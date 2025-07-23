@@ -1,4 +1,4 @@
-general: 
+general:
   back: "• kembali •"
   back_to_main_menu: "• kembali ke menu utama •"
   back_to_settings: "• Kembali ke Pengaturan •"
@@ -224,6 +224,25 @@ payment:
     via: "🤖 **Melalui Bot:** {bot_mention}"
     refund_button: "🔙 Refund Stars"
     notif_fail_owner_blocked: "⚠️ **Notifikasi Gagal Terkirim**\n\nNotifikasi donasi sebesar `{stars}` Stars dari {mention} gagal dikirim ke owner bot `{bot_name}` karena bot diblokir olehnya."
+  defaults:
+    notes_text: |
+      ╭─ **✨ Detail Paket VVIP**
+      │
+      ├─ 📂 **Nama Paket:** `{name}`
+      ├─ 📝 **Deskripsi:** Konten premium eksklusif menanti Anda. Dapatkan akses instan setelah pembayaran.
+      │
+      ├─ 💳 **Harga Normal:** `Rp {price:,}`
+      │
+      ╰─ Cukup klik tombol 'Bayar' di bawah untuk memulai!
+    promo_text: |
+      ╭─ **🎉 Penawaran Spesial Terbatas!**
+      │
+      ├─ 📂 **Nama Paket:** `{name}`
+      ├─ 📝 **Deskripsi:** Kesempatan emas untuk bergabung dengan harga spesial! Jangan lewatkan promo menarik ini.
+      │
+      ├─ 💰 **Harga Promo:** `Rp {promo_price:,}`
+      │
+      ╰─ Segera amankan slot Anda sebelum promo berakhir!
 
 settings:
   title: "**🛠️ Panel Pengaturan Owner**"
