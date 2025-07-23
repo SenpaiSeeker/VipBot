@@ -1,0 +1,141 @@
+import asyncio
+import os
+import sys
+import zipfile
+import traceback
+import uuid
+import glob
+import importlib
+from functools import partial
+from io import BytesIO, StringIO
+from time import time
+from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
+import aiohttp
+import pyrogram
+from pyrogram import filters
+import nsdev
+
+from .lang import Language
+
+ALL_HANDLERS = []
+
+
+class HandlerContext(SimpleNamespace):
+    pass
+
+
+ctx = HandlerContext()
+
+
+def command(filter_lambda, handler_type="message"):
+    def decorator(func):
+        ALL_HANDLERS.append((func, filter_lambda, handler_type))
+        return func
+
+    return decorator
+
+
+DEFAULT_NOTES_TEXT = (
+    "╭─ **✨ Detail Paket VVIP**\n"
+    "│\n"
+    "├─ 📂 **Nama Paket:** `{name}`\n"
+    "├─ 📝 **Deskripsi:** Konten premium eksklusif menanti Anda. Dapatkan akses instan setelah pembayaran.\n"
+    "│\n"
+    "├─ 💳 **Harga Normal:** `Rp {price:,}`\n"
+    "│\n"
+    "╰─ Cukup klik tombol 'Bayar' di bawah untuk memulai!"
+)
+DEFAULT_PROMO_TEXT = (
+    "╭─ **🎉 Penawaran Spesial Terbatas!**\n"
+    "│\n"
+    "├─ 📂 **Nama Paket:** `{name}`\n"
+    "├─ 📝 **Deskripsi:** Kesempatan emas untuk bergabung dengan harga spesial! Jangan lewatkan promo menarik ini.\n"
+    "│\n"
+    "├─ 💰 **Harga Promo:** `Rp {promo_price:,}`\n"
+    "│\n"
+    "╰─ Segera amankan slot Anda sebelum promo berakhir!"
+)
+
+
+async def is_bot_owner(client, user_id):
+    owner_of_this_bot = ctx.db.getVars(client.me.id, "owner_id")
+    return user_id == ctx.owner_id or (
+        owner_of_this_bot and user_id == owner_of_this_bot
+    )
+
+
+async def check_new_user(client, message):
+    user_id = message.from_user.id
+    user_list = ctx.db.getListVars(client.me.id, "user_ids") or []
+    if user_id not in user_list:
+        ctx.db.setListVars(client.me.id, "user_ids", user_id)
+        owner_of_this_bot = ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
+        try:
+            await client.send_message(
+                owner_of_this_bot,
+                f"**👤 Pengguna Baru Telah Memulai Bot Anda!**\n\n"
+                f"**Bot:** {client.me.mention}\n"
+                f"**Pengguna:** {client.ns.arg.getMention(message.from_user)}\n"
+                f"**ID:** `{user_id}`",
+            )
+        except Exception as e:
+            ctx.log.print(
+                f"{ctx.log.YELLOW}Gagal notifikasi user baru ke owner {owner_of_this_bot} dari bot {client.me.id}: {e}"
+            )
+        ctx.log.print(
+            f"{ctx.log.CYAN}User baru {client.ns.arg.getMention(message.from_user, logs=True)} memulai bot {client.me.first_name}"
+        )
+
+
+def _load_all_handlers():
+    current_dir = os.path.dirname(__file__)
+    module_paths = glob.glob(os.path.join(current_dir, "*.py"))
+
+    all_modules = sorted(
+        os.path.basename(f)[:-3]
+        for f in module_paths
+        if os.path.isfile(f) and f.endswith(".py") and not f.endswith("__init__.py")
+    )
+
+    for module_name in all_modules:
+        importlib.import_module(f".{module_name}", package=__name__)
+
+
+_load_all_handlers()
+
+
+def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, owner_id):
+    ctx.db = db_instance
+    ctx.manager = bot_manager
+    ctx.owner_id = owner_id
+    ctx.log = nsdev.LoggerHandler()
+    ctx.ACTIVE_MEMBERS_CACHE = {}
+    ctx.L = Language
+
+    HANDLER_MAP = {
+        "message": pyrogram.handlers.MessageHandler,
+        "callback": pyrogram.handlers.CallbackQueryHandler,
+        "pre_checkout": pyrogram.handlers.PreCheckoutQueryHandler,
+    }
+
+    for func, filter_lambda, handler_type in ALL_HANDLERS:
+        actual_filter = filter_lambda(ctx)
+
+        HandlerClass = HANDLER_MAP.get(handler_type)
+        if not HandlerClass:
+            ctx.log.warning(
+                f"Handler type '{handler_type}' tidak dikenal. Melewati pendaftaran."
+            )
+            continue
+
+        async def handler_wrapper(original_func, c, u):
+            u.lang = Language(db_instance, u.from_user.id)
+            await original_func(c, u)
+
+        wrapped_func = partial(handler_wrapper, func)
+
+        if handler_type == "pre_checkout":
+            client.add_handler(HandlerClass(wrapped_func))
+        else:
+            client.add_handler(HandlerClass(wrapped_func, filters=actual_filter))
