@@ -16,7 +16,7 @@ import pyrogram
 from pyrogram import filters
 import nsdev
 
-from .lang import Language
+from string.lang import Language
 
 ALL_HANDLERS = []
 
@@ -34,28 +34,6 @@ def command(filter_lambda, handler_type="message"):
         return func
 
     return decorator
-
-
-DEFAULT_NOTES_TEXT = (
-    "╭─ **✨ Detail Paket VVIP**\n"
-    "│\n"
-    "├─ 📂 **Nama Paket:** `{name}`\n"
-    "├─ 📝 **Deskripsi:** Konten premium eksklusif menanti Anda. Dapatkan akses instan setelah pembayaran.\n"
-    "│\n"
-    "├─ 💳 **Harga Normal:** `Rp {price:,}`\n"
-    "│\n"
-    "╰─ Cukup klik tombol 'Bayar' di bawah untuk memulai!"
-)
-DEFAULT_PROMO_TEXT = (
-    "╭─ **🎉 Penawaran Spesial Terbatas!**\n"
-    "│\n"
-    "├─ 📂 **Nama Paket:** `{name}`\n"
-    "├─ 📝 **Deskripsi:** Kesempatan emas untuk bergabung dengan harga spesial! Jangan lewatkan promo menarik ini.\n"
-    "│\n"
-    "├─ 💰 **Harga Promo:** `Rp {promo_price:,}`\n"
-    "│\n"
-    "╰─ Segera amankan slot Anda sebelum promo berakhir!"
-)
 
 
 async def is_bot_owner(client, user_id):
@@ -130,7 +108,10 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
             continue
 
         async def handler_wrapper(original_func, c, u):
-            u.lang = Language(db_instance, u.from_user.id)
+            if hasattr(u, "from_user") and u.from_user:
+                u.lang = Language(db_instance, u.from_user.id)
+            else:
+                u.lang = Language(db_instance, u.user_id)
             await original_func(c, u)
 
         wrapped_func = partial(handler_wrapper, func)
