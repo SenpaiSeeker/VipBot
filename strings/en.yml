@@ -203,7 +203,7 @@ payment:
     invoice_prompt: "Please scan the QRIS above."
     invoice_details_title: "Billing Details"
     invoice_product: "🛍️ **Product:** VVIP {name} ({type})"
-    invoice_amount: "💳 **Amount:** `Rp {amount:,}`"
+    invoice_amount: "💳 **Amount:** `IDR {amount:,}`"
     invoice_order_id: "🆔 **Order ID:** `{id}`"
     invoice_expiry: "⏳ **IMPORTANT:** This invoice will expire in **15 minutes**."
   check:
@@ -224,6 +224,25 @@ payment:
     via: "🤖 **Via Bot:** {bot_mention}"
     refund_button: "🔙 Refund Stars"
     notif_fail_owner_blocked: "⚠️ **Notification Failed to Send**\n\nA donation notification of `{stars}` Stars from {mention} failed to be sent to the owner of bot `{bot_name}` because the bot was blocked by them."
+  defaults:
+    notes_text: |
+      ╭─ **✨ VVIP Package Details**
+      │
+      ├─ 📂 **Package Name:** `{name}`
+      ├─ 📝 **Description:** Exclusive premium content awaits you. Get instant access after payment.
+      │
+      ├─ 💳 **Normal Price:** `IDR {price:,}`
+      │
+      ╰─ Just click the 'Pay' button below to get started!
+    promo_text: |
+      ╭─ **🎉 Limited Special Offer!**
+      │
+      ├─ 📂 **Package Name:** `{name}`
+      ├─ 📝 **Description:** A golden opportunity to join at a special price! Don't miss this exciting promo.
+      │
+      ├─ 💰 **Promo Price:** `IDR {promo_price:,}`
+      │
+      ╰─ Secure your spot now before the promo ends!
 
 settings:
   title: "**🛠️ Owner Settings Panel**"
