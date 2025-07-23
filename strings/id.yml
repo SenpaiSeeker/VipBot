@@ -1,4 +1,4 @@
-general: |
+general: 
   back: "• kembali •"
   back_to_main_menu: "• kembali ke menu utama •"
   back_to_settings: "• Kembali ke Pengaturan •"
