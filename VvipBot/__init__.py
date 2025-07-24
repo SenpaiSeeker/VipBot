@@ -8,6 +8,7 @@ import uuid
 import glob
 import importlib
 from functools import partial
+from zoneinfo import ZoneInfo
 from io import BytesIO, StringIO
 from time import time
 from datetime import datetime, timedelta, timezone
