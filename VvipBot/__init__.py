@@ -1,6 +1,5 @@
 import asyncio
 import os
-import math
 import sys
 import zipfile
 import traceback
@@ -8,7 +7,6 @@ import uuid
 import glob
 import importlib
 from functools import partial
-from zoneinfo import ZoneInfo
 from io import BytesIO, StringIO
 from time import time
 from datetime import datetime, timedelta, timezone
@@ -51,13 +49,18 @@ async def check_new_user(client, message):
     if user_id not in user_list:
         ctx.db.setListVars(client.me.id, "user_ids", user_id)
         owner_of_this_bot = ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
+        
         try:
+            owner_lang = Language(ctx.db, owner_of_this_bot)
+            notification_text = owner_lang.get(
+                'bot_management.create.new_user_notification',
+                mention=client.me.mention,
+                user_mention=client.ns.arg.getMention(message.from_user),
+                user_id=user_id
+            )
             await client.send_message(
                 owner_of_this_bot,
-                f"**👤 Pengguna Baru Telah Memulai Bot Anda!**\n\n"
-                f"**Bot:** {client.me.mention}\n"
-                f"**Pengguna:** {client.ns.arg.getMention(message.from_user)}\n"
-                f"**ID:** `{user_id}`",
+                notification_text,
             )
         except Exception as e:
             ctx.log.print(
@@ -114,25 +117,15 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
                 u.lang = Language(db_instance, u.from_user.id)
             else:
                 u.lang = Language(db_instance, u.user_id)
-
+            
             try:
                 await original_func(c, u)
             except pyrogram.errors.MessageNotModified:
-                if isinstance(u, pyrogram.types.CallbackQuery):
-                    await u.answer("MessageNotModified")
-                ctx.log.print(f"{ctx.log.YELLOW}Caught and handled MessageNotModified.")
-            except Exception as e:
                 ctx.log.print(
-                    f"{ctx.log.RED}An error occurred in handler: {e}\n{traceback.format_exc()}"
+                    f"{ctx.log.YELLOW}Caught MessageNotModified in handler '{original_func.__name__}'. Ignoring."
                 )
                 if isinstance(u, pyrogram.types.CallbackQuery):
-                    try:
-                        await u.answer(
-                            u.lang.get("general.error", e=type(e).__name__),
-                            show_alert=True,
-                        )
-                    except Exception:
-                        pass
+                    await u.answer()
 
         wrapped_func = partial(handler_wrapper, func)
 
