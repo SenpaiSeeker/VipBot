@@ -14,7 +14,7 @@ from database import db
 from bot_manager import BotManager
 from services import initialize_bot_services
 import VvipBot as handlers
-from VvipBot.lang import Language
+from VvipBot import Language
 
 log = LoggerHandler()
 
