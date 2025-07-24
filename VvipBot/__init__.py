@@ -4,7 +4,7 @@ import importlib
 from functools import partial
 from types import SimpleNamespace
 import pyrogram
-from pyrogram import filters 
+from pyrogram import filters
 import nsdev
 
 from strings import Language
