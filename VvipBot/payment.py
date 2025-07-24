@@ -288,9 +288,7 @@ async def successful_donation_handler(client, message):
             ctx.db.setVars(main_bot_id, f"refund_{refund_key}", refund_data)
 
             refund_callback_data = f"refund_stars_{refund_key}"
-            refund_button_text = (
-                f"| {lang.get('payment.donation.refund_button')} - {refund_callback_data} |"
-            )
+            refund_button_text = f"| {lang.get('payment.donation.refund_button')} - {refund_callback_data} |"
             refund_btn, _ = main_bot_client.ns.button.create_keyboard(
                 refund_button_text
             )
@@ -299,7 +297,9 @@ async def successful_donation_handler(client, message):
                 chat_id=super_admin_id, text=notification_text, reply_markup=refund_btn
             )
         except Exception as e:
-            ctx.log.print(f"{ctx.log.RED}Gagal mengirim notifikasi donasi ke owner utama: {e}")
+            ctx.log.print(
+                f"{ctx.log.RED}Gagal mengirim notifikasi donasi ke owner utama: {e}"
+            )
 
     ctx.log.print(
         f"{ctx.log.GREEN}Donasi {stars_donated} XTR diterima dari {user.id} ({user.first_name}) melalui bot {current_bot_id}"
