@@ -11,9 +11,7 @@ async def list_members_callback(client, callback_query):
     back_btn_text = f"| {lang.get('general.back_to_settings')} - settings |"
 
     if not members_list:
-        btn, txt = client.ns.button.create_keyboard(
-            f"{lang.get('member.list.empty')}\n\n{back_btn_text}"
-        )
+        btn, txt = client.ns.button.create_keyboard(f"{lang.get('member.list.empty')}\n\n{back_btn_text}")
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(txt, reply_markup=btn)
         return await callback_query.edit_message_text(txt, reply_markup=btn)
@@ -81,9 +79,7 @@ async def confirm_kick_member_callback(client, callback_query):
     )
     btn_text = f"| {lang.get('member.kick.confirm_yes_button')} - do_kick_{user_id_str}_{vvip_name} | | {lang.get('member.kick.confirm_no_button')} - list_members_0 |"
 
-    btn, txt = client.ns.button.create_keyboard(
-        f"**{lang.get('member.kick.confirm_title')}**\n\n{prompt}\n\n{btn_text}"
-    )
+    btn, txt = client.ns.button.create_keyboard(f"**{lang.get('member.kick.confirm_title')}**\n\n{prompt}\n\n{btn_text}")
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
@@ -99,24 +95,16 @@ async def do_kick_member_callback(client, callback_query):
     user_id = int(user_id_str)
     members_list = ctx.db.getListVars(client.me.id, "vvip_members") or []
     record_to_remove = next(
-        (
-            r
-            for r in members_list
-            if r.get("user_id") == user_id and r.get("vvip_name") == vvip_name
-        ),
+        (r for r in members_list if r.get("user_id") == user_id and r.get("vvip_name") == vvip_name),
         None,
     )
 
     if not record_to_remove:
-        return await callback_query.edit_message_caption(
-            lang.get("member.kick.record_not_found")
-        )
+        return await callback_query.edit_message_caption(lang.get("member.kick.record_not_found"))
 
     chat_id_kick = record_to_remove.get("chat_id_kick")
     if not chat_id_kick:
-        return await callback_query.edit_message_caption(
-            lang.get("member.kick.invalid_chat_id")
-        )
+        return await callback_query.edit_message_caption(lang.get("member.kick.invalid_chat_id"))
 
     await callback_query.edit_message_caption(lang.get("member.kick.processing"))
     try:
@@ -159,9 +147,7 @@ async def check_active_menu_callback(client, callback_query):
 
     back_btn_text = f"| {lang.get('general.back_to_settings')} - settings |"
     if not btn_text:
-        btn, txt = client.ns.button.create_keyboard(
-            f"{lang.get('member.active_list.no_valid_chat_id')}\n\n{back_btn_text}"
-        )
+        btn, txt = client.ns.button.create_keyboard(f"{lang.get('member.active_list.no_valid_chat_id')}\n\n{back_btn_text}")
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(txt, reply_markup=btn)
         return await callback_query.edit_message_text(txt, reply_markup=btn)
@@ -191,23 +177,15 @@ async def list_active_members_callback(client, callback_query):
 
     if chat_id not in ctx.ACTIVE_MEMBERS_CACHE:
         try:
-            await callback_query.answer(
-                lang.get("member.active_list.fetching"), show_alert=False
-            )
-            members = [
-                m async for m in client.get_chat_members(chat_id) if not m.user.is_bot
-            ]
+            await callback_query.answer(lang.get("member.active_list.fetching"), show_alert=False)
+            members = [m async for m in client.get_chat_members(chat_id) if not m.user.is_bot]
             ctx.ACTIVE_MEMBERS_CACHE[chat_id] = members
         except Exception as e:
-            return await callback_query.edit_message_caption(
-                lang.get("member.active_list.fetch_fail", e=e)
-            )
+            return await callback_query.edit_message_caption(lang.get("member.active_list.fetch_fail", e=e))
 
     all_members = ctx.ACTIVE_MEMBERS_CACHE.get(chat_id, [])
     if not all_members:
-        return await callback_query.edit_message_caption(
-            lang.get("member.active_list.empty")
-        )
+        return await callback_query.edit_message_caption(lang.get("member.active_list.empty"))
 
     total_members = len(all_members)
     page = (page + total_members) % total_members
@@ -227,9 +205,7 @@ async def list_active_members_callback(client, callback_query):
         )
         btn_text += f"| « - list_active_{chat_id}_{prev_p} | | » - list_active_{chat_id}_{next_p};same |\n"
 
-    btn_text += (
-        f"| {lang.get('general.back_to_group_selection')} - check_active_menu_init |"
-    )
+    btn_text += f"| {lang.get('general.back_to_group_selection')} - check_active_menu_init |"
     btn, _ = client.ns.button.create_keyboard(text + "\n\n" + btn_text)
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
@@ -270,28 +246,20 @@ async def do_kick_active_callback(client, callback_query):
     chat_id, user_id = int(chat_id_str), int(user_id_str)
 
     try:
-        await callback_query.edit_message_caption(
-            lang.get("member.active_list.kick_processing")
-        )
+        await callback_query.edit_message_caption(lang.get("member.active_list.kick_processing"))
         await client.ban_chat_member(chat_id, user_id)
         await client.unban_chat_member(chat_id, user_id)
 
         members_list = ctx.db.getListVars(client.me.id, "vvip_members") or []
         record_to_remove = next(
-            (
-                r
-                for r in members_list
-                if r.get("user_id") == user_id and r.get("chat_id_kick") == chat_id
-            ),
+            (r for r in members_list if r.get("user_id") == user_id and r.get("chat_id_kick") == chat_id),
             None,
         )
         if record_to_remove:
             ctx.db.removeListVars(client.me.id, "vvip_members", record_to_remove)
 
         if chat_id in ctx.ACTIVE_MEMBERS_CACHE:
-            ctx.ACTIVE_MEMBERS_CACHE[chat_id] = [
-                m for m in ctx.ACTIVE_MEMBERS_CACHE[chat_id] if m.user.id != user_id
-            ]
+            ctx.ACTIVE_MEMBERS_CACHE[chat_id] = [m for m in ctx.ACTIVE_MEMBERS_CACHE[chat_id] if m.user.id != user_id]
 
         user = await client.get_users(user_id)
         text = f"{lang.get('member.active_list.kick_success', mention=client.ns.arg.getMention(user))}"

@@ -1,9 +1,11 @@
 import asyncio
 from datetime import datetime, timezone
+
 import pyrogram
 from nsdev import LoggerHandler
-from services import initialize_bot_services
+
 import VvipBot as handlers
+from services import initialize_bot_services
 
 log = LoggerHandler()
 
@@ -39,19 +41,12 @@ class BotManager:
             initialize_bot_services(client, self.db)
 
             self.running_bots[client.me.id] = client
-            log.print(
-                f"{log.GREEN}Bot {client.me.first_name} (ID: {client.me.id}) berhasil diaktifkan."
-            )
+            log.print(f"{log.GREEN}Bot {client.me.first_name} (ID: {client.me.id}) berhasil diaktifkan.")
         except Exception as e:
             log.print(f"{log.RED}Gagal memulai bot {bot_id}: {e}")
-            if (
-                "USER_DEACTIVATED_BAN" in str(e).upper()
-                or "BOT_TOKEN_INVALID" in str(e).upper()
-            ):
+            if "USER_DEACTIVATED_BAN" in str(e).upper() or "BOT_TOKEN_INVALID" in str(e).upper():
                 self.db.removeBot(bot_id)
-                log.print(
-                    f"{log.ORANGE}Data bot {bot_id} dihapus karena token tidak valid/terblokir."
-                )
+                log.print(f"{log.ORANGE}Data bot {bot_id} dihapus karena token tidak valid/terblokir.")
 
     async def start_all_bots(self):
         all_bots_data = self.db.getBots(is_token=True)
@@ -83,16 +78,10 @@ class BotManager:
                         continue
                     expiry_date = datetime.fromisoformat(expiry_date_str)
                     if datetime.now(timezone.utc) > expiry_date:
-                        log.print(
-                            f"{log.ORANGE}Masa aktif bot {bot_id} telah habis. Menghapus bot..."
-                        )
+                        log.print(f"{log.ORANGE}Masa aktif bot {bot_id} telah habis. Menghapus bot...")
                         await self.stop_bot(bot_id)
                         self.db.removeBot(bot_id)
                         self.db.removeAllVars(bot_id)
-                        log.print(
-                            f"{log.YELLOW}Bot {bot_id} telah dihapus karena kedaluwarsa."
-                        )
+                        log.print(f"{log.YELLOW}Bot {bot_id} telah dihapus karena kedaluwarsa.")
                 except Exception as e:
-                    log.print(
-                        f"{log.RED}Error saat memeriksa masa aktif bot {bot_id}: {e}"
-                    )
+                    log.print(f"{log.RED}Error saat memeriksa masa aktif bot {bot_id}: {e}")

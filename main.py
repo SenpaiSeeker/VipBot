@@ -1,19 +1,21 @@
+import asyncio
+import os
 import sys
+import traceback
 from pathlib import Path
+
+import pyrogram
+from nsdev import LoggerHandler
+
+import VvipBot as handlers
+from bot_manager import BotManager
+from config import API_HASH, API_ID, BOT_TOKEN, OWNER_ID
+from database import db
+from services import initialize_bot_services
 
 project_root = Path(__file__).resolve().parent
 sys.path.insert(0, str(project_root))
 
-import asyncio
-import os
-import traceback
-import pyrogram
-from nsdev import LoggerHandler
-from config import API_ID, API_HASH, BOT_TOKEN, OWNER_ID
-from database import db
-from bot_manager import BotManager
-from services import initialize_bot_services
-import VvipBot as handlers
 
 log = LoggerHandler()
 
@@ -24,9 +26,7 @@ async def main():
     strings_dir = "strings"
     if not os.path.exists(strings_dir):
         os.makedirs(strings_dir)
-        log.print(
-            f"{log.YELLOW}Direktori '{strings_dir}' tidak ditemukan, telah dibuat."
-        )
+        log.print(f"{log.YELLOW}Direktori '{strings_dir}' tidak ditemukan, telah dibuat.")
 
     manager = BotManager(db, OWNER_ID)
 

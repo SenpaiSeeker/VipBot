@@ -1,23 +1,23 @@
 import asyncio
-from zoneinfo import ZoneInfo
-import os
-import math
-import sys
-import zipfile
-import traceback
-import uuid
 import glob
 import importlib
+import math
+import os
+import sys
+import traceback
+import uuid
+import zipfile
+from datetime import datetime, timedelta, timezone
 from functools import partial
-
 from io import BytesIO, StringIO
 from time import time
-from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
+from zoneinfo import ZoneInfo
+
 import aiohttp
+import nsdev
 import pyrogram
 from pyrogram import filters
-import nsdev
 
 from strings import Language
 
@@ -41,9 +41,7 @@ def command(filter_lambda, handler_type="message"):
 
 async def is_bot_owner(client, user_id):
     owner_of_this_bot = ctx.db.getVars(client.me.id, "owner_id")
-    return user_id == ctx.owner_id or (
-        owner_of_this_bot and user_id == owner_of_this_bot
-    )
+    return user_id == ctx.owner_id or (owner_of_this_bot and user_id == owner_of_this_bot)
 
 
 async def check_new_user(client, message):
@@ -110,9 +108,7 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
 
         HandlerClass = HANDLER_MAP.get(handler_type)
         if not HandlerClass:
-            ctx.log.warning(
-                f"Handler type '{handler_type}' tidak dikenal. Melewati pendaftaran."
-            )
+            ctx.log.warning(f"Handler type '{handler_type}' tidak dikenal. Melewati pendaftaran.")
             continue
 
         async def handler_wrapper(original_func, c, u):
@@ -124,9 +120,7 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
             try:
                 await original_func(c, u)
             except pyrogram.errors.MessageNotModified:
-                ctx.log.print(
-                    f"{ctx.log.YELLOW}Caught MessageNotModified in handler '{original_func.__name__}'. Ignoring."
-                )
+                ctx.log.print(f"{ctx.log.YELLOW}Caught MessageNotModified in handler '{original_func.__name__}'. Ignoring.")
                 if isinstance(u, pyrogram.types.CallbackQuery):
                     await u.answer()
 

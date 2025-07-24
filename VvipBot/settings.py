@@ -4,9 +4,7 @@ from . import *
 @command(lambda ctx: filters.regex("^settings$"), handler_type="callback")
 async def settings(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
-        return await callback_query.answer(
-            callback_query.lang.get("general.no_access"), show_alert=True
-        )
+        return await callback_query.answer(callback_query.lang.get("general.no_access"), show_alert=True)
 
     lang = callback_query.lang
 
@@ -20,9 +18,7 @@ async def settings(client, callback_query):
     ]
     btn_text = "\n".join(button_rows)
 
-    txt_content = (
-        f"**{lang.get('settings.title')}**\n\n{lang.get('settings.description')}"
-    )
+    txt_content = f"**{lang.get('settings.title')}**\n\n{lang.get('settings.description')}"
     btn, txt = client.ns.button.create_keyboard(f"{txt_content}\n\n{btn_text}")
 
     if callback_query.message.photo:
@@ -51,33 +47,21 @@ async def set_start_photo_callback(client, callback_query):
                 raise nsdev.UserCancelled
             if ask_photo_msg.text.lower() == "/empty":
                 ctx.db.removeVars(client.me.id, "start_photo_id")
-                return await client.send_message(
-                    chat_id, lang.get("settings.photo_emptied"), reply_markup=back_btn
-                )
+                return await client.send_message(chat_id, lang.get("settings.photo_emptied"), reply_markup=back_btn)
 
         if not ask_photo_msg.photo:
-            return await client.send_message(
-                chat_id, lang.get("settings.set_photo_fail"), reply_markup=back_btn
-            )
+            return await client.send_message(chat_id, lang.get("settings.set_photo_fail"), reply_markup=back_btn)
 
         photo_id = ask_photo_msg.photo.sizes[-1].file_id
         ctx.db.setVars(client.me.id, "start_photo_id", photo_id)
-        await client.send_message(
-            chat_id, lang.get("settings.set_photo_success"), reply_markup=back_btn
-        )
+        await client.send_message(chat_id, lang.get("settings.set_photo_success"), reply_markup=back_btn)
 
     except nsdev.UserCancelled:
-        await client.send_message(
-            chat_id, lang.get("general.cancelled"), reply_markup=back_btn
-        )
+        await client.send_message(chat_id, lang.get("general.cancelled"), reply_markup=back_btn)
     except asyncio.TimeoutError:
-        await client.send_message(
-            chat_id, lang.get("general.timeout"), reply_markup=back_btn
-        )
+        await client.send_message(chat_id, lang.get("general.timeout"), reply_markup=back_btn)
     except Exception as e:
-        await client.send_message(
-            chat_id, lang.get("general.error", e=e), reply_markup=back_btn
-        )
+        await client.send_message(chat_id, lang.get("general.error", e=e), reply_markup=back_btn)
 
 
 @command(lambda ctx: filters.regex("^set_start_text$"), handler_type="callback")
@@ -92,50 +76,34 @@ async def set_start_text_callback(client, callback_query):
     back_btn = client.ns.button.create_keyboard(back_btn_text)[0]
 
     try:
-        prompt = (
-            f"{lang.get('settings.set_text_prompt')}{lang.get('prompts.cancel_footer')}"
-        )
+        prompt = f"{lang.get('settings.set_text_prompt')}{lang.get('prompts.cancel_footer')}"
         ask_text_msg = await client.ask(chat_id, prompt, timeout=600)
 
         if not ask_text_msg.text:
-            return await client.send_message(
-                chat_id, lang.get("settings.set_text_fail"), reply_markup=back_btn
-            )
+            return await client.send_message(chat_id, lang.get("settings.set_text_fail"), reply_markup=back_btn)
 
         if ask_text_msg.text.lower() == "/batal":
             raise nsdev.UserCancelled
 
         if ask_text_msg.text.lower() == "/empty":
             ctx.db.removeVars(client.me.id, "start_text_template")
-            return await client.send_message(
-                chat_id, lang.get("settings.text_emptied"), reply_markup=back_btn
-            )
+            return await client.send_message(chat_id, lang.get("settings.text_emptied"), reply_markup=back_btn)
 
         ctx.db.setVars(client.me.id, "start_text_template", ask_text_msg.text)
-        await client.send_message(
-            chat_id, lang.get("settings.set_text_success"), reply_markup=back_btn
-        )
+        await client.send_message(chat_id, lang.get("settings.set_text_success"), reply_markup=back_btn)
 
     except nsdev.UserCancelled:
-        await client.send_message(
-            chat_id, lang.get("general.cancelled"), reply_markup=back_btn
-        )
+        await client.send_message(chat_id, lang.get("general.cancelled"), reply_markup=back_btn)
     except asyncio.TimeoutError:
-        await client.send_message(
-            chat_id, lang.get("general.timeout"), reply_markup=back_btn
-        )
+        await client.send_message(chat_id, lang.get("general.timeout"), reply_markup=back_btn)
     except Exception as e:
-        await client.send_message(
-            chat_id, lang.get("general.error", e=e), reply_markup=back_btn
-        )
+        await client.send_message(chat_id, lang.get("general.error", e=e), reply_markup=back_btn)
 
 
 @command(lambda ctx: filters.regex("^broadcast$"), handler_type="callback")
 async def broadcast_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
-        return await callback_query.answer(
-            callback_query.lang.get("general.no_access"), show_alert=True
-        )
+        return await callback_query.answer(callback_query.lang.get("general.no_access"), show_alert=True)
 
     chat_id = callback_query.message.chat.id
     lang = callback_query.lang
@@ -150,13 +118,9 @@ async def broadcast_callback(client, callback_query):
 
         user_ids = ctx.db.getListVars(client.me.id, "user_ids") or []
         if not user_ids:
-            return await client.send_message(
-                chat_id, lang.get("settings.broadcast_no_users")
-            )
+            return await client.send_message(chat_id, lang.get("settings.broadcast_no_users"))
 
-        progress_msg = await client.send_message(
-            chat_id, lang.get("settings.broadcast_start", count=len(user_ids))
-        )
+        progress_msg = await client.send_message(chat_id, lang.get("settings.broadcast_start", count=len(user_ids)))
 
         success_count, fail_count = 0, 0
         for user_id in user_ids:
@@ -172,9 +136,7 @@ async def broadcast_callback(client, callback_query):
                 fail_count += 1
             await asyncio.sleep(0.1)
 
-        await progress_msg.edit(
-            lang.get("settings.broadcast_done", success=success_count, fail=fail_count)
-        )
+        await progress_msg.edit(lang.get("settings.broadcast_done", success=success_count, fail=fail_count))
 
     except nsdev.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"))
@@ -193,9 +155,9 @@ async def setup_listvvip(client, callback_query):
     await callback_query.message.delete()
 
     try:
-        ask = lambda text: client.ask(
-            chat_id, f"{text}{lang.get('prompts.cancel_footer')}", timeout=600
-        )
+
+        def ask(text):
+            return client.ask(chat_id, f"{text}{lang.get('prompts.cancel_footer')}", timeout=600)
 
         def validate(msg, check_func, err_msg_key):
             if msg.text and msg.text.lower() == "/batal":
@@ -204,14 +166,17 @@ async def setup_listvvip(client, callback_query):
                 raise ValueError(lang.get(err_msg_key))
             return msg.text
 
-        is_digit = lambda t: t.isdigit()
-        is_chatid = lambda t: t.lstrip("-").isdigit()
-        is_link = lambda t: "https://" in t
+        def is_digit(t):
+            return t.isdigit()
+
+        def is_chatid(t):
+            return t.lstrip("-").isdigit()
+
+        def is_link(t):
+            return "https://" in t
 
         vvip_data = {}
-        vvip_data["name"] = validate(
-            await ask(lang.get("settings.setup_vvip.step1_name")), lambda t: True, ""
-        )
+        vvip_data["name"] = validate(await ask(lang.get("settings.setup_vvip.step1_name")), lambda t: True, "")
         vvip_data["price"] = int(
             validate(
                 await ask(lang.get("settings.setup_vvip.step2_price")),
@@ -256,35 +221,31 @@ async def setup_listvvip(client, callback_query):
             promo_text_msg = await client.ask(chat_id, prompt_promo, timeout=600)
             if promo_text_msg.text and promo_text_msg.text.lower() == "/batal":
                 raise nsdev.UserCancelled
-            vvip_data["promo_text"] = (
-                "" if promo_text_msg.text.lower() == "/skip" else promo_text_msg.text
-            )
+            vvip_data["promo_text"] = "" if promo_text_msg.text.lower() == "/skip" else promo_text_msg.text
         else:
             (
                 vvip_data["promo_link"],
                 vvip_data["chat_id_promo"],
                 vvip_data["promo_text"],
-            ) = "", 0, ""
+            ) = (
+                "",
+                0,
+                "",
+            )
 
         prompt_normal = f"{lang.get('settings.setup_vvip.step9_normal_text')}{lang.get('prompts.cancel_footer')}"
         normal_text_msg = await client.ask(chat_id, prompt_normal, timeout=600)
         if normal_text_msg.text and normal_text_msg.text.lower() == "/batal":
             raise nsdev.UserCancelled
-        vvip_data["normal_text"] = (
-            "" if normal_text_msg.text.lower() == "/skip" else normal_text_msg.text
-        )
+        vvip_data["normal_text"] = "" if normal_text_msg.text.lower() == "/skip" else normal_text_msg.text
 
         ctx.db.setListVars(client.me.id, "list_vvip", vvip_data)
-        await client.send_message(
-            chat_id, lang.get("settings.setup_vvip.success", name=vvip_data["name"])
-        )
+        await client.send_message(chat_id, lang.get("settings.setup_vvip.success", name=vvip_data["name"]))
 
     except nsdev.UserCancelled:
         await client.send_message(chat_id, lang.get("settings.setup_vvip.cancelled"))
     except (asyncio.TimeoutError, ValueError) as e:
-        await client.send_message(
-            chat_id, f"{lang.get('general.invalid_input_timeout')}\n`{e}`"
-        )
+        await client.send_message(chat_id, f"{lang.get('general.invalid_input_timeout')}\n`{e}`")
     except Exception as e:
         await client.send_message(chat_id, lang.get("general.error", e=e))
 
@@ -299,9 +260,7 @@ async def delete_listvvip(client, callback_query):
     back_btn = f"| {lang.get('general.back_to_settings')} - settings |"
 
     if not vvip_list:
-        btn, txt = client.ns.button.create_keyboard(
-            f"{lang.get('settings.delete_vvip_empty')}\n\n{back_btn}"
-        )
+        btn, txt = client.ns.button.create_keyboard(f"{lang.get('settings.delete_vvip_empty')}\n\n{back_btn}")
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(txt, reply_markup=btn)
         return await callback_query.edit_message_text(txt, reply_markup=btn)
@@ -317,9 +276,7 @@ async def delete_listvvip(client, callback_query):
     title = lang.get("settings.delete_vvip_title")
     prompt = lang.get("settings.delete_vvip_prompt")
 
-    btn, txt = client.ns.button.create_keyboard(
-        f"**{title}**\n\n{prompt}\n\n{btn_text}"
-    )
+    btn, txt = client.ns.button.create_keyboard(f"**{title}**\n\n{prompt}\n\n{btn_text}")
 
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
@@ -335,17 +292,13 @@ async def confirm_delete_vvip(client, callback_query):
     _, name = callback_query.data.split(" ", 1)
 
     vvip_list = ctx.db.getListVars(client.me.id, "list_vvip") or []
-    item_to_remove = next(
-        (item for item in vvip_list if item.get("name") == name), None
-    )
+    item_to_remove = next((item for item in vvip_list if item.get("name") == name), None)
 
     back_btn = f"| {lang.get('general.back_to_settings')} - delete_listvvip |"
 
     if item_to_remove:
         ctx.db.removeListVars(client.me.id, "list_vvip", item_to_remove)
-        ctx.log.print(
-            f"{ctx.log.ORANGE}Owner bot {client.me.id} menghapus VVIP: {name}"
-        )
+        ctx.log.print(f"{ctx.log.ORANGE}Owner bot {client.me.id} menghapus VVIP: {name}")
         message = lang.get("settings.delete_vvip_success", name=name)
         btn, txt = client.ns.button.create_keyboard(f"{message}\n\n{back_btn}")
     else:
@@ -367,12 +320,8 @@ async def api_settings_callback(client, callback_query):
     active = lang.get("settings.api_status_active")
     inactive = lang.get("settings.api_status_inactive")
 
-    violet_status = (
-        active if ctx.db.getVars(client.me.id, "VIOLET_API_KEY") else inactive
-    )
-    gemini_status = (
-        active if ctx.db.getVars(client.me.id, "GEMINI_API_KEY") else inactive
-    )
+    violet_status = active if ctx.db.getVars(client.me.id, "VIOLET_API_KEY") else inactive
+    gemini_status = active if ctx.db.getVars(client.me.id, "GEMINI_API_KEY") else inactive
 
     btn_text = (
         f"| {lang.get('settings.api_set_violet')} - set_api VIOLET |\n"
@@ -410,7 +359,10 @@ async def set_api_key_prompt(client, callback_query):
     back_btn = client.ns.button.create_keyboard(back_btn_text)[0]
 
     try:
-        ask = lambda p: client.ask(chat_id, f"{p}{lang.get('prompts.cancel_footer')}")
+
+        def ask(p):
+            return client.ask(chat_id, f"{p}{lang.get('prompts.cancel_footer')}")
+
         if key_name == "VIOLET":
             api_key_msg = await ask(lang.get("settings.api_set_violet_1"))
             if api_key_msg.text and api_key_msg.text.lower() == "/batal":
@@ -439,17 +391,11 @@ async def set_api_key_prompt(client, callback_query):
         )
 
     except nsdev.UserCancelled:
-        await client.send_message(
-            chat_id, lang.get("general.cancelled"), reply_markup=back_btn
-        )
+        await client.send_message(chat_id, lang.get("general.cancelled"), reply_markup=back_btn)
     except asyncio.TimeoutError:
-        await client.send_message(
-            chat_id, lang.get("general.timeout"), reply_markup=back_btn
-        )
+        await client.send_message(chat_id, lang.get("general.timeout"), reply_markup=back_btn)
     except Exception as e:
-        await client.send_message(
-            chat_id, lang.get("general.error", e=e), reply_markup=back_btn
-        )
+        await client.send_message(chat_id, lang.get("general.error", e=e), reply_markup=back_btn)
 
 
 @command(lambda ctx: filters.regex("^del_api_confirm$"), handler_type="callback")

@@ -40,9 +40,7 @@ async def eval_bot_handler(client, message):
     if len(final_output) > 4096:
         with BytesIO(str.encode(evaluation + execution_time)) as out_file:
             out_file.name = "eval_result.txt"
-            await message.reply_document(
-                document=out_file, caption=lang.get("admin.eval.too_long")
-            )
+            await message.reply_document(document=out_file, caption=lang.get("admin.eval.too_long"))
     else:
         await reply_to_.reply_text(final_output)
     await msg.delete()
@@ -69,11 +67,7 @@ async def restore_database_handler(client, message):
             zf.extractall(path=".")
 
         db_path = getattr(ctx.db, "data_file", getattr(ctx.db, "db_file", ""))
-        if (
-            db_path
-            and os.path.exists(db_filename_in_zip)
-            and db_filename_in_zip != db_path
-        ):
+        if db_path and os.path.exists(db_filename_in_zip) and db_filename_in_zip != db_path:
             if os.path.exists(db_path):
                 os.remove(db_path)
             os.rename(db_filename_in_zip, db_path)
@@ -94,18 +88,14 @@ async def access_command_handler(client, message):
     lang = message.lang
     user_id_target, _ = await client.ns.arg.getReasonAndId(message)
     if not user_id_target:
-        return await message.reply_text(
-            f"**{lang.get('general.invalid_format')}**\n{lang.get('admin.access.format_error')}"
-        )
+        return await message.reply_text(f"**{lang.get('general.invalid_format')}**\n{lang.get('admin.access.format_error')}")
 
     try:
         target_user = await client.get_users(user_id_target)
         access_list = ctx.db.getListVars(ctx.owner_id, "create_bot_access") or []
 
         status_text = (
-            lang.get("admin.access.has_access")
-            if target_user.id in access_list
-            else lang.get("admin.access.no_access")
+            lang.get("admin.access.has_access") if target_user.id in access_list else lang.get("admin.access.no_access")
         )
 
         text = (
@@ -127,9 +117,7 @@ async def access_command_handler(client, message):
         await message.reply_text(lang.get("admin.access.process_fail", e=e))
 
 
-@command(
-    lambda ctx: filters.regex(r"^(give|revoke)_access\s(\d+)"), handler_type="callback"
-)
+@command(lambda ctx: filters.regex(r"^(give|revoke)_access\s(\d+)"), handler_type="callback")
 async def manage_access_callback(client, callback_query):
     lang = callback_query.lang
     action, target_id_str = callback_query.data.split(" ", 1)
@@ -151,11 +139,7 @@ async def manage_access_callback(client, callback_query):
             show_alert=True,
         )
 
-    status_text = (
-        lang.get("admin.access.has_access")
-        if target_user.id in access_list
-        else lang.get("admin.access.no_access")
-    )
+    status_text = lang.get("admin.access.has_access") if target_user.id in access_list else lang.get("admin.access.no_access")
     text = (
         f"**👤 {lang.get('general.user')}:** {client.ns.arg.getMention(target_user)}\n"
         f"**🆔 {lang.get('general.id')}:** `{target_user.id}`\n"
@@ -173,11 +157,7 @@ async def extend_command_handler(client, message):
         days_to_add = int(days_str)
 
         exp_date_str = ctx.db.getVars(bot_id, "bot_expiration_date")
-        current_exp_date = (
-            datetime.fromisoformat(exp_date_str)
-            if exp_date_str
-            else datetime.now(timezone.utc)
-        )
+        current_exp_date = datetime.fromisoformat(exp_date_str) if exp_date_str else datetime.now(timezone.utc)
         new_exp_date = current_exp_date + timedelta(days=days_to_add)
         ctx.db.setVars(bot_id, "bot_expiration_date", new_exp_date.isoformat())
 
@@ -193,9 +173,7 @@ async def extend_command_handler(client, message):
         if owner_bot_id:
             try:
                 bot_instance = ctx.manager.running_bots.get(bot_id)
-                bot_name = (
-                    bot_instance.me.first_name if bot_instance else f"ID {bot_id}"
-                )
+                bot_name = bot_instance.me.first_name if bot_instance else f"ID {bot_id}"
                 await client.send_message(
                     owner_bot_id,
                     lang.get("admin.extend.notification", bot_name=bot_name),
@@ -203,9 +181,7 @@ async def extend_command_handler(client, message):
             except Exception:
                 pass
     except ValueError:
-        await message.reply_text(
-            f"{lang.get('general.invalid_format')}\n{lang.get('admin.extend.usage')}"
-        )
+        await message.reply_text(f"{lang.get('general.invalid_format')}\n{lang.get('admin.extend.usage')}")
     except Exception as e:
         await message.reply_text(lang.get("admin.extend.fail", e=e))
 
@@ -246,15 +222,9 @@ async def _send_allbots_list(client, message_or_query, page):
             owner_text = f"ID `{owner_id}`"
 
     exp_date_str = ctx.db.getVars(bot_id, "bot_expiration_date")
-    days_left = (
-        (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days
-        if exp_date_str
-        else "N/A"
-    )
+    days_left = (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days if exp_date_str else "N/A"
 
-    text = (
-        f"**{lang.get('admin.allbots.title', page=page + 1, total=total_pages)}**\n\n"
-    )
+    text = f"**{lang.get('admin.allbots.title', page=page + 1, total=total_pages)}**\n\n"
     text += (
         f"• **{lang.get('admin.allbots.bot_name')}:** {bot_name}\n"
         f"• **{lang.get('admin.allbots.bot_id')}:** `{bot_id}`\n"
@@ -293,9 +263,7 @@ async def allbots_callback_handler(client, callback_query):
 async def refund_stars_callback(client, callback_query):
     lang = callback_query.lang
     if not await is_bot_owner(client, callback_query.from_user.id):
-        return await callback_query.answer(
-            lang.get("admin.refund.no_permission"), show_alert=True
-        )
+        return await callback_query.answer(lang.get("admin.refund.no_permission"), show_alert=True)
 
     db_key = ""
     try:
@@ -305,31 +273,24 @@ async def refund_stars_callback(client, callback_query):
 
         if not refund_data:
             return await callback_query.edit_message_text(
-                callback_query.message.text
-                + f"\n\n{lang.get('admin.refund.fail_not_found')}"
+                callback_query.message.text + f"\n\n{lang.get('admin.refund.fail_not_found')}"
             )
 
         user_id_to_refund = refund_data["user_id"]
         charge_id = refund_data["charge_id"]
 
-        await client.refund_star_payment(
-            user_id=user_id_to_refund, telegram_payment_charge_id=charge_id
-        )
+        await client.refund_star_payment(user_id=user_id_to_refund, telegram_payment_charge_id=charge_id)
 
         await callback_query.edit_message_text(
             text=callback_query.message.text + lang.get("admin.refund.success_text"),
             entities=callback_query.message.entities,
         )
 
-        await client.send_message(
-            user_id_to_refund, lang.get("admin.refund.success_notif")
-        )
+        await client.send_message(user_id_to_refund, lang.get("admin.refund.success_notif"))
 
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED}Gagal merefund donasi: {e}")
-        await callback_query.edit_message_text(
-            callback_query.message.text + lang.get("admin.refund.fail_text", e=e)
-        )
+        await callback_query.edit_message_text(callback_query.message.text + lang.get("admin.refund.fail_text", e=e))
     finally:
         if db_key:
             ctx.db.removeVars(client.me.id, db_key)
@@ -349,15 +310,9 @@ async def show_stars_stats(client, callback_query):
 
         peer = await client.resolve_peer(client.me.id)
 
-        raw_result = await client.invoke(
-            pyrogram.raw.functions.payments.GetStarsTransactions(
-                peer=peer, offset="", limit=200
-            )
-        )
+        raw_result = await client.invoke(pyrogram.raw.functions.payments.GetStarsTransactions(peer=peer, offset="", limit=200))
 
-        transactions_history = (
-            raw_result.history if hasattr(raw_result, "history") else []
-        )
+        transactions_history = raw_result.history if hasattr(raw_result, "history") else []
 
         if not transactions_history:
             btn, txt = client.ns.button.create_keyboard(
@@ -368,12 +323,8 @@ async def show_stars_stats(client, callback_query):
             return await callback_query.edit_message_text(txt, reply_markup=btn)
 
         total_balance = raw_result.balance.amount
-        total_income = sum(
-            t.amount.amount for t in transactions_history if t.amount.amount > 0
-        )
-        total_refunds = sum(
-            abs(t.amount.amount) for t in transactions_history if t.amount.amount < 0
-        )
+        total_income = sum(t.amount.amount for t in transactions_history if t.amount.amount > 0)
+        total_refunds = sum(abs(t.amount.amount) for t in transactions_history if t.amount.amount < 0)
         total_transactions_count = len(transactions_history)
 
         peer_map = {p.id: p for p in raw_result.users + raw_result.chats}
@@ -395,26 +346,16 @@ async def show_stars_stats(client, callback_query):
         jakarta_timezone = ZoneInfo("Asia/Jakarta")
 
         for t in paginated_transactions:
-            peer_id = (
-                t.peer.peer.user_id
-                if hasattr(t.peer.peer, "user_id")
-                else t.peer.peer.channel_id
-            )
+            peer_id = t.peer.peer.user_id if hasattr(t.peer.peer, "user_id") else t.peer.peer.channel_id
             peer_obj = peer_map.get(peer_id)
 
             peer_mention = lang.get("stats.transaction_entry_unknown")
             if peer_obj:
-                peer_mention = (
-                    f"{peer_obj.first_name}"
-                    if hasattr(peer_obj, "first_name")
-                    else f"{peer_obj.title}"
-                )
+                peer_mention = f"{peer_obj.first_name}" if hasattr(peer_obj, "first_name") else f"{peer_obj.title}"
 
             amount = t.amount.amount
             amount_str = f"+{amount}" if amount > 0 else str(amount)
-            transaction_date = datetime.fromtimestamp(
-                t.date, tz=timezone.utc
-            ).astimezone(jakarta_timezone)
+            transaction_date = datetime.fromtimestamp(t.date, tz=timezone.utc).astimezone(jakarta_timezone)
 
             text += (
                 lang.get(
@@ -441,7 +382,5 @@ async def show_stars_stats(client, callback_query):
             await callback_query.edit_message_text(text, reply_markup=btn)
 
     except Exception as e:
-        ctx.log.print(
-            f"{ctx.log.RED} Error fetching stars stats: {e}\n{traceback.format_exc()}"
-        )
+        ctx.log.print(f"{ctx.log.RED} Error fetching stars stats: {e}\n{traceback.format_exc()}")
         await callback_query.answer(f"Error: {e}", show_alert=True)

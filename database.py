@@ -1,4 +1,5 @@
 import nsdev
+
 from config import BOT_TOKEN, OWNER_ID
 
 db = nsdev.DataBase(

@@ -27,9 +27,7 @@ async def notes_data(client, callback_query):
             return await callback_query.edit_message_caption(txt, reply_markup=btn)
         return await callback_query.edit_message_text(txt, reply_markup=btn)
 
-    btn, txt = client.ns.button.create_keyboard(
-        f"{lang.get('payment.notes.not_found')} {back_btn_text}"
-    )
+    btn, txt = client.ns.button.create_keyboard(f"{lang.get('payment.notes.not_found')} {back_btn_text}")
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
@@ -52,9 +50,7 @@ async def promo_detail(client, callback_query):
         desc = (
             promo_text.format(name=name, promo_price=promo_price_val)
             if promo_text
-            else lang.get(
-                "payment.defaults.promo_text", name=name, promo_price=promo_price_val
-            )
+            else lang.get("payment.defaults.promo_text", name=name, promo_price=promo_price_val)
         )
 
         btn_text = f"| {lang.get('payment.promo.pay_button')} - paynow {name} promo | {back_btn_text}"
@@ -64,9 +60,7 @@ async def promo_detail(client, callback_query):
             return await callback_query.edit_message_caption(txt, reply_markup=btn)
         return await callback_query.edit_message_text(txt, reply_markup=btn)
 
-    btn, txt = client.ns.button.create_keyboard(
-        f"{lang.get('payment.promo.not_found')} {back_btn_text}"
-    )
+    btn, txt = client.ns.button.create_keyboard(f"{lang.get('payment.promo.not_found')} {back_btn_text}")
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
@@ -84,9 +78,7 @@ async def paynow(client, callback_query):
                 f"{lang.get('payment.pay.service_inactive')}\n| {lang.get('payment.pay.setup_api_button')} - api_settings |"
             )
             return await callback_query.edit_message_caption(txt, reply_markup=btn)
-        return await callback_query.answer(
-            lang.get("payment.pay.service_inactive_alert"), show_alert=True
-        )
+        return await callback_query.answer(lang.get("payment.pay.service_inactive_alert"), show_alert=True)
 
     _, *name_parts, tipe = callback_query.data.split()
     name = " ".join(name_parts)
@@ -94,22 +86,14 @@ async def paynow(client, callback_query):
     item_found = next((item for item in vvip_list if item.get("name") == name), None)
 
     if not item_found:
-        return await callback_query.edit_message_caption(
-            lang.get("payment.pay.not_found")
-        )
+        return await callback_query.edit_message_caption(lang.get("payment.pay.not_found"))
 
-    amount = (
-        item_found.get("promo_price") if tipe == "promo" else item_found.get("price")
-    )
+    amount = item_found.get("promo_price") if tipe == "promo" else item_found.get("price")
     if not isinstance(amount, int) or amount <= 0:
-        return await callback_query.edit_message_caption(
-            lang.get("payment.pay.invalid_price")
-        )
+        return await callback_query.edit_message_caption(lang.get("payment.pay.invalid_price"))
 
     await callback_query.message.delete()
-    msg = await client.send_message(
-        callback_query.from_user.id, lang.get("general.processing")
-    )
+    msg = await client.send_message(callback_query.from_user.id, lang.get("general.processing"))
 
     try:
         pay = await vmp_service.create_payment(amount=amount)
@@ -139,19 +123,13 @@ async def paynow(client, callback_query):
                 f"├─ {lang.get('payment.pay.invoice_order_id', id=order_id)}\n│\n"
                 f"╰─ {lang.get('payment.pay.invoice_expiry')}"
             )
-            await client.send_photo(
-                callback_query.from_user.id, photo=BytesIO(qr_bytes), caption=caption
-            )
-            asyncio.create_task(
-                auto_check_payment(client, callback_query.from_user, order_id)
-            )
+            await client.send_photo(callback_query.from_user.id, photo=BytesIO(qr_bytes), caption=caption)
+            asyncio.create_task(auto_check_payment(client, callback_query.from_user, order_id))
         else:
             raise Exception(lang.get("payment.pay.qr_fail"))
         await msg.delete()
     except Exception as e:
-        await msg.edit(
-            f"**{lang.get('general.error', e='').split(':')[0].strip()}**\n{lang.get('general.error', e=e)}"
-        )
+        await msg.edit(f"**{lang.get('general.error', e='').split(':')[0].strip()}**\n{lang.get('general.error', e=e)}")
 
 
 async def auto_check_payment(client, user, order_id):
@@ -178,25 +156,13 @@ async def auto_check_payment(client, user, order_id):
                 ctx.db.removeVars(client.me.id, order_id)
 
                 vvip_list = ctx.db.getListVars(client.me.id, "list_vvip") or []
-                item_found = next(
-                    (item for item in vvip_list if item.get("name") == name), None
-                )
+                item_found = next((item for item in vvip_list if item.get("name") == name), None)
                 if not item_found:
-                    raise ValueError(
-                        lang.get("payment.check.category_missing", name=name)
-                    )
+                    raise ValueError(lang.get("payment.check.category_missing", name=name))
 
                 is_promo = tipe == "promo" and item_found.get("promo_link")
-                link = (
-                    item_found.get("promo_link")
-                    if is_promo
-                    else item_found.get("group_link")
-                )
-                chat_id_save = (
-                    item_found.get("chat_id_promo")
-                    if is_promo
-                    else item_found.get("chat_id_normal")
-                )
+                link = item_found.get("promo_link") if is_promo else item_found.get("group_link")
+                chat_id_save = item_found.get("chat_id_promo") if is_promo else item_found.get("chat_id_normal")
 
                 member_data = {
                     "user_id": user.id,
@@ -230,9 +196,7 @@ async def auto_check_payment(client, user, order_id):
 
     if not payment_successful and ctx.db.getVars(client.me.id, order_id):
         ctx.db.removeVars(client.me.id, order_id)
-        await client.send_message(
-            user.id, lang.get("payment.check.expired", id=order_id)
-        )
+        await client.send_message(user.id, lang.get("payment.check.expired", id=order_id))
 
 
 @command(lambda ctx: filters.PreCheckoutQuery, handler_type="pre_checkout")
@@ -273,19 +237,13 @@ async def successful_donation_handler(client, message):
         ctx.db.setVars(current_bot_id, f"refund_{refund_key}", refund_data)
 
         refund_callback_data = f"refund_stars_{refund_key}"
-        refund_button_text = (
-            f"| {lang.get('payment.donation.refund_button')} - {refund_callback_data} |"
-        )
+        refund_button_text = f"| {lang.get('payment.donation.refund_button')} - {refund_callback_data} |"
         refund_btn, _ = client.ns.button.create_keyboard(refund_button_text)
 
-        await client.send_message(
-            chat_id=owner_of_this_bot, text=notification_text, reply_markup=refund_btn
-        )
+        await client.send_message(chat_id=owner_of_this_bot, text=notification_text, reply_markup=refund_btn)
 
     except pyrogram.errors.UserIsBlocked:
-        ctx.log.warning(
-            f"Gagal kirim notif donasi, Owner {owner_of_this_bot} memblokir bot {current_bot_id}"
-        )
+        ctx.log.warning(f"Gagal kirim notif donasi, Owner {owner_of_this_bot} memblokir bot {current_bot_id}")
         if main_bot_client and owner_of_this_bot != super_admin_id:
             await main_bot_client.send_message(
                 super_admin_id,

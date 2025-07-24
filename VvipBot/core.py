@@ -7,10 +7,7 @@ async def get_start_keyboard_and_content(client, user):
     lang = ctx.L(ctx.db, user.id)
 
     main_text_template = ctx.db.getVars(client.me.id, "start_text_template")
-    photo_id = (
-        ctx.db.getVars(client.me.id, "start_photo_id")
-        or "https://files.catbox.moe/ozzvtz.jpg"
-    )
+    photo_id = ctx.db.getVars(client.me.id, "start_photo_id") or "https://files.catbox.moe/ozzvtz.jpg"
 
     if not main_text_template:
         key = "start.welcome_main_bot" if is_main_bot else "start.welcome_clone_bot"
@@ -26,19 +23,13 @@ async def get_start_keyboard_and_content(client, user):
     if is_owner:
         button_rows.append(f"| {lang.get('start.settings_panel')} - settings |")
 
-    button_rows.append(
-        f"| {lang.get('start.list_vvip')} - list_vvip | | {lang.get('start.donate')} - donate_stars;same |"
-    )
-    button_rows.append(
-        f"| {lang.get('start.about_bot')} - about_bot | | {lang.get('start.ai_feature')} - gemini_ai;same |"
-    )
+    button_rows.append(f"| {lang.get('start.list_vvip')} - list_vvip | | {lang.get('start.donate')} - donate_stars;same |")
+    button_rows.append(f"| {lang.get('start.about_bot')} - about_bot | | {lang.get('start.ai_feature')} - gemini_ai;same |")
     button_rows.append(f"| {lang.get('start.language')} - set_lang |")
 
     btn_list_str = "\n".join(button_rows)
 
-    btn, txt_content = client.ns.button.create_keyboard(
-        f"{welcome_text}\n\n{btn_list_str}"
-    )
+    btn, txt_content = client.ns.button.create_keyboard(f"{welcome_text}\n\n{btn_list_str}")
     return btn, txt_content, photo_id
 
 
@@ -51,9 +42,7 @@ async def start_bot(client, message):
 
 @command(lambda ctx: filters.regex("^start$"), handler_type="callback")
 async def start_callback(client, callback_query):
-    btn, txt, photo_id = await get_start_keyboard_and_content(
-        client, callback_query.from_user
-    )
+    btn, txt, photo_id = await get_start_keyboard_and_content(client, callback_query.from_user)
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
@@ -107,9 +96,7 @@ async def set_lang_callback(client, callback_query):
 @command(lambda ctx: filters.regex(r"^chg_lang_(id|en)$"), handler_type="callback")
 async def change_lang_callback(client, callback_query):
     lang_code = callback_query.data.split("_")[-1]
-    ctx.db.setVars(
-        callback_query.from_user.id, "language", lang_code, var_key="user_info"
-    )
+    ctx.db.setVars(callback_query.from_user.id, "language", lang_code, var_key="user_info")
     lang = ctx.L(ctx.db, callback_query.from_user.id)
     await callback_query.answer(lang.get("lang.selected"), show_alert=True)
     await start_callback(client, callback_query)
@@ -131,9 +118,7 @@ async def list_vvip_bot(client, callback_query):
     back_btn_text = f"| {lang.get('general.back_to_main_menu')} - start |"
 
     if not vvip_list:
-        btn, txt = client.ns.button.create_keyboard(
-            f"{lang.get('vvip_list.empty')}\n\n{back_btn_text}"
-        )
+        btn, txt = client.ns.button.create_keyboard(f"{lang.get('vvip_list.empty')}\n\n{back_btn_text}")
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(txt, reply_markup=btn)
         return await callback_query.edit_message_text(txt, reply_markup=btn)
@@ -142,18 +127,13 @@ async def list_vvip_bot(client, callback_query):
     for item in vvip_list:
         name = item.get("name", "N/A")
         promo_price = item.get("promo_price", 0)
-        btn_text += (
-            f"| {lang.get('vvip_list.button_package', name=name)} - notes {name} |\n"
-        )
+        btn_text += f"| {lang.get('vvip_list.button_package', name=name)} - notes {name} |\n"
         if promo_price > 0:
             btn_text += f"| {lang.get('vvip_list.button_promo', name=name)} - promo_detail {name};same |\n"
 
     btn_text += back_btn_text
 
-    text = (
-        f"**{lang.get('vvip_list.title', mention=client.me.mention)}**\n\n"
-        f"{lang.get('vvip_list.description')}"
-    )
+    text = f"**{lang.get('vvip_list.title', mention=client.me.mention)}**\n\n" f"{lang.get('vvip_list.description')}"
 
     btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
     if callback_query.message.photo:
@@ -162,9 +142,7 @@ async def list_vvip_bot(client, callback_query):
         await callback_query.edit_message_text(text, reply_markup=btn)
 
 
-@command(
-    lambda ctx: filters.regex("^(gemini_ai|khodam|chatbot)"), handler_type="callback"
-)
+@command(lambda ctx: filters.regex("^(gemini_ai|khodam|chatbot)"), handler_type="callback")
 async def gemini_bot_ai(client, callback_query):
     lang = callback_query.lang
     gemini_service = getattr(client, "services", None) and client.services.gemini
@@ -198,19 +176,13 @@ async def gemini_bot_ai(client, callback_query):
         mode = data[0]
         try:
             if mode == "khodam":
-                prompt = (
-                    f"{lang.get('ai.khodam_prompt')}{lang.get('prompts.cancel_footer')}"
-                )
+                prompt = f"{lang.get('ai.khodam_prompt')}{lang.get('prompts.cancel_footer')}"
                 ask_msg = await client.ask(chat_id, prompt, timeout=300)
                 if ask_msg.text.lower() == "/batal":
                     raise nsdev.UserCancelled
 
-                msg = await client.send_message(
-                    chat_id, lang.get("ai.khodam_analyzing", name=ask_msg.text)
-                )
-                response_text = gemini_service.send_khodam_message(
-                    ask_msg.text, chat_id
-                )
+                msg = await client.send_message(chat_id, lang.get("ai.khodam_analyzing", name=ask_msg.text))
+                response_text = gemini_service.send_khodam_message(ask_msg.text, chat_id)
 
                 btn_text = f"| {lang.get('ai.khodam_try_again_button')} - khodam | | {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |"
                 btn, _ = client.ns.button.create_keyboard(btn_text)
@@ -225,10 +197,7 @@ async def gemini_bot_ai(client, callback_query):
                 vvip_info_text = ""
                 if vvip_list:
                     vvip_info_text = "\n".join(
-                        [
-                            f"- {item.get('name', 'N/A')}: IDR {item.get('price', 0):,}"
-                            for item in vvip_list
-                        ]
+                        [f"- {item.get('name', 'N/A')}: IDR {item.get('price', 0):,}" for item in vvip_list]
                     )
                 else:
                     vvip_info_text = "No VVIP packages available."
@@ -243,9 +212,7 @@ async def gemini_bot_ai(client, callback_query):
                 )
                 gemini_service.set_chatbot_instruction(system_instruction)
 
-                await client.send_message(
-                    chat_id, lang.get("ai.chatbot_intro", bot_name=client.me.first_name)
-                )
+                await client.send_message(chat_id, lang.get("ai.chatbot_intro", bot_name=client.me.first_name))
 
                 while True:
                     user_msg = await client.listen(chat_id, timeout=600)
@@ -254,28 +221,18 @@ async def gemini_bot_ai(client, callback_query):
                     if user_msg.text.lower() == "/stop":
                         raise nsdev.UserCancelled
 
-                    await client.send_chat_action(
-                        chat_id, pyrogram.enums.ChatAction.TYPING
-                    )
+                    await client.send_chat_action(chat_id, pyrogram.enums.ChatAction.TYPING)
                     response_text = gemini_service.send_chat_message(
                         user_msg.text, user_id=chat_id, bot_name=client.me.first_name
                     )
                     await client.send_message(chat_id, response_text)
 
         except nsdev.UserCancelled:
-            btn, _ = client.ns.button.create_keyboard(
-                f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |"
-            )
-            await client.send_message(
-                chat_id, lang.get("ai.session_stopped"), reply_markup=btn
-            )
+            btn, _ = client.ns.button.create_keyboard(f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |")
+            await client.send_message(chat_id, lang.get("ai.session_stopped"), reply_markup=btn)
         except asyncio.TimeoutError:
-            btn, _ = client.ns.button.create_keyboard(
-                f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |"
-            )
-            await client.send_message(
-                chat_id, lang.get("ai.session_expired"), reply_markup=btn
-            )
+            btn, _ = client.ns.button.create_keyboard(f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |")
+            await client.send_message(chat_id, lang.get("ai.session_expired"), reply_markup=btn)
         except Exception as e:
             ctx.log.print(f"{ctx.log.RED}Error on AI Chatbot session: {e}")
             await client.send_message(chat_id, lang.get("ai.error", e=e))
@@ -310,9 +267,7 @@ async def donate_callback(client, callback_query):
             )
     except Exception:
         await callback_query.message.delete()
-        await client.send_photo(
-            callback_query.from_user.id, photo=photo_url, caption=text, reply_markup=btn
-        )
+        await client.send_photo(callback_query.from_user.id, photo=photo_url, caption=text, reply_markup=btn)
 
 
 @command(lambda ctx: filters.regex(r"^donate_pay_(\d+)$"), handler_type="callback")
@@ -321,9 +276,7 @@ async def process_donation_callback(client, callback_query):
     try:
         star_amount = int(callback_query.data.split("_")[2])
     except (IndexError, ValueError):
-        return await callback_query.answer(
-            lang.get("payment.donation.invalid_amount"), show_alert=True
-        )
+        return await callback_query.answer(lang.get("payment.donation.invalid_amount"), show_alert=True)
 
     await callback_query.answer(lang.get("payment.donation.preparing"))
 
@@ -332,15 +285,11 @@ async def process_donation_callback(client, callback_query):
         "description": lang.get("payment.donation.invoice_desc", stars=star_amount),
         "payload": f"donation_{star_amount}_{callback_query.from_user.id}_{int(time())}",
         "currency": "XTR",
-        "prices": [
-            pyrogram.types.LabeledPrice(f"Donasi {star_amount} Stars", star_amount)
-        ],
+        "prices": [pyrogram.types.LabeledPrice(f"Donasi {star_amount} Stars", star_amount)],
     }
 
     try:
         await client.send_invoice(callback_query.from_user.id, **invoice)
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED}Gagal mengirim invoice Stars: {e}")
-        await callback_query.answer(
-            lang.get("payment.donation.invoice_fail"), show_alert=True
-        )
+        await callback_query.answer(lang.get("payment.donation.invoice_fail"), show_alert=True)
