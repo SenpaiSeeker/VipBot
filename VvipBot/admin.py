@@ -157,16 +157,16 @@ async def manage_access_callback(client, callback_query):
     access_list = ctx.db.getListVars(ctx.owner_id, "create_bot_access") or []
 
     status_text = (
-            lang.get("admin.access.has_access")
-            if target_user.id in access_list
-            else lang.get("admin.access.no_access")
-        )
+        lang.get("admin.access.has_access")
+        if target_user.id in access_list
+        else lang.get("admin.access.no_access")
+    )
     text = (
-            f"**{lang.get('admin.access.title')}**\n\n"
-            f"**👤 {lang.get('general.user')}:** {client.ns.arg.getMention(target_user)}\n"
-            f"**🆔 {lang.get('general.id')}:** `{target_user.id}`\n"
-            f"**📊 {lang.get('general.status')}:** `{status_text}`\n\n"
-            f"{lang.get('admin.access.prompt')}"
+        f"**{lang.get('admin.access.title')}**\n\n"
+        f"**👤 {lang.get('general.user')}:** {client.ns.arg.getMention(target_user)}\n"
+        f"**🆔 {lang.get('general.id')}:** `{target_user.id}`\n"
+        f"**📊 {lang.get('general.status')}:** `{status_text}`\n\n"
+        f"{lang.get('admin.access.prompt')}"
     )
     await callback_query.edit_message_text(txt, reply_markup=btn)
 
