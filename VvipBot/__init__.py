@@ -49,14 +49,14 @@ async def check_new_user(client, message):
     if user_id not in user_list:
         ctx.db.setListVars(client.me.id, "user_ids", user_id)
         owner_of_this_bot = ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
-        
+
         try:
             owner_lang = Language(ctx.db, owner_of_this_bot)
             notification_text = owner_lang.get(
-                'bot_management.create.new_user_notification',
+                "bot_management.create.new_user_notification",
                 mention=client.me.mention,
                 user_mention=client.ns.arg.getMention(message.from_user),
-                user_id=user_id
+                user_id=user_id,
             )
             await client.send_message(
                 owner_of_this_bot,
@@ -117,7 +117,7 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
                 u.lang = Language(db_instance, u.from_user.id)
             else:
                 u.lang = Language(db_instance, u.user_id)
-            
+
             try:
                 await original_func(c, u)
             except pyrogram.errors.MessageNotModified:
