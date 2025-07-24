@@ -36,9 +36,9 @@ async def eval_bot_handler(client, message):
     stdout, stderr = redirected_output.getvalue(), redirected_error.getvalue()
     evaluation = exc or stderr or stdout or lang.get("admin.eval.success")
     execution_time = (
-        f"\n\n{lang.get('admin.eval.exec_time')} `{end_time - start_time:.4f}` detik"
+        f"\n\n**{lang.get('admin.eval.exec_time')}** `{end_time - start_time:.4f}` detik"
     )
-    final_output = f"{lang.get('admin.eval.output')}\n<pre>{evaluation.strip()}</pre>{execution_time}"
+    final_output = f"**{lang.get('admin.eval.output')}**\n<pre>{evaluation.strip()}</pre>{execution_time}"
     if len(final_output) > 4096:
         with BytesIO(str.encode(evaluation + execution_time)) as out_file:
             out_file.name = "eval_result.txt"
@@ -153,20 +153,7 @@ async def manage_access_callback(client, callback_query):
             show_alert=True,
         )
 
-    target_user = await client.get_users(target_id)
-    access_list = ctx.db.getListVars(ctx.owner_id, "create_bot_access") or []
-
-    status_text = (
-        lang.get("admin.access.has_access")
-        if target_user.id in access_list
-        else lang.get("admin.access.no_access")
-    )
-    text = (
-        f"**👤 {lang.get('general.user')}:** {client.ns.arg.getMention(target_user)}\n"
-        f"**🆔 {lang.get('general.id')}:** `{target_user.id}`\n"
-        f"**📊 {lang.get('general.status')}:** `{status_text}`"
-    )
-    await callback_query.edit_message_text(text)
+    await callback_query.message.delete()
 
 
 @command(lambda ctx: filters.command("extend") & filters.user(ctx.owner_id))
@@ -297,7 +284,7 @@ async def allbots_callback_handler(client, callback_query):
 @command(lambda ctx: filters.regex(r"^refund_stars_"), handler_type="callback")
 async def refund_stars_callback(client, callback_query):
     lang = callback_query.lang
-    if callback_query.from_user.id != ctx.owner_id:
+    if not await is_bot_owner(client, callback_query.from_user.id):
         return await callback_query.answer(
             lang.get("admin.refund.no_permission"), show_alert=True
         )
@@ -307,6 +294,7 @@ async def refund_stars_callback(client, callback_query):
         refund_key = callback_query.data.split("_")[2]
         db_key = f"refund_{refund_key}"
         refund_data = ctx.db.getVars(client.me.id, db_key)
+        
         if not refund_data:
             return await callback_query.edit_message_text(
                 callback_query.message.text
@@ -315,20 +303,16 @@ async def refund_stars_callback(client, callback_query):
 
         user_id_to_refund = refund_data["user_id"]
         charge_id = refund_data["charge_id"]
-        main_bot_client = ctx.manager.main_bot_client
-
-        if not main_bot_client:
-            return await callback_query.edit_message_text(
-                lang.get("admin.refund.fail_no_main_bot")
-            )
-
-        await main_bot_client.refund_star_payment(
+        
+        await client.refund_star_payment(
             user_id=user_id_to_refund, telegram_payment_charge_id=charge_id
         )
+        
         await callback_query.edit_message_text(
             text=callback_query.message.text + lang.get("admin.refund.success_text"),
             entities=callback_query.message.entities,
         )
+        
         await client.send_message(
             user_id_to_refund, lang.get("admin.refund.success_notif")
         )
