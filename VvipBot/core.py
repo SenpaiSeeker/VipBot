@@ -286,7 +286,7 @@ async def gemini_bot_ai(client, callback_query):
 async def donate_callback(client, callback_query):
     lang = callback_query.lang
     photo_url = "https://files.catbox.moe/1f9j10.jpg"
-    text = f"{lang.get('donation.title')}\n\n{lang.get('donation.description')}"
+    text = f"**{lang.get('donation.title')}\n\n{lang.get('donation.description')}**"
 
     btn_text = (
         "| 1 ⭐ - donate_pay_1 | | 5 ⭐ - donate_pay_5;same |\n"
