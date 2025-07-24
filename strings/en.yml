@@ -61,7 +61,7 @@ vvip_list:
   button_promo: "🎉 Promo {name}"
 
 donation:
-  title: "❤️ Support Us with Telegram Stars!"
+  title: "**❤️ Support Us with Telegram Stars!**"
   description: |
     Your donation is invaluable in helping us continue to develop and maintain this bot.
     
@@ -292,6 +292,7 @@ settings:
   check_active_members: "🕵️ Check Active Members"
   api_keys: "🔑 Manage API Keys"
   broadcast: "📢 Create Broadcast"
+  stats_button: "⭐ Stars Statistics"
   
   set_photo_prompt: "🖼️ **Set Start Photo**\n\nPlease send the new photo you want to use as the image in the /start message.\n\nType `/batal` to cancel or `/empty` to remove the current photo."
   set_photo_fail: "❌ **Failed:** The message sent is not a photo. Process canceled."
@@ -351,3 +352,16 @@ settings:
   api_del_confirm_yes: "✅ Yes, Delete"
   api_del_confirm_no: "❌ No"
   api_del_success: "✅ All API keys for this bot have been deleted."
+  
+stats:
+  title: "📊 Stars Revenue Statistics"
+  total_balance: "Current Balance"
+  total_transactions: "Total Transactions"
+  total_income: "Total Income"
+  total_refunds: "Total Refunds"
+  recent_transactions_title: "📜 Recent Transactions ({page}/{total_pages})"
+  transaction_entry: "• `{date}`: **{amount_str}⭐** from {peer}"
+  transaction_entry_unknown: "• `{date}`: **{amount_str}⭐** from an unknown source"
+  no_transactions: "No Stars transactions have been recorded yet."
+  prev_button: "« Previous"
+  next_button: "Next »"
