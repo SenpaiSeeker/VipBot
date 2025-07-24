@@ -15,6 +15,7 @@ async def settings(client, callback_query):
         f"| {lang.get('settings.add_vvip')} - setup_listvvip | | {lang.get('settings.del_vvip')} - delete_listvvip;same |",
         f"| {lang.get('settings.check_members')} - list_members_0 | | {lang.get('settings.check_active_members')} - check_active_menu_init;same |",
         f"| {lang.get('settings.api_keys')} - api_settings | | {lang.get('settings.broadcast')} - broadcast;same |",
+        f"| {lang.get('settings.stats_button')} - stats_0 |",
         f"| {lang.get('general.back_to_main_menu')} - start |",
     ]
     btn_text = "\n".join(button_rows)
