@@ -40,7 +40,7 @@ class BotManager:
 
             self.running_bots[client.me.id] = client
             log.print(
-                f"{log.GREEN}Bot {client.me.first_name} (ID: {client.me.id}) berhasil dimulai."
+                f"{log.GREEN}Bot {client.me.first_name} (ID: {client.me.id}) berhasil diaktifkan."
             )
         except Exception as e:
             log.print(f"{log.RED}Gagal memulai bot {bot_id}: {e}")
