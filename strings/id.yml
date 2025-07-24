@@ -24,6 +24,7 @@ general:
   yes: "✅ Ya"
   no: "❌ Tidak"
   confirm_title: "⚠️ Konfirmasi"
+  invalid_callback: "Data callback tidak valid."
 
 start:
   welcome_main_bot: "**👋🏻 Selamat Datang, {mention}!**\n\nSaya adalah asisten utama untuk membuat dan mengelola Bot VVIP Anda sendiri. Jelajahi semua fitur yang tersedia melalui tombol di bawah ini."
@@ -51,6 +52,32 @@ lang:
   selected: "✅ Bahasa telah diubah ke Bahasa Indonesia."
   button_en: "🇬🇧 English"
   button_id: "🇮🇩 Indonesian"
+
+vvip_list:
+  empty: "🗂️ Saat ini belum ada paket VVIP yang tersedia."
+  title: "**📚 Daftar VVIP Bot: {mention}**"
+  description: "Berikut adalah daftar paket eksklusif yang kami tawarkan. Klik pada salah satu paket untuk melihat detail lengkap dan penawaran spesial."
+  button_package: "📂 {name}"
+  button_promo: "🎉 Promo {name}"
+
+ai:
+  disabled: "**❌ AI Dinonaktifkan**\nAtur Kunci API Gemini."
+  unavailable: "Maaf, fitur AI saat ini tidak tersedia."
+  setup_button: "• Atur Kunci API •"
+  main_menu_title: "**✨ Asisten AI Gemini**"
+  main_menu_prompt: "Pilih mode interaksi."
+  khodam_button: "👻 Cek Khodam (Hiburan)"
+  chatbot_button: "💬 Ngobrol dengan Asisten"
+  khodam_prompt: "🔮 **Penerawangan Khodam**\nKetik **nama lengkapmu**.\n\nKetik `/batal` untuk membatalkan."
+  khodam_analyzing: "✨ `Menganalisis energi untuk` **{name}**`...`"
+  khodam_result_title: "**--- Hasil Terawangan Khodam untuk {name} ---**"
+  khodam_try_again_button: "• Coba Nama Lain •"
+  back_to_ai_menu_button: "• Kembali ke Menu AI •"
+  chatbot_intro: "💬 **Halo! Ada yang bisa saya bantu?**\nSaya asisten AI untuk bot **{bot_name}**. Anda bisa bertanya tentang cara penggunaan, harga paket VVIP, atau apa pun yang berkaitan dengan bot ini.\n\nKetik `/stop` untuk mengakhiri sesi obrolan."
+  chatbot_system_instruction: "Anda adalah asisten AI yang cerdas dan sangat membantu untuk bot Telegram ini. Nama bot ini adalah '{bot_name}'. Tugas Anda adalah menjawab pertanyaan pengguna yang berkaitan dengan fungsionalitas dan penawaran bot ini. Anda HARUS menggunakan informasi di bawah ini sebagai sumber pengetahuan utama Anda.\n\n--- INFORMASI KONTEKS BOT ---\n1. **Tentang Bot**: {about_bot}\n2. **Daftar Paket VVIP dan Harga**: {vvip_info}\n3. **Cara Pembelian**: Pengguna harus menekan tombol 'Lihat Daftar VVIP' di menu utama untuk melihat detail paket dan memulai pembayaran.\n4. **Lainnya**: Jika pertanyaan di luar konteks bot, jawablah secara umum dan ramah sebagai asisten AI.\n--- AKHIR INFORMASI ---\n\nJawablah semua pertanyaan dengan singkat, jelas, dan dalam Bahasa Indonesia."
+  session_stopped: "✅ Sesi obrolan telah dihentikan."
+  session_expired: "⏰ Sesi berakhir karena tidak ada aktivitas."
+  error: "Maaf, terjadi gangguan pada sistem AI.\n`Error: {e}`"
 
 admin:
   eval:
@@ -117,6 +144,7 @@ bot_management:
     saving: "✅ Bot '{name}' disimpan. `🚀 Memulai...`"
     success: "🎉 **Selamat!** Bot **{name}** aktif selama **30 hari**."
     fail: "❌ **Kesalahan:** `{e}`"
+    main_bot_inactive: "Bot utama tidak aktif."
   my_bots:
     empty: "Anda belum memiliki bot."
     title: "**📦 Daftar Bot Saya ({page}/{total})**"
