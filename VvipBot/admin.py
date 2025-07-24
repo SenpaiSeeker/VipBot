@@ -35,12 +35,15 @@ async def eval_bot_handler(client, message):
     sys.stdout, sys.stderr = old_stdout, old_stderr
     stdout, stderr = redirected_output.getvalue(), redirected_error.getvalue()
     evaluation = exc or stderr or stdout or lang.get("admin.eval.success")
-    execution_time = f"\n\n**{lang.get('admin.eval.exec_time')}** `{end_time - start_time:.4f}` detik"
-    final_output = f"**{lang.get('admin.eval.output')}**\n<pre>{evaluation.strip()}</pre>{execution_time}"
+    
+    final_output = lang.get("admin.eval.output", output=evaluation.strip(), time=end_time - start_time)
+    
     if len(final_output) > 4096:
-        with BytesIO(str.encode(evaluation + execution_time)) as out_file:
+        with BytesIO(str.encode(evaluation)) as out_file:
             out_file.name = "eval_result.txt"
-            await message.reply_document(document=out_file, caption=lang.get("admin.eval.too_long"))
+            await message.reply_document(
+                document=out_file, caption=lang.get("admin.eval.too_long_caption")
+            )
     else:
         await reply_to_.reply_text(final_output)
     await msg.delete()
@@ -67,13 +70,16 @@ async def restore_database_handler(client, message):
             zf.extractall(path=".")
 
         db_path = getattr(ctx.db, "data_file", getattr(ctx.db, "db_file", ""))
-        if db_path and os.path.exists(db_filename_in_zip) and db_filename_in_zip != db_path:
+        if (
+            db_path
+            and os.path.exists(db_filename_in_zip)
+            and db_filename_in_zip != db_path
+        ):
             if os.path.exists(db_path):
                 os.remove(db_path)
             os.rename(db_filename_in_zip, db_path)
-
-        success_text = f"{lang.get('admin.restore.success', db_path=db_path)}\n\n{lang.get('admin.restore.important')}"
-        await status_msg.edit_text(success_text)
+        
+        await status_msg.edit_text(lang.get("admin.restore.success", db_path=db_path))
         ctx.log.print(f"{ctx.log.GREEN}Database '{db_path}' restored by admin.")
     except Exception as e:
         await status_msg.edit_text(lang.get("admin.restore.fail", e=str(e)))
@@ -88,36 +94,30 @@ async def access_command_handler(client, message):
     lang = message.lang
     user_id_target, _ = await client.ns.arg.getReasonAndId(message)
     if not user_id_target:
-        return await message.reply_text(f"**{lang.get('general.invalid_format')}**\n{lang.get('admin.access.format_error')}")
+        return await message.reply_text(lang.get('admin.access.usage_error'))
 
     try:
         target_user = await client.get_users(user_id_target)
         access_list = ctx.db.getListVars(ctx.owner_id, "create_bot_access") or []
-
-        status_text = (
-            lang.get("admin.access.has_access") if target_user.id in access_list else lang.get("admin.access.no_access")
-        )
-
-        text = (
-            f"**{lang.get('admin.access.title')}**\n\n"
-            f"**👤 {lang.get('general.user')}:** {client.ns.arg.getMention(target_user)}\n"
-            f"**🆔 {lang.get('general.id')}:** `{target_user.id}`\n"
-            f"**📊 {lang.get('general.status')}:** `{status_text}`\n\n"
-            f"{lang.get('admin.access.prompt')}"
-        )
-
+        
+        status_text = lang.get("admin.access.has_access") if target_user.id in access_list else lang.get("admin.access.no_access")
+        
+        text = lang.get("admin.access.panel", mention=client.ns.arg.getMention(target_user), id=target_user.id, status=status_text)
+        
         btn_text = (
             f"| {lang.get('admin.access.give_button')} - give_access {target_user.id} |\n"
             f"| {lang.get('admin.access.revoke_button')} - revoke_access {target_user.id};same |"
         )
-
-        btn, _ = client.ns.button.create_keyboard(f"{text}\n{btn_text}")
+        
+        btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
         await message.reply_text(text, reply_markup=btn)
     except Exception as e:
         await message.reply_text(lang.get("admin.access.process_fail", e=e))
 
 
-@command(lambda ctx: filters.regex(r"^(give|revoke)_access\s(\d+)"), handler_type="callback")
+@command(
+    lambda ctx: filters.regex(r"^(give|revoke)_access\s(\d+)"), handler_type="callback"
+)
 async def manage_access_callback(client, callback_query):
     lang = callback_query.lang
     action, target_id_str = callback_query.data.split(" ", 1)
@@ -127,25 +127,13 @@ async def manage_access_callback(client, callback_query):
     if action == "give_access":
         if target_id not in access_list:
             ctx.db.setListVars(ctx.owner_id, "create_bot_access", target_id)
-        await callback_query.answer(
-            lang.get("admin.access.give_success_alert", target_id=target_id),
-            show_alert=True,
-        )
+        await callback_query.answer(lang.get("admin.access.give_success_alert", target_id=target_id), show_alert=True)
     elif action == "revoke_access":
         if target_id in access_list:
             ctx.db.removeListVars(ctx.owner_id, "create_bot_access", target_id)
-        await callback_query.answer(
-            lang.get("admin.access.revoke_success_alert", target_id=target_id),
-            show_alert=True,
-        )
+        await callback_query.answer(lang.get("admin.access.revoke_success_alert", target_id=target_id), show_alert=True)
 
-    status_text = lang.get("admin.access.has_access") if target_user.id in access_list else lang.get("admin.access.no_access")
-    text = (
-        f"**👤 {lang.get('general.user')}:** {client.ns.arg.getMention(target_user)}\n"
-        f"**🆔 {lang.get('general.id')}:** `{target_user.id}`\n"
-        f"**📊 {lang.get('general.status')}:** `{status_text}`"
-    )
-    await callback_query.edit_message_text(text)
+    await callback_query.message.delete()
 
 
 @command(lambda ctx: filters.command("extend") & filters.user(ctx.owner_id))
@@ -161,27 +149,18 @@ async def extend_command_handler(client, message):
         new_exp_date = current_exp_date + timedelta(days=days_to_add)
         ctx.db.setVars(bot_id, "bot_expiration_date", new_exp_date.isoformat())
 
-        await message.reply_text(
-            lang.get(
-                "admin.extend.success",
-                bot_id=bot_id,
-                new_date=new_exp_date.strftime("%d %b %Y"),
-            )
-        )
+        await message.reply_text(lang.get("admin.extend.success", bot_id=bot_id, new_date=new_exp_date.strftime("%d %b %Y")))
 
         owner_bot_id = ctx.db.getVars(bot_id, "owner_id")
         if owner_bot_id:
             try:
                 bot_instance = ctx.manager.running_bots.get(bot_id)
                 bot_name = bot_instance.me.first_name if bot_instance else f"ID {bot_id}"
-                await client.send_message(
-                    owner_bot_id,
-                    lang.get("admin.extend.notification", bot_name=bot_name),
-                )
+                await client.send_message(owner_bot_id, lang.get("admin.extend.notification", bot_name=bot_name))
             except Exception:
                 pass
     except ValueError:
-        await message.reply_text(f"{lang.get('general.invalid_format')}\n{lang.get('admin.extend.usage')}")
+        await message.reply_text(lang.get('admin.extend.usage_error'))
     except Exception as e:
         await message.reply_text(lang.get("admin.extend.fail", e=e))
 
@@ -202,15 +181,15 @@ async def _send_allbots_list(client, message_or_query, page):
     bot_data = all_bots[page]
     bot_id = int(bot_data["name"])
 
-    bot_name = f"ID {bot_id} ({lang.get('admin.allbots.offline')})"
-    bot_username = None
+    bot_name = f"ID {bot_id} {lang.get('admin.allbots.offline')}"
+    bot_username = "N/A"
     try:
         bot_instance = ctx.manager.running_bots.get(bot_id)
         if bot_instance and bot_instance.is_connected:
             bot_name = bot_instance.me.first_name
             bot_username = bot_instance.me.username
     except Exception:
-        bot_name = f"ID {bot_id} ({lang.get('admin.allbots.error')})"
+        bot_name = f"ID {bot_id} {lang.get('admin.allbots.error')}"
 
     owner_id = ctx.db.getVars(bot_id, "owner_id")
     owner_text = lang.get("admin.allbots.unknown")
@@ -224,15 +203,11 @@ async def _send_allbots_list(client, message_or_query, page):
     exp_date_str = ctx.db.getVars(bot_id, "bot_expiration_date")
     days_left = (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days if exp_date_str else "N/A"
 
-    text = f"**{lang.get('admin.allbots.title', page=page + 1, total=total_pages)}**\n\n"
-    text += (
-        f"• **{lang.get('admin.allbots.bot_name')}:** {bot_name}\n"
-        f"• **{lang.get('admin.allbots.bot_id')}:** `{bot_id}`\n"
-        f"• **{lang.get('admin.allbots.bot_username')}:** @{bot_username}\n"
-        f"• **{lang.get('admin.allbots.owner')}:** {owner_text}\n"
-        f"• **{lang.get('admin.allbots.expires_in')}:** `{days_left}` {lang.get('admin.allbots.days')}"
+    text = lang.get('admin.allbots.panel', 
+        page=page + 1, total=total_pages, bot_name=bot_name, bot_id=bot_id,
+        username=bot_username, owner=owner_text, days_left=days_left
     )
-
+    
     btn_text = ""
     if total_pages > 1:
         prev_page = (page - 1 + total_pages) % total_pages
@@ -270,111 +245,109 @@ async def refund_stars_callback(client, callback_query):
         refund_key = callback_query.data.split("_")[2]
         db_key = f"refund_{refund_key}"
         refund_data = ctx.db.getVars(client.me.id, db_key)
-
+        
         if not refund_data:
             return await callback_query.edit_message_text(
-                callback_query.message.text + f"\n\n{lang.get('admin.refund.fail_not_found')}"
+                callback_query.message.text + lang.get('admin.refund.fail_not_found')
             )
 
         user_id_to_refund = refund_data["user_id"]
         charge_id = refund_data["charge_id"]
-
+        
         await client.refund_star_payment(user_id=user_id_to_refund, telegram_payment_charge_id=charge_id)
-
+        
         await callback_query.edit_message_text(
             text=callback_query.message.text + lang.get("admin.refund.success_text"),
             entities=callback_query.message.entities,
         )
-
+        
         await client.send_message(user_id_to_refund, lang.get("admin.refund.success_notif"))
 
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED}Gagal merefund donasi: {e}")
-        await callback_query.edit_message_text(callback_query.message.text + lang.get("admin.refund.fail_text", e=e))
+        await callback_query.edit_message_text(
+            callback_query.message.text + lang.get("admin.refund.fail_text", e=e)
+        )
     finally:
         if db_key:
             ctx.db.removeVars(client.me.id, db_key)
-
 
 @command(lambda ctx: filters.regex(r"^stats_(\d+)"), handler_type="callback")
 async def show_stars_stats(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-
+    
     lang = callback_query.lang
     page = int(callback_query.data.split("_")[1])
     items_per_page = 5
 
     try:
         await callback_query.answer(lang.get("general.processing"))
-
+        
         peer = await client.resolve_peer(client.me.id)
-
-        raw_result = await client.invoke(pyrogram.raw.functions.payments.GetStarsTransactions(peer=peer, offset="", limit=200))
-
-        transactions_history = raw_result.history if hasattr(raw_result, "history") else []
+        
+        raw_result = await client.invoke(
+            pyrogram.raw.functions.payments.GetStarsTransactions(peer=peer, offset="", limit=100)
+        )
+        
+        transactions_history = raw_result.history if hasattr(raw_result, 'history') else []
 
         if not transactions_history:
-            btn, txt = client.ns.button.create_keyboard(
-                f"{lang.get('stats.no_transactions')}\n\n| {lang.get('general.back')} - settings |"
-            )
+            text = lang.get('stats.no_transactions')
+            btn_text = f"| {lang.get('general.back_to_settings')} - settings |"
+            btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
             if callback_query.message.photo:
                 return await callback_query.edit_message_caption(txt, reply_markup=btn)
             return await callback_query.edit_message_text(txt, reply_markup=btn)
-
+        
         total_balance = raw_result.balance.amount
         total_income = sum(t.amount.amount for t in transactions_history if t.amount.amount > 0)
         total_refunds = sum(abs(t.amount.amount) for t in transactions_history if t.amount.amount < 0)
         total_transactions_count = len(transactions_history)
-
+        
         peer_map = {p.id: p for p in raw_result.users + raw_result.chats}
-
         total_pages = math.ceil(total_transactions_count / items_per_page)
         start_index = page * items_per_page
         end_index = start_index + items_per_page
         paginated_transactions = transactions_history[start_index:end_index]
-
-        text = (
-            f"**{lang.get('stats.title')}**\n\n"
-            f"💰 **{lang.get('stats.total_balance')}:** `{total_balance}` ⭐\n"
-            f"📈 **{lang.get('stats.total_income')}:** `{total_income}` ⭐\n"
-            f"📉 **{lang.get('stats.total_refunds')}:** `{total_refunds}` ⭐\n"
-            f"🔄 **{lang.get('stats.total_transactions')}:** `{total_transactions_count}`\n\n"
-            f"**{lang.get('stats.recent_transactions_title', page=page + 1, total_pages=total_pages)}**\n"
-        )
-
+        
+        transactions_text_list = []
         jakarta_timezone = ZoneInfo("Asia/Jakarta")
 
         for t in paginated_transactions:
-            peer_id = t.peer.peer.user_id if hasattr(t.peer.peer, "user_id") else t.peer.peer.channel_id
+            peer_id = t.peer.peer.user_id if hasattr(t.peer.peer, 'user_id') else t.peer.peer.channel_id
             peer_obj = peer_map.get(peer_id)
-
-            peer_mention = lang.get("stats.transaction_entry_unknown")
+            
+            peer_mention = lang.get('stats.transaction_entry_unknown')
             if peer_obj:
-                peer_mention = f"{peer_obj.first_name}" if hasattr(peer_obj, "first_name") else f"{peer_obj.title}"
+                 peer_mention = f"{peer_obj.first_name}" if hasattr(peer_obj, 'first_name') else f"{peer_obj.title}"
 
             amount = t.amount.amount
             amount_str = f"+{amount}" if amount > 0 else str(amount)
             transaction_date = datetime.fromtimestamp(t.date, tz=timezone.utc).astimezone(jakarta_timezone)
+            
+            transactions_text_list.append(lang.get('stats.transaction_entry',
+                date=transaction_date.strftime('%d %b, %H:%M WIB'),
+                amount_str=amount_str,
+                peer=peer_mention
+            ))
 
-            text += (
-                lang.get(
-                    "stats.transaction_entry",
-                    date=transaction_date.strftime("%d %b, %H:%M %Z"),
-                    amount_str=amount_str,
-                    peer=peer_mention,
-                )
-                + "\n"
-            )
-
+        transactions_text = "\n".join(transactions_text_list)
+        
+        text = lang.get('stats.panel', 
+            balance=total_balance, income=total_income, refunds=total_refunds,
+            count=total_transactions_count, page=page + 1, total_pages=total_pages,
+            transactions=transactions_text
+        )
+        
         btn_text = ""
         if total_pages > 1:
             prev_page = page - 1 if page > 0 else total_pages - 1
             next_page = page + 1 if page < total_pages - 1 else 0
             btn_text += f"| {lang.get('stats.prev_button')} - stats_{prev_page} | | {lang.get('stats.next_button')} - stats_{next_page};same |\n"
-
+            
         btn_text += f"| {lang.get('general.back_to_settings')} - settings |"
-
+        
         btn, _ = client.ns.button.create_keyboard(btn_text)
         if callback_query.message.photo:
             await callback_query.edit_message_caption(text, reply_markup=btn)
