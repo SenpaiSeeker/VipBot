@@ -1,6 +1,5 @@
 from . import *
 
-
 @command(lambda ctx: filters.regex(r"^list_members_(\-?\d+)$"), handler_type="callback")
 async def list_members_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
@@ -8,15 +7,16 @@ async def list_members_callback(client, callback_query):
     lang = callback_query.lang
     members_list = ctx.db.getListVars(client.me.id, "vvip_members") or []
 
-    back_btn_text = f"| {lang.get('general.back')} - settings |"
+    back_btn_text = f"| {lang.get('general.back_to_settings')} - settings |"
 
     if not members_list:
         btn, txt = client.ns.button.create_keyboard(
-            f"{lang.get('member.list.empty')} {back_btn_text}"
+            f"{lang.get('member.list.empty')}\n\n{back_btn_text}"
         )
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(txt, reply_markup=btn)
         return await callback_query.edit_message_text(txt, reply_markup=btn)
+
 
     total_pages = len(members_list)
     try:
@@ -47,7 +47,7 @@ async def list_members_callback(client, callback_query):
         f"**{lang.get('general.id')}:** `{user.id}`\n"
         f"**{lang.get('member.list.category')}:** `{vvip_name}` ({pay_type.title()})\n"
         f"**{lang.get('member.list.joined')}:** `{join_dt_utc.strftime('%d %b %Y, %H:%M UTC')}`\n"
-        f"**{lang.get('member.list.duration')}:** `{duration_days}` {lang.get('admin.allbots.days')}\n"
+        f"**{lang.get('member.list.duration')}:** `{duration_days}` {lang.get('admin.allbots.days')}"
     )
 
     btn_text = f"| {lang.get('member.list.kick_button', name=user.first_name or user.id)} - kick_{user.id}_{vvip_name} |\n"
@@ -79,13 +79,15 @@ async def confirm_kick_member_callback(client, callback_query):
         mention=client.ns.arg.getMention(user),
         name=vvip_name,
     )
-    btn_text = f"| {lang.get('member.kick.confirm_yes')} - do_kick_{user_id_str}_{vvip_name} | | {lang.get('general.no')} - list_members_0 |"
+    btn_text = f"| {lang.get('member.kick.confirm_yes_button')} - do_kick_{user_id_str}_{vvip_name} | | {lang.get('member.kick.confirm_no_button')} - list_members_0 |"
 
     btn, txt = client.ns.button.create_keyboard(
-        f"**{lang.get('general.confirm_title')}**\n\n{prompt}\n\n{btn_text}"
+        f"**{lang.get('member.kick.confirm_title')}**\n\n{prompt}\n\n{btn_text}"
     )
-    await callback_query.edit_message_caption(txt, reply_markup=btn)
-
+    if callback_query.message.photo:
+        await callback_query.edit_message_caption(txt, reply_markup=btn)
+    else:
+        await callback_query.edit_message_text(txt, reply_markup=btn)
 
 @command(lambda ctx: filters.regex(r"^do_kick_(\d+)_(.+)"), handler_type="callback")
 async def do_kick_member_callback(client, callback_query):
@@ -157,15 +159,16 @@ async def check_active_menu_callback(client, callback_query):
     back_btn_text = f"| {lang.get('general.back_to_settings')} - settings |"
     if not btn_text:
         btn, txt = client.ns.button.create_keyboard(
-            f"{lang.get('member.active_list.no_valid_chat_id')}\n{back_btn_text}"
+            f"{lang.get('member.active_list.no_valid_chat_id')}\n\n{back_btn_text}"
         )
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(txt, reply_markup=btn)
         return await callback_query.edit_message_text(txt, reply_markup=btn)
 
+
     btn_text += back_btn_text
-    text = f"**{lang.get('member.active_list.title')}**\n{lang.get('member.active_list.prompt')}\n\n{btn_text}"
-    btn, txt = client.ns.button.create_keyboard(text)
+    text = f"**{lang.get('member.active_list.title')}**\n\n{lang.get('member.active_list.prompt')}"
+    btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
@@ -184,7 +187,7 @@ async def list_active_members_callback(client, callback_query):
         _, _, chat_id_str, page_str = callback_query.data.split("_", 3)
         chat_id, page = int(chat_id_str), int(page_str)
     except Exception:
-        return await callback_query.answer("Invalid callback data.")
+        return await callback_query.answer(lang.get("general.invalid_callback"))
 
     if chat_id not in ctx.ACTIVE_MEMBERS_CACHE:
         try:
@@ -213,22 +216,25 @@ async def list_active_members_callback(client, callback_query):
     text = f"**{lang.get('member.active_list.active_title', page=page + 1, total=total_members)}**\n\n"
     text += f"**{lang.get('general.name')}:** {client.ns.arg.getMention(user)}\n"
     text += f"**{lang.get('general.id')}:** `{user.id}`\n"
-    text += f"**{lang.get('general.status')}:** `{member.status.name.title()}`\n"
-
-    btn_text = f"| {lang.get('member.active_list.kick_button', name=user.first_name or user.id)} - kick_active_{chat_id}_{user.id}_{page} |\n"
+    text += f"**{lang.get('general.status')}:** `{member.status.name.title()}`"
+    
+    kick_button_name = user.first_name or user.id
+    btn_text = f"| 🚨 {kick_button_name} - kick_active_{chat_id}_{user.id}_{page} |\n"
     if total_members > 1:
         prev_p, next_p = (
             (page - 1 + total_members) % total_members,
             (page + 1) % total_members,
         )
         btn_text += f"| « - list_active_{chat_id}_{prev_p} | | » - list_active_{chat_id}_{next_p};same |\n"
-
+    
     btn_text += (
         f"| {lang.get('general.back_to_group_selection')} - check_active_menu_init |"
     )
-    btn, _ = client.ns.button.create_keyboard(btn_text)
-    await callback_query.edit_message_caption(text, reply_markup=btn)
-
+    btn, _ = client.ns.button.create_keyboard(text + "\n\n" + btn_text)
+    if callback_query.message.photo:
+        await callback_query.edit_message_caption(txt, reply_markup=btn)
+    else:
+        await callback_query.edit_message_text(txt, reply_markup=btn)
 
 @command(
     lambda ctx: filters.regex(r"^kick_active_(\-?\d+)_(\d+)_(\-?\d+)"),
@@ -241,11 +247,14 @@ async def confirm_kick_active_callback(client, callback_query):
     _, _, chat_id_str, user_id_str, page_str = callback_query.data.split("_", 4)
     user = await client.get_users(int(user_id_str))
 
-    text = f"**{lang.get('general.confirm_title')}**\n{lang.get('member.active_list.kick_confirm_prompt', mention=client.ns.arg.getMention(user))}"
-    btn_text = f"| {lang.get('general.yes')} - do_kick_active_{chat_id_str}_{user_id_str} | | {lang.get('general.no')} - list_active_{chat_id_str}_{page_str} |"
+    text = f"**{lang.get('member.active_list.kick_confirm_title')}**\n{lang.get('member.active_list.kick_confirm_prompt', mention=client.ns.arg.getMention(user))}"
+    btn_text = f"| {lang.get('member.active_list.kick_confirm_yes_button')} - do_kick_active_{chat_id_str}_{user_id_str} | | {lang.get('member.active_list.kick_confirm_no_button')} - list_active_{chat_id_str}_{page_str} |"
 
-    btn, _ = client.ns.button.create_keyboard(f"{text}\n{btn_text}")
-    await callback_query.edit_message_caption(text, reply_markup=btn)
+    btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+    if callback_query.message.photo:
+        await callback_query.edit_message_caption(txt, reply_markup=btn)
+    else:
+        await callback_query.edit_message_text(txt, reply_markup=btn)
 
 
 @command(
@@ -285,9 +294,13 @@ async def do_kick_active_callback(client, callback_query):
 
         user = await client.get_users(user_id)
         text = f"{lang.get('member.active_list.kick_success', mention=client.ns.arg.getMention(user))}"
-        btn_text = f"| {lang.get('general.back')} - check_active_menu_init |"
-        btn, _ = client.ns.button.create_keyboard(f"{text}\n{btn_text}")
-        await callback_query.edit_message_caption(text, reply_markup=btn)
+        btn_text = f"| {lang.get('general.back_to_group_selection')} - check_active_menu_init |"
+        btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+        if callback_query.message.photo:
+            await callback_query.edit_message_caption(txt, reply_markup=btn)
+        else:
+            await callback_query.edit_message_text(txt, reply_markup=btn)
+
 
     except Exception as e:
         await callback_query.edit_message_caption(lang.get("member.kick.fail", e=e))
