@@ -13,7 +13,7 @@ from config import API_ID, API_HASH, BOT_TOKEN, OWNER_ID
 from database import db
 from bot_manager import BotManager
 from services import initialize_bot_services
-import VipBot as handlers
+import VvipBot as handlers
 from VvipBot.lang import Language
 
 log = LoggerHandler()
