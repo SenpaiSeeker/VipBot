@@ -25,88 +25,153 @@ general:
 
 prompts:
   cancel_footer: "\n\nKetik `/batal` untuk membatalkan."
+  skip_footer: "\nKetik `/skip` untuk menggunakan teks default."
+  empty_footer: "\nKetik `/empty` untuk menghapus dan kembali ke default."
 
 start:
   welcome_main_bot: "**👋🏻 Selamat Datang, {mention}!**\n\nSaya adalah asisten utama untuk membuat dan mengelola Bot VVIP Anda sendiri. Jelajahi semua fitur yang tersedia melalui tombol di bawah ini."
   welcome_clone_bot: "**👋🏻 Selamat Datang, {mention}!**\n\nSaya adalah asisten pribadi Anda untuk mengakses konten eksklusif. Jelajahi semua fitur yang tersedia melalui tombol di bawah ini."
+  buttons_layout: |
+    | {list_vvip} - list_vvip | | {donate} - donate_stars;same |
+    | {about_bot} - about_bot | | {ai_feature} - gemini_ai;same |
+    | {language} - set_lang |
+  buttons_layout_main_bot: |
+    | {create_bot} - create_bot | | {my_bots} - list_my_bots_0;same |
+    {owner_buttons}
+    {common_buttons}
+  buttons_layout_clone_bot: |
+    {owner_buttons}
+    {common_buttons}
+  owner_button_row: "| {settings_panel} - settings |"
   create_bot: "🤖 Buat Bot"
   my_bots: "📦 Bot Saya"
   settings_panel: "⚙️ Panel Pengaturan ⚙️"
-  list_vvip: "📚 Lihat Daftar VVIP 📚"
+  list_vvip: "📚 Lihat Daftar VVIP"
   donate: "❤️ Donasi"
-  about_bot: "ℹ️ Tentang Bot ℹ️"
-  ai_feature: "✨ Cek Khodam/AI ✨"
+  about_bot: "ℹ️ Tentang Bot"
+  ai_feature: "✨ Cek Khodam/AI"
   language: "🌐 Bahasa"
 
 about:
-  title: "**🌟 Tentang Bot VVIP Ini**"
-  description: "Selamat datang! Saya adalah asisten otomatis yang dirancang untuk memberikan Anda kemudahan dalam mengakses grup VVIP."
-  main_function_title: "**🤖 Fungsi Utama Saya:**"
-  main_function_desc: "Saya menyediakan sistem pembayaran otomatis yang aman via QRIS, memastikan Anda mendapatkan akses instan ke konten premium setelah transaksi berhasil."
-  workflow_title: "**🚀 Alur Penggunaan:**"
-  workflow_steps: "1. **Pilih Paket:** Jelajahi daftar VVIP yang tersedia.\n2. **Lakukan Pembayaran:** Scan QRIS yang saya berikan.\n3. **Akses Instan:** Link undangan akan otomatis terkirim setelah pembayaran terkonfirmasi."
-  closing: "Semua proses dirancang agar cepat, aman, dan tanpa perlu menunggu konfirmasi manual!"
+  full_text: |
+    **🌟 Tentang Bot VVIP Ini**
+
+    Selamat datang! Saya adalah asisten otomatis yang dirancang untuk memberikan Anda kemudahan dalam mengakses grup VVIP.
+
+    **🤖 Fungsi Utama Saya:**
+    Saya menyediakan sistem pembayaran otomatis yang aman via QRIS, memastikan Anda mendapatkan akses instan ke konten premium setelah transaksi berhasil.
+
+    **🚀 Alur Penggunaan:**
+    1. **Pilih Paket:** Jelajahi daftar VVIP yang tersedia.
+    2. **Lakukan Pembayaran:** Scan QRIS yang saya berikan.
+    3. **Akses Instan:** Link undangan akan otomatis terkirim setelah pembayaran terkonfirmasi.
+
+    Semua proses dirancang agar cepat, aman, dan tanpa perlu menunggu konfirmasi manual!
+
+    | {back_button} - start |
 
 lang:
-  select: "**🌐 Pilih Bahasa Anda**"
-  selected: "✅ Bahasa telah diubah ke Bahasa Indonesia."
+  panel_text: |
+    **🌐 Pilih Bahasa Anda**
+
+    | {id_button} - chg_lang_id |
+    | {en_button} - chg_lang_en;same |
+    | {back_button} - start |
+  selected_alert: "✅ Bahasa telah diubah ke Bahasa Indonesia."
   button_en: "🇬🇧 English"
   button_id: "🇮🇩 Indonesian"
 
 vvip_list:
-  empty: "🗂️ Saat ini belum ada paket VVIP yang tersedia."
-  title: "**📚 Daftar VVIP Bot: {mention}**"
-  description: "Berikut adalah daftar paket eksklusif yang kami tawarkan. Klik pada salah satu paket untuk melihat detail lengkap dan penawaran spesial."
+  empty_panel: |
+    🗂️ Saat ini belum ada paket VVIP yang tersedia.
+
+    | {back_button} - start |
+  panel_header: |
+    **📚 Daftar VVIP Bot: {mention}**
+    
+    Berikut adalah daftar paket eksklusif yang kami tawarkan. Klik pada salah satu paket untuk melihat detail lengkap dan penawaran spesial.
   button_package: "📂 {name}"
   button_promo: "🎉 Promo {name}"
 
 donation:
-  title: "**❤️ Dukung Kami dengan Telegram Stars!**"
-  description: |
+  panel_text: |
+    **❤️ Dukung Kami dengan Telegram Stars!**
+
     Donasi Anda sangat berarti untuk membantu kami terus mengembangkan dan memelihara bot ini.
-    
     Setiap Star yang Anda berikan memberikan kami semangat untuk terus berinovasi. Pilih jumlah donasi di bawah ini untuk memulai.
-    
+
     Terima kasih atas dukungan Anda!
+  buttons_layout: |
+    | 1 ⭐ - donate_pay_1 | | 5 ⭐ - donate_pay_5;same |
+    | 10 ⭐ - donate_pay_10 | | 25 ⭐ - donate_pay_25;same |
+    | {back_button} - start |
 
 ai:
-  disabled: "**❌ AI Dinonaktifkan**\nAtur Kunci API Gemini."
-  unavailable: "Maaf, fitur AI saat ini tidak tersedia."
+  disabled_panel: |
+    **❌ AI Dinonaktifkan**
+    Atur Kunci API Gemini.
+    
+    | {setup_button} - api_settings | | {back_button} - start |
+  unavailable_alert: "Maaf, fitur AI saat ini tidak tersedia."
   setup_button: "• Atur Kunci API •"
-  main_menu_title: "**✨ Asisten AI Gemini**"
-  main_menu_prompt: "Pilih mode interaksi."
+  main_menu_panel: |
+    **✨ Asisten AI Gemini**
+    Pilih mode interaksi.
+
+    | {khodam_button} - khodam | | {chatbot_button} - chatbot;same |
+    | {back_button} - start |
   khodam_button: "👻 Cek Khodam (Hiburan)"
   chatbot_button: "💬 Ngobrol dengan Asisten"
   khodam_prompt: "🔮 **Penerawangan Khodam**\nKetik **nama lengkapmu**."
   khodam_analyzing: "✨ `Menganalisis energi untuk` **{name}**`...`"
-  khodam_result_title: "**--- Hasil Terawangan Khodam untuk {name} ---**"
+  khodam_result_panel: |
+    **--- Hasil Terawangan Khodam untuk {name} ---**
+
+    **>{result}**
+
+    | {try_again_button} - khodam | | {back_to_ai_menu_button} - gemini_ai |
   khodam_try_again_button: "• Coba Nama Lain •"
   back_to_ai_menu_button: "• Kembali ke Menu AI •"
   chatbot_intro: "💬 **Halo! Ada yang bisa saya bantu?**\nSaya asisten AI untuk bot **{bot_name}**. Anda bisa bertanya tentang cara penggunaan, harga paket VVIP, atau apa pun yang berkaitan dengan bot ini.\n\nKetik `/stop` untuk mengakhiri sesi obrolan."
   chatbot_system_instruction: "Anda adalah asisten AI yang cerdas dan sangat membantu untuk bot Telegram ini. Nama bot ini adalah '{bot_name}'. Tugas Anda adalah menjawab pertanyaan pengguna yang berkaitan dengan fungsionalitas dan penawaran bot ini. Anda HARUS menggunakan informasi di bawah ini sebagai sumber pengetahuan utama Anda.\n\n--- INFORMASI KONTEKS BOT ---\n1. **Tentang Bot**: {about_bot}\n2. **Daftar Paket VVIP dan Harga**: {vvip_info}\n3. **Cara Pembelian**: Pengguna harus menekan tombol 'Lihat Daftar VVIP' di menu utama untuk melihat detail paket dan memulai pembayaran.\n4. **Lainnya**: Jika pertanyaan di luar konteks bot, jawablah secara umum dan ramah sebagai asisten AI.\n--- AKHIR INFORMASI ---\n\nJawablah semua pertanyaan dengan singkat, jelas, dan dalam Bahasa Indonesia."
-  session_stopped: "✅ Sesi obrolan telah dihentikan."
-  session_expired: "⏰ Sesi berakhir karena tidak ada aktivitas."
-  error: "Maaf, terjadi gangguan pada sistem AI.\n`Error: {e}`"
+  session_stopped_panel: |
+    ✅ Sesi obrolan telah dihentikan.
+    
+    | {back_to_ai_menu_button} - gemini_ai |
+  session_expired_panel: |
+    ⏰ Sesi berakhir karena tidak ada aktivitas.
+
+    | {back_to_ai_menu_button} - gemini_ai |
+  error_message: "Maaf, terjadi gangguan pada sistem AI.\n`Error: {e}`"
 
 admin:
   eval:
     processing: "`🔄 Memproses kode...`"
     no_code: "❌ **Perintah Gagal:** Harap berikan kode untuk dievaluasi."
     success: "✅ **Eksekusi Berhasil**"
-    exec_time: "**⏳ Waktu Eksekusi:**"
-    output: "🖥️ OUTPUT:"
-    too_long: "📄 Hasil evaluasi terlalu panjang."
+    exec_time: "\n\n**⏳ Waktu Eksekusi:** `{time:.4f}` detik"
+    output_format: "**🖥️ OUTPUT:**\n<pre>{evaluation}</pre>{exec_time}"
+    too_long_caption: "📄 Hasil evaluasi terlalu panjang."
   restore:
     usage: "⚠️ **Cara Penggunaan Salah:**\nBalas (reply) ke file backup `.zip` yang dikirim oleh bot."
     wrong_format: "❌ **Format File Salah:**\nHanya file backup dengan format `.zip` yang bisa dipulihkan."
     processing: "⏳ `Mendownload & mengekstrak file backup...`"
     empty_zip: "File .zip ini kosong."
-    success: "✅ **Pemulihan Berhasil!**\nDatabase `{db_path}` telah dipulihkan."
-    important: "⚠️ **PENTING:** Mohon **restart** bot agar dapat menggunakan database baru."
+    success: "✅ **Pemulihan Berhasil!**\nDatabase `{db_path}` telah dipulihkan.\n\n⚠️ **PENTING:** Mohon **restart** bot agar dapat menggunakan database baru."
     fail: "❌ **Pemulihan Gagal!**\n\n**Error:** `{e}`"
   access:
     format_error: "Gunakan: `/akses <user_id atau username>`"
-    title: "**🔑 Kelola Akses Pembuatan Bot**"
+    panel_format: |
+      **🔑 Kelola Akses Pembuatan Bot**
+
+      **👤 {user_label}:** {mention}
+      **🆔 {id_label}:** `{user_id}`
+      **📊 {status_label}:** `{status}`
+
+      {prompt}
+
+      | {give_button} - give_access {user_id} |
+      | {revoke_button} - revoke_access {user_id};same |
     has_access: "✅ Memiliki Akses"
     no_access: "❌ Tidak Memiliki Akses"
     prompt: "Pilih tindakan untuk pengguna ini:"
@@ -114,20 +179,25 @@ admin:
     revoke_button: "❌ Cabut Akses"
     give_success_alert: "✅ Akses berhasil diberikan kepada {target_id}"
     revoke_success_alert: "❌ Akses berhasil dicabut dari {target_id}"
-    process_fail: "Gagal memproses. Error: {e}"
   extend:
-    usage: "Gunakan: `/extend <bot_id> <jumlah_hari>`\nContoh: `/extend 12345678 30`"
+    format_error: "Gunakan: `/extend <bot_id> <jumlah_hari>`\nContoh: `/extend 12345678 30`"
     success: "✅ **Sukses!** Durasi bot `{bot_id}` berhasil diubah. Masa aktif baru: `{new_date}`."
     notification: "🎉 **Kabar Baik!**\n\nMasa aktif bot Anda **{bot_name}** telah diperpanjang oleh Owner Utama."
-    fail: "❌ Terjadi kesalahan: `{e}`"
   allbots:
-    empty: "Belum ada bot yang dibuat oleh pengguna manapun."
-    title: "**📦 Daftar Semua Bot ({page}/{total})**"
-    bot_name: "Nama Bot"
-    bot_id: "ID Bot"
-    bot_username: "Username Bot"
-    owner: "Pemilik"
-    expires_in: "Sisa Aktif"
+    empty_alert: "Belum ada bot yang dibuat oleh pengguna manapun."
+    panel_format: |
+      **📦 Daftar Semua Bot ({page}/{total})**
+      
+      • **{name_label}:** {bot_name}
+      • **{id_label}:** `{bot_id}`
+      • **{username_label}:** @{username}
+      • **{owner_label}:** {owner}
+      • **{expires_label}:** `{days_left}` {days}
+    bot_name_label: "Nama Bot"
+    bot_id_label: "ID Bot"
+    username_label: "Username Bot"
+    owner_label: "Pemilik"
+    expires_label: "Sisa Aktif"
     days: "hari"
     offline: "Offline"
     error: "Error"
@@ -135,16 +205,20 @@ admin:
     prev_button: "« Sebelumnya"
     next_button: "Selanjutnya »"
   refund:
-    no_permission: "🚫 Anda tidak memiliki izin untuk melakukan ini."
-    fail_not_found: "**⚠️ Gagal: Transaksi tidak ditemukan atau sudah di-refund.**"
-    fail_no_main_bot: "❌ **Gagal:** Klien bot utama tidak ditemukan."
+    no_permission_alert: "🚫 Anda tidak memiliki izin untuk melakukan ini."
+    fail_not_found: "\n\n**⚠️ Gagal: Transaksi tidak ditemukan atau sudah di-refund.**"
     success_text: "\n\n✅ Donasi berhasil dikembalikan."
     success_notif: "ℹ️ **Informasi Donasi**\n\nDonasi Stars Anda telah dikembalikan oleh admin. Terima kasih atas pengertiannya."
     fail_text: "\n\n**❌ Gagal mengembalikan donasi:**\n`{e}`"
 
 bot_management:
   create:
-    no_access: "**🚫 Akses Ditolak**\n\nHubungi {mention} untuk meminta akses."
+    no_access_panel: |
+      **🚫 Akses Ditolak**
+      
+      Hubungi {mention} untuk meminta akses.
+      
+      | {back_button} - start |
     step1_api_id: "**🔐 1/3: Masukkan API ID**"
     step2_api_hash: "**🔐 2/3: Masukkan API Hash**"
     step3_bot_token: "**🤖 3/3: Masukkan Bot Token**"
@@ -155,119 +229,201 @@ bot_management:
     fail: "❌ **Kesalahan:** `{e}`"
     main_bot_inactive: "Bot utama tidak aktif."
   my_bots:
-    empty: "Anda belum memiliki bot."
-    title: "**📦 Daftar Bot Saya ({page}/{total})**"
+    empty_alert: "Anda belum memiliki bot."
+    panel_format: |
+      **📦 Daftar Bot Saya ({page}/{total})**
+      
+      • **{name_label}:** {bot_name}
+      • **{id_label}:** `{bot_id}`
+      • **{username_label}:** @{username}
+      • **{expires_label}:** `{days_left}` {days}
     manage_button: "⚙️ Kelola {name}"
   manage:
-    title: "**⚙️ Kelola Bot: {name}**"
-    expires_in: "Sisa Masa Aktif"
+    panel_format: |
+      **⚙️ Kelola Bot: {bot_name}**
+
+      **{id_label}:** `{bot_id}`
+      **{expires_label}:** `{days_left}`
+      
+      {prompt}
+
+      | {extend_button} - request_extend_duration {bot_id} |
+      | {delete_button} - confirm_delete_bot {bot_id} |
+      | {back_button} - list_my_bots_0 |
+    expires_in_label: "Sisa Masa Aktif"
     not_set: "Tidak diatur"
     prompt: "Pilih tindakan yang ingin Anda lakukan:"
     extend_button: "➕ Minta Perpanjangan"
     delete_button: "🗑️ Hapus Bot Ini"
   extend:
-    request_title: "**🔔 Permintaan Perpanjangan Durasi**"
-    requester: "Pengguna"
+    request_panel: |
+      **🔔 Permintaan Perpanjangan Durasi**
+
+      **{user_label}:** {user_mention} (`{user_id}`)
+      **{bot_label}:** **{bot_name}** (`{bot_id}`)
+
+      {prompt}
+      
+      | {approve_button} - approve_extension {bot_id} {user_id} |
+      | {reject_button} - close_req {bot_id} {user_id} |
     request_prompt: "Setujui untuk menambah masa aktif bot ini sebanyak 30 hari."
     approve_button: "✅ Setujui (+30 Hari)"
     reject_button: "❌ Tolak Permintaan"
     sent_alert: "✅ Permintaan perpanjangan telah dikirim ke Owner Utama."
     fail_alert: "❌ Gagal mengirim permintaan ke Owner: {e}"
-    approve_denied: "Hanya Owner Utama yang bisa menyetujui."
+    approve_denied_alert: "Hanya Owner Utama yang bisa menyetujui."
     approve_success_log: "✅ **Persetujuan Berhasil!**\nDurasi bot `{bot_id}` telah ditambah **{days} hari**."
     approve_success_notif: "🎉 **Kabar Baik!**\n\nPermintaan perpanjangan Anda untuk bot **{bot_name}** telah disetujui."
     approve_fail: "❌ Gagal menyetujui permintaan: `{e}`"
-    reject_denied: "Hanya Owner Utama yang bisa melakukan ini."
+    reject_denied_alert: "Hanya Owner Utama yang bisa melakukan ini."
     rejected_log: "🚫 Permintaan telah ditolak/ditutup."
   delete:
-    confirm_title: "**⚠️ Konfirmasi Penghapusan**"
-    confirm_prompt: "Anda yakin ingin menghapus bot **{name}** (`{id}`) secara permanen?\n\n__Tindakan ini tidak dapat diurungkan.__"
+    confirm_panel: |
+      **⚠️ Konfirmasi Penghapusan**
+      
+      Anda yakin ingin menghapus bot **{name}** (`{id}`) secara permanen?
+      
+      __Tindakan ini tidak dapat diurungkan.__
+      
+      | {yes_button} - do_delete_bot {id} |
+      | {no_button} - manage_bot {id} |
     confirm_yes_button: "✅ Ya, Hapus"
     confirm_no_button: "❌ Tidak, Kembali"
-    no_permission: "Anda tidak berhak menghapus bot ini."
+    no_permission_alert: "Anda tidak berhak menghapus bot ini."
     processing: "⏳ Sedang menghapus bot `{bot_id}`..."
-    success: "✅ **Penghapusan Berhasil!**\nBot `{id}` telah dihapus."
-    fail: "❌ Terjadi kesalahan: `{e}`"
+    success_panel: |
+      ✅ **Penghapusan Berhasil!**
+      Bot `{id}` telah dihapus.
+      
+      | {back_button} - list_my_bots_0 |
 
 member:
   list:
-    empty: "✅ Tidak ada member VVIP tercatat."
-    title: "**👥 Daftar Member VVIP ({page}/{total})**"
-    data_error: "Error data member:\n`{e}`\n\nData rusak dihapus."
-    category: "Kategori"
-    joined: "Bergabung"
-    duration: "Durasi"
+    empty_panel: |
+      ✅ Tidak ada member VVIP tercatat.
+      
+      | {back_button} - settings |
+    details_format: |
+      **👥 Daftar Member VVIP ({page}/{total})**
+
+      **{name_label}:** {mention}
+      **{id_label}:** `{user_id}`
+      **{category_label}:** `{category_name}` ({type})
+      **{joined_label}:** `{join_date}`
+      **{duration_label}:** `{duration}` {days}
+    category_label: "Kategori"
+    joined_label: "Bergabung"
+    duration_label: "Durasi"
     kick_button: "🚨 Tendang {name}"
   kick:
-    confirm_title: "**⚠️ Konfirmasi Penendangan**"
-    confirm_prompt: "Yakin ingin menendang **{mention}** dari VVIP **{name}**?\n\nKeanggotaan mereka akan dicabut."
+    confirm_panel: |
+      **⚠️ Konfirmasi Penendangan**
+      
+      Yakin ingin menendang **{mention}** dari VVIP **{name}**?
+      
+      Keanggotaan mereka akan dicabut.
+      
+      | {yes_button} - do_kick_{user_id}_{name} | | {no_button} - list_members_0 |
     confirm_yes_button: "✅ Ya, Tendang"
     confirm_no_button: "❌ Tidak"
     record_not_found: "❌ **Gagal:** Record keanggotaan tidak ditemukan."
     invalid_chat_id: "❌ **Gagal:** Chat ID untuk menendang member tidak valid."
     processing: "⏳ `Menendang member dari grup...`"
     success: "✅ **Sukses!**\nPengguna {mention} telah ditendang dari **{name}**."
-    fail: "❌ **Gagal Menendang:** `{e}`"
   active_list:
     title: "**🕵️ Cek Member Aktif Real-time**"
     prompt: "Pilih grup untuk diperiksa."
     button_normal: "👥 Cek '{name}' Normal"
     button_promo: "👥 Cek '{name}' Promo"
-    no_valid_chat_id: "Tidak ada VVIP dengan Chat ID valid."
-    fetching: "⏳ Mengambil data member..."
+    no_valid_chat_id_panel: |
+      Tidak ada VVIP dengan Chat ID valid.
+      
+      | {back_button} - settings |
+    fetching_alert: "⏳ Mengambil data member..."
     fetch_fail: "❌ **Gagal Mengambil Member:**\n`{e}`"
-    empty: "Tidak ada anggota (non-bot) ditemukan."
-    active_title: "**🕵️ Member Aktif ({page}/{total})**"
-    kick_confirm_title: "⚠️ Konfirmasi"
-    kick_confirm_prompt: "Yakin menendang **{mention}**?"
+    empty_message: "Tidak ada anggota (non-bot) ditemukan."
+    details_format: |
+      **🕵️ Member Aktif ({page}/{total})**
+      
+      **{name_label}:** {mention}
+      **{id_label}:** `{user_id}`
+      **{status_label}:** `{status}`
+    kick_confirm_panel: |
+      **⚠️ Konfirmasi**
+      
+      Yakin menendang **{mention}**?
+      
+      | {yes_button} - do_kick_active_{chat_id}_{user_id} | | {no_button} - list_active_{chat_id}_{page} |
     kick_confirm_yes_button: "✅ Ya"
     kick_confirm_no_button: "❌ Tidak"
     kick_processing: "⏳ `Menendang pengguna...`"
-    kick_success: "✅ **Sukses!**\nPengguna **{mention}** telah ditendang."
+    kick_success_panel: |
+      ✅ **Sukses!**
+      Pengguna **{mention}** telah ditendang.
+      
+      | {back_button} - check_active_menu_init |
+  fail_kick: "❌ **Gagal Menendang:** `{e}`"
 
 payment:
   notes:
-    not_found: "❌ VVIP tidak ditemukan."
+    not_found_panel: |
+      ❌ VVIP tidak ditemukan.
+      
+      | {back_button} - list_vvip |
     pay_button: "💸 Bayar Normal"
   promo:
-    not_found: "❌ Promo tidak ditemukan."
+    not_found_panel: |
+      ❌ Promo tidak ditemukan.
+      
+      | {back_button} - list_vvip |
     pay_button: "✅ Bayar Promo"
   pay:
-    service_inactive: "⚠️ **Layanan Pembayaran Tidak Aktif**"
+    service_inactive_panel: |
+      **⚠️ Layanan Pembayaran Tidak Aktif**
+      
+      | {setup_button} - api_settings |
     service_inactive_alert: "Maaf, layanan pembayaran saat ini tidak tersedia."
     setup_api_button: "⚙️ Atur Kunci API"
     not_found: "❌ VVIP tidak ditemukan lagi."
     invalid_price: "❌ Harga untuk paket ini tidak valid."
-    qr_fail: "Gagal download QRIS"
-    invoice_title: "**✅ Pembayaran Siap Dilakukan!**"
-    invoice_prompt: "Silakan scan QRIS di atas."
-    invoice_details_title: "Detail Tagihan"
-    invoice_product: "🛍️ **Produk:** VVIP {name} ({type})"
-    invoice_amount: "💳 **Jumlah:** `Rp {amount:,}`"
-    invoice_order_id: "🆔 **Order ID:** `{id}`"
-    invoice_expiry: "⏳ **PENTING:** Invoice ini akan kedaluwarsa dalam **15 menit**."
+    qr_fail: "Gagal mengunduh QRIS"
+    invoice_caption: |
+      **✅ Pembayaran Siap Dilakukan!**
+
+      Silakan scan QRIS di atas.
+
+      ╭─ **Detail Tagihan**
+      │
+      ├─ 🛍️ **Produk:** VVIP {name} ({type})
+      ├─ 💳 **Jumlah:** `Rp {amount:,}`
+      ├─ 🆔 **Order ID:** `{id}`
+      │
+      ╰─ ⏳ **PENTING:** Invoice ini akan kedaluwarsa dalam **15 menit**.
   check:
     category_missing: "Kategori '{name}' hilang."
-    success_customer: "🎉 **Pembayaran Dikonfirmasi!**"
-    access_link: "Link Akses VVIP **{name}**: {link}"
-    success_owner: "💰 **Pemasukan Baru!**\nUser: {mention}\nBot: {bot_mention}\nKategori: `{name}` ({type})"
-    expired: "⌛ **Invoice Kedaluwarsa.**\nOrder ID `{id}` dibatalkan."
+    success_customer_message: "🎉 **Pembayaran Dikonfirmasi!**\n\nLink Akses VVIP **{name}**: {link}"
+    success_owner_message: "💰 **Pemasukan Baru!**\nUser: {mention}\nBot: {bot_mention}\nKategori: `{name}` ({type})"
+    expired_message: "⌛ **Invoice Kedaluwarsa.**\nOrder ID `{id}` dibatalkan."
   donation:
     invoice_title: "Donasi untuk Pengembangan Bot"
     invoice_desc: "Dukungan Anda sebesar {stars} Bintang (Stars) sangat kami hargai. Terima kasih!"
-    invalid_amount: "Jumlah donasi tidak valid!"
-    preparing: "Mempersiapkan donasi..."
-    invoice_fail: "Gagal membuat invoice. Coba lagi nanti."
+    invalid_amount_alert: "Jumlah donasi tidak valid!"
+    preparing_alert: "Mempersiapkan donasi..."
+    invoice_fail_alert: "Gagal membuat invoice. Coba lagi nanti."
     success_title: "🎉 **Terima Kasih Banyak, {name}!**"
     success_text: "Kami telah menerima donasi Anda sebesar **{stars} Stars (⭐)**.\nDukungan Anda adalah bahan bakar semangat bagi kami. Semoga hari Anda menyenangkan!"
-    new_donation_notif: "**✨ Donasi Baru Diterima!**"
-    amount: "💰 **Jumlah:** `{stars}` Stars (⭐)"
-    from: "👤 **Dari:** {mention} (`{id}`)"
-    via: "🤖 **Melalui Bot:** {bot_mention}"
+    new_donation_notif_format: |
+      **✨ Donasi Baru Diterima!**
+      
+      💰 **Jumlah:** `{stars}` Stars (⭐)
+      👤 **Dari:** {mention} (`{id}`)
+      🤖 **Melalui Bot:** {bot_mention}
+      
+      | {refund_button} - refund_stars_{key} |
     refund_button: "🔙 Refund Stars"
-    notif_fail_owner_blocked: "⚠️ **Notifikasi Gagal Terkirim**\n\nNotifikasi donasi sebesar `{stars}` Stars dari {mention} gagal dikirim ke owner bot `{bot_name}` karena bot diblokir olehnya."
+    notif_fail_owner_blocked_message: "⚠️ **Notifikasi Gagal Terkirim**\n\nNotifikasi donasi sebesar `{stars}` Stars dari {mention} gagal dikirim ke owner bot `{bot_name}` karena bot diblokir olehnya."
   defaults:
-    notes_text: |
+    notes_panel: |
       ╭─ **✨ Detail Paket VVIP**
       │
       ├─ 📂 **Nama Paket:** `{name}`
@@ -276,7 +432,9 @@ payment:
       ├─ 💳 **Harga Normal:** `Rp {price:,}`
       │
       ╰─ Cukup klik tombol 'Bayar' di bawah untuk memulai!
-    promo_text: |
+
+      | {pay_button} - paynow {name} normal | | {back_button} - list_vvip |
+    promo_panel: |
       ╭─ **🎉 Penawaran Spesial Terbatas!**
       │
       ├─ 📂 **Nama Paket:** `{name}`
@@ -285,26 +443,37 @@ payment:
       ├─ 💰 **Harga Promo:** `Rp {promo_price:,}`
       │
       ╰─ Segera amankan slot Anda sebelum promo berakhir!
+      
+      | {pay_button} - paynow {name} promo | | {back_button} - list_vvip |
 
 settings:
-  title: "**🛠️ Panel Pengaturan Owner**"
-  description: "Selamat datang di pusat kendali bot Anda! Silakan pilih menu di bawah untuk mengelola berbagai aspek bot."
-  set_start_photo: "🖼️ Atur Foto Start"
-  set_start_text: "✍️ Atur Teks Start"
-  add_vvip: "➕ Tambah VVIP"
-  del_vvip: "➖ Hapus VVIP"
-  check_members: "👥 Cek Member VVIP"
-  check_active_members: "🕵️ Cek Member Aktif"
-  api_keys: "🔑 Kelola Kunci API"
-  broadcast: "📢 Buat Broadcast"
+  panel_format: |
+    **🛠️ Panel Pengaturan Owner**
+
+    Selamat datang di pusat kendali bot Anda! Silakan pilih menu di bawah untuk mengelola berbagai aspek bot.
+
+    | {photo_button} - set_start_photo | | {text_button} - set_start_text;same |
+    | {add_button} - setup_listvvip | | {del_button} - delete_listvvip;same |
+    | {members_button} - list_members_0 | | {active_button} - check_active_menu_init;same |
+    | {api_button} - api_settings | | {broadcast_button} - broadcast;same |
+    | {stats_button} - stats_0 |
+    | {back_button} - start |
+  set_start_photo_button: "🖼️ Atur Foto Start"
+  set_start_text_button: "✍️ Atur Teks Start"
+  add_vvip_button: "➕ Tambah VVIP"
+  del_vvip_button: "➖ Hapus VVIP"
+  check_members_button: "👥 Cek Member VVIP"
+  check_active_members_button: "🕵️ Cek Member Aktif"
+  api_keys_button: "🔑 Kelola Kunci API"
+  broadcast_button: "📢 Buat Broadcast"
   stats_button: "⭐ Statistik Stars"
   
-  set_photo_prompt: "🖼️ **Atur Foto Start**\n\nSilakan kirim foto baru yang ingin Anda gunakan sebagai gambar di pesan /start.\n\nKetik `/empty` untuk menghapus foto saat ini."
+  set_photo_prompt: "🖼️ **Atur Foto Start**\n\nSilakan kirim foto baru yang ingin Anda gunakan sebagai gambar di pesan /start."
   set_photo_fail: "❌ **Gagal:** Pesan yang dikirim bukan foto. Proses dibatalkan."
   set_photo_success: "✅ **Sukses!** Foto /start telah berhasil diperbarui."
   photo_emptied: "✅ **Sukses!** Foto /start telah dihapus dan akan menggunakan gambar default."
   
-  set_text_prompt: "✍️ **Atur Teks Start**\n\nSilakan kirim teks baru untuk pesan /start. Anda dapat menggunakan variabel `{mention}` untuk menyapa pengguna secara pribadi.\n\n**Contoh:**\n`Halo {mention}, selamat datang di bot VVIP kami!`\n\nKetik `/empty` untuk menghapus teks kustom."
+  set_text_prompt: "✍️ **Atur Teks Start**\n\nSilakan kirim teks baru untuk pesan /start. Anda dapat menggunakan variabel `{mention}` untuk menyapa pengguna secara pribadi.\n\n**Contoh:**\n`Halo {mention}, selamat datang di bot VVIP kami!`"
   set_text_fail: "❌ **Gagal:** Pesan yang dikirim tidak berisi teks."
   set_text_success: "✅ **Sukses!** Teks /start telah berhasil diperbarui."
   text_emptied: "✅ **Sukses!** Teks /start telah dihapus dan akan menggunakan teks default."
@@ -322,41 +491,68 @@ settings:
     step5_promo_price: "**🎉 Langkah 5/6: Harga Promo**\n(kirim `0` jika tidak ada)"
     step6_promo_link: "**🔗 Kirim Link Grup Promo**"
     step7_promo_chat_id: "**🆔 Kirim Chat ID Promo**"
-    step8_promo_text: "**📝 Kirim Teks Deskripsi Promo**\nKetik `/skip` untuk default."
-    step9_normal_text: "**📝 Langkah 6/6: Teks Deskripsi Normal**\nKetik `/skip` untuk default."
+    step8_promo_text: "**📝 Kirim Teks Deskripsi Promo**"
+    step9_normal_text: "**📝 Langkah 6/6: Teks Deskripsi Normal**"
     err_must_be_number: "Input harus angka."
     err_must_be_link: "Link harus valid."
     err_must_be_chat_id: "Chat ID harus angka."
     success: "✅ **Sukses!**\nPaket VVIP **{name}** berhasil ditambahkan."
     cancelled: "🚫 Setup dibatalkan oleh pengguna."
 
-  delete_vvip_title: "**🗑️ Hapus Paket VVIP**"
-  delete_vvip_prompt: "Pilih paket VVIP yang ingin Anda hapus."
-  delete_vvip_empty: "✅ Luar biasa! Tidak ada paket VVIP untuk dihapus."
-  delete_vvip_button: "🗑️ Hapus {name}"
-  delete_vvip_success: "✅ **Berhasil!** Paket **{name}** telah dihapus."
-  delete_vvip_fail: "❌ **Gagal!** Paket **{name}** tidak ditemukan lagi."
+  delete_vvip:
+    panel_header: |
+      **🗑️ Hapus Paket VVIP**
+
+      Pilih paket VVIP yang ingin Anda hapus.
+    empty_panel: |
+      ✅ Luar biasa! Tidak ada paket VVIP untuk dihapus.
+      
+      | {back_button} - settings |
+    button: "🗑️ Hapus {name}"
+    success_panel: |
+      ✅ **Berhasil!** Paket **{name}** telah dihapus.
+      
+      | {back_button} - delete_listvvip |
+    fail_panel: |
+      ❌ **Gagal!** Paket **{name}** tidak ditemukan lagi.
+      
+      | {back_button} - delete_listvvip |
   
-  api_title: "**🔑 Pengelola Kunci API untuk {mention}**"
-  api_desc: "Atur API untuk layanan pihak ketiga."
-  api_status_title: "**Status:**"
-  api_status_violet: "- `Gateway Pembayaran (Violet)`: **{status}**"
-  api_status_gemini: "- `Asisten AI (Gemini)`: **{status}**"
-  api_status_active: "✅ Aktif"
-  api_status_inactive: "❌ Belum Diatur"
-  api_prompt: "Pilih tindakan:"
-  api_set_violet: "💳 Atur Kunci Violet"
-  api_set_gemini: "🤖 Atur Kunci Gemini"
-  api_del_all: "🗑️ Hapus Semua Kunci"
-  api_set_violet_1: "**1/2:** Kirim **VIOLET_API_KEY**."
-  api_set_violet_2: "**2/2:** Kirim **VIOLET_SECRET_KEY**."
-  api_set_gemini_prompt: "🔑 Kirim **{key_name}** Anda."
-  api_set_success: "✅ **Sukses!**\nKunci untuk `{key_name}` berhasil disimpan."
-  api_del_confirm_title: "⚠️ Konfirmasi"
-  api_del_confirm_prompt: "Yakin menghapus **SEMUA** kunci API bot ini?"
-  api_del_confirm_yes_button: "✅ Ya, Hapus"
-  api_del_confirm_no_button: "❌ Tidak"
-  api_del_success: "✅ Semua kunci API bot ini telah dihapus."
+  api:
+    panel_format: |
+      **🔑 Pengelola Kunci API untuk {mention}**
+      
+      Atur API untuk layanan pihak ketiga.
+
+      **{status_label}:**
+      - `Gateway Pembayaran (Violet)`: **{violet_status}**
+      - `Asisten AI (Gemini)`: **{gemini_status}**
+
+      {prompt}
+
+      | {set_violet_button} - set_api VIOLET |
+      | {set_gemini_button} - set_api GEMINI_API_KEY;same |
+      | {del_all_button} - del_api_confirm |
+      | {back_button} - settings |
+    status_active: "✅ Aktif"
+    status_inactive: "❌ Belum Diatur"
+    prompt: "Pilih tindakan:"
+    set_violet_button: "💳 Atur Kunci Violet"
+    set_gemini_button: "🤖 Atur Kunci Gemini"
+    del_all_button: "🗑️ Hapus Semua Kunci"
+    set_violet_1_prompt: "**1/2:** Kirim **VIOLET_API_KEY**."
+    set_violet_2_prompt: "**2/2:** Kirim **VIOLET_SECRET_KEY**."
+    set_gemini_prompt: "🔑 Kirim **{key_name}** Anda."
+    set_success: "✅ **Sukses!**\nKunci untuk `{key_name}` berhasil disimpan."
+    del_confirm_panel: |
+      **⚠️ Konfirmasi**
+      
+      Yakin menghapus **SEMUA** kunci API bot ini?
+      
+      | {yes_button} - do_del_api | | {no_button} - api_settings |
+    del_confirm_yes_button: "✅ Ya, Hapus"
+    del_confirm_no_button: "❌ Tidak"
+    del_success_alert: "✅ Semua kunci API bot ini telah dihapus."
   
 stats:
   title: "📊 Statistik Pendapatan Stars"
@@ -367,6 +563,9 @@ stats:
   recent_transactions_title: "📜 Transaksi Terakhir ({page}/{total_pages})"
   transaction_entry: "• `{date}`: **{amount_str}⭐** dari {peer}"
   transaction_entry_unknown: "• `{date}`: **{amount_str}⭐** dari sumber tidak dikenal"
-  no_transactions: "Belum ada transaksi Stars yang tercatat."
+  no_transactions_panel: |
+    Belum ada transaksi Stars yang tercatat.
+
+    | {back_button} - settings |
   prev_button: "« Sebelumnya"
   next_button: "Selanjutnya »"
