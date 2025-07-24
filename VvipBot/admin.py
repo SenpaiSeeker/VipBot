@@ -2,7 +2,6 @@ from . import *
 import math
 from pyrogram.raw import functions
 
-
 @command(lambda ctx: filters.command("eval") & filters.user(ctx.owner_id))
 async def eval_bot_handler(client, message):
     lang = message.lang
@@ -37,7 +36,9 @@ async def eval_bot_handler(client, message):
     sys.stdout, sys.stderr = old_stdout, old_stderr
     stdout, stderr = redirected_output.getvalue(), redirected_error.getvalue()
     evaluation = exc or stderr or stdout or lang.get("admin.eval.success")
-    execution_time = f"\n\n**{lang.get('admin.eval.exec_time')}** `{end_time - start_time:.4f}` detik"
+    execution_time = (
+        f"\n\n**{lang.get('admin.eval.exec_time')}** `{end_time - start_time:.4f}` detik"
+    )
     final_output = f"**{lang.get('admin.eval.output')}**\n<pre>{evaluation.strip()}</pre>{execution_time}"
     if len(final_output) > 4096:
         with BytesIO(str.encode(evaluation + execution_time)) as out_file:
@@ -294,7 +295,7 @@ async def refund_stars_callback(client, callback_query):
         refund_key = callback_query.data.split("_")[2]
         db_key = f"refund_{refund_key}"
         refund_data = ctx.db.getVars(client.me.id, db_key)
-
+        
         if not refund_data:
             return await callback_query.edit_message_text(
                 callback_query.message.text
@@ -303,16 +304,16 @@ async def refund_stars_callback(client, callback_query):
 
         user_id_to_refund = refund_data["user_id"]
         charge_id = refund_data["charge_id"]
-
+        
         await client.refund_star_payment(
             user_id=user_id_to_refund, telegram_payment_charge_id=charge_id
         )
-
+        
         await callback_query.edit_message_text(
             text=callback_query.message.text + lang.get("admin.refund.success_text"),
             entities=callback_query.message.entities,
         )
-
+        
         await client.send_message(
             user_id_to_refund, lang.get("admin.refund.success_notif")
         )
@@ -326,101 +327,82 @@ async def refund_stars_callback(client, callback_query):
         if db_key:
             ctx.db.removeVars(client.me.id, db_key)
 
-
 @command(lambda ctx: filters.regex(r"^stats_(\d+)"), handler_type="callback")
 async def show_stars_stats(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-
+    
     lang = callback_query.lang
     page = int(callback_query.data.split("_")[1])
     items_per_page = 5
 
     try:
         await callback_query.answer(lang.get("general.processing"))
-
+        
         peer = await client.resolve_peer(client.me.id)
-
+        
         raw_result = await client.invoke(
-            functions.payments.GetStarsTransactions(peer=peer, offset="", limit=200)
+            functions.payments.GetStarsTransactions(
+                peer=peer,
+                offset="",
+                limit=100 
+            )
         )
-
-        transactions_history = (
-            raw_result.history if hasattr(raw_result, "history") else []
-        )
+        
+        transactions_history = raw_result.history if hasattr(raw_result, 'history') else []
 
         if not transactions_history:
-            btn, txt = client.ns.button.create_keyboard(
-                f"{lang.get('stats.no_transactions')}\n\n| {lang.get('general.back')} - settings |"
-            )
+            btn, txt = client.ns.button.create_keyboard(f"{lang.get('stats.no_transactions')}\n\n| {lang.get('general.back')} - settings |")
             if callback_query.message.photo:
                 return await callback_query.edit_message_caption(txt, reply_markup=btn)
             return await callback_query.edit_message_text(txt, reply_markup=btn)
-
+        
         total_balance = raw_result.balance.amount
-        total_income = sum(
-            t.amount.amount for t in transactions_history if t.amount.amount > 0
-        )
-        total_refunds = sum(
-            abs(t.amount.amount) for t in transactions_history if t.amount.amount < 0
-        )
-
+        total_income = sum(t.amount.amount for t in transactions_history if t.amount.amount > 0)
+        total_refunds = sum(abs(t.amount.amount) for t in transactions_history if t.amount.amount < 0)
+        total_transactions_count = len(transactions_history)
+        
         peer_map = {p.id: p for p in raw_result.users + raw_result.chats}
 
-        total_pages = math.ceil(len(transactions_history) / items_per_page)
+        total_pages = math.ceil(total_transactions_count / items_per_page)
         start_index = page * items_per_page
         end_index = start_index + items_per_page
         paginated_transactions = transactions_history[start_index:end_index]
-
+        
         text = (
             f"**{lang.get('stats.title')}**\n\n"
             f"💰 **{lang.get('stats.total_balance')}:** `{total_balance}` ⭐\n"
             f"📈 **{lang.get('stats.total_income')}:** `{total_income}` ⭐\n"
             f"📉 **{lang.get('stats.total_refunds')}:** `{total_refunds}` ⭐\n"
-            f"🔄 **{lang.get('stats.total_transactions')}:** `{raw_result.count}`\n\n"
+            f"🔄 **{lang.get('stats.total_transactions')}:** `{total_transactions_count}` (Tampil)\n\n"
             f"**{lang.get('stats.recent_transactions_title', page=page + 1, total_pages=total_pages)}**\n"
         )
-
+        
         for t in paginated_transactions:
-            peer_id = (
-                t.peer.peer.user_id
-                if hasattr(t.peer.peer, "user_id")
-                else t.peer.peer.channel_id
-            )
+            peer_id = t.peer.peer.user_id if hasattr(t.peer.peer, 'user_id') else t.peer.peer.channel_id
             peer_obj = peer_map.get(peer_id)
-
-            peer_mention = lang.get("stats.transaction_entry_unknown")
+            
+            peer_mention = lang.get('stats.transaction_entry_unknown')
             if peer_obj:
-                peer_mention = (
-                    f"{peer_obj.first_name}"
-                    if hasattr(peer_obj, "first_name")
-                    else f"{peer_obj.title}"
-                )
+                 peer_mention = f"{peer_obj.first_name}" if hasattr(peer_obj, 'first_name') else f"{peer_obj.title}"
 
             amount = t.amount.amount
             amount_str = f"+{amount}" if amount > 0 else str(amount)
-            transaction_date = datetime.fromtimestamp(
-                t.date, tz=timezone.utc
-            ).astimezone()
-
-            text += (
-                lang.get(
-                    "stats.transaction_entry",
-                    date=transaction_date.strftime("%d %b, %H:%M"),
-                    amount_str=amount_str,
-                    peer=peer_mention,
-                )
-                + "\n"
-            )
-
+            transaction_date = datetime.fromtimestamp(t.date, tz=timezone.utc).astimezone()
+            
+            text += lang.get('stats.transaction_entry',
+                             date=transaction_date.strftime('%d %b, %H:%M'),
+                             amount_str=amount_str,
+                             peer=peer_mention) + "\n"
+        
         btn_text = ""
         if total_pages > 1:
             prev_page = page - 1 if page > 0 else total_pages - 1
             next_page = page + 1 if page < total_pages - 1 else 0
             btn_text += f"| {lang.get('stats.prev_button')} - stats_{prev_page} | | {lang.get('stats.next_button')} - stats_{next_page};same |\n"
-
+            
         btn_text += f"| {lang.get('general.back_to_settings')} - settings |"
-
+        
         btn, _ = client.ns.button.create_keyboard(btn_text)
         if callback_query.message.photo:
             await callback_query.edit_message_caption(text, reply_markup=btn)
@@ -428,7 +410,5 @@ async def show_stars_stats(client, callback_query):
             await callback_query.edit_message_text(text, reply_markup=btn)
 
     except Exception as e:
-        ctx.log.print(
-            f"{ctx.log.RED} Error fetching stars stats: {e}\n{traceback.format_exc()}"
-        )
+        ctx.log.print(f"{ctx.log.RED} Error fetching stars stats: {e}\n{traceback.format_exc()}")
         await callback_query.answer(f"Error: {e}", show_alert=True)
