@@ -112,7 +112,7 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
                 u.lang = Language(db_instance, u.from_user.id)
             else:
                 u.lang = Language(db_instance, u.user_id)
-            
+
             try:
                 await original_func(c, u)
             except pyrogram.errors.MessageNotModified:
@@ -120,13 +120,17 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
                     await u.answer("MessageNotModified")
                 ctx.log.print(f"{ctx.log.YELLOW}Caught and handled MessageNotModified.")
             except Exception as e:
-                ctx.log.print(f"{ctx.log.RED}An error occurred in handler: {e}\n{traceback.format_exc()}")
+                ctx.log.print(
+                    f"{ctx.log.RED}An error occurred in handler: {e}\n{traceback.format_exc()}"
+                )
                 if isinstance(u, pyrogram.types.CallbackQuery):
                     try:
-                        await u.answer(u.lang.get("general.error", e=type(e).__name__), show_alert=True)
+                        await u.answer(
+                            u.lang.get("general.error", e=type(e).__name__),
+                            show_alert=True,
+                        )
                     except Exception:
                         pass
-
 
         wrapped_func = partial(handler_wrapper, func)
 
