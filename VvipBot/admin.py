@@ -33,8 +33,8 @@ async def eval_bot_handler(client, message):
     sys.stdout, sys.stderr = old_stdout, old_stderr
     stdout, stderr = redirected_output.getvalue(), redirected_error.getvalue()
     evaluation = exc or stderr or stdout or lang.get("admin.eval.success")
-    execution_time = f"\n\n**{lang.get('admin.eval.exec_time')}** `{end_time - start_time:.4f}` detik"
-    final_output = f"**{lang.get('admin.eval.output')}**\n<pre>{evaluation.strip()}</pre>{execution_time}"
+    execution_time = f"\n\n{lang.get('admin.eval.exec_time')} `{end_time - start_time:.4f}` detik"
+    final_output = f"{lang.get('admin.eval.output')}\n<pre>{evaluation.strip()}</pre>{execution_time}"
     if len(final_output) > 4096:
         with BytesIO(str.encode(evaluation + execution_time)) as out_file:
             out_file.name = "eval_result.txt"
