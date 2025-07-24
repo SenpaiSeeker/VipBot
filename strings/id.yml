@@ -360,7 +360,7 @@ stats:
   total_income: "Total Pemasukan"
   total_refunds: "Total Pengembalian"
   recent_transactions_title: "📜 Transaksi Terakhir ({page}/{total_pages})"
-  transaction_entry: "• `{date}`: **{amount_str}⭐** dari {peer}"
+  transaction_entry: "• `{date:<3}`: **{amount_str}⭐** dari {peer}"
   transaction_entry_unknown: "• `{date:<3}`: **{amount_str}⭐** dari sumber tidak dikenal"
   no_transactions: "Belum ada transaksi Stars yang tercatat."
   prev_button: "« Sebelumnya"
