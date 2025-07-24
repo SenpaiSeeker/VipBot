@@ -250,9 +250,11 @@ async def successful_donation_handler(client, message):
     stars_donated = message.successful_payment.total_amount
     charge_id = message.successful_payment.telegram_payment_charge_id
 
-    current_bot_id = client.me.id
-    main_bot_id = ctx.manager.main_bot_id
-    super_admin_id = ctx.owner_id
+    current_bot_id, main_bot_id, super_admin_id = (
+        client.me.id,
+        ctx.manager.main_bot_id,
+        ctx.owner_id,
+    )
 
     await client.send_message(
         chat_id=user.id,
@@ -262,44 +264,44 @@ async def successful_donation_handler(client, message):
     owner_of_this_bot = ctx.db.getVars(current_bot_id, "owner_id") or super_admin_id
     main_bot_client = ctx.manager.main_bot_client
 
-    notification_text = (
-        f"{lang.get('payment.donation.new_donation_notif')}\n\n"
-        f"{lang.get('payment.donation.amount', stars=stars_donated)}\n"
-        f"{lang.get('payment.donation.from', mention=client.ns.arg.getMention(user), id=user.id)}\n"
-        f"{lang.get('payment.donation.via', bot_mention=client.me.mention)}"
-    )
+    try:
+        notification_text = (
+            f"{lang.get('payment.donation.new_donation_notif')}\n\n"
+            f"{lang.get('payment.donation.amount', stars=stars_donated)}\n"
+            f"{lang.get('payment.donation.from', mention=client.ns.arg.getMention(user), id=user.id)}\n"
+            f"{lang.get('payment.donation.via', bot_mention=client.me.mention)}"
+        )
 
-    if owner_of_this_bot != super_admin_id:
-        try:
-            await client.send_message(chat_id=owner_of_this_bot, text=notification_text)
-        except pyrogram.errors.UserIsBlocked:
-            ctx.log.warning(
-                f"Gagal kirim notif donasi, Owner {owner_of_this_bot} memblokir bot {current_bot_id}"
-            )
-        except Exception as e:
-            ctx.log.print(
-                f"{ctx.log.RED}Gagal mengirim notifikasi donasi ke pemilik bot: {e}"
-            )
+        refund_key = uuid.uuid4().hex[:16]
+        refund_data = {"user_id": user.id, "charge_id": charge_id}
+        ctx.db.setVars(main_bot_id, f"refund_{refund_key}", refund_data)
 
-    if main_bot_client:
-        try:
-            refund_key = uuid.uuid4().hex[:16]
-            refund_data = {"user_id": user.id, "charge_id": charge_id}
-            ctx.db.setVars(main_bot_id, f"refund_{refund_key}", refund_data)
+        refund_callback_data = f"refund_stars_{refund_key}"
+        refund_button_text = (
+            f"| {lang.get('payment.donation.refund_button')} - {refund_callback_data} |"
+        )
+        refund_btn, _ = client.ns.button.create_keyboard(refund_button_text)
 
-            refund_callback_data = f"refund_stars_{refund_key}"
-            refund_button_text = f"| {lang.get('payment.donation.refund_button')} - {refund_callback_data} |"
-            refund_btn, _ = main_bot_client.ns.button.create_keyboard(
-                refund_button_text
-            )
+        await client.send_message(
+            chat_id=owner_of_this_bot, text=notification_text, reply_markup=refund_btn
+        )
 
+    except pyrogram.errors.UserIsBlocked:
+        ctx.log.warning(
+            f"Gagal kirim notif donasi, Owner {owner_of_this_bot} memblokir bot {current_bot_id}"
+        )
+        if main_bot_client:
             await main_bot_client.send_message(
-                chat_id=super_admin_id, text=notification_text, reply_markup=refund_btn
+                super_admin_id,
+                lang.get(
+                    "payment.donation.notif_fail_owner_blocked",
+                    stars=stars_donated,
+                    mention=client.ns.arg.getMention(user),
+                    bot_name=client.me.first_name,
+                ),
             )
-        except Exception as e:
-            ctx.log.print(
-                f"{ctx.log.RED}Gagal mengirim notifikasi donasi ke owner utama: {e}"
-            )
+    except Exception as e:
+        ctx.log.print(f"{ctx.log.RED}Gagal mengirim notifikasi donasi: {e}")
 
     ctx.log.print(
         f"{ctx.log.GREEN}Donasi {stars_donated} XTR diterima dari {user.id} ({user.first_name}) melalui bot {current_bot_id}"
