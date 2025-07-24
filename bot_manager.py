@@ -23,7 +23,7 @@ class BotManager:
             return
 
         try:
-            log.print(f"{log.CYAN}Mencoba memulai bot: {bot_id}")
+            log.print(f"{log.CYAN}Mencoba mengaktifkan bot: {bot_id}")
             client = pyrogram.Client(
                 name=str(bot_id),
                 api_id=bot_data["api_id"],
