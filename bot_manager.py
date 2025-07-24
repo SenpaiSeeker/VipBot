@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import pyrogram
 from nsdev import LoggerHandler
 from services import initialize_bot_services
-import VipBot as handlers
+import VvipBot as handlers
 
 log = LoggerHandler()
 
