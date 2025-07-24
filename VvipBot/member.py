@@ -1,5 +1,6 @@
 from . import *
 
+
 @command(lambda ctx: filters.regex(r"^list_members_(\-?\d+)$"), handler_type="callback")
 async def list_members_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
@@ -16,7 +17,6 @@ async def list_members_callback(client, callback_query):
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(txt, reply_markup=btn)
         return await callback_query.edit_message_text(txt, reply_markup=btn)
-
 
     total_pages = len(members_list)
     try:
@@ -88,6 +88,7 @@ async def confirm_kick_member_callback(client, callback_query):
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
         await callback_query.edit_message_text(txt, reply_markup=btn)
+
 
 @command(lambda ctx: filters.regex(r"^do_kick_(\d+)_(.+)"), handler_type="callback")
 async def do_kick_member_callback(client, callback_query):
@@ -165,7 +166,6 @@ async def check_active_menu_callback(client, callback_query):
             return await callback_query.edit_message_caption(txt, reply_markup=btn)
         return await callback_query.edit_message_text(txt, reply_markup=btn)
 
-
     btn_text += back_btn_text
     text = f"**{lang.get('member.active_list.title')}**\n\n{lang.get('member.active_list.prompt')}"
     btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
@@ -217,7 +217,7 @@ async def list_active_members_callback(client, callback_query):
     text += f"**{lang.get('general.name')}:** {client.ns.arg.getMention(user)}\n"
     text += f"**{lang.get('general.id')}:** `{user.id}`\n"
     text += f"**{lang.get('general.status')}:** `{member.status.name.title()}`"
-    
+
     kick_button_name = user.first_name or user.id
     btn_text = f"| 🚨 {kick_button_name} - kick_active_{chat_id}_{user.id}_{page} |\n"
     if total_members > 1:
@@ -226,7 +226,7 @@ async def list_active_members_callback(client, callback_query):
             (page + 1) % total_members,
         )
         btn_text += f"| « - list_active_{chat_id}_{prev_p} | | » - list_active_{chat_id}_{next_p};same |\n"
-    
+
     btn_text += (
         f"| {lang.get('general.back_to_group_selection')} - check_active_menu_init |"
     )
@@ -235,6 +235,7 @@ async def list_active_members_callback(client, callback_query):
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
         await callback_query.edit_message_text(txt, reply_markup=btn)
+
 
 @command(
     lambda ctx: filters.regex(r"^kick_active_(\-?\d+)_(\d+)_(\-?\d+)"),
@@ -300,7 +301,6 @@ async def do_kick_active_callback(client, callback_query):
             await callback_query.edit_message_caption(txt, reply_markup=btn)
         else:
             await callback_query.edit_message_text(txt, reply_markup=btn)
-
 
     except Exception as e:
         await callback_query.edit_message_caption(lang.get("member.kick.fail", e=e))
