@@ -165,10 +165,9 @@ async def manage_access_callback(client, callback_query):
         f"**{lang.get('admin.access.title')}**\n\n"
         f"**👤 {lang.get('general.user')}:** {client.ns.arg.getMention(target_user)}\n"
         f"**🆔 {lang.get('general.id')}:** `{target_user.id}`\n"
-        f"**📊 {lang.get('general.status')}:** `{status_text}`\n\n"
-        f"{lang.get('admin.access.prompt')}"
+        f"**📊 {lang.get('general.status')}:** `{status_text}`"
     )
-    await callback_query.edit_message_text(txt, reply_markup=btn)
+    await callback_query.edit_message_text(text)
 
 
 @command(lambda ctx: filters.command("extend") & filters.user(ctx.owner_id))
