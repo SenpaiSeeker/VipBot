@@ -151,7 +151,17 @@ async def manage_access_callback(client, callback_query):
             show_alert=True,
         )
 
-    await callback_query.message.delete()
+    status_text = (
+        lang.get("admin.access.has_access")
+        if target_user.id in access_list
+        else lang.get("admin.access.no_access")
+    )
+    text = (
+        f"**👤 {lang.get('general.user')}:** {client.ns.arg.getMention(target_user)}\n"
+        f"**🆔 {lang.get('general.id')}:** `{target_user.id}`\n"
+        f"**📊 {lang.get('general.status')}:** `{status_text}`"
+    )
+    await callback_query.edit_message_text(text)
 
 
 @command(lambda ctx: filters.command("extend") & filters.user(ctx.owner_id))
