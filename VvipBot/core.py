@@ -115,16 +115,18 @@ async def close_panel_callback(client, callback_query):
     try:
         await callback_query.message.delete()
     except Exception:
-        await callback_query.answer("Selesai.")
+        await callback_query.answer("Done.")
 
 
 @command(lambda ctx: filters.regex("^list_vvip$"), handler_type="callback")
 async def list_vvip_bot(client, callback_query):
+    lang = callback_query.lang
     vvip_list = ctx.db.getListVars(client.me.id, "list_vvip") or []
+    
+    back_btn_text = f"| {lang.get('general.back')} - start |"
+    
     if not vvip_list:
-        btn, txt = client.ns.button.create_keyboard(
-            "🗂️ Saat ini belum ada paket VVIP yang tersedia.\n\n| • kembali • - start |"
-        )
+        btn, txt = client.ns.button.create_keyboard(f"{lang.get('vvip_list.empty')}\n\n{back_btn_text}")
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(txt, reply_markup=btn)
         return await callback_query.edit_message_text(txt, reply_markup=btn)
@@ -133,180 +135,119 @@ async def list_vvip_bot(client, callback_query):
     for item in vvip_list:
         name = item.get("name", "N/A")
         promo_price = item.get("promo_price", 0)
-        btn_text += f"| 📂 {name} - notes {name} |\n"
+        btn_text += f"| {lang.get('vvip_list.button_package', name=name)} - notes {name} |\n"
         if promo_price > 0:
-            btn_text += f"| 🎉 Promo {name} - promo_detail {name};same |\n"
+            btn_text += f"| {lang.get('vvip_list.button_promo', name=name)} - promo_detail {name};same |\n"
 
-    btn_text += "| • kembali • - start |"
-    btn, txt = client.ns.button.create_keyboard(
-        f"**📚 Daftar VVIP Bot: {client.me.mention}**\n\n"
-        f"Berikut adalah daftar paket eksklusif yang kami tawarkan. Klik pada salah satu paket untuk melihat detail lengkap dan penawaran spesial.\n\n{btn_text}"
+    btn_text += back_btn_text
+    
+    text = (
+        f"**{lang.get('vvip_list.title', mention=client.me.mention)}**\n\n"
+        f"{lang.get('vvip_list.description')}"
     )
+    
+    btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(txt, reply_markup=btn)
+        await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(txt, reply_markup=btn)
+        await callback_query.edit_message_text(text, reply_markup=btn)
 
 
 @command(lambda ctx: filters.regex("^(gemini_ai|khodam|chatbot)"), handler_type="callback")
 async def gemini_bot_ai(client, callback_query):
+    lang = callback_query.lang
     gemini_service = getattr(client, "services", None) and client.services.gemini
+    
     if not gemini_service:
         if await is_bot_owner(client, callback_query.from_user.id):
-            btn, txt = client.ns.button.create_keyboard(
-                "**❌ AI Dinonaktifkan**\nAtur Kunci API Gemini.\n\n| • Atur Kunci API • - api_settings | | • Kembali • - start |"
-            )
+            btn_text = f"{lang.get('ai.disabled')}\n\n| {lang.get('ai.setup_button')} - api_settings | | {lang.get('general.back')} - start |"
+            btn, txt = client.ns.button.create_keyboard(btn_text)
             if callback_query.message.photo:
                 return await callback_query.edit_message_caption(txt, reply_markup=btn)
             return await callback_query.edit_message_text(txt, reply_markup=btn)
-        return await callback_query.answer(
-            "Maaf, fitur AI saat ini tidak tersedia.", show_alert=True
-        )
+        return await callback_query.answer(lang.get('ai.unavailable'), show_alert=True)
 
     data = callback_query.data.split()
     chat_id = callback_query.from_user.id
+    
     if data[0] == "gemini_ai":
-        btn, txt = client.ns.button.create_keyboard(
-            "**✨ Asisten AI Gemini**\nPilih mode interaksi.\n\n| 👻 Cek Khodam (Hiburan) - khodam | | 💬 Ngobrol dengan Asisten - chatbot;same |\n| • kembali • - start |"
+        btn_text = (
+            f"**{lang.get('ai.main_menu_title')}**\n{lang.get('ai.main_menu_prompt')}\n\n"
+            f"| {lang.get('ai.khodam_button')} - khodam | | {lang.get('ai.chatbot_button')} - chatbot;same |\n"
+            f"| {lang.get('general.back')} - start |"
         )
+        btn, txt = client.ns.button.create_keyboard(btn_text)
         if callback_query.message.photo:
             await callback_query.edit_message_caption(txt, reply_markup=btn)
         else:
             await callback_query.edit_message_text(txt, reply_markup=btn)
+            
     elif data[0] in ("khodam", "chatbot"):
         await callback_query.edit_message_reply_markup(None)
         mode = data[0]
         try:
             if mode == "khodam":
-                ask_msg = await client.ask(
-                    chat_id,
-                    "🔮 **Penerawangan Khodam**\nKetik **nama lengkapmu**.\n\nKetik `/batal` untuk membatalkan.",
-                    timeout=300,
-                )
-                if ask_msg.text.lower() == "/batal":
-                    raise nsdev.UserCancelled
-                msg = await client.send_message(
-                    chat_id, f"✨ `Menganalisis energi untuk` **{ask_msg.text}**`...`"
-                )
-                response_text = gemini_service.send_khodam_message(
-                    ask_msg.text, chat_id
-                )
-                btn, _ = client.ns.button.create_keyboard(
-                    "| • Coba Nama Lain • - khodam | | • Kembali ke Menu AI • - gemini_ai |"
-                )
-                await msg.edit(
-                    f"**--- Hasil Terawangan Khodam untuk {ask_msg.text} ---**\n\n**>{response_text}",
-                    reply_markup=btn,
-                )
+                ask_msg = await client.ask(chat_id, lang.get('ai.khodam_prompt'), timeout=300)
+                if ask_msg.text.lower() == "/batal": raise nsdev.UserCancelled
+                
+                msg = await client.send_message(chat_id, lang.get('ai.khodam_analyzing', name=ask_msg.text))
+                response_text = gemini_service.send_khodam_message(ask_msg.text, chat_id)
+                
+                btn_text = f"| {lang.get('ai.khodam_try_again_button')} - khodam | | {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |"
+                btn, _ = client.ns.button.create_keyboard(btn_text)
+                
+                await msg.edit(f"**{lang.get('ai.khodam_result_title', name=ask_msg.text)}**\n\n**>{response_text}", reply_markup=btn)
+                
             elif mode == "chatbot":
                 vvip_list = ctx.db.getListVars(client.me.id, "list_vvip") or []
                 vvip_info_text = ""
                 if vvip_list:
-                    vvip_info_text += (
-                        "Berikut adalah daftar paket VVIP yang tersedia saat ini:\n"
-                    )
-                    for item in vvip_list:
-                        name = item.get("name", "N/A")
-                        price = item.get("price", 0)
-                        promo_price = item.get("promo_price", 0)
-
-                        vvip_info_text += (
-                            f"- Paket '{name}': Harga normal Rp {price:,}."
-                        )
-                        if promo_price > 0:
-                            vvip_info_text += (
-                                f" Saat ini sedang promo menjadi Rp {promo_price:,}."
-                            )
-                        vvip_info_text += "\n"
+                    vvip_info_text = "\n".join([f"- {item.get('name', 'N/A')}: IDR {item.get('price', 0):,}" for item in vvip_list])
                 else:
-                    vvip_info_text = "Saat ini belum ada paket VVIP yang tersedia."
+                    vvip_info_text = "No VVIP packages available."
 
-                about_bot_text = (
-                    "Saya adalah bot asisten VVIP otomatis. "
-                    "Pengguna dapat membeli akses ke grup premium melalui saya. "
-                    "Alur pembelian: Pengguna memilih paket dari menu 'Lihat Daftar VVIP', "
-                    "melakukan pembayaran via QRIS yang saya berikan, dan setelah pembayaran "
-                    "terkonfirmasi, saya akan secara otomatis mengirimkan link undangan grup."
-                )
-
-                system_instruction = (
-                    "Anda adalah asisten AI yang cerdas dan sangat membantu untuk bot Telegram ini. "
-                    f"Nama bot ini adalah '{client.me.first_name}'. "
-                    "Tugas Anda adalah menjawab pertanyaan pengguna yang berkaitan dengan fungsionalitas dan penawaran bot ini. "
-                    "Anda HARUS menggunakan informasi di bawah ini sebagai sumber pengetahuan utama Anda.\n\n"
-                    "--- INFORMASI KONTEKS BOT ---\n"
-                    f"1. **Tentang Bot**: {about_bot_text}\n"
-                    f"2. **Daftar Paket VVIP dan Harga**: {vvip_info_text}\n"
-                    "3. **Cara Pembelian**: Pengguna harus menekan tombol 'Lihat Daftar VVIP' di menu utama untuk melihat detail paket dan memulai pembayaran.\n"
-                    "4. **Lainnya**: Jika pertanyaan di luar konteks bot, jawablah secara umum dan ramah sebagai asisten AI.\n"
-                    "--- AKHIR INFORMASI ---\n\n"
-                    "Jawablah semua pertanyaan dengan singkat, jelas, dan dalam Bahasa Indonesia."
-                )
-
+                about_bot_text = lang.get('about.description')
+                
+                system_instruction = lang.get('ai.chatbot_system_instruction', bot_name=client.me.first_name, about_bot=about_bot_text, vvip_info=vvip_info_text)
                 gemini_service.set_chatbot_instruction(system_instruction)
 
-                await client.send_message(
-                    chat_id,
-                    f"💬 **Halo! Ada yang bisa saya bantu?**\nSaya asisten AI untuk bot **{client.me.first_name}**. "
-                    "Anda bisa bertanya tentang cara penggunaan, harga paket VVIP, atau apa pun yang berkaitan dengan bot ini.\n\n"
-                    "Ketik `/stop` untuk mengakhiri sesi obrolan.",
-                )
+                await client.send_message(chat_id, lang.get('ai.chatbot_intro', bot_name=client.me.first_name))
 
                 while True:
                     user_msg = await client.listen(chat_id, timeout=600)
-                    if not user_msg.text:
-                        continue
-                    if user_msg.text.lower() == "/stop":
-                        raise nsdev.UserCancelled
+                    if not user_msg.text: continue
+                    if user_msg.text.lower() == "/stop": raise nsdev.UserCancelled
 
-                    await client.send_chat_action(
-                        chat_id, pyrogram.enums.ChatAction.TYPING
-                    )
-
-                    response_text = gemini_service.send_chat_message(
-                        user_msg.text, user_id=chat_id, bot_name=client.me.first_name
-                    )
+                    await client.send_chat_action(chat_id, pyrogram.enums.ChatAction.TYPING)
+                    response_text = gemini_service.send_chat_message(user_msg.text, user_id=chat_id, bot_name=client.me.first_name)
                     await client.send_message(chat_id, response_text)
 
         except nsdev.UserCancelled:
-            await client.send_message(
-                chat_id,
-                "✅ Sesi obrolan telah dihentikan.",
-                reply_markup=client.ns.button.create_keyboard(
-                    "| • Kembali ke Menu AI • - gemini_ai |"
-                )[0],
-            )
+            btn, _ = client.ns.button.create_keyboard(f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |")
+            await client.send_message(chat_id, lang.get('ai.session_stopped'), reply_markup=btn)
         except asyncio.TimeoutError:
-            await client.send_message(
-                chat_id,
-                "⏰ Sesi berakhir karena tidak ada aktivitas.",
-                reply_markup=client.ns.button.create_keyboard(
-                    "| • Kembali ke Menu AI • - gemini_ai |"
-                )[0],
-            )
+            btn, _ = client.ns.button.create_keyboard(f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |")
+            await client.send_message(chat_id, lang.get('ai.session_expired'), reply_markup=btn)
         except Exception as e:
-            ctx.log.print(f"{ctx.log.RED}Error pada sesi AI Chatbot: {e}")
-            await client.send_message(
-                chat_id, f"Maaf, terjadi gangguan pada sistem AI.\n`Error: {e}`"
-            )
+            ctx.log.print(f"{ctx.log.RED}Error on AI Chatbot session: {e}")
+            await client.send_message(chat_id, lang.get('ai.error', e=e))
         finally:
             gemini_service.reset_chatbot_instruction()
 
 
 @command(lambda ctx: filters.regex("^donate_stars$"), handler_type="callback")
 async def donate_callback(client, callback_query):
+    lang = callback_query.lang
     photo_url = "https://files.catbox.moe/1f9j10.jpg"
     text = (
-        "**❤️ Dukung Kami dengan Telegram Stars!**\n\n"
-        "Donasi Anda sangat berarti untuk membantu kami terus mengembangkan dan memelihara bot ini.\n\n"
-        "Setiap Star yang Anda berikan memberikan kami semangat untuk terus berinovasi. Pilih jumlah donasi di bawah ini untuk memulai.\n\n"
-        "Terima kasih atas dukungan Anda!"
+        f"{lang.get('donation.title')}\n\n"
+        f"{lang.get('donation.description')}"
     )
 
     btn_text = (
         "| 1 ⭐ - donate_pay_1 | | 5 ⭐ - donate_pay_5;same |\n"
         "| 10 ⭐ - donate_pay_10 | | 25 ⭐ - donate_pay_25;same |\n"
-        "| • Kembali • - start |"
+        f"| {lang.get('general.back')} - start |"
     )
 
     btn, _ = client.ns.button.create_keyboard(btn_text)
