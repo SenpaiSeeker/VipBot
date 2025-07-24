@@ -60,6 +60,13 @@ vvip_list:
   button_package: "📂 {name}"
   button_promo: "🎉 Promo {name}"
 
+donation:
+  title: "**❤️ Dukung Kami dengan Telegram Stars!**"
+  description: |
+    Donasi Anda sangat berarti untuk membantu kami terus mengembangkan dan memelihara bot ini.
+    Setiap Star yang Anda berikan memberikan kami semangat untuk terus berinovasi. Pilih jumlah donasi di bawah ini untuk memulai.
+    Terima kasih atas dukungan Anda!
+
 ai:
   disabled: "**❌ AI Dinonaktifkan**\nAtur Kunci API Gemini."
   unavailable: "Maaf, fitur AI saat ini tidak tersedia."
