@@ -249,12 +249,8 @@ async def successful_donation_handler(client, message):
     lang = message.lang
     stars_donated = message.successful_payment.total_amount
     charge_id = message.successful_payment.telegram_payment_charge_id
-
-    current_bot_id, main_bot_id, super_admin_id = (
-        client.me.id,
-        ctx.manager.main_bot_id,
-        ctx.owner_id,
-    )
+    current_bot_id = client.me.id
+    super_admin_id = ctx.owner_id
 
     await client.send_message(
         chat_id=user.id,
@@ -274,7 +270,7 @@ async def successful_donation_handler(client, message):
 
         refund_key = uuid.uuid4().hex[:16]
         refund_data = {"user_id": user.id, "charge_id": charge_id}
-        ctx.db.setVars(main_bot_id, f"refund_{refund_key}", refund_data)
+        ctx.db.setVars(current_bot_id, f"refund_{refund_key}", refund_data)
 
         refund_callback_data = f"refund_stars_{refund_key}"
         refund_button_text = (
@@ -290,7 +286,7 @@ async def successful_donation_handler(client, message):
         ctx.log.warning(
             f"Gagal kirim notif donasi, Owner {owner_of_this_bot} memblokir bot {current_bot_id}"
         )
-        if main_bot_client:
+        if main_bot_client and owner_of_this_bot != super_admin_id:
             await main_bot_client.send_message(
                 super_admin_id,
                 lang.get(
