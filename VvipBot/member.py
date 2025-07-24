@@ -123,11 +123,11 @@ async def check_active_menu_callback(client, callback_query):
 
     btn_text += back_btn_text
     text = f"**{lang.get('member.active_list.title')}**\n{lang.get('member.active_list.prompt')}\n\n{btn_text}"
-    btn, _ = client.ns.button.create_keyboard(text)
+    btn, txt = client.ns.button.create_keyboard(text)
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
+        await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(txt, reply_markup=btn)
 
 @command(lambda ctx: filters.regex(r"^list_active_(\-?\d+)_(\-?\d+)"), handler_type="callback")
 async def list_active_members_callback(client, callback_query):
