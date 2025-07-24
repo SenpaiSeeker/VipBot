@@ -20,11 +20,13 @@ log = LoggerHandler()
 
 async def main():
     os.system("rm -f *.session* /tmp/*.png")
-    
+
     strings_dir = "strings"
     if not os.path.exists(strings_dir):
         os.makedirs(strings_dir)
-        log.print(f"{log.YELLOW}Direktori '{strings_dir}' tidak ditemukan, telah dibuat.")
+        log.print(
+            f"{log.YELLOW}Direktori '{strings_dir}' tidak ditemukan, telah dibuat."
+        )
 
     manager = BotManager(db, OWNER_ID)
 
