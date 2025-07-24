@@ -35,9 +35,7 @@ async def eval_bot_handler(client, message):
     sys.stdout, sys.stderr = old_stdout, old_stderr
     stdout, stderr = redirected_output.getvalue(), redirected_error.getvalue()
     evaluation = exc or stderr or stdout or lang.get("admin.eval.success")
-    execution_time = (
-        f"\n\n**{lang.get('admin.eval.exec_time')}** `{end_time - start_time:.4f}` detik"
-    )
+    execution_time = f"\n\n**{lang.get('admin.eval.exec_time')}** `{end_time - start_time:.4f}` detik"
     final_output = f"**{lang.get('admin.eval.output')}**\n<pre>{evaluation.strip()}</pre>{execution_time}"
     if len(final_output) > 4096:
         with BytesIO(str.encode(evaluation + execution_time)) as out_file:
@@ -294,7 +292,7 @@ async def refund_stars_callback(client, callback_query):
         refund_key = callback_query.data.split("_")[2]
         db_key = f"refund_{refund_key}"
         refund_data = ctx.db.getVars(client.me.id, db_key)
-        
+
         if not refund_data:
             return await callback_query.edit_message_text(
                 callback_query.message.text
@@ -303,16 +301,16 @@ async def refund_stars_callback(client, callback_query):
 
         user_id_to_refund = refund_data["user_id"]
         charge_id = refund_data["charge_id"]
-        
+
         await client.refund_star_payment(
             user_id=user_id_to_refund, telegram_payment_charge_id=charge_id
         )
-        
+
         await callback_query.edit_message_text(
             text=callback_query.message.text + lang.get("admin.refund.success_text"),
             entities=callback_query.message.entities,
         )
-        
+
         await client.send_message(
             user_id_to_refund, lang.get("admin.refund.success_notif")
         )
