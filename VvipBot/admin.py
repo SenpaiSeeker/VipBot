@@ -378,7 +378,7 @@ async def show_stars_stats(client, callback_query):
             f"💰 **{lang.get('stats.total_balance')}:** `{total_balance}` ⭐\n"
             f"📈 **{lang.get('stats.total_income')}:** `{total_income}` ⭐\n"
             f"📉 **{lang.get('stats.total_refunds')}:** `{total_refunds}` ⭐\n"
-            f"🔄 **{lang.get('stats.total_transactions')}:** `{total_transactions_count}` (Tampil)\n\n"
+            f"🔄 **{lang.get('stats.total_transactions')}:** `{total_transactions_count}`\n\n"
             f"**{lang.get('stats.recent_transactions_title', page=page + 1, total_pages=total_pages)}**\n"
         )
 
@@ -409,7 +409,7 @@ async def show_stars_stats(client, callback_query):
             text += (
                 lang.get(
                     "stats.transaction_entry",
-                    date=transaction_date.strftime("%d %b, %H:%M WIB"),
+                    date=transaction_date.strftime("%d %b, %H:%M %Z"),
                     amount_str=amount_str,
                     peer=peer_mention,
                 )
