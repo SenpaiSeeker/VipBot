@@ -61,12 +61,10 @@ vvip_list:
   button_promo: "🎉 Promo {name}"
 
 donation:
-  title: "❤️ Dukung Kami dengan Telegram Stars!"
+  title: "**❤️ Dukung Kami dengan Telegram Stars!**"
   description: |
     Donasi Anda sangat berarti untuk membantu kami terus mengembangkan dan memelihara bot ini.
-    
     Setiap Star yang Anda berikan memberikan kami semangat untuk terus berinovasi. Pilih jumlah donasi di bawah ini untuk memulai.
-    
     Terima kasih atas dukungan Anda!
 
 ai:
@@ -292,6 +290,7 @@ settings:
   check_active_members: "🕵️ Cek Member Aktif"
   api_keys: "🔑 Kelola Kunci API"
   broadcast: "📢 Buat Broadcast"
+  stats_button: "⭐ Statistik Stars"
   
   set_photo_prompt: "🖼️ **Atur Foto Start**\n\nSilakan kirim foto baru yang ingin Anda gunakan sebagai gambar di pesan /start.\n\nKetik `/batal` untuk membatalkan atau `/empty` untuk menghapus foto saat ini."
   set_photo_fail: "❌ **Gagal:** Pesan yang dikirim bukan foto. Proses dibatalkan."
@@ -351,3 +350,16 @@ settings:
   api_del_confirm_yes: "✅ Ya, Hapus"
   api_del_confirm_no: "❌ Tidak"
   api_del_success: "✅ Semua kunci API bot ini telah dihapus."
+  
+stats:
+  title: "📊 Statistik Pendapatan Stars"
+  total_balance: "Saldo Saat Ini"
+  total_transactions: "Total Transaksi"
+  total_income: "Total Pemasukan"
+  total_refunds: "Total Pengembalian"
+  recent_transactions_title: "📜 Transaksi Terakhir ({page}/{total_pages})"
+  transaction_entry: "• `{date}`: **{amount_str}⭐** dari {peer}"
+  transaction_entry_unknown: "• `{date}`: **{amount_str}⭐** dari sumber tidak dikenal"
+  no_transactions: "Belum ada transaksi Stars yang tercatat."
+  prev_button: "« Sebelumnya"
+  next_button: "Selanjutnya »"
