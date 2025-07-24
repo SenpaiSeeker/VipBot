@@ -16,7 +16,7 @@ import pyrogram
 from pyrogram import filters
 import nsdev
 
-from string.lang import Language
+from string import Language
 
 ALL_HANDLERS = []
 
