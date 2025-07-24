@@ -61,7 +61,7 @@ vvip_list:
   button_promo: "🎉 Promo {name}"
 
 donation:
-  title: "**❤️ Support Us with Telegram Stars!**"
+  title: "❤️ Support Us with Telegram Stars!"
   description: |
     Your donation is invaluable in helping us continue to develop and maintain this bot.
     
