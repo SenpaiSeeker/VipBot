@@ -162,7 +162,6 @@ async def manage_access_callback(client, callback_query):
         else lang.get("admin.access.no_access")
     )
     text = (
-        f"**{lang.get('admin.access.title')}**\n\n"
         f"**👤 {lang.get('general.user')}:** {client.ns.arg.getMention(target_user)}\n"
         f"**🆔 {lang.get('general.id')}:** `{target_user.id}`\n"
         f"**📊 {lang.get('general.status')}:** `{status_text}`"
