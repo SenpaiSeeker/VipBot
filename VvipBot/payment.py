@@ -173,7 +173,7 @@ async def auto_check_payment(client, user, order_id):
         await asyncio.sleep(15)
         try:
             pay_check = await vmp_service.check_transaction(ref_kode, ref_id)
-            if pay_check.api_response.data.status == "success":
+            if pay_check.data.status == "success":
                 payment_successful = True
                 ctx.db.removeVars(client.me.id, order_id)
 
