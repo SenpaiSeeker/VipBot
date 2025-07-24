@@ -17,7 +17,7 @@ async def create_bot_callback(client, callback_query):
     await callback_query.message.delete()
     
     try:
-        ask = lambda text: client.ask(chat_id, f"{text}\nKetik `/batal`.", timeout=600)
+        ask = lambda text: client.ask(chat_id, f"{text}", timeout=600)
         api_id_msg = await ask(lang.get('bot_management.create.step1_api_id'))
         if api_id_msg.text.lower() == "/batal": raise nsdev.UserCancelled
         api_id = api_id_msg.text
