@@ -64,7 +64,9 @@ donation:
   title: "**❤️ Dukung Kami dengan Telegram Stars!**"
   description: |
     Donasi Anda sangat berarti untuk membantu kami terus mengembangkan dan memelihara bot ini.
+    
     Setiap Star yang Anda berikan memberikan kami semangat untuk terus berinovasi. Pilih jumlah donasi di bawah ini untuk memulai.
+    
     Terima kasih atas dukungan Anda!
 
 ai:
@@ -359,7 +361,7 @@ stats:
   total_refunds: "Total Pengembalian"
   recent_transactions_title: "📜 Transaksi Terakhir ({page}/{total_pages})"
   transaction_entry: "• `{date}`: **{amount_str}⭐** dari {peer}"
-  transaction_entry_unknown: "• `{date}`: **{amount_str}⭐** dari sumber tidak dikenal"
+  transaction_entry_unknown: "• `{date:<3}`: **{amount_str}⭐** dari sumber tidak dikenal"
   no_transactions: "Belum ada transaksi Stars yang tercatat."
   prev_button: "« Sebelumnya"
   next_button: "Selanjutnya »"
