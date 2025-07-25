@@ -203,18 +203,13 @@ payment:
     not_found: "❌ VVIP no longer found."
     invalid_price: "❌ The price for this package is invalid."
     qr_fail: "Failed to download QRIS."
-    invoice: |
-      **✅ Payment Ready!**
-
-      Please scan the QRIS above.
-
-      ╭─ **Billing Details**
-      │
-      ├─ 🛍️ **Product:** VVIP {name} ({type})
-      ├─ 💳 **Amount:** `IDR {amount:,}`
-      ├─ 🆔 **Order ID:** `{id}`
-      │
-      ╰─ ⏳ **IMPORTANT:** This invoice will expire in **15 minutes**.
+    invoice_title: "✅ Payment Ready!"
+    invoice_prompt: "Please scan the QRIS above."
+    invoice_details_title: "Billing Details"
+    invoice_product: "🛍️ **Product:** VVIP {name} ({type})"
+    invoice_amount: "💳 **Amount:** `IDR {amount:,}`"
+    invoice_order_id: "🆔 **Order ID:** `{id}`"
+    invoice_expiry: "⏳ **IMPORTANT:** This invoice will expire in **15 minutes**."
   check:
     category_missing: "VVIP category '{name}' was not found. Payment was successful, but the link could not be delivered."
     success_customer_msg: "🎉 **Payment Confirmed!**\n\nVVIP Access Link for **{name}**: {link}"
