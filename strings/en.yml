@@ -43,6 +43,7 @@ lang:
   selected: "✅ Language has been changed to English."
   button_en: "🇬🇧 English"
   button_id: "🇮🇩 Indonesian"
+  button_ja: "🇯🇵 Japanese"
 
 vvip_list:
   empty: "🗂️ No VVIP packages are available at the moment."
