@@ -121,7 +121,7 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
                 await original_func(c, u)
             except pyrogram.errors.MessageNotModified:
                 ctx.log.print(
-                    f"{ctx.log.YELLOW}Caught MessageNotModified in handler '{original_func.__name__}'. Ignoring."
+                    f"{ctx.log.YELLOW}Caught MessageNotModified in handler '{original_func.__name__}'"
                 )
                 if isinstance(u, pyrogram.types.CallbackQuery):
                     await u.answer()
