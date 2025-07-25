@@ -123,24 +123,16 @@ async def broadcast_callback(client, callback_query):
         progress_msg = await client.send_message(chat_id, lang.get("settings.broadcast_start", count=len(user_ids)))
 
         success_count, fail_count = 0, 0
-        
+
         text_to_parse = ask_message.text or ask_message.caption or ""
         reply_markup, cleaned_text = client.ns.button.create_keyboard(text_to_parse)
 
         async def send_to_user(target_user_id):
             if reply_markup and reply_markup.inline_keyboard:
                 if ask_message.media:
-                    await ask_message.copy(
-                        chat_id=target_user_id,
-                        caption=cleaned_text,
-                        reply_markup=reply_markup
-                    )
+                    await ask_message.copy(chat_id=target_user_id, caption=cleaned_text, reply_markup=reply_markup)
                 else:
-                    await client.send_message(
-                        chat_id=target_user_id,
-                        text=cleaned_text,
-                        reply_markup=reply_markup
-                    )
+                    await client.send_message(chat_id=target_user_id, text=cleaned_text, reply_markup=reply_markup)
             else:
                 await ask_message.copy(chat_id=target_user_id)
 
