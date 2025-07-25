@@ -280,7 +280,7 @@ async def confirm_delete_bot_callback(client, callback_query):
         f"| {lang.get('bot_management.delete.confirm_yes_button')} - do_delete_bot {bot_id_to_manage} |\n"
         f"| {lang.get('bot_management.delete.confirm_no_button')} - manage_bot {bot_id_to_manage} |"
     )
-    
+
     btn, txt = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
 
     if callback_query.message.photo:
