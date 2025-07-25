@@ -175,7 +175,7 @@ async def auto_check_payment(client, user, order_id):
 
                 await client.send_message(
                     user.id,
-                    f"{lang.get('payment.check.success_customer')}\n\n{lang.get('payment.check.access_link', name=name, link=link)}",
+                    lang.get("payment.check.success_customer_msg", name=name, link=link),
                     protect_content=True,
                 )
 
@@ -183,7 +183,7 @@ async def auto_check_payment(client, user, order_id):
                 await client.send_message(
                     owner_bot_id,
                     lang.get(
-                        "payment.check.success_owner",
+                        "payment.check.success_owner_notif",
                         mention=client.ns.arg.getMention(user),
                         bot_mention=client.me.mention,
                         name=name,
@@ -196,7 +196,7 @@ async def auto_check_payment(client, user, order_id):
 
     if not payment_successful and ctx.db.getVars(client.me.id, order_id):
         ctx.db.removeVars(client.me.id, order_id)
-        await client.send_message(user.id, lang.get("payment.check.expired", id=order_id))
+        await client.send_message(user.id, lang.get("payment.check.expired_msg", id=order_id))
 
 
 @command(lambda ctx: filters.PreCheckoutQuery, handler_type="pre_checkout")
