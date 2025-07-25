@@ -290,7 +290,7 @@ async def show_stars_stats(client, callback_query):
         peer = await client.resolve_peer(client.me.id)
 
         raw_result = await client.invoke(
-            pyrogram.raw.functions.payments.GetStarsTransactions(peer=peer, offset="", limit=100)
+            pyrogram.raw.functions.payments.GetStarsTransactions(peer=peer, offset="", limit=200)
         )
 
         transactions_history = raw_result.history if hasattr(raw_result, "history") else []
