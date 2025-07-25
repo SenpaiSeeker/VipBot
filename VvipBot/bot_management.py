@@ -143,7 +143,7 @@ async def manage_bot_callback(client, callback_query):
     days_left_text = lang.get("bot_management.manage.not_set")
     if exp_date_str:
         days_left = (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days
-        days_left_text = lang.get("admin.allbots.expires_in", days_left=days_left)
+        days_left_text = f"{days_left} {lang.get('admin.allbots.days')}"
 
     btn_text = (
         f"| {lang.get('bot_management.manage.extend_button')} - request_extend_duration {bot_id_to_manage} |\n"
