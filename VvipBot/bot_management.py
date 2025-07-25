@@ -85,7 +85,7 @@ async def list_my_bots_callback(client, callback_query):
     bot_id = int(bot_data["name"])
 
     bot_name = f"ID {bot_id} ({lang.get('admin.allbots.offline')})"
-    bot_username = None
+    bot_username = "N/A"
     try:
         bot_instance = ctx.manager.running_bots.get(bot_id)
         if bot_instance and bot_instance.is_connected:
@@ -97,11 +97,17 @@ async def list_my_bots_callback(client, callback_query):
     exp_date_str = ctx.db.getVars(bot_id, "bot_expiration_date")
     days_left = (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days if exp_date_str else "N/A"
 
-    text = f"**{lang.get('bot_management.my_bots.title', page=page + 1, total=total_pages)}**\n\n"
-    text += f"• **{lang.get('admin.allbots.bot_name')}:** {bot_name}\n"
-    text += f"• **{lang.get('admin.allbots.bot_id')}:** `{bot_id}`\n"
-    text += f"• **{lang.get('admin.allbots.bot_username')}:** @{bot_username}\n"
-    text += f"• **{lang.get('admin.allbots.expires_in')}:** `{days_left}` {lang.get('admin.allbots.days')}"
+    # --- PERBAIKAN DI SINI ---
+    # Menggunakan satu kunci bahasa 'panel' yang sudah berisi semua format teks.
+    text = lang.get(
+        "bot_management.my_bots.panel",
+        page=page + 1,
+        total=total_pages,
+        bot_name=bot_name,
+        bot_id=bot_id,
+        username=bot_username,
+        days_left=days_left,
+    )
 
     btn_text = f"| {lang.get('bot_management.my_bots.manage_button', name=bot_name)} - manage_bot {bot_id} |\n"
     if total_pages > 1:
@@ -136,20 +142,23 @@ async def manage_bot_callback(client, callback_query):
         pass
 
     exp_date_str = ctx.db.getVars(bot_id_to_manage, "bot_expiration_date")
-    days_left_text = lang.get("bot_management.manage.not_set")
+    days_left_text = lang.get('bot_management.manage.not_set')
     if exp_date_str:
-        days_left_text = f"{(datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days} {lang.get('admin.allbots.days')}"
+        days_left = (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days
+        # Menggunakan kunci bahasa 'days' dari admin.allbots
+        days_left_text = f"{days_left} {lang.get('admin.allbots.days')}"
 
     btn_text = (
         f"| {lang.get('bot_management.manage.extend_button')} - request_extend_duration {bot_id_to_manage} |\n"
         f"| {lang.get('bot_management.manage.delete_button')} - confirm_delete_bot {bot_id_to_manage} |\n"
         f"| {lang.get('general.back_to_bot_list')} - list_my_bots_0 |"
     )
-    text = (
-        f"**{lang.get('bot_management.manage.title', name=bot_name)}**\n\n"
-        f"**{lang.get('admin.allbots.bot_id')}:** `{bot_id_to_manage}`\n"
-        f"**{lang.get('bot_management.manage.expires_in')}:** `{days_left_text}`\n\n"
-        f"{lang.get('bot_management.manage.prompt')}"
+    # Menggunakan kunci bahasa 'expires_in' dari bot_management.my_bots
+    text = lang.get(
+        "bot_management.manage.panel",
+        name=bot_name,
+        id=bot_id_to_manage,
+        days_left=days_left_text
     )
     btn, txt = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
     if callback_query.message.photo:
@@ -179,12 +188,14 @@ async def request_extend_duration_callback(client, callback_query):
         if not main_bot_client or not main_bot_client.is_connected:
             raise ConnectionError(lang.get("bot_management.create.main_bot_inactive"))
 
-        txt_owner = (
-            f"**{lang.get('bot_management.extend.request_title')}**\n\n"
-            f"**{lang.get('general.user')}:** {main_bot_client.ns.arg.getMention(requester)} (`{requester.id}`)\n"
-            f"**{lang.get('general.bot')}:** **{bot_name}** (`{bot_id_to_request}`)\n\n"
-            f"{lang.get('bot_management.extend.request_prompt')}"
+        txt_owner = lang.get(
+            "bot_management.extend.panel_owner",
+            mention=main_bot_client.ns.arg.getMention(requester),
+            id=requester.id,
+            bot_name=bot_name,
+            bot_id=bot_id_to_request
         )
+
         btn_owner_text = (
             f"| {lang.get('bot_management.extend.approve_button')} - approve_extension {bot_id_to_request} {requester.id} |\n"
             f"| {lang.get('bot_management.extend.reject_button')} - close_req {bot_id_to_request} {requester.id} |"
@@ -266,13 +277,13 @@ async def confirm_delete_bot_callback(client, callback_query):
     except Exception:
         pass
 
-    text = lang.get("bot_management.delete.confirm_prompt", name=bot_name, id=bot_id_to_manage)
+    text = lang.get("bot_management.delete.confirm_panel", name=bot_name, id=bot_id_to_manage)
     btn_text = (
         f"| {lang.get('bot_management.delete.confirm_yes_button')} - do_delete_bot {bot_id_to_manage} |\n"
         f"| {lang.get('bot_management.delete.confirm_no_button')} - manage_bot {bot_id_to_manage} |"
     )
     btn, txt = client.ns.button.create_keyboard(
-        f"**{lang.get('bot_management.delete.confirm_title')}**\n\n{text}\n\n{btn_text}"
+        f"**{lang.get('bot_management.delete.confirm_panel').splitlines()[0]}**\n\n{text}\n\n{btn_text}"
     )
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
