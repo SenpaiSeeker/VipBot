@@ -9,7 +9,7 @@ general:
   close_panel: "Close Panel"
   cancelled: "🚫 Process canceled."
   timeout: "⏰ Timeout. Process canceled."
-  error: "❌ An Error Occurred: `{e}`"
+  error: "❌ An Error Occurred:\n`{e}`"
   success: "✅ Success!"
   processing: "⏳ Please wait..."
   invalid_input_timeout: "Invalid input or timeout. Process canceled."
@@ -36,6 +36,7 @@ start:
 
 about:
   panel: "**🌟 About This VVIP Bot**\n\nWelcome! I am an automated assistant designed to provide you with easy access to VVIP groups.\n\n**🤖 My Main Function:**\nI provide a secure automatic payment system via QRIS, ensuring you get instant access to premium content after a successful transaction.\n\n**🚀 Usage Flow:**\n1. **Select a Package:** Browse the list of available VVIPs.\n2. **Make a Payment:** Scan the QRIS I provide.\n3. **Instant Access:** An invitation link will be sent automatically after payment is confirmed.\n\nThe entire process is designed to be fast, secure, and without the need for manual confirmation!"
+  description: "I am an automated assistant designed to give you easy access to VVIP groups, through a secure automatic payment system via QRIS."
 
 lang:
   select: "**🌐 Select Your Language**"
@@ -53,13 +54,13 @@ donation:
   panel: "**❤️ Support Us with Telegram Stars!**\n\nYour donation is invaluable in helping us continue to develop and maintain this bot.\n\nEvery Star you give encourages us to keep innovating. Select a donation amount below to start.\n\nThank you for your support!"
 
 ai:
-  disabled: "**❌ AI Disabled**\nSet up the Gemini API Key."
+  disabled: "**❌ AI Disabled**\nPlease set up the Gemini API Key in the settings panel first."
   unavailable: "Sorry, the AI feature is currently unavailable."
   setup_button: "• Set Up API Key •"
   panel: "**✨ Gemini AI Assistant**\nChoose an interaction mode."
   khodam_button: "👻 Check Khodam (Fun)"
   chatbot_button: "💬 Chat with Assistant"
-  khodam_prompt: "🔮 **Khodam Divination**\nType your **full name**."
+  khodam_prompt: "🔮 **Khodam Divination**\nType your **full name** to be divined."
   khodam_analyzing: "✨ `Analyzing energy for` **{name}**`...`"
   khodam_result_title: "**--- Khodam Divination Result for {name} ---**\n\n**>{result}**"
   khodam_try_again_button: "• Try Another Name •"
@@ -76,12 +77,12 @@ admin:
     no_code: "❌ **Command Failed:** Please provide code to evaluate."
     success: "✅ **Execution Successful**"
     output: "**🖥️ OUTPUT:**\n<pre>{output}</pre>\n\n**⏳ Execution Time:** `{time:.4f}` seconds"
-    too_long_caption: "📄 Evaluation result is too long."
+    too_long_caption: "📄 Evaluation result is too long. Sent as a file."
   restore:
-    usage: "⚠️ **Incorrect Usage:**\nReply to the `.zip` backup file sent by the bot."
+    usage: "⚠️ **Incorrect Usage:**\nReply to the `.zip` backup file sent by the bot with this command."
     wrong_format: "❌ **Incorrect File Format:**\nOnly `.zip` backup files can be restored."
     processing: "⏳ `Downloading & extracting backup file...`"
-    empty_zip: "This .zip file is empty."
+    empty_zip: "This .zip file is empty or corrupted."
     success: "✅ **Restore Successful!**\nDatabase `{db_path}` has been restored.\n\n⚠️ **IMPORTANT:** Please **restart** the bot to use the new database."
     fail: "❌ **Restore Failed!**\n\n**Error:** `{e}`"
   access:
@@ -111,7 +112,6 @@ admin:
   refund:
     no_permission: "🚫 You do not have permission to do this."
     fail_not_found: "\n\n**⚠️ Failed: Transaction not found or already refunded.**"
-    fail_no_main_bot: "❌ **Failed:** Main bot client not found."
     success_text: "\n\n✅ Donation has been successfully refunded."
     success_notif: "ℹ️ **Donation Information**\n\nYour Stars donation has been refunded by the admin. Thank you for your understanding."
     fail_text: "\n\n**❌ Failed to refund donation:**\n`{e}`"
@@ -119,18 +119,18 @@ admin:
 bot_management:
   create:
     new_user_notification: "**👤 A New User Has Started Your Bot!**\n\n**Bot:** {mention}\n**User:** {user_mention}\n**ID:** `{user_id}`"
-    no_access: "**🚫 Access Denied**\n\nContact {mention} to request access."
-    step1_api_id: "**🔐 1/3: Enter your API ID.**"
-    step2_api_hash: "**🔐 2/3: Enter your API Hash.**"
-    step3_bot_token: "**🤖 3/3: Enter your Bot Token.**"
-    verifying: "🔍 `Verifying...`"
-    invalid_token: "Invalid bot token."
-    saving: "✅ Bot '{name}' saved. `🚀 Starting...`"
-    success: "🎉 **Congratulations!** Bot **{name}** is active for **30 days**."
-    fail: "❌ **Error:** `{e}`"
-    main_bot_inactive: "Main bot is not active."
+    no_access: "**🚫 Access Denied**\n\nPlease contact {mention} to request bot creation access."
+    step1_api_id: "**🔐 1/3: Enter your API ID.**\nGet it from my.telegram.org."
+    step2_api_hash: "**🔐 2/3: Enter your API Hash.**\nGet it from my.telegram.org."
+    step3_bot_token: "**🤖 3/3: Enter your Bot Token.**\nGet it from @BotFather."
+    verifying: "🔍 `Verifying data & token...`"
+    invalid_token: "The bot token you entered is invalid."
+    saving: "✅ Bot '{name}' is valid and being saved. `🚀 Starting bot...`"
+    success: "🎉 **Congratulations!** Bot **{name}** has been created and is active for **30 days**."
+    fail: "❌ **Bot Creation Error:** `{e}`"
+    main_bot_inactive: "Main bot is currently inactive, unable to send notifications."
   my_bots:
-    empty: "You don't have any bots yet."
+    empty: "You don't have any bots yet. Press 'Create Bot' to start."
     panel: "**📦 My Bots List ({page}/{total})**\n\n• **Bot Name:** {bot_name}\n• **Bot ID:** `{bot_id}`\n• **Bot Username:** @{username}\n• **Expires In:** `{days_left}` days"
     manage_button: "⚙️ Manage {name}"
   manage:
@@ -142,85 +142,90 @@ bot_management:
     panel_owner: "**🔔 Duration Extension Request**\n\n**User:** {mention} (`{id}`)\n**Bot:** **{bot_name}** (`{bot_id}`)\n\nApprove to extend this bot's active period by 30 days."
     approve_button: "✅ Approve (+30 Days)"
     reject_button: "❌ Reject Request"
-    sent_alert: "✅ Extension request has been sent to the Main Owner."
+    sent_alert: "✅ Extension request has been sent to the Main Owner. You will be contacted if approved."
     fail_alert: "❌ Failed to send request to Owner: {e}"
-    approve_denied: "Only the Main Owner can approve."
+    approve_denied: "Only the Main Owner can approve this request."
     approve_success_log: "✅ **Approval Successful!**\nDuration for bot `{bot_id}` has been extended by **{days} days**."
-    approve_success_notif: "🎉 **Good News!**\n\nYour extension request for bot **{bot_name}** has been approved."
+    approve_success_notif: "🎉 **Good News!**\n\nYour extension request for bot **{bot_name}** has been approved and extended."
     approve_fail: "❌ Failed to approve request: `{e}`"
     reject_denied: "Only the Main Owner can do this."
-    rejected_log: "🚫 Request has been rejected/closed."
+    rejected_log: "🚫 Request has been rejected/closed by the Main Owner."
   delete:
-    confirm_panel: "**⚠️ Deletion Confirmation**\n\nAre you sure you want to permanently delete the bot **{name}** (`{id}`)?\n\n__This action cannot be undone.__"
-    confirm_yes_button: "✅ Yes, Delete"
-    confirm_no_button: "❌ No"
+    confirm_panel: "**⚠️ Deletion Confirmation**\n\nAre you sure you want to permanently delete the bot **{name}** (`{id}`)?\n\n__All data (members, packages, settings) for this bot will be lost and this action cannot be undone.__"
+    confirm_yes_button: "✅ Yes, I'm Sure, Delete"
+    confirm_no_button: "❌ No, Cancel"
     no_permission: "You are not authorized to delete this bot."
-    processing: "⏳ Deleting bot `{id}`..."
-    success: "✅ **Deletion Successful!**\nBot `{id}` has been deleted."
-    fail: "❌ An error occurred: `{e}`"
+    processing: "⏳ Stopping and deleting bot `{id}`..."
+    success: "✅ **Deletion Successful!**\nBot `{id}` and its data have been deleted from the system."
+    fail: "❌ An error occurred while deleting the bot: `{e}`"
 
 member:
   list:
-    empty: "✅ No VVIP members recorded."
-    panel: "**👥 VVIP Members List ({page}/{total})**\n\n**Name:** {mention}\n**ID:** `{id}`\n**Category:** `{category}` ({type})\n**Joined:** `{date}`\n**Duration:** `{duration}` days"
-    data_error: "Corrupt member data:\n`{e}`\n\nThis entry has been removed from the list."
+    empty: "✅ No VVIP members recorded in the database."
+    panel: "**👥 VVIP Members List ({page}/{total})**\n\n**Name:** {mention}\n**ID:** `{id}`\n**Category:** `{category}` ({type})\n**Joined:** `{date}`\n**Membership Duration:** `{duration}` days"
+    data_error: "This member's data seems corrupted or the user is no longer accessible.\n`Error: {e}`\n\nThis entry has been removed from the list to maintain data cleanliness."
     kick_button: "🚨 Kick {name}"
   kick:
-    confirm_panel: "**⚠️ Kick Confirmation**\n\nAre you sure you want to kick **{mention}** from VVIP **{name}**?\n\nTheir membership will be revoked."
+    confirm_panel: "**⚠️ Kick Confirmation**\n\nAre you sure you want to kick **{mention}** from the VVIP group **{name}**?\n\nThe user will be removed from the group and their membership data will be deleted."
     confirm_yes_button: "✅ Yes, Kick"
     confirm_no_button: "❌ No"
-    record_not_found: "❌ **Failed:** Membership record not found."
-    invalid_chat_id: "❌ **Failed:** Invalid Chat ID to kick the member."
-    processing: "⏳ `Kicking member from group...`"
-    success: "✅ **Success!**\nUser {mention} has been kicked from **{name}**."
+    record_not_found: "❌ **Failed:** Membership record not found in the database."
+    invalid_chat_id: "❌ **Failed:** Chat ID to kick the member is invalid or not set in the VVIP package."
+    processing: "⏳ `Processing member kick from the group...`"
+    success: "✅ **Success!**\nUser {mention} has been kicked from **{name}** and removed from the list."
     fail: "❌ **Failed to Kick:** `{e}`"
   active_list:
-    panel: "**🕵️ Check Active Members Real-time**\n\nSelect a group to check."
+    panel: "**🕵️ Check Active Members Real-time**\n\nSelect a group to check its current member list."
     button_normal: "👥 Check '{name}' Normal"
     button_promo: "👥 Check '{name}' Promo"
-    no_valid_chat_id: "No VVIP with a valid Chat ID is configured."
-    fetching: "⏳ Fetching member data from the group..."
-    fetch_fail: "❌ **Failed to Fetch Members:**\n`{e}`"
+    no_valid_chat_id: "No VVIP with a valid Chat ID is configured. Please set it up first."
+    fetching: "⏳ Fetching member data from Telegram servers, please wait..."
+    fetch_fail: "❌ **Failed to Fetch Member List:**\n`{e}`"
     empty: "No members (non-bots) found in this group."
     member_panel: "**🕵️ Active Member ({page}/{total})**\n\n**Name:** {mention}\n**ID:** `{id}`\n**Status:** `{status}`"
     kick_confirm_panel: "**⚠️ Confirmation**\n\nAre you sure you want to kick **{mention}** from the group?"
-    kick_confirm_yes_button: "✅ Yes"
-    kick_confirm_no_button: "❌ No"
-    kick_processing: "⏳ `Kicking user...`"
-    kick_success: "✅ **Success!**\nUser **{mention}** has been kicked."
+    kick_confirm_yes_button: "✅ Yes, Kick"
+    kick_confirm_no_button: "❌ No, Cancel"
+    kick_processing: "⏳ `Processing user kick...`"
+    kick_success: "✅ **Success!**\nUser **{mention}** has been kicked from the group."
 
 payment:
   notes:
-    not_found: "❌ VVIP not found."
-    pay_button: "💸 Pay Normal"
+    not_found: "❌ VVIP package not found."
+    pay_button: "💸 Pay Normal Price"
   promo:
-    not_found: "❌ Promo not found."
-    pay_button: "✅ Pay Promo"
+    not_found: "❌ Promo package not found or inactive."
+    pay_button: "✅ Pay Promo Price"
   pay:
-    service_inactive_panel: "⚠️ **Payment Service Inactive**"
+    service_inactive_panel: "⚠️ **Payment Service Inactive**\n\nPlease set up API Keys for the payment gateway first."
     service_inactive_alert: "Sorry, the payment service is currently unavailable."
     setup_api_button: "⚙️ Set Up API Keys"
-    not_found: "❌ VVIP no longer found."
-    invalid_price: "❌ The price for this package is invalid."
-    qr_fail: "Failed to download QRIS."
-    invoice_title: "✅ Payment Ready!"
-    invoice_prompt: "Please scan the QRIS above."
-    invoice_details_title: "Billing Details"
-    invoice_product: "🛍️ **Product:** VVIP {name} ({type})"
-    invoice_amount: "💳 **Amount:** `IDR {amount:,}`"
-    invoice_order_id: "🆔 **Order ID:** `{id}`"
-    invoice_expiry: "⏳ **IMPORTANT:** This invoice will expire in **15 minutes**."
+    not_found: "❌ This VVIP package is no longer found."
+    invalid_price: "❌ The price for this package is invalid (0 or less)."
+    qr_fail: "Failed to download the QRIS image."
+    invoice_full: |
+      **✅ Payment Ready!**
+
+      Please scan the QRIS above to make the payment.
+
+      ╭─ **Billing Details**
+      │
+      ├─ 🛍️ **Product:** VVIP {name} ({type})
+      ├─ 💳 **Amount:** `IDR {amount}`
+      ├─ 🆔 **Order ID:** `{id}`
+      │
+      ╰─ ⏳ **IMPORTANT:** This invoice will expire in **15 minutes**.
   check:
-    category_missing: "VVIP category '{name}' was not found. Payment was successful, but the link could not be delivered."
-    success_customer_msg: "🎉 **Payment Confirmed!**\n\nVVIP Access Link for **{name}**: {link}"
+    category_missing: "VVIP category '{name}' is no longer found in the database. Payment was successful, but the group link could not be delivered. Please contact the admin."
+    success_customer_full: "🎉 **Payment Confirmed!**\n\nThank you, here is your access link for the **{name}** package:\n\n{link}"
     success_owner_notif: "💰 **New Income!**\n\n**User:** {mention}\n**Bot:** {bot_mention}\n**Category:** `{name}` ({type})"
-    expired_msg: "⌛ **Invoice Expired.**\nOrder ID `{id}` has been canceled."
+    expired_msg: "⌛ **Invoice Expired.**\nOrder ID `{id}` has been canceled due to exceeding the payment time limit."
   donation:
     invoice_title: "Donation for Bot Development"
     invoice_desc: "Your support of {stars} Stars is greatly appreciated. Thank you!"
     invalid_amount: "Invalid donation amount!"
-    preparing: "Preparing donation..."
-    invoice_fail: "Failed to create invoice. Please try again later."
+    preparing: "Preparing donation invoice..."
+    invoice_fail: "Failed to create donation invoice. Please try again later."
     success_msg: "🎉 **Thank You So Much, {name}!**\n\nWe have received your donation of **{stars} Stars (⭐)**.\nYour support is the fuel for our passion. Have a great day!"
     owner_notif: "**✨ New Donation Received!**\n\n**Amount:** `{stars}` Stars (⭐)\n**From:** {mention} (`{id}`)\n**Via Bot:** {bot_mention}"
     refund_button: "🔙 Refund Donation"
@@ -230,18 +235,18 @@ payment:
       ╭─ **✨ VVIP Package Details**
       │
       ├─ 📂 **Package Name:** `{name}`
-      ├─ 📝 **Description:** Exclusive premium content awaits you. Get instant access after payment.
+      ├─ 📝 **Description:** Get instant access to premium and exclusive content after a successful payment.
       │
-      ├─ 💳 **Normal Price:** `IDR {price:,}`
+      ├─ 💳 **Normal Price:** `IDR {price}`
       │
-      ╰─ Just click the 'Pay' button below to get started!
+      ╰─ Please click the 'Pay' button below to proceed!
     promo_text: |
       ╭─ **🎉 Limited Special Offer!**
       │
       ├─ 📂 **Package Name:** `{name}`
-      ├─ 📝 **Description:** A golden opportunity to join at a special price! Don't miss this exciting promo.
+      ├─ 📝 **Description:** Don't miss this golden opportunity to join at a much more affordable price!
       │
-      ├─ 💰 **Promo Price:** `IDR {promo_price:,}`
+      ├─ 💰 **Promo Price:** `IDR {promo_price}`
       │
       ╰─ Secure your spot now before the promo ends!
 
@@ -260,41 +265,41 @@ settings:
   set_photo_prompt: "🖼️ **Set Start Photo**\n\nPlease send the new photo you want to use as the image in the /start message.\n\nType `/empty` to remove the current photo and revert to default."
   set_photo_fail: "❌ **Failed:** The message sent is not a photo. Process canceled."
   set_photo_success: "✅ **Success!** The /start photo has been updated."
-  photo_emptied: "✅ **Success!** The /start photo has been removed."
+  photo_emptied: "✅ **Success!** The /start photo has been removed and will revert to default."
   
-  set_text_prompt: "✍️ **Set Start Text**\n\nPlease send the new text for the /start message. You can use the `{mention}` variable to greet users.\n\n**Example:** `Hello {mention}, welcome!`\n\nType `/empty` to remove the custom text and revert to default."
-  set_text_fail: "❌ **Failed:** The message sent does not contain text."
+  set_text_prompt: "✍️ **Set Start Text**\n\nPlease send the new text for the /start message. You can use the `{mention}` variable to greet users.\n\n**Example:** `Hello {mention}, welcome to my bot!`\n\nType `/empty` to remove the custom text and revert to default."
+  set_text_fail: "❌ **Failed:** The message sent does not contain text. Process canceled."
   set_text_success: "✅ **Success!** The /start text has been updated."
-  text_emptied: "✅ **Success!** The /start text has been removed."
+  text_emptied: "✅ **Success!** The /start text has been removed and will revert to default."
 
-  broadcast_prompt: "**📢 Send Broadcast Message**\n\nPlease forward or send the message you want to broadcast to all bot users."
+  broadcast_prompt: "**📢 Send Broadcast Message**\n\nPlease forward or send the message you want to broadcast to all users who have started this bot. You can use format buttons."
   broadcast_no_users: "❌ **Failed:** There are no users to broadcast to."
   broadcast_start: "✅ Starting broadcast to `{count}` users..."
-  broadcast_done: "**📢 Broadcast Finished!**\n✔️ **Sent:** `{success}`\n❌ **Failed:** `{fail}` (have been removed from the database)"
+  broadcast_done: "**📢 Broadcast Finished!**\n✔️ **Sent:** `{success}`\n❌ **Failed:** `{fail}` (failed users have been removed from the database)"
 
   setup_vvip:
-    step1_name: "**✍️ Step 1/6: Category Name**\n(e.g., `Monthly VVIP`)"
-    step2_price: "**💰 Step 2/6: Normal Price**\n(e.g., `50000`)"
-    step3_link: "**🔗 Step 3/6: Normal Group Link**"
-    step4_chat_id: "**🆔 Step 4/6: Normal Group Chat ID**"
-    step5_promo_price: "**🎉 Step 5/6: Promo Price**\n(send `0` if no promo)"
-    step6_promo_link: "**🔗 Send Promo Group Link**"
-    step7_promo_chat_id: "**🆔 Send Promo Group Chat ID**"
-    step8_promo_text: "**📝 Send Promo Description Text**"
-    step9_normal_text: "**📝 Step 6/6: Normal Description Text**"
+    step1_name: "**✍️ Step 1/9: Category Name**\nExample: `Monthly VVIP`"
+    step2_price: "**💰 Step 2/9: Normal Price**\nExample: `50000` (without dots or commas)"
+    step3_link: "**🔗 Step 3/9: Normal Group Link**\nExample: `https://t.me/+AbcdeFghij`"
+    step4_chat_id: "**🆔 Step 4/9: Normal Group Chat ID**\nExample: `-100123456789`"
+    step5_promo_price: "**🎉 Step 5/9: Promo Price**\nSend `0` if there is no promo price."
+    step6_promo_link: "**🔗 Step 6/9: Promo Group Link**\nFill in if Promo Price > 0."
+    step7_promo_chat_id: "**🆔 Step 7/9: Promo Group Chat ID**\nFill in if Promo Price > 0."
+    step8_promo_text: "**📝 Step 8/9: Promo Description Text**\nUse `{name}` and `{promo_price}`."
+    step9_normal_text: "**📝 Step 9/9: Normal Description Text**\nUse `{name}` and `{price}`."
     err_must_be_number: "Input must be a number."
-    err_must_be_link: "Input must be a valid link."
-    err_must_be_chat_id: "Input must be a numeric chat ID."
+    err_must_be_link: "Input must be a valid link (starting with http/https)."
+    err_must_be_chat_id: "Input must be a numeric chat ID (usually starts with -100)."
     success: "✅ **Success!**\nVVIP package **{name}** has been added."
-    cancelled: "🚫 Setup canceled by user."
+    cancelled: "🚫 VVIP package setup canceled by user."
 
-  delete_vvip_panel: "**🗑️ Delete VVIP Package**\n\nSelect the VVIP package you want to delete."
+  delete_vvip_panel: "**🗑️ Delete VVIP Package**\n\nSelect the VVIP package you want to delete from the list."
   delete_vvip_empty: "✅ Great! There are no VVIP packages to delete."
   delete_vvip_button: "🗑️ Delete {name}"
   delete_vvip_success: "✅ **Success!** Package **{name}** has been deleted."
   delete_vvip_fail: "❌ **Failed!** Package **{name}** is no longer found."
   
-  api_panel: "**🔑 API Key Manager for {mention}**\n\nSet up APIs for third-party services.\n\n**Status:**\n- `Payment Gateway (Violet)`: **{violet_status}**\n- `AI Assistant (Gemini)`: **{gemini_status}**\n\nSelect an action:"
+  api_panel: "**🔑 API Key Manager for {mention}**\n\nSet up API keys for third-party services to enable payment and AI features.\n\n**Service Status:**\n- `Payment Gateway (Violet)`: **{violet_status}**\n- `AI Assistant (Gemini)`: **{gemini_status}**\n\nSelect an action:"
   api_status_active: "✅ Active"
   api_status_inactive: "❌ Not Set"
   api_set_violet: "💳 Set Violet Keys"
@@ -303,11 +308,11 @@ settings:
   api_set_violet_1: "**1/2:** Send your **VIOLET_API_KEY**."
   api_set_violet_2: "**2/2:** Send your **VIOLET_SECRET_KEY**."
   api_set_gemini_prompt: "🔑 Send your **{key_name}**."
-  api_set_success: "✅ **Success!**\nThe key for `{key_name}` has been saved."
-  api_del_confirm_panel: "**⚠️ Confirmation**\n\nAre you sure you want to delete **ALL** API keys for this bot?"
-  api_del_confirm_yes_button: "✅ Yes, Delete"
-  api_del_confirm_no_button: "❌ No"
-  api_del_success: "✅ All API keys for this bot have been deleted."
+  api_set_success: "✅ **Success!**\nThe key for `{key_name}` has been saved and the related service has been enabled."
+  api_del_confirm_panel: "**⚠️ Confirmation**\n\nAre you sure you want to delete **ALL** API keys (Violet & Gemini) for this bot?"
+  api_del_confirm_yes_button: "✅ Yes, Delete All"
+  api_del_confirm_no_button: "❌ No, Cancel"
+  api_del_success: "✅ All API keys for this bot have been successfully deleted."
   
 stats:
   panel: "**📊 Stars Revenue Statistics**\n\n💰 **Current Balance:** `{balance}` ⭐\n📈 **Total Income:** `{income}` ⭐\n📉 **Total Refunds:** `{refunds}` ⭐\n🔄 **Total Transactions (Shown):** `{count}`\n\n**📜 Recent Transactions ({page}/{total_pages})**\n{transactions}"
