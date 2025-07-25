@@ -219,7 +219,7 @@ async def successful_donation_handler(client, message):
     # --- PERBAIKAN 1: Pesan untuk pengguna diganti menjadi satu kunci ---
     await client.send_message(
         chat_id=user.id,
-        text=lang.get('payment.donation.success_msg', name=user.first_name, stars=stars_donated),
+        text=lang.get("payment.donation.success_msg", name=user.first_name, stars=stars_donated),
     )
 
     owner_of_this_bot = ctx.db.getVars(current_bot_id, "owner_id") or super_admin_id
@@ -227,11 +227,11 @@ async def successful_donation_handler(client, message):
 
     try:
         notification_text = lang.get(
-            'payment.donation.owner_notif',
+            "payment.donation.owner_notif",
             stars=stars_donated,
             mention=client.ns.arg.getMention(user),
             id=user.id,
-            bot_mention=client.me.mention
+            bot_mention=client.me.mention,
         )
 
         refund_key = uuid.uuid4().hex[:16]
