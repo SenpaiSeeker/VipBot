@@ -118,7 +118,7 @@ async def manage_access_callback(client, callback_query):
     lang = callback_query.lang
     action, target_id_str = callback_query.data.split(" ", 1)
     target_id = int(target_id_str.strip())
-    access_list = ctx.db.getListVars(ctx.owner_id, "create_bot_access") or []
+    access_list = ctx.db.getListVars(client.me.id, "create_bot_access") or []
 
     if action == "give_access":
         if target_id not in access_list:
