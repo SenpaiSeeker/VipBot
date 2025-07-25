@@ -5,7 +5,7 @@ from . import *
 async def create_bot_callback(client, callback_query):
     user_id = callback_query.from_user.id
     lang = callback_query.lang
-    access_list = ctx.db.getListVars(ctx.owner_id, "create_bot_access") or []
+    access_list = ctx.db.getListVars(client.me.id, "create_bot_access") or []
 
     if user_id != ctx.owner_id and user_id not in access_list:
         owner_user = await client.get_users(ctx.owner_id)
@@ -49,7 +49,7 @@ async def create_bot_callback(client, callback_query):
         ctx.db.setVars(new_bot_id, "owner_id", user_id)
 
         if user_id != ctx.owner_id:
-            ctx.db.removeListVars(ctx.owner_id, "create_bot_access", user_id)
+            ctx.db.removeListVars(client.me.id, "create_bot_access", user_id)
 
         await msg.edit(lang.get("bot_management.create.saving", name=new_bot_name))
         bot_data = {
