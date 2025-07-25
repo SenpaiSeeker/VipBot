@@ -122,7 +122,14 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
             except pyrogram.errors.MessageNotModified:
                 ctx.log.print(f"{ctx.log.YELLOW}Caught MessageNotModified in handler '{original_func.__name__}'")
                 if isinstance(u, pyrogram.types.CallbackQuery):
-                    await u.answer()
+                    await u.answer("MessageNotModified")
+            except pyrogram.errors.MessageDeleteForbidden:
+                ctx.log.print(
+                    f"{ctx.log.YELLOW}Gagal menghapus pesan di handler '{original_func.__name__}'. "
+                    f"Pesan mungkin sudah lama atau bot tidak punya izin. Mengabaikan error."
+                )
+            except Exception as e:
+                ctx.log.print(f"{ctx.log.YELLOW}{e}")
 
         wrapped_func = partial(handler_wrapper, func)
 
