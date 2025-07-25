@@ -43,6 +43,7 @@ lang:
   selected: "✅ Bahasa telah diubah ke Bahasa Indonesia."
   button_en: "🇬🇧 English"
   button_id: "🇮🇩 Indonesian"
+  button_ja: "🇯🇵 Jepang"
 
 vvip_list:
   empty: "🗂️ Saat ini belum ada paket VVIP yang tersedia."
