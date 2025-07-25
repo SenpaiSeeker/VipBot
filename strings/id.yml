@@ -107,6 +107,7 @@ admin:
     unknown: "Tidak diketahui"
     prev_button: "« Sebelumnya"
     next_button: "Selanjutnya »"
+    days: "hari"
   refund:
     no_permission: "🚫 Anda tidak memiliki izin untuk melakukan ini."
     fail_not_found: "\n\n**⚠️ Gagal: Transaksi tidak ditemukan atau sudah di-refund.**"
