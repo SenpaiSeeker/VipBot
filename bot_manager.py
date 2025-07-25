@@ -111,7 +111,7 @@ class BotManager:
                         log.print(f"{log.YELLOW}Bot {bot_id} telah dihapus karena kedaluwarsa.")
                         continue
 
-                    target_warning_days = [10, 5, 3]
+                    target_warning_days = [10, 5, 3, 1]
                     if days_left in target_warning_days:
                         last_notif_date_key = "last_warning_notification_date"
                         last_notif_date_str = self.db.getVars(bot_id, last_notif_date_key)
