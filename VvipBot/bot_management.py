@@ -142,7 +142,7 @@ async def manage_bot_callback(client, callback_query):
         pass
 
     exp_date_str = ctx.db.getVars(bot_id_to_manage, "bot_expiration_date")
-    days_left_text = lang.get('bot_management.manage.not_set')
+    days_left_text = lang.get("bot_management.manage.not_set")
     if exp_date_str:
         days_left = (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days
         # Menggunakan kunci bahasa 'days' dari admin.allbots
@@ -154,12 +154,7 @@ async def manage_bot_callback(client, callback_query):
         f"| {lang.get('general.back_to_bot_list')} - list_my_bots_0 |"
     )
     # Menggunakan kunci bahasa 'expires_in' dari bot_management.my_bots
-    text = lang.get(
-        "bot_management.manage.panel",
-        name=bot_name,
-        id=bot_id_to_manage,
-        days_left=days_left_text
-    )
+    text = lang.get("bot_management.manage.panel", name=bot_name, id=bot_id_to_manage, days_left=days_left_text)
     btn, txt = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
@@ -193,7 +188,7 @@ async def request_extend_duration_callback(client, callback_query):
             mention=main_bot_client.ns.arg.getMention(requester),
             id=requester.id,
             bot_name=bot_name,
-            bot_id=bot_id_to_request
+            bot_id=bot_id_to_request,
         )
 
         btn_owner_text = (
