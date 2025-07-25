@@ -122,11 +122,11 @@ async def manage_access_callback(client, callback_query):
 
     if action == "give_access":
         if target_id not in access_list:
-            ctx.db.setListVars(ctx.owner_id, "create_bot_access", target_id)
+            ctx.db.setListVars(client.me.id, "create_bot_access", target_id)
         await callback_query.answer(lang.get("admin.access.give_success_alert", target_id=target_id), show_alert=True)
     elif action == "revoke_access":
         if target_id in access_list:
-            ctx.db.removeListVars(ctx.owner_id, "create_bot_access", target_id)
+            ctx.db.removeListVars(client.me.id, "create_bot_access", target_id)
         await callback_query.answer(lang.get("admin.access.revoke_success_alert", target_id=target_id), show_alert=True)
 
     await callback_query.message.delete()
