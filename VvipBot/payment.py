@@ -216,7 +216,6 @@ async def successful_donation_handler(client, message):
     current_bot_id = client.me.id
     super_admin_id = ctx.owner_id
 
-    # --- PERBAIKAN 1: Pesan untuk pengguna diganti menjadi satu kunci ---
     await client.send_message(
         chat_id=user.id,
         text=lang.get("payment.donation.success_msg", name=user.first_name, stars=stars_donated),
