@@ -298,7 +298,7 @@ async def show_stars_stats(client, callback_query):
         if not transactions_history:
             text = lang.get("stats.no_transactions")
             btn_text = f"| {lang.get('general.back_to_settings')} - settings |"
-            btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+            btn, txt = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
             if callback_query.message.photo:
                 return await callback_query.edit_message_caption(txt, reply_markup=btn)
             return await callback_query.edit_message_text(txt, reply_markup=btn)
@@ -359,11 +359,11 @@ async def show_stars_stats(client, callback_query):
 
         btn_text += f"| {lang.get('general.back_to_settings')} - settings |"
 
-        btn, _ = client.ns.button.create_keyboard(btn_text)
+        btn, txt = client.ns.button.create_keyboard(btn_text)
         if callback_query.message.photo:
-            await callback_query.edit_message_caption(text, reply_markup=btn)
+            await callback_query.edit_message_caption(txt, reply_markup=btn)
         else:
-            await callback_query.edit_message_text(text, reply_markup=btn)
+            await callback_query.edit_message_text(txt, reply_markup=btn)
 
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED} Error fetching stars stats: {e}\n{traceback.format_exc()}")
