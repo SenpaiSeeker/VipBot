@@ -107,6 +107,7 @@ admin:
     unknown: "Unknown"
     prev_button: "« Previous"
     next_button: "Next »"
+    days: "days"
   refund:
     no_permission: "🚫 You do not have permission to do this."
     fail_not_found: "\n\n**⚠️ Failed: Transaction not found or already refunded.**"
