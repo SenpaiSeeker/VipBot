@@ -76,11 +76,14 @@ async def about_bot_callback(client, callback_query):
 async def set_lang_callback(client, callback_query):
     lang = callback_query.lang
     text = lang.get("lang.select")
+    
     btn_text = (
         f"| {lang.get('lang.button_id')} - chg_lang_id |\n"
         f"| {lang.get('lang.button_en')} - chg_lang_en;same |\n"
+        f"| {lang.get('lang.button_ja')} - chg_lang_ja |\n"
         f"| {lang.get('general.back_to_main_menu')} - start |"
     )
+    
     btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
 
     if callback_query.message.photo:
@@ -89,7 +92,7 @@ async def set_lang_callback(client, callback_query):
         await callback_query.edit_message_text(text, reply_markup=btn)
 
 
-@command(lambda ctx: filters.regex(r"^chg_lang_(id|en)$"), handler_type="callback")
+@command(lambda ctx: filters.regex(r"^chg_lang_(id|en|ja)$"), handler_type="callback")
 async def change_lang_callback(client, callback_query):
     lang_code = callback_query.data.split("_")[-1]
     ctx.db.setVars(callback_query.from_user.id, "language", lang_code, var_key="user_info")
