@@ -69,19 +69,84 @@ class BotManager:
         while True:
             await asyncio.sleep(3600)
             log.print(f"{log.CYAN}Menjalankan pemeriksaan masa aktif bot...")
-            all_bot_ids = [bot["name"] for bot in self.db.getBots(is_token=True)]
+
+            all_bot_ids = [
+                bot["name"] for bot in self.db.getBots(is_token=True) if int(bot["name"]) != self.main_bot_id
+            ]
+
             for bot_id_str in all_bot_ids:
                 bot_id = int(bot_id_str)
                 try:
                     expiry_date_str = self.db.getVars(bot_id, "bot_expiration_date")
                     if not expiry_date_str:
                         continue
+
                     expiry_date = datetime.fromisoformat(expiry_date_str)
-                    if datetime.now(timezone.utc) > expiry_date:
+                    time_remaining = expiry_date - datetime.now(timezone.utc)
+                    days_left = time_remaining.days
+
+                    owner_id = self.db.getVars(bot_id, "owner_id")
+                    if not owner_id:
+                        continue
+
+                    main_client = self.main_bot_client
+                    if not main_client:
+                        continue
+
+                    if days_left < 0:
                         log.print(f"{log.ORANGE}Masa aktif bot {bot_id} telah habis. Menghapus bot...")
+                        try:
+                            bot_instance = self.running_bots.get(bot_id)
+                            bot_name = (
+                                bot_instance.me.first_name
+                                if bot_instance and bot_instance.is_connected
+                                else f"ID {bot_id}"
+                            )
+                            expired_message = f"Masa aktif bot Anda **{bot_name}** sudah habis."
+                            await main_client.send_message(owner_id, expired_message)
+                        except Exception as e:
+                            log.print(f"{log.RED}Gagal mengirim notifikasi kedaluwarsa ke owner {owner_id}: {e}")
+
                         await self.stop_bot(bot_id)
                         self.db.removeBot(bot_id)
                         self.db.removeAllVars(bot_id)
                         log.print(f"{log.YELLOW}Bot {bot_id} telah dihapus karena kedaluwarsa.")
+                        continue
+
+                    if 0 <= days_left <= 10:
+                        warning_sent_key = "expiry_warning_sent"
+                        if not self.db.getVars(bot_id, warning_sent_key):
+                            try:
+                                owner_user = await main_client.get_users(owner_id)
+                                mention_owner = main_client.ns.arg.getMention(owner_user)
+
+                                bot_instance = self.running_bots.get(bot_id)
+                                bot_name = (
+                                    bot_instance.me.first_name
+                                    if bot_instance and bot_instance.is_connected
+                                    else f"ID {bot_id}"
+                                )
+
+                                warning_message = (
+                                    f"🔔 **Notifikasi Masa Aktif** 🔔\n\n"
+                                    f"Halo {mention_owner},\n"
+                                    f"Masa aktif bot Anda (**{bot_name}**) tinggal **{days_left} hari** lagi.\n\n"
+                                    "Silakan hubungi @NorSodikin jika mau diperpanjang."
+                                )
+
+                                await main_client.send_message(owner_id, warning_message)
+                                self.db.setVars(bot_id, warning_sent_key, True)
+                                log.print(
+                                    f"{log.CYAN}Mengirim notifikasi sisa {days_left} hari ke owner {owner_id} untuk bot {bot_id}"
+                                )
+                            except Exception as e:
+                                log.print(f"{log.RED}Gagal mengirim notifikasi perpanjangan ke owner {owner_id}: {e}")
+
+                    elif days_left > 10:
+                        warning_sent_key = "expiry_warning_sent"
+                        if self.db.getVars(bot_id, warning_sent_key):
+                            self.db.removeVars(bot_id, warning_sent_key)
+                            log.print(f"{log.GREEN}Mereset flag notifikasi perpanjangan untuk bot {bot_id}.")
+
                 except Exception as e:
                     log.print(f"{log.RED}Error saat memeriksa masa aktif bot {bot_id}: {e}")
