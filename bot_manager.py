@@ -70,9 +70,7 @@ class BotManager:
             await asyncio.sleep(3600)
             log.print(f"{log.CYAN}Menjalankan pemeriksaan masa aktif bot...")
 
-            all_bot_ids = [
-                bot["name"] for bot in self.db.getBots(is_token=True)
-            ]
+            all_bot_ids = [bot["name"] for bot in self.db.getBots(is_token=True)]
 
             for bot_id_str in all_bot_ids:
                 bot_id = int(bot_id_str)
