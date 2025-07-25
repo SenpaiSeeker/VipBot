@@ -138,9 +138,7 @@ async def manage_bot_callback(client, callback_query):
     exp_date_str = ctx.db.getVars(bot_id_to_manage, "bot_expiration_date")
     days_left_text = lang.get("bot_management.manage.not_set")
     if exp_date_str:
-        days_left_text = (
-            f"{(datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days} {lang.get('admin.allbots.days')}"
-        )
+        days_left_text = f"{(datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days} {lang.get('admin.allbots.days')}"
 
     btn_text = (
         f"| {lang.get('bot_management.manage.extend_button')} - request_extend_duration {bot_id_to_manage} |\n"
@@ -231,7 +229,9 @@ async def owner_approve_extension_callback(client, callback_query):
 
         try:
             bot_instance = ctx.manager.running_bots.get(bot_id_to_extend)
-            bot_name = bot_instance.me.first_name if bot_instance and bot_instance.is_connected else f"ID {bot_id_to_extend}"
+            bot_name = (
+                bot_instance.me.first_name if bot_instance and bot_instance.is_connected else f"ID {bot_id_to_extend}"
+            )
             await client.send_message(
                 requester_id,
                 lang.get("bot_management.extend.approve_success_notif", bot_name=bot_name),

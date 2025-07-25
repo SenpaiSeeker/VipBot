@@ -145,7 +145,9 @@ async def extend_command_handler(client, message):
         new_exp_date = current_exp_date + timedelta(days=days_to_add)
         ctx.db.setVars(bot_id, "bot_expiration_date", new_exp_date.isoformat())
 
-        await message.reply_text(lang.get("admin.extend.success", bot_id=bot_id, new_date=new_exp_date.strftime("%d %b %Y")))
+        await message.reply_text(
+            lang.get("admin.extend.success", bot_id=bot_id, new_date=new_exp_date.strftime("%d %b %Y"))
+        )
 
         owner_bot_id = ctx.db.getVars(bot_id, "owner_id")
         if owner_bot_id:
@@ -249,7 +251,9 @@ async def refund_stars_callback(client, callback_query):
         refund_data = ctx.db.getVars(client.me.id, db_key)
 
         if not refund_data:
-            return await callback_query.edit_message_text(callback_query.message.text + lang.get("admin.refund.fail_not_found"))
+            return await callback_query.edit_message_text(
+                callback_query.message.text + lang.get("admin.refund.fail_not_found")
+            )
 
         user_id_to_refund = refund_data["user_id"]
         charge_id = refund_data["charge_id"]
@@ -285,7 +289,9 @@ async def show_stars_stats(client, callback_query):
 
         peer = await client.resolve_peer(client.me.id)
 
-        raw_result = await client.invoke(pyrogram.raw.functions.payments.GetStarsTransactions(peer=peer, offset="", limit=100))
+        raw_result = await client.invoke(
+            pyrogram.raw.functions.payments.GetStarsTransactions(peer=peer, offset="", limit=100)
+        )
 
         transactions_history = raw_result.history if hasattr(raw_result, "history") else []
 

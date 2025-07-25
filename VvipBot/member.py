@@ -48,7 +48,9 @@ async def list_members_callback(client, callback_query):
         f"**{lang.get('member.list.duration')}:** `{duration_days}` {lang.get('admin.allbots.days')}"
     )
 
-    btn_text = f"| {lang.get('member.list.kick_button', name=user.first_name or user.id)} - kick_{user.id}_{vvip_name} |\n"
+    btn_text = (
+        f"| {lang.get('member.list.kick_button', name=user.first_name or user.id)} - kick_{user.id}_{vvip_name} |\n"
+    )
     if total_pages > 1:
         prev_page, next_page = (
             (page - 1 + total_pages) % total_pages,
@@ -79,7 +81,9 @@ async def confirm_kick_member_callback(client, callback_query):
     )
     btn_text = f"| {lang.get('member.kick.confirm_yes_button')} - do_kick_{user_id_str}_{vvip_name} | | {lang.get('member.kick.confirm_no_button')} - list_members_0 |"
 
-    btn, txt = client.ns.button.create_keyboard(f"**{lang.get('member.kick.confirm_title')}**\n\n{prompt}\n\n{btn_text}")
+    btn, txt = client.ns.button.create_keyboard(
+        f"**{lang.get('member.kick.confirm_title')}**\n\n{prompt}\n\n{btn_text}"
+    )
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
@@ -141,13 +145,19 @@ async def check_active_menu_callback(client, callback_query):
             item.get("chat_id_promo"),
         )
         if name and chat_id_norm:
-            btn_text += f"| {lang.get('member.active_list.button_normal', name=name)} - list_active_{chat_id_norm}_0 |\n"
+            btn_text += (
+                f"| {lang.get('member.active_list.button_normal', name=name)} - list_active_{chat_id_norm}_0 |\n"
+            )
         if name and chat_id_promo:
-            btn_text += f"| {lang.get('member.active_list.button_promo', name=name)} - list_active_{chat_id_promo}_0;same |\n"
+            btn_text += (
+                f"| {lang.get('member.active_list.button_promo', name=name)} - list_active_{chat_id_promo}_0;same |\n"
+            )
 
     back_btn_text = f"| {lang.get('general.back_to_settings')} - settings |"
     if not btn_text:
-        btn, txt = client.ns.button.create_keyboard(f"{lang.get('member.active_list.no_valid_chat_id')}\n\n{back_btn_text}")
+        btn, txt = client.ns.button.create_keyboard(
+            f"{lang.get('member.active_list.no_valid_chat_id')}\n\n{back_btn_text}"
+        )
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(txt, reply_markup=btn)
         return await callback_query.edit_message_text(txt, reply_markup=btn)

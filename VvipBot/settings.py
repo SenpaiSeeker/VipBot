@@ -178,25 +178,35 @@ async def setup_listvvip(client, callback_query):
         vvip_data = {}
         vvip_data["name"] = validate(await ask(lang.get("settings.setup_vvip.step1_name")), lambda t: True, "")
         vvip_data["price"] = int(
-            validate(await ask(lang.get("settings.setup_vvip.step2_price")), is_digit, "settings.setup_vvip.err_must_be_number")
+            validate(
+                await ask(lang.get("settings.setup_vvip.step2_price")),
+                is_digit,
+                "settings.setup_vvip.err_must_be_number",
+            )
         )
         vvip_data["group_link"] = validate(
             await ask(lang.get("settings.setup_vvip.step3_link")), is_link, "settings.setup_vvip.err_must_be_link"
         )
         vvip_data["chat_id_normal"] = int(
             validate(
-                await ask(lang.get("settings.setup_vvip.step4_chat_id")), is_chatid, "settings.setup_vvip.err_must_be_chat_id"
+                await ask(lang.get("settings.setup_vvip.step4_chat_id")),
+                is_chatid,
+                "settings.setup_vvip.err_must_be_chat_id",
             )
         )
         vvip_data["promo_price"] = int(
             validate(
-                await ask(lang.get("settings.setup_vvip.step5_promo_price")), is_digit, "settings.setup_vvip.err_must_be_number"
+                await ask(lang.get("settings.setup_vvip.step5_promo_price")),
+                is_digit,
+                "settings.setup_vvip.err_must_be_number",
             )
         )
 
         if vvip_data["promo_price"] > 0:
             vvip_data["promo_link"] = validate(
-                await ask(lang.get("settings.setup_vvip.step6_promo_link")), is_link, "settings.setup_vvip.err_must_be_link"
+                await ask(lang.get("settings.setup_vvip.step6_promo_link")),
+                is_link,
+                "settings.setup_vvip.err_must_be_link",
             )
             vvip_data["chat_id_promo"] = int(
                 validate(
@@ -309,7 +319,9 @@ async def api_settings_callback(client, callback_query):
         f"| {lang.get('general.back_to_settings')} - settings |"
     )
 
-    text = lang.get("settings.api_panel", mention=client.me.mention, violet_status=violet_status, gemini_status=gemini_status)
+    text = lang.get(
+        "settings.api_panel", mention=client.me.mention, violet_status=violet_status, gemini_status=gemini_status
+    )
     btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
 
     if callback_query.message.photo:
@@ -356,7 +368,9 @@ async def set_api_key_prompt(client, callback_query):
 
         initialize_bot_services(client, ctx.db)
 
-        await client.send_message(chat_id, lang.get("settings.api_set_success", key_name=key_name), reply_markup=back_btn)
+        await client.send_message(
+            chat_id, lang.get("settings.api_set_success", key_name=key_name), reply_markup=back_btn
+        )
 
     except nsdev.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"), reply_markup=back_btn)

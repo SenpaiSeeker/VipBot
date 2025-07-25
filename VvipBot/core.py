@@ -23,8 +23,12 @@ async def get_start_keyboard_and_content(client, user):
     if is_owner:
         button_rows.append(f"| {lang.get('start.settings_panel')} - settings |")
 
-    button_rows.append(f"| {lang.get('start.list_vvip')} - list_vvip | | {lang.get('start.donate')} - donate_stars;same |")
-    button_rows.append(f"| {lang.get('start.about_bot')} - about_bot | | {lang.get('start.ai_feature')} - gemini_ai;same |")
+    button_rows.append(
+        f"| {lang.get('start.list_vvip')} - list_vvip | | {lang.get('start.donate')} - donate_stars;same |"
+    )
+    button_rows.append(
+        f"| {lang.get('start.about_bot')} - about_bot | | {lang.get('start.ai_feature')} - gemini_ai;same |"
+    )
     button_rows.append(f"| {lang.get('start.language')} - set_lang |")
 
     btn_list_str = "\n".join(button_rows)
@@ -146,7 +150,9 @@ async def gemini_bot_ai(client, callback_query):
     if not gemini_service:
         if await is_bot_owner(client, callback_query.from_user.id):
             text = lang.get("ai.disabled")
-            btn_text = f"| {lang.get('ai.setup_button')} - api_settings | | {lang.get('general.back_to_main_menu')} - start |"
+            btn_text = (
+                f"| {lang.get('ai.setup_button')} - api_settings | | {lang.get('general.back_to_main_menu')} - start |"
+            )
             btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
             if callback_query.message.photo:
                 return await callback_query.edit_message_caption(text, reply_markup=btn)
@@ -184,7 +190,9 @@ async def gemini_bot_ai(client, callback_query):
                 btn_text = f"| {lang.get('ai.khodam_try_again_button')} - khodam | | {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |"
                 btn, _ = client.ns.button.create_keyboard(btn_text)
 
-                await msg.edit(lang.get("ai.khodam_result_title", name=ask_msg.text, result=response_text), reply_markup=btn)
+                await msg.edit(
+                    lang.get("ai.khodam_result_title", name=ask_msg.text, result=response_text), reply_markup=btn
+                )
 
             elif mode == "chatbot":
                 vvip_list = ctx.db.getListVars(client.me.id, "list_vvip") or []
