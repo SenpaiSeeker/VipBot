@@ -97,8 +97,6 @@ async def list_my_bots_callback(client, callback_query):
     exp_date_str = ctx.db.getVars(bot_id, "bot_expiration_date")
     days_left = (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days if exp_date_str else "N/A"
 
-    # --- PERBAIKAN DI SINI ---
-    # Menggunakan satu kunci bahasa 'panel' yang sudah berisi semua format teks.
     text = lang.get(
         "bot_management.my_bots.panel",
         page=page + 1,
