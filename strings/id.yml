@@ -203,18 +203,13 @@ payment:
     not_found: "❌ VVIP tidak ditemukan lagi."
     invalid_price: "❌ Harga untuk paket ini tidak valid."
     qr_fail: "Gagal mengunduh QRIS."
-    invoice: |
-      **✅ Pembayaran Siap Dilakukan!**
-
-      Silakan scan QRIS di atas.
-
-      ╭─ **Detail Tagihan**
-      │
-      ├─ 🛍️ **Produk:** VVIP {name} ({type})
-      ├─ 💳 **Jumlah:** `Rp {amount:,}`
-      ├─ 🆔 **Order ID:** `{id}`
-      │
-      ╰─ ⏳ **PENTING:** Invoice ini akan kedaluwarsa dalam **15 menit**.
+    invoice_title: "✅ Pembayaran Siap Dilakukan!"
+    invoice_prompt: "Silakan scan QRIS di atas."
+    invoice_details_title: "Detail Tagihan"
+    invoice_product: "🛍️ **Produk:** VVIP {name} ({type})"
+    invoice_amount: "💳 **Jumlah:** `Rp {amount:,}`"
+    invoice_order_id: "🆔 **Order ID:** `{id}`"
+    invoice_expiry: "⏳ **PENTING:** Invoice ini akan kedaluwarsa dalam **15 menit**."
   check:
     category_missing: "Kategori VVIP '{name}' tidak lagi ditemukan. Pembayaran berhasil namun link gagal diberikan."
     success_customer_msg: "🎉 **Pembayaran Dikonfirmasi!**\n\nLink Akses VVIP **{name}**: {link}"
