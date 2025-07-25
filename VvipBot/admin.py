@@ -326,7 +326,7 @@ async def show_stars_stats(client, callback_query):
             transactions_text_list.append(
                 lang.get(
                     "stats.transaction_entry",
-                    date=transaction_date.strftime("%d %b, %H:%M WIB"),
+                    date=transaction_date.strftime("%d %b, %H:%M %Z"),
                     amount_str=amount_str,
                     peer=peer_mention,
                 )
