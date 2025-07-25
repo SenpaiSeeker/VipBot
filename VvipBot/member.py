@@ -11,7 +11,7 @@ async def list_members_callback(client, callback_query):
     back_btn_text = f"| {lang.get('general.back_to_settings')} - settings |"
 
     if not members_list:
-        text = lang.get('member.list.empty')
+        text = lang.get("member.list.empty")
         btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{back_btn_text}")
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
@@ -41,14 +41,18 @@ async def list_members_callback(client, callback_query):
     join_dt_utc = datetime.fromisoformat(join_date_iso)
     duration_days = (datetime.now(timezone.utc) - join_dt_utc).days
 
-    text = lang.get('member.list.panel',
-        page=page + 1, total=total_pages,
-        mention=client.ns.arg.getMention(user), id=user.id,
-        category=vvip_name, type=pay_type.title(),
-        date=join_dt_utc.strftime('%d %b %Y, %H:%M UTC'),
-        duration=duration_days
+    text = lang.get(
+        "member.list.panel",
+        page=page + 1,
+        total=total_pages,
+        mention=client.ns.arg.getMention(user),
+        id=user.id,
+        category=vvip_name,
+        type=pay_type.title(),
+        date=join_dt_utc.strftime("%d %b %Y, %H:%M UTC"),
+        duration=duration_days,
     )
-    
+
     btn_text_list = [
         f"| {lang.get('member.list.kick_button', name=user.first_name or user.id)} - kick_{user.id}_{vvip_name} |"
     ]
@@ -57,7 +61,9 @@ async def list_members_callback(client, callback_query):
             (page - 1 + total_pages) % total_pages,
             (page + 1) % total_pages,
         )
-        btn_text_list.append(f"| {lang.get('admin.allbots.prev_button')} - list_members_{prev_page} | | {lang.get('admin.allbots.next_button')} - list_members_{next_page};same |")
+        btn_text_list.append(
+            f"| {lang.get('admin.allbots.prev_button')} - list_members_{prev_page} | | {lang.get('admin.allbots.next_button')} - list_members_{next_page};same |"
+        )
     btn_text_list.append(back_btn_text)
 
     btn, _ = client.ns.button.create_keyboard("\n".join(btn_text_list))
@@ -144,14 +150,18 @@ async def check_active_menu_callback(client, callback_query):
             item.get("chat_id_promo"),
         )
         if name and chat_id_norm:
-            btn_text_list.append(f"| {lang.get('member.active_list.button_normal', name=name)} - list_active_{chat_id_norm}_0 |")
+            btn_text_list.append(
+                f"| {lang.get('member.active_list.button_normal', name=name)} - list_active_{chat_id_norm}_0 |"
+            )
         if name and chat_id_promo:
-            btn_text_list.append(f"| {lang.get('member.active_list.button_promo', name=name)} - list_active_{chat_id_promo}_0;same |")
+            btn_text_list.append(
+                f"| {lang.get('member.active_list.button_promo', name=name)} - list_active_{chat_id_promo}_0;same |"
+            )
 
     back_btn_text = f"| {lang.get('general.back_to_settings')} - settings |"
-    
+
     if not btn_text_list:
-        text = lang.get('member.active_list.no_valid_chat_id')
+        text = lang.get("member.active_list.no_valid_chat_id")
         btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{back_btn_text}")
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
@@ -159,9 +169,9 @@ async def check_active_menu_callback(client, callback_query):
 
     btn_text = "\n".join(btn_text_list)
     btn_text += f"\n{back_btn_text}"
-    text = lang.get('member.active_list.panel')
+    text = lang.get("member.active_list.panel")
     btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
-    
+
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -198,10 +208,13 @@ async def list_active_members_callback(client, callback_query):
     page = (page + total_members) % total_members
     member, user = all_members[page], all_members[page].user
 
-    text = lang.get('member.active_list.member_panel',
-        page=page + 1, total=total_members,
-        mention=client.ns.arg.getMention(user), id=user.id,
-        status=member.status.name.title()
+    text = lang.get(
+        "member.active_list.member_panel",
+        page=page + 1,
+        total=total_members,
+        mention=client.ns.arg.getMention(user),
+        id=user.id,
+        status=member.status.name.title(),
     )
 
     kick_button_name = user.first_name or user.id
@@ -214,7 +227,7 @@ async def list_active_members_callback(client, callback_query):
         btn_text_list.append(f"| « - list_active_{chat_id}_{prev_p} | | » - list_active_{chat_id}_{next_p};same |")
 
     btn_text_list.append(f"| {lang.get('general.back_to_group_selection')} - check_active_menu_init |")
-    
+
     btn, _ = client.ns.button.create_keyboard("\n".join(btn_text_list))
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
@@ -233,7 +246,7 @@ async def confirm_kick_active_callback(client, callback_query):
     _, _, chat_id_str, user_id_str, page_str = callback_query.data.split("_", 4)
     user = await client.get_users(int(user_id_str))
 
-    text = lang.get('member.active_list.kick_confirm_panel', mention=client.ns.arg.getMention(user))
+    text = lang.get("member.active_list.kick_confirm_panel", mention=client.ns.arg.getMention(user))
     btn_text = f"| {lang.get('member.active_list.kick_confirm_yes_button')} - do_kick_active_{chat_id_str}_{user_id_str} | | {lang.get('member.active_list.kick_confirm_no_button')} - list_active_{chat_id_str}_{page_str} |"
 
     btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
@@ -271,7 +284,7 @@ async def do_kick_active_callback(client, callback_query):
             ctx.ACTIVE_MEMBERS_CACHE[chat_id] = [m for m in ctx.ACTIVE_MEMBERS_CACHE[chat_id] if m.user.id != user_id]
 
         user = await client.get_users(user_id)
-        text = lang.get('member.active_list.kick_success', mention=client.ns.arg.getMention(user))
+        text = lang.get("member.active_list.kick_success", mention=client.ns.arg.getMention(user))
         btn_text = f"| {lang.get('general.back_to_group_selection')} - check_active_menu_init |"
         btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
         if callback_query.message.photo:
