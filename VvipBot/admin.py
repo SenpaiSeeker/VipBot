@@ -359,7 +359,7 @@ async def show_stars_stats(client, callback_query):
 
         btn_text += f"| {lang.get('general.back_to_settings')} - settings |"
 
-        btn, txt = client.ns.button.create_keyboard(btn_text)
+        btn, txt = client.ns.button.create_keyboard(f"{text} {btn_text}")
         if callback_query.message.photo:
             await callback_query.edit_message_caption(txt, reply_markup=btn)
         else:
