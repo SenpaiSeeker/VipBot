@@ -113,7 +113,6 @@ async def access_command_handler(client, message):
         await message.reply_text(lang.get("admin.access.process_fail", e=e))
 
 
-
 @command(lambda ctx: filters.regex(r"^(give|revoke)_access\s(\d+)"), handler_type="callback")
 async def manage_access_callback(client, callback_query):
     lang = callback_query.lang
