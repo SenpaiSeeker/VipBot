@@ -112,35 +112,42 @@ async def access_command_handler(client, message):
     except Exception as e:
         await message.reply_text(lang.get("admin.access.process_fail", e=e))
 
-
+i
 @command(lambda ctx: filters.regex(r"^(give|revoke)_access\s(\d+)"), handler_type="callback")
 async def manage_access_callback(client, callback_query):
     lang = callback_query.lang
     action, target_id_str = callback_query.data.split(" ", 1)
     target_id = int(target_id_str.strip())
-    access_list = ctx.db.getListVars(client.me.id, "create_bot_access") or []
 
-    if action == "give_access":
-        if target_id not in access_list:
-            ctx.db.setListVars(client.me.id, "create_bot_access", target_id)
-        await callback_query.answer(lang.get("admin.access.give_success_alert", target_id=target_id), show_alert=True)
-    elif action == "revoke_access":
-        if target_id in access_list:
-            ctx.db.removeListVars(client.me.id, "create_bot_access", target_id)
-        await callback_query.answer(lang.get("admin.access.revoke_success_alert", target_id=target_id), show_alert=True)
+    try:
+        target_user = await client.get_users(target_id)
+        mention = client.ns.arg.getMention(target_user)
+        access_list = ctx.db.getListVars(client.me.id, "create_bot_access") or []
 
-    target_user = await client.get_users(target_id)
-    access_list = ctx.db.getListVars(client.me.id, "create_bot_access") or []
+        text = ""
+        alert_text = ""
 
-    status_text = (
-        lang.get("admin.access.has_access") if target_user.id in access_list else lang.get("admin.access.no_access")
-    )
+        if action == "give_access":
+            if target_id not in access_list:
+                ctx.db.setListVars(client.me.id, "create_bot_access", target_id)
+            alert_text = lang.get("admin.access.give_success_alert", target_id=target_id)
+            text = lang.get("admin.access.give_success_panel", mention=mention)
 
-    text = lang.get(
-        "admin.access.panel", mention=client.ns.arg.getMention(target_user), id=target_user.id, status=status_text
-    )
+        elif action == "revoke_access":
+            if target_id in access_list:
+                ctx.db.removeListVars(client.me.id, "create_bot_access", target_id)
+            alert_text = lang.get("admin.access.revoke_success_alert", target_id=target_id)
+            text = lang.get("admin.access.revoke_success_panel", mention=mention)
 
-    await callback_query.edit_message_text(text)
+        await callback_query.answer(alert_text)
+
+        btn_text = f"| {lang.get('general.close_panel')} - close_panel |"
+        btn, _ = client.ns.button.create_keyboard(btn_text)
+        
+        await callback_query.edit_message_text(text, reply_markup=btn)
+
+    except Exception as e:
+        await callback_query.answer(lang.get("admin.access.process_fail", e=e), show_alert=True)
 
 
 @command(lambda ctx: filters.command("extend") & filters.user(ctx.owner_id))
