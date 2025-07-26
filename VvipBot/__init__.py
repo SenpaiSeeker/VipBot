@@ -43,9 +43,9 @@ def seller_only(func):
     @wraps(func)
     async def wrapper(client, update, *args, **kwargs):
         user_id = update.from_user.id
-        
+
         seller_list = ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
-        
+
         if user_id == ctx.owner_id or user_id in seller_list:
             return await func(client, update, *args, **kwargs)
         else:
@@ -56,7 +56,7 @@ def seller_only(func):
                 return await update.answer(error_message, show_alert=True)
             elif isinstance(update, pyrogram.types.Message):
                 return await update.reply_text(error_message, quote=True)
-            
+
     return wrapper
 
 
