@@ -92,7 +92,7 @@ async def access_command_handler(client, message):
 
     try:
         target_user = await client.get_users(user_id_target)
-        access_list = ctx.db.getListVars(ctx.owner_id, "create_bot_access") or []
+        access_list = ctx.db.getListVars(client.me.id, "create_bot_access") or []
 
         status_text = (
             lang.get("admin.access.has_access") if target_user.id in access_list else lang.get("admin.access.no_access")
@@ -130,7 +130,7 @@ async def manage_access_callback(client, callback_query):
         await callback_query.answer(lang.get("admin.access.revoke_success_alert", target_id=target_id), show_alert=True)
 
     target_user = await client.get_users(target_id)
-    access_list = ctx.db.getListVars(ctx.owner_id, "create_bot_access") or []
+    access_list = ctx.db.getListVars(client.me.id, "create_bot_access") or []
 
     status_text = (
         lang.get("admin.access.has_access") if target_user.id in access_list else lang.get("admin.access.no_access")
