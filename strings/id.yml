@@ -17,6 +17,7 @@ general:
   invalid_format: "**Format Salah.**"
   not_your_bot: "Ini bukan bot milik Anda."
   invalid_callback: "Data callback tidak valid."
+  no_access_decorator: "🚫 **Akses Ditolak!**\nAnda tidak memiliki izin untuk menggunakan perintah ini."
 
 prompts:
   cancel_footer: "\n\nKetik `/batal` untuk membatalkan."
