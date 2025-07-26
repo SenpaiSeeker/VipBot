@@ -129,7 +129,18 @@ async def manage_access_callback(client, callback_query):
             ctx.db.removeListVars(client.me.id, "create_bot_access", target_id)
         await callback_query.answer(lang.get("admin.access.revoke_success_alert", target_id=target_id), show_alert=True)
 
-    await callback_query.message.delete()
+    target_user = await client.get_users(target_id)
+    access_list = ctx.db.getListVars(ctx.owner_id, "create_bot_access") or []
+
+    status_text = (
+            lang.get("admin.access.has_access") if target_user.id in access_list else lang.get("admin.access.no_access")
+        )
+
+    text = lang.get(
+            "admin.access.panel", mention=client.ns.arg.getMention(target_user), id=target_user.id, status=status_text
+        )
+
+    await callback_query.edit_message_text(text)
 
 
 @command(lambda ctx: filters.command("extend") & filters.user(ctx.owner_id))
