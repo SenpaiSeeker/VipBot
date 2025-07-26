@@ -8,7 +8,7 @@ import traceback
 import uuid
 import zipfile
 from datetime import datetime, timedelta, timezone
-from functools import partial
+from functools import partial, wraps
 from io import BytesIO, StringIO
 from time import time
 from types import SimpleNamespace
@@ -37,6 +37,23 @@ def command(filter_lambda, handler_type="message"):
         return func
 
     return decorator
+
+
+def seller_only(func):
+    @wraps(func)
+    async def wrapper(client, message, *args, **kwargs):
+        user_id = message.from_user.id
+        
+        seller_list = ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
+        
+        if user_id == ctx.owner_id or user_id in seller_list:
+            return await func(client, message, *args, **kwargs)
+        else:
+            error_message = message.lang.get("general.no_access_decorator")
+            await message.reply_text(error_message, quote=True)
+            return
+            
+    return wrapper
 
 
 async def is_bot_owner(client, user_id):
