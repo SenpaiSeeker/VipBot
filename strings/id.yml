@@ -96,6 +96,8 @@ admin:
     give_success_alert: "✅ Akses berhasil diberikan kepada {target_id}"
     revoke_success_alert: "❌ Akses berhasil dicabut dari {target_id}"
     process_fail: "Gagal memproses. Error: `{e}`"
+    give_success_panel: "✅ **Akses Diberikan!**\n\nPengguna {mention} sekarang dapat membuat bot baru menggunakan bot ini."
+    revoke_success_panel: "❌ **Akses Dicabut!**\n\nPengguna {mention} tidak lagi memiliki hak untuk membuat bot."
   extend:
     usage_error: "**Format salah.**\nGunakan: `/extend <bot_id> <jumlah_hari>`\nContoh: `/extend 12345678 30`"
     success: "✅ **Sukses!** Durasi bot `{bot_id}` berhasil diubah. Masa aktif baru: `{new_date}`."
