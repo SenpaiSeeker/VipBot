@@ -91,7 +91,7 @@ class BotManager:
                     if not main_client:
                         continue
 
-                    if days_left < 0:
+                    if days_left < 1:
                         log.print(f"{log.ORANGE}Masa aktif bot {bot_id} telah habis. Menghapus bot...")
                         try:
                             bot_instance = self.running_bots.get(bot_id)
