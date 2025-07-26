@@ -130,7 +130,7 @@ async def broadcast_callback(client, callback_query):
         async def send_to_user(target_user_id):
             if reply_markup and reply_markup.inline_keyboard:
                 if ask_message.media:
-                    await ask_message.copy(chat_id=target_user_id, caption=cleaned_text, reply_markup=reply_markup)
+                    await ask_message.copy(chat_id=target_user_id, reply_markup=reply_markup)
                 else:
                     await client.send_message(chat_id=target_user_id, text=cleaned_text, reply_markup=reply_markup)
             else:
