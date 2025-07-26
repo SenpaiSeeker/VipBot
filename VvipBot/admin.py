@@ -84,6 +84,7 @@ async def restore_database_handler(client, message):
 
 
 @command(lambda ctx: filters.command("akses") & filters.user(ctx.owner_id))
+@seller_only
 async def access_command_handler(client, message):
     lang = message.lang
     user_id_target, _ = await client.ns.arg.getReasonAndId(message)
