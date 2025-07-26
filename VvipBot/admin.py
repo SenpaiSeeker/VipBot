@@ -83,7 +83,7 @@ async def restore_database_handler(client, message):
             os.remove(downloaded_zip_path)
 
 
-@command(lambda ctx: filters.command("akses") & filters.user(ctx.owner_id))
+@command(lambda ctx: filters.command("akses"))
 @seller_only
 async def access_command_handler(client, message):
     lang = message.lang
