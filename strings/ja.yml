@@ -96,6 +96,8 @@ admin:
     give_success_alert: "✅ {target_id}にアクセスを許可しました"
     revoke_success_alert: "❌ {target_id}からアクセスを取り消しました"
     process_fail: "処理に失敗しました。エラー: {e}"
+    give_success_panel: "✅ **アクセスを許可しました！**\n\nユーザー {mention} はこのボットを使用して新しいボットを作成できるようになりました。"
+    revoke_success_panel: "❌ **アクセスを取り消しました！**\n\nユーザー {mention} はボットを作成する権限を失いました。"
   extend:
     usage_error: "**形式が正しくありません。** 使用法: `/extend <ボットID> <日数>`\n例: `/extend 12345678 30`"
     success: "✅ **成功！** ボット `{bot_id}` の有効期間が変更されました。新しい有効期限: `{new_date}`。"
