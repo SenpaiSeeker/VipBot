@@ -17,6 +17,7 @@ general:
   invalid_format: "**形式が正しくありません。**"
   not_your_bot: "これはあなたのボットではありません。"
   invalid_callback: "無効なコールバックデータです。"
+  no_access_decorator: "🚫 **アクセスが拒否されました！**\nこのコマンドを使用する権限がありません。"
 
 prompts:
   cancel_footer: "\n\nキャンセルするには `/batal` と入力してください。"
