@@ -17,6 +17,7 @@ general:
   invalid_format: "**Invalid Format.**"
   not_your_bot: "This is not your bot."
   invalid_callback: "Invalid callback data."
+  no_access_decorator: "🚫 **Access Denied!**\nYou do not have permission to use this command."
 
 prompts:
   cancel_footer: "\n\nType `/batal` to cancel."
