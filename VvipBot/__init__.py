@@ -41,18 +41,22 @@ def command(filter_lambda, handler_type="message"):
 
 def seller_only(func):
     @wraps(func)
-    async def wrapper(client, message, *args, **kwargs):
-        user_id = message.from_user.id
-
+    async def wrapper(client, update, *args, **kwargs):
+        user_id = update.from_user.id
+        
         seller_list = ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
-
+        
         if user_id == ctx.owner_id or user_id in seller_list:
-            return await func(client, message, *args, **kwargs)
+            return await func(client, update, *args, **kwargs)
         else:
-            error_message = message.lang.get("general.no_access_decorator")
-            await message.reply_text(error_message, quote=True)
-            return
+            lang = update.lang
+            error_message = lang.get("general.no_access_decorator")
 
+            if isinstance(update, pyrogram.types.CallbackQuery):
+                return await update.answer(error_message, show_alert=True)
+            elif isinstance(update, pyrogram.types.Message):
+                return await update.reply_text(error_message, quote=True)
+            
     return wrapper
 
 
