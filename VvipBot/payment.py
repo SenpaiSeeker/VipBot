@@ -103,7 +103,7 @@ async def paynow(client, callback_query):
 
     try:
         pay = await vmp_service.create_payment(amount=amount)
-        result = pay.api_response.data
+        result = pay.data
         unique_seed = f"{result.ref_kode}_{result.id_reference}"
         order_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, unique_seed))
         expire_time = datetime.now(timezone.utc) + timedelta(minutes=15)
