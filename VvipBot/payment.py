@@ -111,11 +111,7 @@ async def paynow(client, callback_query):
         order_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, unique_seed))
         expire_time = datetime.now(timezone.utc) + timedelta(minutes=15)
 
-        ctx.db.setVars(
-            client.me.id,
-            order_id,
-            f"{unique_seed}|{name}|{expire_time.isoformat()}|{tipe}"
-        )
+        ctx.db.setVars(client.me.id, order_id, f"{unique_seed}|{name}|{expire_time.isoformat()}|{tipe}")
 
         async with aiohttp.ClientSession() as session, session.get(result.target) as resp:
             qr_bytes = await resp.read() if resp.status == 200 else None
