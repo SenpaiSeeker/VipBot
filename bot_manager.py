@@ -45,7 +45,7 @@ class BotManager:
         except Exception as e:
             error_str = str(e).upper()
             common_errors = ["USER_DEACTIVATED_BAN", "BOT_TOKEN_INVALID", "ACCESS_TOKEN_EXPIRED"]
-            
+
             log.print(f"{log.RED}Gagal memulai bot {bot_id}: {e}")
             if any(err in error_str for err in common_errors):
                 self.db.removeBot(bot_id)
