@@ -43,8 +43,11 @@ class BotManager:
             self.running_bots[client.me.id] = client
             log.print(f"{log.GREEN}Bot {client.me.first_name} (ID: {client.me.id}) berhasil diaktifkan.")
         except Exception as e:
+            error_str = str(e).upper()
+            common_errors = ["USER_DEACTIVATED_BAN", "BOT_TOKEN_INVALID", "ACCESS_TOKEN_EXPIRED"]
+            
             log.print(f"{log.RED}Gagal memulai bot {bot_id}: {e}")
-            if "USER_DEACTIVATED_BAN" in str(e).upper() or "BOT_TOKEN_INVALID" in str(e).upper():
+            if any(err in error_str for err in common_errors):
                 self.db.removeBot(bot_id)
                 log.print(f"{log.ORANGE}Data bot {bot_id} dihapus karena token tidak valid/terblokir.")
 
