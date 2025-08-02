@@ -1,25 +1,24 @@
+import asyncio
 import os
 import uuid
-import asyncio
-from dotenv import load_dotenv
 
+import nsdev
+from dotenv import load_dotenv
 from telegram import (
-    Update,
-    InlineQueryResultArticle,
-    InputTextMessageContent,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-)
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    InlineQueryHandler,
-    ContextTypes,
+    InlineQueryResultArticle,
+    InputTextMessageContent,
+    Update,
 )
 from telegram.constants import ParseMode
 from telegram.error import TelegramError
-
-import nsdev
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    ContextTypes,
+    InlineQueryHandler,
+)
 
 load_dotenv()
 
@@ -29,21 +28,23 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 chatbot = nsdev.ChatbotGemini(api_key=GEMINI_API_KEY)
 log = nsdev.LoggerHandler()
 
+
 # --- FUNGSI PENTING UNTUK MEMBERSIHKAN TEKS DARI AI ---
 def sanitize_markdown(text: str) -> str:
     """Memperbaiki Markdown yang rusak dari output AI."""
     # Karakter yang sering menyebabkan masalah jika tidak ditutup
-    markers = ['*', '_', '`']
+    markers = ["*", "_", "`"]
     for marker in markers:
         # Jika jumlah marker ganjil, tambahkan satu di akhir untuk menutupnya
         if text.count(marker) % 2 != 0:
             text += marker
-            
+
     # Membersihkan blok kode yang tidak ditutup
-    if text.count('```') % 2 != 0:
-        text += '\n```'
-        
+    if text.count("```") % 2 != 0:
+        text += "\n```"
+
     return text
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
@@ -53,28 +54,29 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         f"Ketik <code>@{context.bot.username} [pertanyaan]</code> di chat manapun untuk mendapatkan jawaban langsung."
     )
 
+
 async def get_ai_answer_and_update(
     update: Update, context: ContextTypes.DEFAULT_TYPE, query: str, result_id: str
 ) -> None:
     """Tugas background untuk mengambil jawaban AI dan memperbarui hasil inline."""
     try:
+
         def get_response_sync():
             return chatbot.send_chat_message(
-                message=query,
-                user_id=f"inline_{update.inline_query.from_user.id}",
-                bot_name="GeminiBot"
+                message=query, user_id=f"inline_{update.inline_query.from_user.id}", bot_name="GeminiBot"
             )
+
         response_text = await asyncio.to_thread(get_response_sync)
-        
+
         # Gunakan fungsi sanitasi pada output AI
         sanitized_response = sanitize_markdown(response_text)
-        
+
         final_text = f"🤔 **Prompt:**\n`{query}`\n\n💡 **Jawaban Gemini:**\n{sanitized_response}"
-        
+
         keyboard = [
             [
                 InlineKeyboardButton("✏️ Ubah & Tanya Lagi", switch_inline_query_current_chat=query),
-                InlineKeyboardButton("💬 Tanya Baru", switch_inline_query_current_chat="")
+                InlineKeyboardButton("💬 Tanya Baru", switch_inline_query_current_chat=""),
             ]
         ]
         final_markup = InlineKeyboardMarkup(keyboard)
@@ -84,10 +86,7 @@ async def get_ai_answer_and_update(
                 id=result_id,
                 title="Jawaban dari Gemini AI",
                 description=sanitized_response.replace("\n", " ")[:60],
-                input_message_content=InputTextMessageContent(
-                    final_text,
-                    parse_mode=ParseMode.MARKDOWN
-                ),
+                input_message_content=InputTextMessageContent(final_text, parse_mode=ParseMode.MARKDOWN),
                 reply_markup=final_markup,
                 thumbnail_url="https://files.catbox.moe/ozzvtz.jpg",
                 thumbnail_width=64,
@@ -110,12 +109,13 @@ async def get_ai_answer_and_update(
                     id=result_id,
                     title="❌ Terjadi Kesalahan",
                     description="Tidak dapat memproses permintaan Anda.",
-                    input_message_content=InputTextMessageContent(f"❌ Gagal memproses prompt: `{query}`")
+                    input_message_content=InputTextMessageContent(f"❌ Gagal memproses prompt: `{query}`"),
                 )
             ]
             await update.inline_query.answer(error_result, cache_time=1)
         except Exception:
             pass
+
 
 async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Menangani permintaan inline, mengirim placeholder, dan memproses di background."""
@@ -130,16 +130,15 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             id=result_id,
             title="⏳ Memproses...",
             description="AI sedang berpikir, harap tunggu sebentar.",
-            input_message_content=InputTextMessageContent("Sedang menunggu jawaban dari AI...")
+            input_message_content=InputTextMessageContent("Sedang menunggu jawaban dari AI..."),
         )
     ]
     # Kirim placeholder SEGERA untuk menghindari timeout
     await update.inline_query.answer(placeholder_result, cache_time=1)
 
     # Jalankan tugas yang sebenarnya di background
-    asyncio.create_task(
-        get_ai_answer_and_update(update, context, query, result_id)
-    )
+    asyncio.create_task(get_ai_answer_and_update(update, context, query, result_id))
+
 
 def main() -> None:
     application = Application.builder().token(BOT_TOKEN).build()
