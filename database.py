@@ -1,6 +1,6 @@
 import nsdev
 
-from config import BOT_TOKEN, OWNER_ID, DB_KEY, DB_NAME
+from config import BOT_TOKEN, DB_KEY, DB_NAME, OWNER_ID
 
 db = nsdev.DataBase(
     storage_type="local",
