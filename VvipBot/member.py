@@ -12,7 +12,7 @@ async def list_members_callback(client, callback_query):
 
     if not members_list:
         text = lang.get("member.list.empty")
-        btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{back_btn_text}")
+        btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{back_btn_text}")
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
         return await callback_query.edit_message_text(text, reply_markup=btn)
@@ -33,7 +33,7 @@ async def list_members_callback(client, callback_query):
         text_error = lang.get("member.list.data_error", e=e)
         await callback_query.edit_message_caption(
             text_error,
-            reply_markup=client.ns.button.create_keyboard(back_btn_text)[0],
+            reply_markup=client.ns.telegram.button.create_inline_keyboard(back_btn_text)[0],
         )
         ctx.db.removeListVars(client.me.id, "vvip_members", member_data)
         return
@@ -45,7 +45,7 @@ async def list_members_callback(client, callback_query):
         "member.list.panel",
         page=page + 1,
         total=total_pages,
-        mention=client.ns.arg.getMention(user),
+        mention=client.ns.telegram.arg.getMention(user),
         id=user.id,
         category=vvip_name,
         type=pay_type.title(),
@@ -66,7 +66,7 @@ async def list_members_callback(client, callback_query):
         )
     btn_text_list.append(back_btn_text)
 
-    btn, _ = client.ns.button.create_keyboard("\n".join(btn_text_list))
+    btn, _ = client.ns.telegram.button.create_inline_keyboard("\n".join(btn_text_list))
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -83,12 +83,12 @@ async def confirm_kick_member_callback(client, callback_query):
 
     text = lang.get(
         "member.kick.confirm_panel",
-        mention=client.ns.arg.getMention(user),
+        mention=client.ns.telegram.arg.getMention(user),
         name=vvip_name,
     )
     btn_text = f"| {lang.get('member.kick.confirm_yes_button')} - do_kick_{user_id_str}_{vvip_name} | | {lang.get('member.kick.confirm_no_button')} - list_members_0 |"
 
-    btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+    btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -125,7 +125,7 @@ async def do_kick_member_callback(client, callback_query):
         await callback_query.edit_message_caption(
             lang.get(
                 "member.kick.success",
-                mention=client.ns.arg.getMention(user_to_kick),
+                mention=client.ns.telegram.arg.getMention(user_to_kick),
                 name=vvip_name,
             )
         )
@@ -162,7 +162,7 @@ async def check_active_menu_callback(client, callback_query):
 
     if not btn_text_list:
         text = lang.get("member.active_list.no_valid_chat_id")
-        btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{back_btn_text}")
+        btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{back_btn_text}")
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
         return await callback_query.edit_message_text(text, reply_markup=btn)
@@ -170,7 +170,7 @@ async def check_active_menu_callback(client, callback_query):
     btn_text = "\n".join(btn_text_list)
     btn_text += f"\n{back_btn_text}"
     text = lang.get("member.active_list.panel")
-    btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+    btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
 
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
@@ -212,7 +212,7 @@ async def list_active_members_callback(client, callback_query):
         "member.active_list.member_panel",
         page=page + 1,
         total=total_members,
-        mention=client.ns.arg.getMention(user),
+        mention=client.ns.telegram.arg.getMention(user),
         id=user.id,
         status=member.status.name.title(),
     )
@@ -228,7 +228,7 @@ async def list_active_members_callback(client, callback_query):
 
     btn_text_list.append(f"| {lang.get('general.back_to_group_selection')} - check_active_menu_init |")
 
-    btn, _ = client.ns.button.create_keyboard("\n".join(btn_text_list))
+    btn, _ = client.ns.telegram.button.create_inline_keyboard("\n".join(btn_text_list))
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -246,10 +246,10 @@ async def confirm_kick_active_callback(client, callback_query):
     _, _, chat_id_str, user_id_str, page_str = callback_query.data.split("_", 4)
     user = await client.get_users(int(user_id_str))
 
-    text = lang.get("member.active_list.kick_confirm_panel", mention=client.ns.arg.getMention(user))
+    text = lang.get("member.active_list.kick_confirm_panel", mention=client.ns.telegram.arg.getMention(user))
     btn_text = f"| {lang.get('member.active_list.kick_confirm_yes_button')} - do_kick_active_{chat_id_str}_{user_id_str} | | {lang.get('member.active_list.kick_confirm_no_button')} - list_active_{chat_id_str}_{page_str} |"
 
-    btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+    btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -284,9 +284,9 @@ async def do_kick_active_callback(client, callback_query):
             ctx.ACTIVE_MEMBERS_CACHE[chat_id] = [m for m in ctx.ACTIVE_MEMBERS_CACHE[chat_id] if m.user.id != user_id]
 
         user = await client.get_users(user_id)
-        text = lang.get("member.active_list.kick_success", mention=client.ns.arg.getMention(user))
+        text = lang.get("member.active_list.kick_success", mention=client.ns.telegram.arg.getMention(user))
         btn_text = f"| {lang.get('general.back_to_group_selection')} - check_active_menu_init |"
-        btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+        btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
         if callback_query.message.photo:
             await callback_query.edit_message_caption(text, reply_markup=btn)
         else:
