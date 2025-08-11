@@ -94,8 +94,8 @@ async def set_lang_callback(client, callback_query):
 
 @command(lambda ctx: filters.regex(r"^chg_lang_(id|en|ja)$"), handler_type="callback")
 async def change_lang_callback(client, callback_query):
-    callback_query.data.split("_")[-1]
-    ctx.db.setVars(callback_query.from_user.id, "language", var_key="user_info")
+    lang_code = callback_query.data.split("_")[-1]
+    ctx.db.setVars(callback_query.from_user.id, "language", lang_code, var_key="user_info")
     lang = ctx.L(ctx.db, callback_query.from_user.id)
     await callback_query.answer(lang.get("lang.selected"), show_alert=True)
     await start_callback(client, callback_query)
