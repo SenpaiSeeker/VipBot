@@ -2,7 +2,6 @@ import asyncio
 from datetime import datetime, timezone
 
 import pyrogram
-import nsdev
 from nsdev import listen
 
 _ = listen
@@ -108,7 +107,9 @@ class BotManager:
                             expired_message = f"Masa aktif bot Anda **{bot_name}** sudah habis."
                             await main_client.send_message(owner_id, expired_message)
                         except Exception as e:
-                            self.log.print(f"{self.log.RED}Gagal mengirim notifikasi kedaluwarsa ke owner {owner_id}: {e}")
+                            self.log.print(
+                                f"{self.log.RED}Gagal mengirim notifikasi kedaluwarsa ke owner {owner_id}: {e}"
+                            )
 
                         await self.stop_bot(bot_id)
                         self.db.removeBot(bot_id)
@@ -147,7 +148,9 @@ class BotManager:
                                     f"{self.log.CYAN}Mengirim notifikasi sisa {days_left} hari ke owner {owner_id} untuk bot {bot_id}"
                                 )
                             except Exception as e:
-                                self.log.print(f"{self.log.RED}Gagal mengirim notifikasi perpanjangan ke owner {owner_id}: {e}")
+                                self.log.print(
+                                    f"{self.log.RED}Gagal mengirim notifikasi perpanjangan ke owner {owner_id}: {e}"
+                                )
 
                     elif days_left > 10:
                         last_notif_date_key = "last_warning_notification_date"
