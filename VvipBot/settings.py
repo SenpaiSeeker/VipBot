@@ -44,7 +44,7 @@ async def set_start_photo_callback(client, callback_query):
 
         if ask_photo_msg.text:
             if ask_photo_msg.text.lower() == "/batal":
-                raise nsdev.listen.UserCancelled
+                raise listen.UserCancelled
             if ask_photo_msg.text.lower() == "/empty":
                 ctx.db.removeVars(client.me.id, "start_photo_id")
                 return await client.send_message(chat_id, lang.get("settings.photo_emptied"), reply_markup=back_btn)
@@ -56,7 +56,7 @@ async def set_start_photo_callback(client, callback_query):
         ctx.db.setVars(client.me.id, "start_photo_id", photo_id)
         await client.send_message(chat_id, lang.get("settings.set_photo_success"), reply_markup=back_btn)
 
-    except nsdev.listen.UserCancelled:
+    except listen.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"), reply_markup=back_btn)
     except asyncio.TimeoutError:
         await client.send_message(chat_id, lang.get("general.timeout"), reply_markup=back_btn)
@@ -83,7 +83,7 @@ async def set_start_text_callback(client, callback_query):
             return await client.send_message(chat_id, lang.get("settings.set_text_fail"), reply_markup=back_btn)
 
         if ask_text_msg.text.lower() == "/batal":
-            raise nsdev.listen.UserCancelled
+            raise listen.UserCancelled
 
         if ask_text_msg.text.lower() == "/empty":
             ctx.db.removeVars(client.me.id, "start_text_template")
@@ -92,7 +92,7 @@ async def set_start_text_callback(client, callback_query):
         ctx.db.setVars(client.me.id, "start_text_template", ask_text_msg.text)
         await client.send_message(chat_id, lang.get("settings.set_text_success"), reply_markup=back_btn)
 
-    except nsdev.listen.UserCancelled:
+    except listen.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"), reply_markup=back_btn)
     except asyncio.TimeoutError:
         await client.send_message(chat_id, lang.get("general.timeout"), reply_markup=back_btn)
@@ -114,7 +114,7 @@ async def broadcast_callback(client, callback_query):
         ask_message = await client.ask(chat_id, text=prompt, timeout=600)
 
         if ask_message.text and ask_message.text.lower() == "/batal":
-            raise nsdev.listen.UserCancelled
+            raise listen.UserCancelled
 
         user_ids = ctx.db.getListVars(client.me.id, "user_ids") or []
         if not user_ids:
@@ -151,7 +151,7 @@ async def broadcast_callback(client, callback_query):
 
         await progress_msg.edit(lang.get("settings.broadcast_done", success=success_count, fail=fail_count))
 
-    except nsdev.listen.UserCancelled:
+    except listen.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"))
     except asyncio.TimeoutError:
         await client.send_message(chat_id, lang.get("general.timeout"))
@@ -174,7 +174,7 @@ async def setup_listvvip(client, callback_query):
 
         def validate(msg, check_func, err_msg_key):
             if msg.text and msg.text.lower() == "/batal":
-                raise nsdev.listen.UserCancelled
+                raise listen.UserCancelled
             if not check_func(msg.text):
                 raise ValueError(lang.get(err_msg_key))
             return msg.text
@@ -231,7 +231,7 @@ async def setup_listvvip(client, callback_query):
             prompt_promo = f"{lang.get('settings.setup_vvip.step8_promo_text')}{lang.get('prompts.skip_footer')}{lang.get('prompts.cancel_footer')}"
             promo_text_msg = await client.ask(chat_id, prompt_promo, timeout=600)
             if promo_text_msg.text and promo_text_msg.text.lower() == "/batal":
-                raise nsdev.listen.UserCancelled
+                raise listen.UserCancelled
             vvip_data["promo_text"] = "" if promo_text_msg.text.lower() == "/skip" else promo_text_msg.text
         else:
             vvip_data["promo_link"], vvip_data["chat_id_promo"], vvip_data["promo_text"] = "", 0, ""
@@ -239,13 +239,13 @@ async def setup_listvvip(client, callback_query):
         prompt_normal = f"{lang.get('settings.setup_vvip.step9_normal_text')}{lang.get('prompts.skip_footer')}{lang.get('prompts.cancel_footer')}"
         normal_text_msg = await client.ask(chat_id, prompt_normal, timeout=600)
         if normal_text_msg.text and normal_text_msg.text.lower() == "/batal":
-            raise nsdev.listen.UserCancelled
+            raise listen.UserCancelled
         vvip_data["normal_text"] = "" if normal_text_msg.text.lower() == "/skip" else normal_text_msg.text
 
         ctx.db.setListVars(client.me.id, "list_vvip", vvip_data)
         await client.send_message(chat_id, lang.get("settings.setup_vvip.success", name=vvip_data["name"]))
 
-    except nsdev.listen.UserCancelled:
+    except listen.UserCancelled:
         await client.send_message(chat_id, lang.get("settings.setup_vvip.cancelled"))
     except (asyncio.TimeoutError, ValueError) as e:
         await client.send_message(chat_id, f"{lang.get('general.invalid_input_timeout')}\n`{e}`")
@@ -363,10 +363,10 @@ async def set_api_key_prompt(client, callback_query):
         if key_name == "VIOLET":
             api_key_msg = await ask(lang.get("settings.api_set_violet_1"))
             if api_key_msg.text and api_key_msg.text.lower() == "/batal":
-                raise nsdev.listen.UserCancelled
+                raise listen.UserCancelled
             secret_key_msg = await ask(lang.get("settings.api_set_violet_2"))
             if secret_key_msg.text and secret_key_msg.text.lower() == "/batal":
-                raise nsdev.listen.UserCancelled
+                raise listen.UserCancelled
 
             ctx.db.setVars(client.me.id, "VIOLET_API_KEY", api_key_msg.text)
             ctx.db.setVars(client.me.id, "VIOLET_SECRET_KEY", secret_key_msg.text)
@@ -374,7 +374,7 @@ async def set_api_key_prompt(client, callback_query):
             prompt = lang.get("settings.api_set_gemini_prompt", key_name=key_name)
             key_value_msg = await ask(prompt)
             if key_value_msg.text and key_value_msg.text.lower() == "/batal":
-                raise nsdev.listen.UserCancelled
+                raise listen.UserCancelled
             ctx.db.setVars(client.me.id, key_name, key_value_msg.text)
 
         from services import initialize_bot_services
@@ -385,7 +385,7 @@ async def set_api_key_prompt(client, callback_query):
             chat_id, lang.get("settings.api_set_success", key_name=key_name), reply_markup=back_btn
         )
 
-    except nsdev.listen.UserCancelled:
+    except listen.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"), reply_markup=back_btn)
     except asyncio.TimeoutError:
         await client.send_message(chat_id, lang.get("general.timeout"), reply_markup=back_btn)
