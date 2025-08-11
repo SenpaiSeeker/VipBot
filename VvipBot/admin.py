@@ -17,7 +17,7 @@ async def eval_bot_handler(client, message):
         return await locals()["__aexec"](client, message)
 
     msg = await message.reply_text(lang.get("admin.eval.processing"))
-    cmd = client.ns.arg.getMessage(message, is_arg=True)
+    cmd = client.ns.telegram.arg.getMessage(message, is_arg=True)
     if not cmd:
         return await msg.edit(lang.get("admin.eval.no_code"))
 
@@ -87,7 +87,7 @@ async def restore_database_handler(client, message):
 @seller_only
 async def access_command_handler(client, message):
     lang = message.lang
-    user_id_target, _ = await client.ns.arg.getReasonAndId(message)
+    user_id_target, _ = await client.ns.telegram.arg.getReasonAndId(message)
     if not user_id_target:
         return await message.reply_text(lang.get("admin.access.usage_error"))
 
@@ -100,7 +100,7 @@ async def access_command_handler(client, message):
         )
 
         text = lang.get(
-            "admin.access.panel", mention=client.ns.arg.getMention(target_user), id=target_user.id, status=status_text
+            "admin.access.panel", mention=client.ns.telegram.arg.getMention(target_user), id=target_user.id, status=status_text
         )
 
         btn_text = (
@@ -108,7 +108,7 @@ async def access_command_handler(client, message):
             f"| {lang.get('admin.access.revoke_button')} - revoke_access {target_user.id};same |"
         )
 
-        btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+        btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
         await message.reply_text(text, reply_markup=btn)
     except Exception as e:
         await message.reply_text(lang.get("admin.access.process_fail", e=e))
@@ -122,7 +122,7 @@ async def manage_access_callback(client, callback_query):
 
     try:
         target_user = await client.get_users(target_id)
-        mention = client.ns.arg.getMention(target_user)
+        mention = client.ns.telegram.arg.getMention(target_user)
         access_list = ctx.db.getListVars(client.me.id, "create_bot_access") or []
 
         text = ""
@@ -143,7 +143,7 @@ async def manage_access_callback(client, callback_query):
         await callback_query.answer(alert_text)
 
         btn_text = f"| {lang.get('general.close_panel')} - close_panel |"
-        btn, _ = client.ns.button.create_keyboard(btn_text)
+        btn, _ = client.ns.telegram.button.create_inline_keyboard(btn_text)
 
         await callback_query.edit_message_text(text, reply_markup=btn)
 
@@ -213,7 +213,7 @@ async def _send_allbots_list(client, message_or_query, page):
     if owner_id:
         try:
             owner_user = await client.get_users(owner_id)
-            owner_text = client.ns.arg.getMention(owner_user)
+            owner_text = client.ns.telegram.arg.getMention(owner_user)
         except Exception:
             owner_text = f"ID `{owner_id}`"
 
@@ -238,7 +238,7 @@ async def _send_allbots_list(client, message_or_query, page):
         btn_text += f"| {lang.get('admin.allbots.prev_button')} - allbots_{prev_page} | | {lang.get('admin.allbots.next_button')} - allbots_{next_page};same |\n"
 
     btn_text += f"| {lang.get('general.close_panel')} - close_panel |"
-    btn, _ = client.ns.button.create_keyboard(btn_text)
+    btn, _ = client.ns.telegram.button.create_inline_keyboard(btn_text)
 
     if isinstance(message_or_query, pyrogram.types.Message):
         await message_or_query.reply_text(text, reply_markup=btn)
@@ -317,7 +317,7 @@ async def show_stars_stats(client, callback_query):
         if not transactions_history:
             text = lang.get("stats.no_transactions")
             btn_text = f"| {lang.get('general.back_to_settings')} - settings |"
-            btn, txt = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+            btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
             if callback_query.message.photo:
                 return await callback_query.edit_message_caption(txt, reply_markup=btn)
             return await callback_query.edit_message_text(txt, reply_markup=btn)
@@ -378,7 +378,7 @@ async def show_stars_stats(client, callback_query):
 
         btn_text += f"| {lang.get('general.back_to_settings')} - settings |"
 
-        btn, txt = client.ns.button.create_keyboard(f"{text} {btn_text}")
+        btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{text} {btn_text}")
         if callback_query.message.photo:
             await callback_query.edit_message_caption(txt, reply_markup=btn)
         else:
