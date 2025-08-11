@@ -77,7 +77,7 @@ async def check_new_user(client, message):
             notification_text = owner_lang.get(
                 "bot_management.create.new_user_notification",
                 mention=client.me.mention,
-                user_mention=client.ns.arg.getMention(message.from_user),
+                user_mention=client.ns.telegram.arg.getMention(message.from_user),
                 user_id=user_id,
             )
             await client.send_message(
@@ -89,7 +89,7 @@ async def check_new_user(client, message):
                 f"{ctx.log.YELLOW}Gagal notifikasi user baru ke owner {owner_of_this_bot} dari bot {client.me.id}: {e}"
             )
         ctx.log.print(
-            f"{ctx.log.CYAN}User baru {client.ns.arg.getMention(message.from_user, logs=True)} memulai bot {client.me.first_name}"
+            f"{ctx.log.CYAN}User baru {client.ns.telegram.arg.getMention(message.from_user, logs=True)} memulai bot {client.me.first_name}"
         )
 
 
@@ -114,7 +114,7 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
     ctx.db = db_instance
     ctx.manager = bot_manager
     ctx.owner_id = owner_id
-    ctx.log = nsdev.LoggerHandler()
+    ctx.log = client.ns.utils.log
     ctx.ACTIVE_MEMBERS_CACHE = {}
     ctx.L = Language
 
@@ -136,7 +136,7 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
             if hasattr(u, "from_user") and u.from_user:
                 u.lang = Language(db_instance, u.from_user.id)
             else:
-                u.lang = Language(db_instance, u.user_id)
+                u.lang = Language(db_instance, u.sender_chat.id)
 
             try:
                 await original_func(c, u)
