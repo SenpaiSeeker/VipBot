@@ -233,10 +233,14 @@ async def gemini_bot_ai(client, callback_query):
                     await client.send_message(chat_id, response_text)
 
         except listen.UserCancelled:
-            btn, _ = client.ns.telegram.button.create_inline_keyboard(f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |")
+            btn, _ = client.ns.telegram.button.create_inline_keyboard(
+                f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |"
+            )
             await client.send_message(chat_id, lang.get("ai.session_stopped"), reply_markup=btn)
         except asyncio.TimeoutError:
-            btn, _ = client.ns.telegram.button.create_inline_keyboard(f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |")
+            btn, _ = client.ns.telegram.button.create_inline_keyboard(
+                f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |"
+            )
             await client.send_message(chat_id, lang.get("ai.session_expired"), reply_markup=btn)
         except Exception as e:
             ctx.log.print(f"{ctx.log.RED}Error on AI Chatbot session: {e}")
