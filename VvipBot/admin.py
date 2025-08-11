@@ -100,7 +100,10 @@ async def access_command_handler(client, message):
         )
 
         text = lang.get(
-            "admin.access.panel", mention=client.ns.telegram.arg.getMention(target_user), id=target_user.id, status=status_text
+            "admin.access.panel",
+            mention=client.ns.telegram.arg.getMention(target_user),
+            id=target_user.id,
+            status=status_text,
         )
 
         btn_text = (
