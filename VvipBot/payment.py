@@ -21,14 +21,14 @@ async def notes_data(client, callback_query):
         )
 
         btn_text = f"| {lang.get('payment.notes.pay_button')} - paynow {name} normal | {back_btn_text}"
-        btn, txt = client.ns.button.create_keyboard(f"{desc}\n\n{btn_text}")
+        btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{desc}\n\n{btn_text}")
 
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(txt, reply_markup=btn)
         return await callback_query.edit_message_text(txt, reply_markup=btn)
 
     text = lang.get("payment.notes.not_found")
-    btn, txt = client.ns.button.create_keyboard(f"{text}\n\n{back_btn_text}")
+    btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{back_btn_text}")
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
@@ -55,14 +55,14 @@ async def promo_detail(client, callback_query):
         )
 
         btn_text = f"| {lang.get('payment.promo.pay_button')} - paynow {name} promo | {back_btn_text}"
-        btn, txt = client.ns.button.create_keyboard(f"{desc}\n\n{btn_text}")
+        btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{desc}\n\n{btn_text}")
 
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(txt, reply_markup=btn)
         return await callback_query.edit_message_text(txt, reply_markup=btn)
 
     text = lang.get("payment.promo.not_found")
-    btn, txt = client.ns.button.create_keyboard(f"{text}\n\n{back_btn_text}")
+    btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{back_btn_text}")
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
@@ -78,7 +78,7 @@ async def paynow(client, callback_query):
         if await is_bot_owner(client, callback_query.from_user.id):
             text = lang.get("payment.pay.service_inactive_panel")
             btn_text = f"| {lang.get('payment.pay.setup_api_button')} - api_settings |"
-            btn, txt = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+            btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
             if callback_query.message.photo:
                 await callback_query.edit_message_caption(txt, reply_markup=btn)
             else:
@@ -186,7 +186,7 @@ async def auto_check_payment(client, user, order_id):
                     owner_bot_id,
                     owner_lang.get(
                         "payment.check.success_owner_notif",
-                        mention=client.ns.arg.getMention(user),
+                        mention=client.ns.telegram.arg.getMention(user),
                         bot_mention=client.me.mention,
                         name=name,
                         type=tipe.title(),
@@ -232,7 +232,7 @@ async def successful_donation_handler(client, message):
         notification_text = owner_lang.get(
             "payment.donation.owner_notif",
             stars=stars_donated,
-            mention=client.ns.arg.getMention(user),
+            mention=client.ns.telegram.arg.getMention(user),
             id=user.id,
             bot_mention=client.me.mention,
         )
@@ -243,7 +243,7 @@ async def successful_donation_handler(client, message):
 
         refund_callback_data = f"refund_stars_{refund_key}"
         refund_button_text = f"| {owner_lang.get('payment.donation.refund_button')} - {refund_callback_data} |"
-        refund_btn, _ = client.ns.button.create_keyboard(refund_button_text)
+        refund_btn, _ = client.ns.telegram.button.create_inline_keyboard(refund_button_text)
 
         await client.send_message(chat_id=owner_of_this_bot, text=notification_text, reply_markup=refund_btn)
 
@@ -256,7 +256,7 @@ async def successful_donation_handler(client, message):
                 super_admin_lang.get(
                     "payment.donation.owner_blocked_notif",
                     stars=stars_donated,
-                    mention=client.ns.arg.getMention(user),
+                    mention=client.ns.telegram.arg.getMention(user),
                     bot_name=client.me.first_name,
                 ),
             )
