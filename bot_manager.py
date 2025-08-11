@@ -2,9 +2,6 @@ import asyncio
 from datetime import datetime, timezone
 
 import pyrogram
-from nsdev import listen
-
-_ = listen
 
 import VvipBot as handlers
 from services import initialize_bot_services
