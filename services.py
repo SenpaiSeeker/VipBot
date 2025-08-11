@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 
+
 def initialize_bot_services(client, db_instance):
     bot_id = client.me.id
     log = client.ns.utils.log
