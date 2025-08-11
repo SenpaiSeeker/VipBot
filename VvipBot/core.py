@@ -94,7 +94,7 @@ async def set_lang_callback(client, callback_query):
 
 @command(lambda ctx: filters.regex(r"^chg_lang_(id|en|ja)$"), handler_type="callback")
 async def change_lang_callback(client, callback_query):
-    lang_code = callback_query.data.split("_")[-1]
+    callback_query.data.split("_")[-1]
     ctx.db.setVars(callback_query.from_user.id, "language", var_key="user_info")
     lang = ctx.L(ctx.db, callback_query.from_user.id)
     await callback_query.answer(lang.get("lang.selected"), show_alert=True)
@@ -233,10 +233,14 @@ async def gemini_bot_ai(client, callback_query):
                     await client.send_message(chat_id, response_text)
 
         except nsdev.listen.UserCancelled:
-            btn, _ = client.ns.telegram.button.create_inline_keyboard(f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |")
+            btn, _ = client.ns.telegram.button.create_inline_keyboard(
+                f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |"
+            )
             await client.send_message(chat_id, lang.get("ai.session_stopped"), reply_markup=btn)
         except asyncio.TimeoutError:
-            btn, _ = client.ns.telegram.button.create_inline_keyboard(f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |")
+            btn, _ = client.ns.telegram.button.create_inline_keyboard(
+                f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |"
+            )
             await client.send_message(chat_id, lang.get("ai.session_expired"), reply_markup=btn)
         except Exception as e:
             ctx.log.print(f"{ctx.log.RED}Error on AI Chatbot session: {e}")
