@@ -185,7 +185,7 @@ async def gemini_bot_ai(client, callback_query):
                 prompt = f"{lang.get('ai.khodam_prompt')}{lang.get('prompts.cancel_footer')}"
                 ask_msg = await client.ask(chat_id, prompt, timeout=300)
                 if ask_msg.text.lower() == "/batal":
-                    raise nsdev.listen.UserCancelled
+                    raise listen.UserCancelled
 
                 msg = await client.send_message(chat_id, lang.get("ai.khodam_analyzing", name=ask_msg.text))
                 response_text = gemini_service.send_khodam_message(ask_msg.text, chat_id)
@@ -224,7 +224,7 @@ async def gemini_bot_ai(client, callback_query):
                     if not user_msg.text:
                         continue
                     if user_msg.text.lower() == "/stop":
-                        raise nsdev.listen.UserCancelled
+                        raise listen.UserCancelled
 
                     await client.send_chat_action(chat_id, pyrogram.enums.ChatAction.TYPING)
                     response_text = gemini_service.send_chat_message(
@@ -232,15 +232,11 @@ async def gemini_bot_ai(client, callback_query):
                     )
                     await client.send_message(chat_id, response_text)
 
-        except nsdev.listen.UserCancelled:
-            btn, _ = client.ns.telegram.button.create_inline_keyboard(
-                f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |"
-            )
+        except listen.UserCancelled:
+            btn, _ = client.ns.telegram.button.create_inline_keyboard(f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |")
             await client.send_message(chat_id, lang.get("ai.session_stopped"), reply_markup=btn)
         except asyncio.TimeoutError:
-            btn, _ = client.ns.telegram.button.create_inline_keyboard(
-                f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |"
-            )
+            btn, _ = client.ns.telegram.button.create_inline_keyboard(f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |")
             await client.send_message(chat_id, lang.get("ai.session_expired"), reply_markup=btn)
         except Exception as e:
             ctx.log.print(f"{ctx.log.RED}Error on AI Chatbot session: {e}")
