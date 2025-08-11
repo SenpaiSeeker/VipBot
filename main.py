@@ -6,9 +6,6 @@ from pathlib import Path
 
 import nsdev
 import pyrogram
-from nsdev import listen
-
-_ = listen
 
 import VvipBot as handlers
 from bot_manager import BotManager
