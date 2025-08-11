@@ -4,8 +4,8 @@ import sys
 import traceback
 from pathlib import Path
 
-import pyrogram
 import nsdev
+import pyrogram
 from nsdev import listen
 
 _ = listen
