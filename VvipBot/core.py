@@ -13,7 +13,7 @@ async def get_start_keyboard_and_content(client, user):
         key = "start.welcome_main_bot" if is_main_bot else "start.welcome_clone_bot"
         main_text_template = lang.get(key)
 
-    welcome_text = main_text_template.format(mention=client.ns.arg.getMention(user))
+    welcome_text = main_text_template.format(mention=client.ns.telegram.arg.getMention(user))
 
     button_rows = []
     if is_main_bot:
@@ -33,7 +33,7 @@ async def get_start_keyboard_and_content(client, user):
 
     btn_list_str = "\n".join(button_rows)
 
-    btn, _ = client.ns.button.create_keyboard(f"{welcome_text}\n\n{btn_list_str}")
+    btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{welcome_text}\n\n{btn_list_str}")
     return btn, welcome_text, photo_id
 
 
@@ -64,7 +64,7 @@ async def about_bot_callback(client, callback_query):
     lang = callback_query.lang
     text = lang.get("about.panel")
     btn_text = f"| {lang.get('general.back_to_main_menu')} - start |"
-    btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+    btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
 
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
@@ -84,7 +84,7 @@ async def set_lang_callback(client, callback_query):
         f"| {lang.get('general.back_to_main_menu')} - start |"
     )
 
-    btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+    btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
 
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
@@ -95,7 +95,7 @@ async def set_lang_callback(client, callback_query):
 @command(lambda ctx: filters.regex(r"^chg_lang_(id|en|ja)$"), handler_type="callback")
 async def change_lang_callback(client, callback_query):
     lang_code = callback_query.data.split("_")[-1]
-    ctx.db.setVars(callback_query.from_user.id, "language", lang_code, var_key="user_info")
+    ctx.db.setVars(callback_query.from_user.id, "language", var_key="user_info")
     lang = ctx.L(ctx.db, callback_query.from_user.id)
     await callback_query.answer(lang.get("lang.selected"), show_alert=True)
     await start_callback(client, callback_query)
@@ -118,7 +118,7 @@ async def list_vvip_bot(client, callback_query):
 
     if not vvip_list:
         text = lang.get("vvip_list.empty")
-        btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{back_btn_text}")
+        btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{back_btn_text}")
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
         return await callback_query.edit_message_text(text, reply_markup=btn)
@@ -137,7 +137,7 @@ async def list_vvip_bot(client, callback_query):
     btn_text += f"\n{back_btn_text}"
 
     text = lang.get("vvip_list.panel", mention=client.me.mention)
-    btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+    btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
 
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
@@ -156,7 +156,7 @@ async def gemini_bot_ai(client, callback_query):
             btn_text = (
                 f"| {lang.get('ai.setup_button')} - api_settings | | {lang.get('general.back_to_main_menu')} - start |"
             )
-            btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+            btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
             if callback_query.message.photo:
                 return await callback_query.edit_message_caption(text, reply_markup=btn)
             return await callback_query.edit_message_text(text, reply_markup=btn)
@@ -171,7 +171,7 @@ async def gemini_bot_ai(client, callback_query):
             f"| {lang.get('ai.khodam_button')} - khodam | | {lang.get('ai.chatbot_button')} - chatbot;same |\n"
             f"| {lang.get('general.back_to_main_menu')} - start |"
         )
-        btn, _ = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+        btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
         if callback_query.message.photo:
             await callback_query.edit_message_caption(text, reply_markup=btn)
         else:
@@ -185,13 +185,13 @@ async def gemini_bot_ai(client, callback_query):
                 prompt = f"{lang.get('ai.khodam_prompt')}{lang.get('prompts.cancel_footer')}"
                 ask_msg = await client.ask(chat_id, prompt, timeout=300)
                 if ask_msg.text.lower() == "/batal":
-                    raise nsdev.UserCancelled
+                    raise nsdev.listen.UserCancelled
 
                 msg = await client.send_message(chat_id, lang.get("ai.khodam_analyzing", name=ask_msg.text))
                 response_text = gemini_service.send_khodam_message(ask_msg.text, chat_id)
 
                 btn_text = f"| {lang.get('ai.khodam_try_again_button')} - khodam | | {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |"
-                btn, _ = client.ns.button.create_keyboard(btn_text)
+                btn, _ = client.ns.telegram.button.create_inline_keyboard(btn_text)
 
                 await msg.edit(
                     lang.get("ai.khodam_result_title", name=ask_msg.text, result=response_text), reply_markup=btn
@@ -224,7 +224,7 @@ async def gemini_bot_ai(client, callback_query):
                     if not user_msg.text:
                         continue
                     if user_msg.text.lower() == "/stop":
-                        raise nsdev.UserCancelled
+                        raise nsdev.listen.UserCancelled
 
                     await client.send_chat_action(chat_id, pyrogram.enums.ChatAction.TYPING)
                     response_text = gemini_service.send_chat_message(
@@ -232,11 +232,11 @@ async def gemini_bot_ai(client, callback_query):
                     )
                     await client.send_message(chat_id, response_text)
 
-        except nsdev.UserCancelled:
-            btn, _ = client.ns.button.create_keyboard(f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |")
+        except nsdev.listen.UserCancelled:
+            btn, _ = client.ns.telegram.button.create_inline_keyboard(f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |")
             await client.send_message(chat_id, lang.get("ai.session_stopped"), reply_markup=btn)
         except asyncio.TimeoutError:
-            btn, _ = client.ns.button.create_keyboard(f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |")
+            btn, _ = client.ns.telegram.button.create_inline_keyboard(f"| {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |")
             await client.send_message(chat_id, lang.get("ai.session_expired"), reply_markup=btn)
         except Exception as e:
             ctx.log.print(f"{ctx.log.RED}Error on AI Chatbot session: {e}")
@@ -256,7 +256,7 @@ async def donate_callback(client, callback_query):
         f"| {lang.get('general.back_to_main_menu')} - start |"
     )
 
-    btn, _ = client.ns.button.create_keyboard(btn_text)
+    btn, _ = client.ns.telegram.button.create_inline_keyboard(btn_text)
 
     try:
         if callback_query.message.photo:
