@@ -2,16 +2,18 @@ import asyncio
 from datetime import datetime, timezone
 
 import pyrogram
+from nsdev import LoggerHandler
 
 import VvipBot as handlers
 from services import initialize_bot_services
 
+log = LoggerHandler()
+
 
 class BotManager:
-    def __init__(self, db_instance, owner_id, logger):
+    def __init__(self, db_instance, owner_id):
         self.db = db_instance
         self.owner_id = owner_id
-        self.log = logger
         self.running_bots = {}
         self.main_bot_client = None
         self.main_bot_id = None
@@ -19,11 +21,11 @@ class BotManager:
     async def start_bot(self, bot_data):
         bot_id = int(bot_data["name"])
         if bot_id in self.running_bots:
-            self.log.print(f"{self.log.YELLOW}Bot {bot_id} sudah berjalan.")
+            log.print(f"{log.YELLOW}Bot {bot_id} sudah berjalan.")
             return
 
         try:
-            self.log.print(f"{self.log.CYAN}Mencoba mengaktifkan bot: {bot_id}")
+            log.print(f"{log.CYAN}Mencoba mengaktifkan bot: {bot_id}")
             client = pyrogram.Client(
                 name=str(bot_id),
                 api_id=bot_data["api_id"],
@@ -39,15 +41,15 @@ class BotManager:
             initialize_bot_services(client, self.db)
 
             self.running_bots[client.me.id] = client
-            self.log.print(f"{self.log.GREEN}Bot {client.me.first_name} (ID: {client.me.id}) berhasil diaktifkan.")
+            log.print(f"{log.GREEN}Bot {client.me.first_name} (ID: {client.me.id}) berhasil diaktifkan.")
         except Exception as e:
             error_str = str(e).upper()
             common_errors = ["USER_DEACTIVATED_BAN", "BOT_TOKEN_INVALID", "ACCESS_TOKEN_EXPIRED"]
 
-            self.log.print(f"{self.log.RED}Gagal memulai bot {bot_id}: {e}")
+            log.print(f"{log.RED}Gagal memulai bot {bot_id}: {e}")
             if any(err in error_str for err in common_errors):
                 self.db.removeBot(bot_id)
-                self.log.print(f"{self.log.ORANGE}Data bot {bot_id} dihapus karena token tidak valid/terblokir.")
+                log.print(f"{log.ORANGE}Data bot {bot_id} dihapus karena token tidak valid/terblokir.")
 
     async def start_all_bots(self):
         all_bots_data = self.db.getBots(is_token=True)
@@ -60,16 +62,16 @@ class BotManager:
                 client = self.running_bots[bot_id]
                 if client.is_connected:
                     await client.stop()
-                self.log.print(f"{self.log.YELLOW}Bot {bot_id} berhasil dihentikan.")
+                log.print(f"{log.YELLOW}Bot {bot_id} berhasil dihentikan.")
             except Exception as e:
-                self.log.print(f"{self.log.RED}Error saat menghentikan bot {bot_id}: {e}")
+                log.print(f"{log.RED}Error saat menghentikan bot {bot_id}: {e}")
             finally:
                 del self.running_bots[bot_id]
 
     async def expiration_checker(self):
         while True:
             await asyncio.sleep(3600)
-            self.log.print(f"{self.log.CYAN}Menjalankan pemeriksaan masa aktif bot...")
+            log.print(f"{log.CYAN}Menjalankan pemeriksaan masa aktif bot...")
 
             all_bot_ids = [bot["name"] for bot in self.db.getBots(is_token=True)]
 
@@ -93,7 +95,7 @@ class BotManager:
                         continue
 
                     if days_left < 1:
-                        self.log.print(f"{self.log.ORANGE}Masa aktif bot {bot_id} telah habis. Menghapus bot...")
+                        log.print(f"{log.ORANGE}Masa aktif bot {bot_id} telah habis. Menghapus bot...")
                         try:
                             bot_instance = self.running_bots.get(bot_id)
                             bot_name = (
@@ -104,14 +106,12 @@ class BotManager:
                             expired_message = f"Masa aktif bot Anda **{bot_name}** sudah habis."
                             await main_client.send_message(owner_id, expired_message)
                         except Exception as e:
-                            self.log.print(
-                                f"{self.log.RED}Gagal mengirim notifikasi kedaluwarsa ke owner {owner_id}: {e}"
-                            )
+                            log.print(f"{log.RED}Gagal mengirim notifikasi kedaluwarsa ke owner {owner_id}: {e}")
 
                         await self.stop_bot(bot_id)
                         self.db.removeBot(bot_id)
                         self.db.removeAllVars(bot_id)
-                        self.log.print(f"{self.log.YELLOW}Bot {bot_id} telah dihapus karena kedaluwarsa.")
+                        log.print(f"{log.YELLOW}Bot {bot_id} telah dihapus karena kedaluwarsa.")
                         continue
 
                     target_warning_days = [10, 5, 3, 1]
@@ -141,19 +141,17 @@ class BotManager:
 
                                 await main_client.send_message(owner_id, warning_message)
                                 self.db.setVars(bot_id, last_notif_date_key, today_str)
-                                self.log.print(
-                                    f"{self.log.CYAN}Mengirim notifikasi sisa {days_left} hari ke owner {owner_id} untuk bot {bot_id}"
+                                log.print(
+                                    f"{log.CYAN}Mengirim notifikasi sisa {days_left} hari ke owner {owner_id} untuk bot {bot_id}"
                                 )
                             except Exception as e:
-                                self.log.print(
-                                    f"{self.log.RED}Gagal mengirim notifikasi perpanjangan ke owner {owner_id}: {e}"
-                                )
+                                log.print(f"{log.RED}Gagal mengirim notifikasi perpanjangan ke owner {owner_id}: {e}")
 
                     elif days_left > 10:
                         last_notif_date_key = "last_warning_notification_date"
                         if self.db.getVars(bot_id, last_notif_date_key):
                             self.db.removeVars(bot_id, last_notif_date_key)
-                            self.log.print(f"{self.log.GREEN}Mereset flag tanggal notifikasi untuk bot {bot_id}.")
+                            log.print(f"{log.GREEN}Mereset flag tanggal notifikasi untuk bot {bot_id}.")
 
                 except Exception as e:
-                    self.log.print(f"{self.log.RED}Error saat memeriksa masa aktif bot {bot_id}: {e}")
+                    log.print(f"{log.RED}Error saat memeriksa masa aktif bot {bot_id}: {e}")
