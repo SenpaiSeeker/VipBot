@@ -5,7 +5,10 @@ import traceback
 from pathlib import Path
 
 import pyrogram
-from nsdev import LoggerHandler
+import nsdev
+from nsdev import listen
+
+_ = listen
 
 import VvipBot as handlers
 from bot_manager import BotManager
@@ -17,10 +20,8 @@ project_root = Path(__file__).resolve().parent
 sys.path.insert(0, str(project_root))
 
 
-log = LoggerHandler()
-
-
 async def main():
+    log = nsdev.LoggerHandler()
     os.system("rm -f *.session* /tmp/*.png")
 
     strings_dir = "strings"
@@ -28,7 +29,7 @@ async def main():
         os.makedirs(strings_dir)
         log.print(f"{log.YELLOW}Direktori '{strings_dir}' tidak ditemukan, telah dibuat.")
 
-    manager = BotManager(db, OWNER_ID)
+    manager = BotManager(db, OWNER_ID, log)
 
     app = pyrogram.Client(
         name="vvip_manager_main",
@@ -62,6 +63,7 @@ async def main():
 
 
 if __name__ == "__main__":
+    log = nsdev.LoggerHandler()
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
