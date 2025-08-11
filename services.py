@@ -1,9 +1,12 @@
 from types import SimpleNamespace
 
+from nsdev import LoggerHandler
+
+log = LoggerHandler()
+
 
 def initialize_bot_services(client, db_instance):
     bot_id = client.me.id
-    log = client.ns.utils.log
     client.services = SimpleNamespace(vmp=None, gemini=None)
 
     violet_api_key = db_instance.getVars(bot_id, "VIOLET_API_KEY")
