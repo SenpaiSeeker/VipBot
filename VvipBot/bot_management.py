@@ -9,7 +9,7 @@ async def create_bot_callback(client, callback_query):
 
     if user_id != ctx.owner_id and user_id not in access_list:
         owner_user = await client.get_users(ctx.owner_id)
-        btn, txt = client.ns.button.create_keyboard(
+        btn, txt = client.ns.telegram.button.create_inline_keyboard(
             f"{lang.get('bot_management.create.no_access', mention=owner_user.mention)}\n\n| {lang.get('general.back')} - start |"
         )
         return await callback_query.edit_message_caption(txt, reply_markup=btn)
@@ -24,21 +24,21 @@ async def create_bot_callback(client, callback_query):
 
         api_id_msg = await ask(lang.get("bot_management.create.step1_api_id"))
         if api_id_msg.text.lower() == "/batal":
-            raise nsdev.UserCancelled
+            raise nsdev.listen.UserCancelled
         api_id = api_id_msg.text
 
         api_hash_msg = await ask(lang.get("bot_management.create.step2_api_hash"))
         if api_hash_msg.text.lower() == "/batal":
-            raise nsdev.UserCancelled
+            raise nsdev.listen.UserCancelled
         api_hash = api_hash_msg.text
 
         token_msg = await ask(lang.get("bot_management.create.step3_bot_token"))
         if token_msg.text.lower() == "/batal":
-            raise nsdev.UserCancelled
+            raise nsdev.listen.UserCancelled
         token = token_msg.text
 
         msg = await client.send_message(chat_id, lang.get("bot_management.create.verifying"))
-        new_bot_name = client.ns.arg.getNamebot(token)
+        new_bot_name = client.ns.telegram.arg.getNamebot(token)
         if "invalid" in new_bot_name.lower():
             raise ValueError(lang.get("bot_management.create.invalid_token"))
 
@@ -61,7 +61,7 @@ async def create_bot_callback(client, callback_query):
         await ctx.manager.start_bot(bot_data)
         await msg.edit(lang.get("bot_management.create.success", name=new_bot_name))
 
-    except nsdev.UserCancelled:
+    except nsdev.listen.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"))
     except asyncio.TimeoutError:
         await client.send_message(chat_id, lang.get("general.timeout"))
@@ -114,7 +114,7 @@ async def list_my_bots_callback(client, callback_query):
         btn_text += f"| {lang.get('admin.allbots.prev_button')} - list_my_bots_{prev_page} | | {lang.get('admin.allbots.next_button')} - list_my_bots_{next_page};same |\n"
 
     btn_text += f"| {lang.get('general.back')} - start |"
-    btn, _ = client.ns.button.create_keyboard(btn_text)
+    btn, _ = client.ns.telegram.button.create_inline_keyboard(btn_text)
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -158,7 +158,7 @@ async def manage_bot_callback(client, callback_query):
         days_left=days_left_text,
     )
 
-    btn, txt = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+    btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
@@ -188,7 +188,7 @@ async def request_extend_duration_callback(client, callback_query):
 
         txt_owner = lang.get(
             "bot_management.extend.panel_owner",
-            mention=main_bot_client.ns.arg.getMention(requester),
+            mention=main_bot_client.ns.telegram.arg.getMention(requester),
             id=requester.id,
             bot_name=bot_name,
             bot_id=bot_id_to_request,
@@ -199,7 +199,7 @@ async def request_extend_duration_callback(client, callback_query):
             f"| {lang.get('bot_management.extend.reject_button')} - close_req {bot_id_to_request} {requester.id} |"
         )
 
-        btn_owner, _ = main_bot_client.ns.button.create_keyboard(f"{txt_owner}\n{btn_owner_text}")
+        btn_owner, _ = main_bot_client.ns.telegram.button.create_inline_keyboard(f"{txt_owner}\n{btn_owner_text}")
         await main_bot_client.send_message(ctx.owner_id, txt_owner, reply_markup=btn_owner)
         await callback_query.answer(lang.get("bot_management.extend.sent_alert"), show_alert=True)
 
@@ -281,7 +281,7 @@ async def confirm_delete_bot_callback(client, callback_query):
         f"| {lang.get('bot_management.delete.confirm_no_button')} - manage_bot {bot_id_to_manage} |"
     )
 
-    btn, txt = client.ns.button.create_keyboard(f"{text}\n\n{btn_text}")
+    btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
 
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
@@ -310,7 +310,7 @@ async def do_delete_bot_callback(client, callback_query):
         btn_text = f"| {lang.get('general.back_to_bot_list')} - list_my_bots_0 |"
         await callback_query.edit_message_caption(
             lang.get("bot_management.delete.success", id=bot_id_to_manage),
-            reply_markup=client.ns.button.create_keyboard(btn_text)[0],
+            reply_markup=client.ns.telegram.button.create_inline_keyboard(btn_text)[0],
         )
     except Exception as e:
         await callback_query.edit_message_caption(lang.get("bot_management.delete.fail", e=e))
