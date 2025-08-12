@@ -1,51 +1,37 @@
-while true; do
-    read -p $'\033[38;2;255;255;0mMasukkan nama file konfigurasi (harus diakhiri dengan .env): \033[0m' config_file
-    if [[ "$config_file" =~ \.env$ ]]; then
-        break
-    else
-        echo -e "\033[38;2;255;0;0mNama file harus diakhiri dengan .env! Coba lagi.\033[0m"
-    fi
-done
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
 
-declare -a env_variables=("API_ID" "API_HASH" "BOT_TOKEN" "OWNER_ID")
+echo -e "${CYAN}--- Skrip Konfigurasi VVIP Multi-Bot Manager ---${NC}"
+echo "Skrip ini akan memandu Anda membuat file konfigurasi environment."
+echo ""
 
-export TZ="Asia/Jakarta"
-formatted_date=$(LC_TIME=id_ID.UTF-8 date +"%A, %d %B %Y %H:%M:%S")
+echo -e "${YELLOW}Silakan masukkan kredensial Telegram Anda yang diperlukan:${NC}"
+read -p "Masukkan API_ID Anda: " API_ID
+read -p "Masukkan API_HASH Anda: " API_HASH
+read -p "Masukkan BOT_TOKEN Anda (untuk Bot Utama/Induk): " BOT_TOKEN
+read -p "Masukkan OWNER_ID Anda (ID Telegram numerik Anda): " OWNER_ID
+echo ""
 
-> "$config_file"
-echo "# Configuration File - Dibuat pada $formatted_date" >> "$config_file"
-echo "" >> "$config_file"
+read -p "Masukkan nama file untuk environment Anda [default: .env]: " FILENAME
+FILENAME=${FILENAME:-.env}
 
-function get_input() {
-    local var_name="$1"
-    local value=""
-    while true; do
-        read -p $'\033[1;38;5;46mMasukkan config untuk '"$var_name"$': \033[0m' value
-        if [[ -z "$value" ]]; then
-            echo -e "\033[38;2;255;0;0mInput tidak boleh kosong! Coba lagi.\033[0m" >&2
-        else
-            break
-        fi
-    done
-    echo "$value"
-}
+echo "Membuat file konfigurasi: $FILENAME..."
 
-declare -A config_values
-for var in "${env_variables[@]}"; do
-    config_values["$var"]="$(get_input "$var")"
-done
+cat << EOF > "$FILENAME"
+API_ID=$API_ID
+API_HASH=$API_HASH
+BOT_TOKEN=$BOT_TOKEN
+OWNER_ID=$OWNER_ID
+EOF
 
-echo -e "\033[38;2;0;191;255mKonfigurasi yang telah dimasukkan:\033[0m"
-for var in "${!config_values[@]}"; do
-    echo -e "\033[38;2;173;216;230m$var\033[0m=\033[38;2;144;238;144m${config_values[$var]}\033[0m"
-done
+echo ""
+echo -e "${GREEN}✅ File konfigurasi '$FILENAME' berhasil dibuat!${NC}"
+echo "Sekarang Anda dapat menjalankan bot menggunakan perintah di bawah ini:"
 
-read -p $'\033[38;2;255;255;0mApakah Anda yakin ingin menyimpan konfigurasi? (y/n): \033[0m' confirm
-if [[ "$confirm" =~ ^[Yy]$ ]]; then
-    for var in "${!config_values[@]}"; do
-        echo "$var=${config_values[$var]}" >> "$config_file"
-    done
-    echo -e "\033[38;2;0;255;0mFile config berhasil disimpan di $config_file\033[0m"
+if [ "$FILENAME" == ".env" ]; then
+    echo -e "${CYAN}python3 main.py${NC}"
 else
-    echo -e "\033[38;2;255;0;0mPenyimpanan dibatalkan.\033[0m"
+    echo -e "${CYAN}python3 main.py \"$FILENAME\"${NC}"
 fi
