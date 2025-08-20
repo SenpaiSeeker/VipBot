@@ -155,9 +155,7 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
                 func_name = tb_info.name
                 line_no = tb_info.lineno
 
-                log_message = (
-                    f"{ctx.log.CYAN}{filename}:{func_name}:{line_no} {ctx.log.WHITE}| {ctx.log.YELLOW}{e}"
-                )
+                log_message = f"{ctx.log.CYAN}{filename}:{func_name}:{line_no} {ctx.log.WHITE}| {ctx.log.YELLOW}{e}"
                 ctx.log.print(log_message)
 
         wrapped_func = partial(handler_wrapper, func)
