@@ -119,6 +119,21 @@ admin:
     success_text: "\n\n✅ Donation has been successfully refunded."
     success_notif: "ℹ️ **Donation Information**\n\nYour Stars donation has been refunded by the admin. Thank you for your understanding."
     fail_text: "\n\n**❌ Failed to refund donation:**\n`{e}`"
+  list_users:
+    panel_title: "**👥 All Users List (Page {page}/{total_pages})**\n\n"
+    no_users: "<b>No users recorded.</b>"
+    refreshing_data: "🔄 Refreshing user data, this may take a moment..."
+    page_info: "Page {page}/{total}"
+    send_message_button: "💬 Message {name}"
+    refresh_button: "🔄 Refresh"
+    data_updated_answer: "Data is already up to date."
+    update_error_answer: "An error occurred while updating the view."
+  message_user:
+    prompt: "Please send the message you want to forward."
+    success: "✅ Message sent successfully."
+    cancelled: "Cancelled."
+    timeout: "Timeout."
+    fail: "Failed to send message: {e}"
 
 bot_management:
   create:
@@ -265,6 +280,7 @@ settings:
   api_keys: "🔑 Manage API Keys"
   broadcast: "📢 Create Broadcast"
   stats_button: "⭐ Stars Statistics"
+  list_all_users: "👥 List All Users"
   
   set_photo_prompt: "🖼️ **Set Start Photo**\n\nPlease send the new photo you want to use as the image in the /start message.\n\nType `/empty` to remove the current photo and revert to default."
   set_photo_fail: "❌ **Failed:** The message sent is not a photo. Process canceled."
