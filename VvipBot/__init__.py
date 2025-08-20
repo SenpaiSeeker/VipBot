@@ -130,28 +130,35 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
 
         HandlerClass = HANDLER_MAP.get(handler_type)
         if not HandlerClass:
-            ctx.log.warning(f"Handler type '{handler_type}' tidak dikenal. Melewati pendaftaran.")
+            ctx.log.print(f"{ctx.log.YELLOW}Handler type '{handler_type}' tidak dikenal. Melewati pendaftaran.")
             continue
 
         async def handler_wrapper(original_func, c, u):
             if hasattr(u, "from_user") and u.from_user:
                 u.lang = Language(db_instance, u.from_user.id)
-            else:
+            elif hasattr(u, "sender_chat") and u.sender_chat:
                 u.lang = Language(db_instance, u.sender_chat.id)
+            else:
+                u.lang = Language(db_instance, 0)
 
             try:
                 await original_func(c, u)
             except pyrogram.errors.MessageNotModified:
-                ctx.log.print(f"{ctx.log.YELLOW}Caught MessageNotModified in handler '{original_func.__name__}'")
-                if isinstance(u, pyrogram.types.CallbackQuery):
-                    await u.answer("MessageNotModified")
+                pass
             except pyrogram.errors.MessageDeleteForbidden:
-                ctx.log.print(
-                    f"{ctx.log.YELLOW}Gagal menghapus pesan di handler '{original_func.__name__}'. "
-                    f"Pesan mungkin sudah lama atau bot tidak punya izin. Mengabaikan error."
-                )
+                pass
             except Exception as e:
-                ctx.log.print(f"{ctx.log.YELLOW}{e}")
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                tb_info = traceback.extract_tb(exc_traceback)[-1]
+
+                filename = os.path.basename(tb_info.filename)
+                func_name = tb_info.name
+                line_no = tb_info.lineno
+
+                log_message = (
+                    f"{ctx.log.CYAN}{filename}:{func_name}:{line_no} {ctx.log.WHITE}| {ctx.log.YELLOW}{e}"
+                )
+                ctx.log.print(log_message)
 
         wrapped_func = partial(handler_wrapper, func)
 
