@@ -119,6 +119,21 @@ admin:
     success_text: "\n\n✅ 寄付は正常に返金されました。"
     success_notif: "ℹ️ **寄付に関するお知らせ**\n\nあなたのスターによる寄付は、管理者によって返金されました。ご理解のほど、よろしくお願いいたします。"
     fail_text: "\n\n**❌ 寄付の返金に失敗しました:**\n`{e}`"
+  list_users:
+    panel_title: "**👥 全ユーザーリスト (ページ {page}/{total_pages})**\n\n"
+    no_users: "<b>記録されているユーザーはいません。</b>"
+    refreshing_data: "🔄 ユーザーデータを更新しています。少々お待ちください..."
+    page_info: "{page}/{total} ページ"
+    send_message_button: "💬 {name}にメッセージ"
+    refresh_button: "🔄 更新"
+    data_updated_answer: "データは既に最新です。"
+    update_error_answer: "ビューの更新中にエラーが発生しました。"
+  message_user:
+    prompt: "転送したいメッセージを送信してください。"
+    success: "✅ メッセージは正常に送信されました。"
+    cancelled: "キャンセルしました。"
+    timeout: "タイムアウトしました。"
+    fail: "メッセージの送信に失敗しました: {e}"
 
 bot_management:
   create:
@@ -265,6 +280,7 @@ settings:
   api_keys: "🔑 APIキーの管理"
   broadcast: "📢 ブロードキャストを作成"
   stats_button: "⭐ スター統計"
+  list_all_users: "👥 全ユーザーを一覧表示"
   
   set_photo_prompt: "🖼️ **開始写真の設定**\n\n/startメッセージの画像として使用したい新しい写真を送信してください。\n\n現在の写真を削除してデフォルトに戻すには `/empty` と入力してください。"
   set_photo_fail: "❌ **失敗:** 送信されたメッセージは写真ではありません。プロセスはキャンセルされました。"
