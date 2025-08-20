@@ -1,118 +1,107 @@
-# VVIP Multi-Bot Manager
+# 🚀 VVIP Multi-Bot Manager
 
-Sebuah platform bot Telegram canggih yang dirancang tidak hanya untuk mengelola satu grup VVIP, tetapi untuk **membuat dan mengelola seluruh armada bot VVIP**. Bot utama bertindak sebagai pusat kontrol, memungkinkan pemilik untuk memberikan akses kepada pengguna lain untuk meluncurkan bot VVIP mereka sendiri, lengkap dengan masa aktif, panel kontrol, dan sistem pembayaran yang terisolasi.
+Selamat datang di **VVIP Multi-Bot Manager**, sebuah platform Telegram canggih yang dirancang tidak hanya untuk mengelola satu grup VVIP, tetapi untuk **membuat, mengelola, dan menskalakan seluruh armada bot VVIP**. Bot utama berfungsi sebagai pusat kontrol (*control panel*), memungkinkan *Owner Utama* untuk memberikan akses kepada pengguna lain untuk meluncurkan bot VVIP mereka sendiri. Setiap bot yang dibuat beroperasi secara mandiri, lengkap dengan masa aktif, panel kontrol pribadi, dan sistem pembayaran yang terisolasi.
+
+Platform ini adalah solusi *all-in-one* bagi siapa saja yang ingin membangun bisnis komunitas berbayar di Telegram dengan model multi-tenant.
 
 ## ⭐ Fitur Unggulan
 
-- **Sistem Multi-Bot Canggih**:
-  - **Bot Induk (Main Bot)**: Berfungsi sebagai pusat manajemen untuk membuat bot-bot baru.
-  - **Pembuatan Bot oleh Pengguna**: Owner utama dapat memberikan akses kepada pengguna terpercaya (`/akses`) untuk membuat bot VVIP mereka sendiri.
-  - **Manajemen Bot Individual**: Setiap bot yang dibuat memiliki database, daftar VVIP, member, dan API Keys (Violet & Gemini) yang terpisah.
-  - **Masa Aktif Bot**: Bot yang dibuat memiliki masa aktif 30 hari, yang dapat diperpanjang melalui permintaan kepada owner utama.
-  - **Panel Kontrol Terpusat**: Owner utama dapat melihat semua bot yang aktif (`/allbots`) dan mengatur masa aktifnya secara manual (`/extend`).
+### 🤖 Sistem Multi-Bot Canggih
+- **Bot Induk (Main Bot)**: Berfungsi sebagai pusat manajemen untuk membuat, memantau, dan mengelola semua bot VVIP yang ada di dalam sistem.
+- **Pembuatan Bot oleh Pengguna**: *Owner Utama* dapat mendelegasikan hak pembuatan bot kepada pengguna terpercaya melalui perintah `/akses`.
+- **Manajemen Bot Individual**: Setiap bot yang dibuat adalah entitas independen dengan database, daftar VVIP, daftar member, dan API Keys (Violet & Gemini) yang terpisah.
+- **Masa Aktif Bot**: Setiap bot yang dibuat otomatis mendapatkan masa aktif 30 hari, yang dapat diperpanjang melalui permintaan kepada *Owner Utama*.
+- **Panel Kontrol Terpusat (`/allbots`)**: *Owner Utama* memiliki pandangan *bird's-eye* dari semua bot yang aktif, lengkap dengan informasi pemilik dan sisa masa aktif.
+- **Manajemen Durasi Manual (`/extend`)**: *Owner Utama* dapat menambah atau mengurangi masa aktif bot manapun secara manual, memberikan fleksibilitas penuh dalam manajemen.
 
-- **Manajemen VVIP & Paket**:
-  - **Panel Kontrol Intuitif**: Tambah, hapus, dan kelola paket VVIP dengan mudah melalui tombol interaktif di dalam "⚙️ Panel Pengaturan ⚙️".
-  - **Harga Dinamis**: Atur harga normal dan harga promosi untuk setiap paket.
-  - **Teks yang Dapat Disesuaikan**: Personalisasi teks deskripsi untuk setiap paket dan promo.
+### 💼 Manajemen VVIP & Paket
+- **Panel Kontrol Intuitif**: Tambah, hapus, dan kelola paket VVIP dengan mudah melalui antarmuka berbasis tombol di dalam **"⚙️ Panel Pengaturan ⚙️"**.
+- **Harga Dinamis**: Atur harga normal dan harga promosi untuk setiap paket, memungkinkan strategi penjualan yang fleksibel.
+- **Teks yang Dapat Disesuaikan**: Personalisasi teks deskripsi untuk setiap paket dan promo untuk menarik lebih banyak pelanggan.
 
-- **Pembayaran dan Akses Otomatis**:
-  - **Integrasi QRIS**: Terhubung dengan VioletMediaPay untuk menghasilkan kode QRIS unik per transaksi.
-  - **Verifikasi Otomatis**: Bot secara mandiri memverifikasi pembayaran dan memberikan akses instan.
-  - **Konten Terlindungi**: Tautan grup dikirim sebagai pesan yang dilindungi untuk mencegah penerusan.
-  - **Dukungan Donasi**: Terima dukungan dari pengguna melalui Telegram Stars (⭐), dengan notifikasi instan kepada pemilik bot.
+### 💳 Pembayaran dan Akses Otomatis
+- **Integrasi QRIS (VioletMediaPay)**: Terhubung secara *seamless* dengan VioletMediaPay untuk menghasilkan kode QRIS yang unik untuk setiap transaksi, mendukung semua e-wallet dan m-banking di Indonesia.
+- **Verifikasi Otomatis**: Bot secara mandiri memverifikasi status pembayaran setiap 15 detik dan memberikan akses instan begitu pembayaran berhasil. Tidak perlu lagi konfirmasi manual.
+- **Konten Terlindungi**: Tautan undangan grup dikirim sebagai pesan yang dilindungi (*protected content*) untuk mencegah penerusan dan penyalahgunaan.
+- **Dukungan Donasi (Telegram Stars ⭐)**: Terima dukungan finansial dari pengguna melalui Telegram Stars. Notifikasi instan dikirim ke pemilik bot, lengkap dengan tombol untuk *refund* jika diperlukan.
 
-- **Manajemen Anggota yang Komprehensif**:
-  - **Daftar Member VVIP**: Lihat daftar semua anggota yang bergabung melalui bot, lengkap dengan detail dan tombol untuk menendang.
-  - **Cek Member Aktif Real-time**: Periksa daftar anggota langsung dari grup/channel target untuk memastikan tidak ada penyusup.
+### 👥 Manajemen Anggota yang Komprehensif
+- **Daftar Member VVIP**: Lihat daftar lengkap semua anggota yang telah bergabung melalui bot, lengkap dengan detail paket, tanggal bergabung, dan tombol untuk menendang (*kick*) anggota.
+- **Cek Member Aktif Real-time**: Verifikasi daftar anggota langsung dari grup/channel target untuk memastikan tidak ada penyusup atau anggota yang tidak terdaftar.
 
-- **Peralatan Admin yang Kuat**:
-  - **Fitur Broadcast**: Kirim pesan massal ke semua pengguna yang pernah memulai bot Anda.
-  - **Manajemen API per-Bot**: Setiap pemilik bot dapat mengatur API Key Violet (pembayaran) dan Gemini (AI) mereka sendiri, memastikan layanan tetap terisolasi.
-  - **Pemulihan Database**: Pulihkan seluruh data bot dari backup `.zip` dengan perintah `/restore`.
-  - **Eksekusi Kode**: Perintah `/eval` untuk debugging dan eksekusi kode tingkat lanjut (hanya untuk Owner Utama).
+### 🛠️ Peralatan Admin yang Kuat
+- **Fitur Broadcast**: Kirim pesan massal ke semua pengguna yang pernah berinteraksi dengan bot Anda, cocok untuk pengumuman atau promosi.
+- **Manajemen API per-Bot**: Setiap pemilik bot dapat mengatur API Key Violet (untuk pembayaran) dan Gemini (untuk AI) mereka sendiri, memastikan layanan tetap terisolasi dan mandiri.
+- **Backup & Restore Database**: Bot secara otomatis mengirimkan file backup `database.zip` secara berkala. Pulihkan seluruh data bot dengan mudah menggunakan perintah `/restore`.
+- **Eksekusi Kode (`/eval`)**: Fitur canggih untuk debugging dan eksekusi kode Python secara *real-time* (hanya untuk *Owner Utama*).
 
-- **Kustomisasi & Personalisasi**:
-  - **Multi-Bahasa**: Bot mendukung Bahasa Indonesia dan Inggris. Pengguna dapat memilih bahasa pilihan mereka melalui menu pengaturan.
-  - **Kustomisasi Tampilan**: Pemilik bot dapat dengan mudah mengubah foto dan teks sambutan (`/start`) melalui panel pengaturan. Gunakan perintah `/empty` untuk kembali ke pengaturan default.
-  - **Asisten AI**: Integrasi dengan Google Gemini untuk fitur hiburan "Cek Khodam" dan chatbot cerdas yang dapat menjawab pertanyaan pengguna seputar bot.
+### 🎨 Kustomisasi & Personalisasi
+- **Dukungan Multi-Bahasa**: Bot mendukung Bahasa Indonesia, Inggris, dan Jepang. Pengguna dapat memilih bahasa pilihan mereka melalui menu pengaturan.
+- **Kustomisasi Tampilan**: Pemilik bot dapat dengan mudah mengubah foto dan teks sambutan (`/start`) melalui panel pengaturan, memberikan identitas unik pada setiap bot. Perintah `/empty` tersedia untuk kembali ke pengaturan default.
+- **Asisten AI (Google Gemini)**: Integrasi dengan Google Gemini menghadirkan fitur hiburan "Cek Khodam" dan *chatbot* cerdas yang dapat menjawab pertanyaan pengguna seputar fungsionalitas bot, harga paket, dan lainnya, mengurangi beban support manual.
 
 ## 🚀 Pengaturan dan Instalasi
 
-Ikuti langkah-langkah ini untuk menjalankan platform bot Anda.
+Ikuti langkah-langkah ini untuk menjalankan platform bot Anda dari awal hingga siap digunakan.
 
 ### 1. Prasyarat
-
 - Python 3.8 atau lebih tinggi.
-- Token Bot Telegram untuk **Bot Utama**.
+- Token Bot Telegram untuk **Bot Utama (Induk)**. Dapatkan dari [@BotFather](https://t.me/BotFather).
 - API ID dan API Hash dari [my.telegram.org](https://my.telegram.org).
 
 ### 2. Kloning Repositori
-
 Pertama, kloning repositori ini ke mesin lokal atau server Anda.
 ```bash
-git clone https://github.com/your-username/vvip-git
-cd vvip
+git clone https://github.com/your-username/VipBot-main.git
+cd VipBot-main
 ```
 
 ### 3. Instalasi Dependensi
-
 Instal semua pustaka Python yang diperlukan menggunakan file `requirements.txt`.
 ```bash
 pip3 install -r requirements.txt
 ```
 
-### 4. Konfigurasi Menggunakan Skrip
+### 4. Konfigurasi Menggunakan Skrip `config.sh`
+Langkah ini adalah untuk membuat file environment (`.env`) yang berisi kredensial Anda.
 
-Bot ini memerlukan file konfigurasi yang berisi kunci API Anda. Gunakan skrip `config.sh` yang telah disediakan untuk mempermudah proses ini.
-
-1.  Jalankan skrip di terminal Anda:
+1.  Jalankan skrip `config.sh` di terminal Anda:
     ```bash
     bash config.sh
     ```
 
-2.  Skrip akan meminta Anda untuk memasukkan informasi berikut secara berurutan:
-    - **API_ID**: API ID Telegram Anda.
-    - **API_HASH**: API Hash Telegram Anda.
-    - **BOT_TOKEN**: Token Bot Telegram Anda (ini akan menjadi **Bot Utama/Induk**).
-    - **OWNER_ID**: ID Pengguna Telegram numerik Anda. Anda bisa mendapatkannya dari bot seperti `@userinfobot`.
-    - **Filename**: Nama yang ingin Anda berikan pada file environment Anda. Cukup tekan **Enter** untuk menggunakan nama default (`.env`) atau ketik nama lain (contoh: `mybot.env`).
+2.  Skrip akan memandu Anda untuk memasukkan informasi berikut:
+    - **API_ID** & **API_HASH** Anda.
+    - **BOT_TOKEN** untuk bot utama/induk.
+    - **OWNER_ID** numerik Anda (dapatkan dari [@userinfobot](https://t.me/userinfobot)).
+    - **Nama file database** (default: `vvip_database`).
+    - **Nama file environment** yang ingin dibuat (default: `vvip.env`).
 
-    Setelah selesai, skrip akan membuat file environment (misalnya, `.env`) yang berisi semua kredensial Anda.
+    **Penting:** Skrip ini tidak lagi meminta Kunci Enkripsi. Kunci tersebut akan dimasukkan secara aman pada saat bot dijalankan.
 
-### 5. Menjalankan Bot
+### 5. Menjalankan Bot Menggunakan Skrip `run.sh`
+Ini adalah cara yang direkomendasikan dan paling aman untuk memulai bot Anda.
 
-Setelah file konfigurasi dibuat, Anda dapat memulai bot.
-
-Gunakan perintah berikut, ganti `nama_file.env` dengan nama file yang Anda buat pada langkah sebelumnya.
-
-```bash
-python3 main.py nama_file.env
-```
-
-**Contoh Skenario:**
-
--   Jika saat menjalankan `config.sh` Anda menekan **Enter** untuk nama file (default `.env`):
+1.  **Jadikan skrip `run.sh` executable** (hanya perlu dilakukan sekali):
     ```bash
-    python3 main.py .env
-    ```
-    Atau lebih singkat lagi (karena `.env` adalah default):
-    ```bash
-    python3 main.py
+    chmod +x run.sh
     ```
 
--   Jika saat menjalankan `config.sh` Anda mengetik `mybot.env` sebagai nama file:
+2.  **Jalankan bot**:
     ```bash
-    python3 main.py mybot.env
+    ./run.sh
     ```
 
-Bot sekarang akan dimulai, dan Anda akan melihat pesan konfirmasi di terminal.
+3.  Skrip akan meminta dua hal:
+    - **Nama file environment**: Tekan Enter untuk menggunakan default (`vvip.env`) atau ketik nama file lain.
+    - **Kunci enkripsi rahasia**: Ketik kunci rahasia Anda. **Input tidak akan terlihat di layar** demi keamanan.
+
+Setelah Anda memasukkan informasi tersebut, bot akan dimulai dengan banner selamat datang di terminal.
 
 ## 📖 Panduan Penggunaan
 
-### Untuk Owner Utama (Super Admin)
-
-Anda adalah administrator tertinggi dengan kontrol penuh atas sistem.
+### 👑 Untuk Owner Utama (Super Admin)
+Anda adalah administrator tertinggi dengan kontrol penuh atas seluruh sistem.
 
 1.  **Mulai Bot**: Kirim `/start` ke bot utama Anda.
 2.  **Memberikan Akses**: Untuk mengizinkan pengguna lain membuat bot, gunakan perintah:
@@ -120,7 +109,7 @@ Anda adalah administrator tertinggi dengan kontrol penuh atas sistem.
     /akses <user_id atau @username>
     ```
     Ini akan membuka panel untuk memberi atau mencabut hak "Create Bot".
-3.  **Melihat Semua Bot**: Gunakan perintah `/allbots` untuk melihat daftar semua bot yang telah dibuat oleh pengguna, lengkap dengan ID, pemilik, dan sisa masa aktif. Panel ini memiliki navigasi halaman.
+3.  **Melihat Semua Bot**: Gunakan perintah `/allbots` untuk melihat daftar semua bot yang telah dibuat, lengkap dengan ID, pemilik, dan sisa masa aktif. Panel ini memiliki navigasi halaman.
 4.  **Mengatur Durasi Bot**: Gunakan perintah `/extend` untuk menambah atau mengurangi masa aktif bot manapun secara manual.
     ```
     /extend <bot_id> <jumlah_hari>
@@ -130,9 +119,8 @@ Anda adalah administrator tertinggi dengan kontrol penuh atas sistem.
 5.  **Menyetujui Perpanjangan**: Ketika seorang pemilik bot meminta perpanjangan, Anda akan menerima pesan di chat pribadi dengan tombol untuk menyetujui atau menolak.
 6.  **Backup & Restore**: Bot akan secara otomatis mengirimkan file backup `database.zip` secara berkala. Untuk memulihkan, balas file tersebut dengan perintah `/restore`. **PENTING: Restart bot setelah restore berhasil.**
 
-### Untuk Pemilik Bot (Pengguna)
-
-Setelah mendapatkan akses dari Owner Utama, Anda dapat membuat dan mengelola bot VVIP Anda sendiri.
+### 👤 Untuk Pemilik Bot (Pengguna)
+Setelah mendapatkan akses dari *Owner Utama*, Anda dapat membuat dan mengelola bot VVIP Anda sendiri.
 
 1.  **Membuat Bot**: Tekan tombol **"🤖 Buat Bot"** di bot utama dan ikuti instruksi untuk memasukkan `API_ID`, `API_HASH`, dan `BOT_TOKEN` Anda. Setelah berhasil, bot Anda akan langsung aktif selama 30 hari.
 2.  **Mengelola Bot**:
@@ -140,16 +128,15 @@ Setelah mendapatkan akses dari Owner Utama, Anda dapat membuat dan mengelola bot
     - Anda akan melihat menu **"⚙️ Panel Pengaturan ⚙️"**. Di sinilah Anda mengelola semua aspek bot Anda: menambah/menghapus paket VVIP, mengecek anggota, mengatur API keys, mengubah foto/teks start, dan melakukan broadcast **hanya untuk pengguna bot Anda**.
 3.  **Meminta Perpanjangan**:
     - Di bot **utama**, tekan tombol **"📦 Bot Saya"**.
-    - Pilih bot Anda dari daftar, lalu klik **"➕ Minta Perpanjangan"**. Permintaan akan dikirimkan ke Owner Utama untuk disetujui.
+    - Pilih bot Anda dari daftar, lalu klik **"➕ Minta Perpanjangan"**. Permintaan akan dikirimkan ke *Owner Utama* untuk disetujui.
 
-### Untuk Pengguna Akhir (Pelanggan)
-
-Pelanggan akan berinteraksi dengan bot-bot yang telah dibuat.
+### 👨‍👩‍👧‍👦 Untuk Pengguna Akhir (Pelanggan)
+Pelanggan akan berinteraksi dengan bot-bot VVIP yang telah Anda atau pengguna lain buat.
 
 1.  **Mulai Bot**: Pengguna mengirim `/start`.
 2.  **Pilih Bahasa**: Pengguna dapat memilih bahasa melalui tombol "🌐 Bahasa".
 3.  **Lihat Paket**: Klik **"📚 Lihat Daftar VVIP 📚"**.
 4.  **Pembayaran**: Setelah memilih paket, pengguna klik "Bayar", menerima QRIS, dan melakukan pembayaran.
-5.  **Akses Grup**: Setelah pembayaran terkonfirmasi, bot akan otomatis mengirimkan link undangan grup.
+5.  **Akses Grup**: Setelah pembayaran terkonfirmasi, bot akan otomatis mengirimkan link undangan grup dalam pesan yang tidak bisa diteruskan.
 
 #### ⭐️ Dibuat oleh: [@NorSodikin](https://t.me/NorSodikin)
