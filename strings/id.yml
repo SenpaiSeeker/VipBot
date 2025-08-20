@@ -119,6 +119,21 @@ admin:
     success_text: "\n\n✅ Donasi berhasil dikembalikan."
     success_notif: "ℹ️ **Informasi Donasi**\n\nDonasi Stars Anda telah dikembalikan oleh admin. Terima kasih atas pengertiannya."
     fail_text: "\n\n**❌ Gagal mengembalikan donasi:**\n`{e}`"
+  list_users:
+    panel_title: "**👥 Daftar Semua Pengguna (Halaman {page}/{total_pages})**\n\n"
+    no_users: "<b>Tidak ada pengguna yang tercatat.</b>"
+    refreshing_data: "🔄 Menyegarkan data pengguna, ini mungkin butuh waktu..."
+    page_info: "Halaman {page}/{total}"
+    send_message_button: "💬 Kirim Pesan ke {name}"
+    refresh_button: "🔄 Refresh"
+    data_updated_answer: "Data sudah yang terbaru."
+    update_error_answer: "Terjadi kesalahan saat memperbarui tampilan."
+  message_user:
+    prompt: "Silakan kirim pesan yang ingin diteruskan."
+    success: "✅ Pesan berhasil dikirim."
+    cancelled: "Dibatalkan."
+    timeout: "Waktu habis."
+    fail: "Gagal mengirim pesan: {e}"
 
 bot_management:
   create:
@@ -265,6 +280,7 @@ settings:
   api_keys: "🔑 Kelola Kunci API"
   broadcast: "📢 Buat Broadcast"
   stats_button: "⭐ Statistik Stars"
+  list_all_users: "👥 Daftar Semua Pengguna"
   
   set_photo_prompt: "🖼️ **Atur Foto Start**\n\nSilakan kirim foto baru yang ingin Anda gunakan sebagai gambar di pesan /start.\n\nKetik `/empty` untuk menghapus foto saat ini dan kembali ke default."
   set_photo_fail: "❌ **Gagal:** Pesan yang dikirim bukan foto. Proses dibatalkan."
