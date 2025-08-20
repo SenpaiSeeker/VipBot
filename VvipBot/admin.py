@@ -390,3 +390,131 @@ async def show_stars_stats(client, callback_query):
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED} Error fetching stars stats: {e}\n{traceback.format_exc()}")
         await callback_query.answer(f"Error: {e}", show_alert=True)
+
+
+@command(lambda ctx: filters.regex(r"^list_all_users_(\d+)(_refresh)?"), handler_type="callback")
+async def list_all_users_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return await callback_query.answer(callback_query.lang.get("general.no_access"), show_alert=True)
+
+    lang = callback_query.lang
+    match = callback_query.matches[0]
+    page = int(match.group(1))
+    is_refresh = bool(match.group(2))
+    bot_id = client.me.id
+
+    if not hasattr(ctx, "all_users_cache"):
+        ctx.all_users_cache = {}
+
+    if is_refresh or bot_id not in ctx.all_users_cache:
+        await callback_query.answer(lang.get("admin.list_users.refreshing_data"), show_alert=False)
+        user_ids = ctx.db.getListVars(bot_id, "user_ids") or []
+        user_data_cache = []
+        if user_ids:
+            for i in range(0, len(user_ids), 200):
+                chunk_ids = user_ids[i : i + 200]
+                try:
+                    users = await client.get_users(chunk_ids)
+                    user_data_cache.extend(users)
+                    await asyncio.sleep(1)
+                except pyrogram.errors.FloodWait as e:
+                    await asyncio.sleep(e.value + 2)
+                    users = await client.get_users(chunk_ids)
+                    user_data_cache.extend(users)
+                except Exception as e:
+                    ctx.log.warning(f"Gagal mengambil chunk pengguna: {e}")
+        ctx.all_users_cache[bot_id] = user_data_cache
+
+    users_data = ctx.all_users_cache.get(bot_id, [])
+
+    back_btn_text = f"| {lang.get('general.back_to_settings')} - settings |"
+
+    if not users_data:
+        text = lang.get("admin.list_users.no_users")
+        refresh_btn = f"| {lang.get('admin.list_users.refresh_button')} - list_all_users_0_refresh |"
+        btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{refresh_btn}\n{back_btn_text}")
+        if callback_query.message.photo:
+            return await callback_query.edit_message_caption(text, reply_markup=btn)
+        return await callback_query.edit_message_text(text, reply_markup=btn)
+
+    items_per_page = 5
+    total_pages = math.ceil(len(users_data) / items_per_page)
+    page = max(0, min(page, total_pages - 1))
+    start_index = page * items_per_page
+    end_index = start_index + items_per_page
+    page_user_data = users_data[start_index:end_index]
+
+    text = lang.get("admin.list_users.panel_title", page=page + 1, total_pages=total_pages)
+    for user in page_user_data:
+        text += f"• {client.ns.telegram.arg.getMention(user)} (`{user.id}`)\n  - @{user.username or 'N/A'}\n"
+
+    btn_text_list = []
+    pagination_row_parts = []
+    if total_pages > 1:
+        if page > 0:
+            pagination_row_parts.append(f"| « - list_all_users_{page-1} |")
+        pagination_row_parts.append(
+            f"| {lang.get('admin.list_users.page_info', page=page+1, total=total_pages)} - noop;same |"
+        )
+        if page < total_pages - 1:
+            pagination_row_parts.append(f"| » - list_all_users_{page+1};same |")
+
+    if pagination_row_parts:
+        btn_text_list.append(" ".join(pagination_row_parts))
+
+    i = 0
+    while i < len(page_user_data):
+        user1 = page_user_data[i]
+        btn1_text = lang.get("admin.list_users.send_message_button", name=user1.first_name[:10])
+        btn1_str = f"| {btn1_text} - message_user_{user1.id}_{page} |"
+
+        if i + 1 < len(page_user_data):
+            user2 = page_user_data[i + 1]
+            btn2_text = lang.get("admin.list_users.send_message_button", name=user2.first_name[:10])
+            btn2_str = f"| {btn2_text} - message_user_{user2.id}_{page};same |"
+            btn_text_list.append(f"{btn1_str}{btn2_str}")
+            i += 2
+        else:
+            btn_text_list.append(btn1_str)
+            i += 1
+
+    btn_text_list.append(f"| {lang.get('admin.list_users.refresh_button')} - list_all_users_{page}_refresh |")
+    btn_text_list.append(back_btn_text)
+
+    btn, _ = client.ns.telegram.button.create_inline_keyboard("\n".join(btn_text_list))
+
+    try:
+        if callback_query.message.photo:
+            await callback_query.edit_message_caption(text, reply_markup=btn)
+        else:
+            await callback_query.edit_message_text(text, reply_markup=btn)
+    except pyrogram.errors.MessageNotModified:
+        await callback_query.answer(lang.get("admin.list_users.data_updated_answer"), show_alert=False)
+    except Exception as e:
+        ctx.log.print(f"{ctx.log.RED}Gagal mengedit daftar pengguna: {e}")
+        await callback_query.answer(lang.get("admin.list_users.update_error_answer"), show_alert=True)
+
+
+@command(lambda ctx: filters.regex(r"^message_user_(\d+)_(\d+)"), handler_type="callback")
+async def message_user_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return await callback_query.answer(callback_query.lang.get("general.no_access"), show_alert=True)
+
+    lang = callback_query.lang
+    target_user_id, page = map(int, callback_query.data.split("_")[2:])
+
+    try:
+        prompt = f"{lang.get('admin.message_user.prompt')}{lang.get('prompts.cancel_footer')}"
+        ask_msg = await client.ask(callback_query.from_user.id, prompt, timeout=300)
+
+        if ask_msg.text and ask_msg.text.lower() == "/batal":
+            raise listen.UserCancelled
+
+        await ask_msg.forward(target_user_id)
+        await ask_msg.reply_text(lang.get("admin.message_user.success"))
+    except listen.UserCancelled:
+        await client.send_message(callback_query.from_user.id, lang.get("admin.message_user.cancelled"))
+    except asyncio.TimeoutError:
+        await client.send_message(callback_query.from_user.id, lang.get("admin.message_user.timeout"))
+    except Exception as e:
+        await client.send_message(callback_query.from_user.id, lang.get("admin.message_user.fail", e=e))
