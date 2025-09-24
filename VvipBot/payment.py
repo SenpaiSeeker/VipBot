@@ -1,6 +1,5 @@
 from . import *
 
-
 @command(lambda ctx: filters.regex(r"^notes\s(.+)"), handler_type="callback")
 async def notes_data(client, callback_query):
     lang = callback_query.lang
@@ -161,16 +160,30 @@ async def auto_check_payment(client, user, order_id):
                 if not item_found:
                     raise ValueError(lang.get("payment.check.category_missing", name=name))
 
-                is_promo = tipe == "promo" and item_found.get("promo_link")
-                link = item_found.get("promo_link") if is_promo else item_found.get("group_link")
-                chat_id_save = item_found.get("chat_id_promo") if is_promo else item_found.get("chat_id_normal")
+                is_promo = tipe == "promo"
+                target_chat_id = item_found.get("chat_id_promo") if is_promo else item_found.get("chat_id_normal")
+                
+                if not target_chat_id:
+                    raise ValueError("Chat ID untuk paket VVIP ini belum diatur oleh admin.")
+                
+                try:
+                    expire_date_link = datetime.now() + timedelta(hours=2)
+                    invite_link_obj = await client.create_chat_invite_link(
+                        chat_id=target_chat_id,
+                        member_limit=1,
+                        expire_date=expire_date_link
+                    )
+                    link = invite_link_obj.invite_link
+                except Exception as e:
+                    ctx.log.print(f"{ctx.log.RED}Gagal membuat invite link untuk {target_chat_id}: {e}")
+                    raise Exception(f"Gagal membuat link undangan. Pastikan bot adalah admin di grup tujuan dengan hak 'Invite Users'.")
 
                 member_data = {
                     "user_id": user.id,
                     "vvip_name": name,
                     "join_date": datetime.now(timezone.utc).isoformat(),
                     "payment_type": tipe,
-                    "chat_id_kick": chat_id_save,
+                    "chat_id_kick": target_chat_id,
                 }
                 ctx.db.setListVars(client.me.id, "vvip_members", member_data)
 
@@ -195,6 +208,8 @@ async def auto_check_payment(client, user, order_id):
                 return
         except Exception as e:
             ctx.log.print(f"{ctx.log.RED}Error auto-check {order_id}: {e}")
+            await client.send_message(user.id, lang.get("general.error", e=e))
+            break 
 
     if not payment_successful and ctx.db.getVars(client.me.id, order_id):
         ctx.db.removeVars(client.me.id, order_id)
@@ -265,4 +280,4 @@ async def successful_donation_handler(client, message):
 
     ctx.log.print(
         f"{ctx.log.GREEN}Donasi {stars_donated} XTR diterima dari {user.id} ({user.first_name}) melalui bot {current_bot_id}"
-    )
+)
