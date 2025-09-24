@@ -81,9 +81,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, handle_exit_signal)
     
     try:
-        # Jalankan `main` sebagai callback pertama saat loop dimulai
         IOLoop.current().add_callback(main)
-        # Mulai event loop Tornado
         IOLoop.current().start()
     except Exception as e:
         log.print(f"{log.RED}Terjadi error tak terduga di IOLoop: {e}")
