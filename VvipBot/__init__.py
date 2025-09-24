@@ -115,7 +115,7 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
     ctx.db = db_instance
     ctx.manager = bot_manager
     ctx.owner_id = owner_id
-    ctx.log = client.ns.utils.log
+    ctx.log = client.ns.utils.log()
     ctx.ACTIVE_MEMBERS_CACHE = {}
     ctx.L = Language
 
@@ -143,9 +143,7 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
 
             try:
                 await original_func(c, u)
-            except pyrogram.errors.MessageNotModified:
-                pass
-            except pyrogram.errors.MessageDeleteForbidden:
+            except (pyrogram.errors.MessageNotModified, pyrogram.errors.MessageDeleteForbidden):
                 pass
             except Exception as e:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -155,7 +153,7 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
                 func_name = tb_info.name
                 line_no = tb_info.lineno
 
-                log_message = f"{ctx.log.CYAN}{filename}:{func_name}:{line_no} {ctx.log.WHITE}| {ctx.log.YELLOW}{e}"
+                log_message = f"{ctx.log.RED}[ERROR]: {ctx.log.CYAN}{filename}:{func_name}:{line_no} {ctx.log.WHITE}| {ctx.log.YELLOW}{type(e).__name__}: {ctx.log.RED}{e}"
                 ctx.log.print(log_message)
 
         wrapped_func = partial(handler_wrapper, func)
