@@ -168,7 +168,6 @@ async def setup_listvvip(client, callback_query):
     await callback_query.message.delete()
 
     try:
-
         def ask(text):
             return client.ask(chat_id, f"{text}{lang.get('prompts.cancel_footer')}", timeout=600)
 
@@ -179,67 +178,27 @@ async def setup_listvvip(client, callback_query):
                 raise ValueError(lang.get(err_msg_key))
             return msg.text
 
-        def is_digit(t):
-            return t.isdigit()
-
-        def is_chatid(t):
-            return t.lstrip("-").isdigit()
-
-        def is_link(t):
-            return "https://" in t
+        def is_digit(t): return t.isdigit()
+        def is_chatid(t): return t.lstrip("-").isdigit()
 
         vvip_data = {}
         vvip_data["name"] = validate(await ask(lang.get("settings.setup_vvip.step1_name")), lambda t: True, "")
-        vvip_data["price"] = int(
-            validate(
-                await ask(lang.get("settings.setup_vvip.step2_price")),
-                is_digit,
-                "settings.setup_vvip.err_must_be_number",
-            )
-        )
-        vvip_data["group_link"] = validate(
-            await ask(lang.get("settings.setup_vvip.step3_link")), is_link, "settings.setup_vvip.err_must_be_link"
-        )
-        vvip_data["chat_id_normal"] = int(
-            validate(
-                await ask(lang.get("settings.setup_vvip.step4_chat_id")),
-                is_chatid,
-                "settings.setup_vvip.err_must_be_chat_id",
-            )
-        )
-        vvip_data["promo_price"] = int(
-            validate(
-                await ask(lang.get("settings.setup_vvip.step5_promo_price")),
-                is_digit,
-                "settings.setup_vvip.err_must_be_number",
-            )
-        )
+        vvip_data["price"] = int(validate(await ask(lang.get("settings.setup_vvip.step2_price")), is_digit, "settings.setup_vvip.err_must_be_number"))
+        vvip_data["chat_id_normal"] = int(validate(await ask(lang.get("settings.setup_vvip.step3_chat_id")), is_chatid, "settings.setup_vvip.err_must_be_chat_id"))
+        vvip_data["promo_price"] = int(validate(await ask(lang.get("settings.setup_vvip.step4_promo_price")), is_digit, "settings.setup_vvip.err_must_be_number"))
 
         if vvip_data["promo_price"] > 0:
-            vvip_data["promo_link"] = validate(
-                await ask(lang.get("settings.setup_vvip.step6_promo_link")),
-                is_link,
-                "settings.setup_vvip.err_must_be_link",
-            )
-            vvip_data["chat_id_promo"] = int(
-                validate(
-                    await ask(lang.get("settings.setup_vvip.step7_promo_chat_id")),
-                    is_chatid,
-                    "settings.setup_vvip.err_must_be_chat_id",
-                )
-            )
-            prompt_promo = f"{lang.get('settings.setup_vvip.step8_promo_text')}{lang.get('prompts.skip_footer')}{lang.get('prompts.cancel_footer')}"
+            vvip_data["chat_id_promo"] = int(validate(await ask(lang.get("settings.setup_vvip.step5_promo_chat_id")), is_chatid, "settings.setup_vvip.err_must_be_chat_id"))
+            prompt_promo = f"{lang.get('settings.setup_vvip.step6_promo_text')}{lang.get('prompts.skip_footer')}{lang.get('prompts.cancel_footer')}"
             promo_text_msg = await client.ask(chat_id, prompt_promo, timeout=600)
-            if promo_text_msg.text and promo_text_msg.text.lower() == "/batal":
-                raise listen.UserCancelled
+            if promo_text_msg.text and promo_text_msg.text.lower() == "/batal": raise listen.UserCancelled
             vvip_data["promo_text"] = "" if promo_text_msg.text.lower() == "/skip" else promo_text_msg.text
         else:
-            vvip_data["promo_link"], vvip_data["chat_id_promo"], vvip_data["promo_text"] = "", 0, ""
+            vvip_data["chat_id_promo"], vvip_data["promo_text"] = 0, ""
 
-        prompt_normal = f"{lang.get('settings.setup_vvip.step9_normal_text')}{lang.get('prompts.skip_footer')}{lang.get('prompts.cancel_footer')}"
+        prompt_normal = f"{lang.get('settings.setup_vvip.step7_normal_text')}{lang.get('prompts.skip_footer')}{lang.get('prompts.cancel_footer')}"
         normal_text_msg = await client.ask(chat_id, prompt_normal, timeout=600)
-        if normal_text_msg.text and normal_text_msg.text.lower() == "/batal":
-            raise listen.UserCancelled
+        if normal_text_msg.text and normal_text_msg.text.lower() == "/batal": raise listen.UserCancelled
         vvip_data["normal_text"] = "" if normal_text_msg.text.lower() == "/skip" else normal_text_msg.text
 
         ctx.db.setListVars(client.me.id, "list_vvip", vvip_data)
