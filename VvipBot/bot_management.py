@@ -39,7 +39,7 @@ async def create_bot_callback(client, callback_query):
 
         msg = await client.send_message(chat_id, lang.get("bot_management.create.verifying"))
         new_bot_name = await client.ns.telegram.arg.getNamebot(token)
-        if "invalid" in new_bot_name.lower():
+        if "invalid" in new_bot_name:
             raise ValueError(lang.get("bot_management.create.invalid_token"))
 
         new_bot_id = int(token.split(":", 1)[0])
@@ -59,7 +59,7 @@ async def create_bot_callback(client, callback_query):
             "bot_token": token,
         }
         await ctx.manager.start_bot(bot_data)
-        await msg.edit(lang.get("bot_management.create.success", name=new_bot_name))
+        await msg.edit(lang.get("bot_management.create.success", name=new_bot_name.first_name))
 
     except listen.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"))
