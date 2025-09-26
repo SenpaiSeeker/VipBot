@@ -188,7 +188,7 @@ async def gemini_bot_ai(client, callback_query):
                     raise listen.UserCancelled
 
                 msg = await client.send_message(chat_id, lang.get("ai.khodam_analyzing", name=ask_msg.text))
-                response_text = gemini_service.send_khodam_message(ask_msg.text, chat_id)
+                response_text = await gemini_service.send_khodam_message(ask_msg.text, chat_id)
 
                 btn_text = f"| {lang.get('ai.khodam_try_again_button')} - khodam | | {lang.get('ai.back_to_ai_menu_button')} - gemini_ai |"
                 btn, _ = client.ns.telegram.button.create_inline_keyboard(btn_text)
@@ -227,7 +227,7 @@ async def gemini_bot_ai(client, callback_query):
                         raise listen.UserCancelled
 
                     await client.send_chat_action(chat_id, pyrogram.enums.ChatAction.TYPING)
-                    response_text = gemini_service.send_chat_message(
+                    response_text = await gemini_service.send_chat_message(
                         user_msg.text, user_id=chat_id, bot_name=client.me.first_name
                     )
                     await client.send_message(chat_id, response_text)
