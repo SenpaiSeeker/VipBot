@@ -18,7 +18,6 @@ async def create_bot_callback(client, callback_query):
     await callback_query.message.delete()
 
     try:
-
         def ask(text):
             return client.ask(chat_id, f"{text}{lang.get('prompts.cancel_footer')}", timeout=600)
 
@@ -41,9 +40,10 @@ async def create_bot_callback(client, callback_query):
         new_bot_name = await client.ns.telegram.arg.getNamebot(token)
         if "invalid" in [new_bot_name]:
             raise ValueError(lang.get("bot_management.create.invalid_token"))
-        new_bot_id = int(token.split(":", 1)[0])
 
         await msg.edit(lang.get("bot_management.create.saving", name=new_bot_name.first_name))
+        
+        new_bot_id = int(token.split(":", 1)[0])
         bot_data = {
             "name": str(new_bot_id),
             "api_id": api_id,
@@ -61,7 +61,6 @@ async def create_bot_callback(client, callback_query):
             ctx.db.removeListVars(client.me.id, "create_bot_access", user_id)
 
         await msg.edit(lang.get("bot_management.create.success", name=new_bot_name.first_name))
-
     except listen.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"))
     except asyncio.TimeoutError:
