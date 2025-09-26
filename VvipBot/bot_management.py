@@ -38,7 +38,7 @@ async def create_bot_callback(client, callback_query):
         token = token_msg.text
 
         msg = await client.send_message(chat_id, lang.get("bot_management.create.verifying"))
-        new_bot_name = client.ns.telegram.arg.getNamebot(token)
+        new_bot_name = await client.ns.telegram.arg.getNamebot(token)
         if "invalid" in new_bot_name.lower():
             raise ValueError(lang.get("bot_management.create.invalid_token"))
 
