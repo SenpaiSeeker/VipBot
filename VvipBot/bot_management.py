@@ -42,6 +42,15 @@ async def create_bot_callback(client, callback_query):
         if "invalid" in [new_bot_name]:
             raise ValueError(lang.get("bot_management.create.invalid_token"))
 
+        await msg.edit(lang.get("bot_management.create.saving", name=new_bot_name.first_name))
+        bot_data = {
+            "name": str(new_bot_id),
+            "api_id": api_id,
+            "api_hash": api_hash,
+            "bot_token": token,
+        }
+        await ctx.manager.start_bot(bot_data)
+        
         new_bot_id = int(token.split(":", 1)[0])
         ctx.db.saveBot(new_bot_id, api_id, api_hash, token, is_token=True)
         expiry_date = datetime.now(timezone.utc) + timedelta(days=30)
@@ -51,14 +60,6 @@ async def create_bot_callback(client, callback_query):
         if user_id != ctx.owner_id:
             ctx.db.removeListVars(client.me.id, "create_bot_access", user_id)
 
-        await msg.edit(lang.get("bot_management.create.saving", name=new_bot_name.first_name))
-        bot_data = {
-            "name": str(new_bot_id),
-            "api_id": api_id,
-            "api_hash": api_hash,
-            "bot_token": token,
-        }
-        await ctx.manager.start_bot(bot_data)
         await msg.edit(lang.get("bot_management.create.success", name=new_bot_name.first_name))
 
     except listen.UserCancelled:
