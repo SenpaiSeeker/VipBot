@@ -7,9 +7,9 @@ NC='\033[0m'
 
 clear
 
-echo -e "${LIGHT_CYAN}=======================================${NC}"
-echo -e "${LIGHT_CYAN}  Konfigurasi VVIP Multi-Bot Manager   ${NC}"
-echo -e "${LIGHT_CYAN}=======================================${NC}"
+echo -e "${LIGHT_CYAN}========================================${NC}"
+echo -e "${LIGHT_CYAN}   Konfigurasi VVIP Multi-Bot Manager   ${NC}"
+echo -e "${LIGHT_CYAN}========================================${NC}"
 echo
 echo -e "${LIGHT_YELLOW}Skrip ini akan memandu Anda untuk membuat file environment (.env).${NC}"
 echo
