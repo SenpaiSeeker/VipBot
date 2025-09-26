@@ -51,7 +51,7 @@ async def create_bot_callback(client, callback_query):
         if user_id != ctx.owner_id:
             ctx.db.removeListVars(client.me.id, "create_bot_access", user_id)
 
-        await msg.edit(lang.get("bot_management.create.saving", name=new_bot_name))
+        await msg.edit(lang.get("bot_management.create.saving", name=new_bot_name.first_name))
         bot_data = {
             "name": str(new_bot_id),
             "api_id": api_id,
