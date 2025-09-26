@@ -7,9 +7,9 @@ NC='\033[0m'
 
 clear
 
-echo -e "${LIGHT_CYAN}==============================${NC}"
-echo -e "${LIGHT_CYAN}  VVIP Multi-Bot Launcher     ${NC}"
-echo -e "${LIGHT_CYAN}==============================${NC}"
+echo -e "${LIGHT_CYAN}=================================${NC}"
+echo -e "${LIGHT_CYAN}     VVIP Multi-Bot Launcher     ${NC}"
+echo -e "${LIGHT_CYAN}=================================${NC}"
 echo
 
 read -p "$(echo -e ${LIGHT_MAGENTA}"Masukkan nama file environment (${LIGHT_YELLOW}default: vvip.env${LIGHT_MAGENTA}): "${NC})" ENV_FILE
