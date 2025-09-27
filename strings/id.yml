@@ -30,6 +30,7 @@ start:
   my_bots: "📦 Bot Saya"
   settings_panel: "⚙️ Panel Pengaturan ⚙️"
   list_vvip: "📚 Lihat Daftar VVIP 📚"
+  my_access: "🎟️ Akses Saya"
   donate: "❤️ Donasi"
   about_bot: "ℹ️ Tentang Bot ℹ️"
   ai_feature: "✨ Cek Khodam/AI ✨"
@@ -134,6 +135,13 @@ admin:
     cancelled: "Dibatalkan."
     timeout: "Waktu habis."
     fail: "Gagal mengirim pesan: {e}"
+  dashboard:
+    panel: "**📊 Dashboard Platform**\n\n**Statistik Platform:**\n- Total Bot Aktif: `{total_bots}`\n- Total Pengguna Unik: `{total_users}`\n- Bot Terpopuler: `{top_bot}`\n\n**Kesehatan Server:**\n{server_stats}"
+    server_stats: "- CPU: `{cpu}%`\n- RAM: `{ram}%`\n- Disk: `{disk}%`"
+    server_stats_fail: "Gagal mengambil statistik server: `{e}`"
+  broadcast_owners:
+    usage: "Gunakan: `/broadcast_owners <pesan>` atau balas ke sebuah pesan."
+    no_owners: "Tidak ada pemilik bot yang bisa di-broadcast."
 
 bot_management:
   create:
@@ -181,7 +189,7 @@ bot_management:
 member:
   list:
     empty: "✅ Tidak ada member VVIP yang tercatat di database."
-    panel: "**👥 Daftar Member VVIP ({page}/{total})**\n\n**Nama:** {mention}\n**ID:** `{id}`\n**Kategori:** `{category}` ({type})\n**Bergabung:** `{date}`\n**Durasi Keanggotaan:** `{duration}` hari"
+    panel: "**👥 Daftar Member VVIP ({page}/{total})**\n\n**Nama:** {mention}\n**ID:** `{id}`\n**Kategori:** `{category}` ({type})\n**Bergabung:** `{date}`\n**Kedaluwarsa:** `{expiry}`"
     data_error: "Data member ini tampaknya rusak atau pengguna tidak dapat diakses lagi.\n`Error: {e}`\n\nEntri ini telah dihapus dari daftar untuk menjaga kebersihan data."
     kick_button: "🚨 Tendang {name}"
   kick:
@@ -207,6 +215,22 @@ member:
     kick_confirm_no_button: "❌ Tidak, Batalkan"
     kick_processing: "⏳ `Memproses penendangan pengguna...`"
     kick_success: "✅ **Sukses!**\nPengguna **{mention}** telah ditendang dari grup."
+
+member_portal:
+  panel_title: "**🎟️ Portal Akses VVIP Anda**\n\nBerikut adalah daftar langganan aktif yang Anda miliki:"
+  membership_entry: "\n\n- **Paket:** `{name}`\n- **Bergabung pada:** `{join_date}`\n- **Berakhir pada:** `{expiry_date}`"
+  no_access: "Anda belum memiliki akses VVIP apapun saat ini."
+  permanent: "Permanen"
+  resend_link_button: "🔗 Minta Ulang Link {name}"
+  not_found: "Data keanggotaan tidak ditemukan."
+  chat_id_missing: "Gagal: Admin belum mengatur grup tujuan untuk paket ini."
+  link_resent: "✅ **Link Akses Baru**\n\nBerikut adalah link akses baru Anda untuk paket **{name}**:\n\n{link}"
+  link_sent_alert: "✅ Link baru telah dikirim ke chat pribadi Anda."
+
+subscription:
+  renewal_reminder: "🔔 **Pengingat Langganan**\n\nLangganan Anda untuk paket **{name}** akan berakhir dalam **{days} hari** lagi. Perpanjang sekarang agar tidak kehilangan akses!"
+  renew_button: "🔄 Perpanjang Sekarang"
+  expired_kick_notif: "⌛ **Langganan Berakhir**\n\nLangganan Anda untuk paket **{name}** telah berakhir. Anda telah dikeluarkan dari grup."
 
 payment:
   notes:
@@ -281,6 +305,7 @@ settings:
   broadcast: "📢 Buat Broadcast"
   stats_button: "⭐ Statistik Stars"
   list_all_users: "👥 Daftar Semua Pengguna"
+  coupons: "🎟️ Kelola Kupon"
   
   set_photo_prompt: "🖼️ **Atur Foto Start**\n\nSilakan kirim foto baru yang ingin Anda gunakan sebagai gambar di pesan /start.\n\nKetik `/empty` untuk menghapus foto saat ini dan kembali ke default."
   set_photo_fail: "❌ **Gagal:** Pesan yang dikirim bukan foto. Proses dibatalkan."
@@ -298,13 +323,14 @@ settings:
   broadcast_done: "**📢 Siaran Selesai!**\n✔️ **Terkirim:** `{success}`\n❌ **Gagal:** `{fail}` (pengguna gagal telah dihapus dari database)"
 
   setup_vvip:
-    step1_name: "**✍️ Langkah 1/7: Nama Kategori**\nContoh: `VVIP Bulanan`"
-    step2_price: "**💰 Langkah 2/7: Harga Normal**\nContoh: `50000` (tanpa titik atau koma)"
-    step3_chat_id: "**🆔 Langkah 3/7: Chat ID Grup Normal**\nContoh: `-100123456789`. Ini adalah grup tujuan untuk member."
-    step4_promo_price: "**🎉 Langkah 4/7: Harga Promo**\nKirim `0` jika tidak ada harga promo."
-    step5_promo_chat_id: "**🆔 Langkah 5/7: Chat ID Grup Promo**\nDiisi jika Harga Promo > 0."
-    step6_promo_text: "**📝 Langkah 6/7: Teks Deskripsi Promo**\nGunakan `{name}` dan `{promo_price}`."
-    step7_normal_text: "**📝 Langkah 7/7: Teks Deskripsi Normal**\nGunakan `{name}` dan `{price}`."
+    step1_name: "**✍️ Langkah 1/8: Nama Kategori**\nContoh: `VVIP Bulanan`"
+    step2_price: "**💰 Langkah 2/8: Harga Normal**\nContoh: `50000` (tanpa titik atau koma)"
+    step3_duration: "**⏳ Langkah 3/8: Durasi Keanggotaan (Hari)**\nKirim `0` untuk akses permanen."
+    step4_chat_id: "**🆔 Langkah 4/8: Chat ID Grup Normal**\nContoh: `-100123456789`. Ini adalah grup tujuan untuk member."
+    step5_promo_price: "**🎉 Langkah 5/8: Harga Promo**\nKirim `0` jika tidak ada harga promo."
+    step6_promo_chat_id: "**🆔 Langkah 6/8: Chat ID Grup Promo**\nDiisi jika Harga Promo > 0."
+    step7_promo_text: "**📝 Langkah 7/8: Teks Deskripsi Promo**\nGunakan `{name}` dan `{promo_price}`."
+    step8_normal_text: "**📝 Langkah 8/8: Teks Deskripsi Normal**\nGunakan `{name}` dan `{price}`."
     err_must_be_number: "Input harus berupa angka."
     err_must_be_link: "Input harus berupa link yang valid (diawali http/https)."
     err_must_be_chat_id: "Input harus berupa ID chat numerik (biasanya diawali dengan -100)."
@@ -339,3 +365,25 @@ stats:
   no_transactions: "Belum ada transaksi Stars yang tercatat."
   prev_button: "« Sebelumnya"
   next_button: "Selanjutnya »"
+
+coupons:
+  panel: "**🎟️ Manajemen Kupon**\nKelola kode diskon untuk VVIP Anda."
+  add_button: "➕ Buat Kupon Baru"
+  list_button: "📋 Lihat Kupon"
+  ask_code: "**1/4:** Masukkan kode kupon unik (misal: `DISKONBARU`)."
+  ask_type: "**2/4:** Pilih tipe diskon:\n1. Persentase (%)\n2. Potongan Harga Tetap (misal: 10000)"
+  ask_value_percent: "**3/4:** Masukkan nilai persentase (misal: `15` untuk 15%)."
+  ask_value_fixed: "**3/4:** Masukkan jumlah potongan harga (misal: `10000` untuk Rp 10.000)."
+  ask_uses: "**4/4:** Berapa kali kupon ini bisa digunakan? (masukkan angka)"
+  ask_expiry: "**5/5:** Berapa hari kupon ini akan berlaku? (masukkan angka)"
+  add_success: "✅ Kupon `{code}` berhasil dibuat."
+  list_empty: "Tidak ada kupon yang dibuat."
+  list_panel: "**📋 Detail Kupon ({page}/{total})**\n- Kode: `{code}`\n- Tipe: `{type}`\n- Nilai: `{value}`\n- Sisa Penggunaan: `{uses}`\n- Berlaku hingga: `{expiry}`"
+  delete_button: "🗑️ Hapus Kupon Ini"
+  delete_success: "✅ Kupon berhasil dihapus."
+  use_button: "🎟️ Gunakan Kupon"
+  prompt: "Silakan masukkan kode kupon Anda."
+  invalid: "❌ Kode kupon tidak valid."
+  limit_reached: "❌ Kupon ini sudah habis digunakan."
+  expired: "❌ Kupon ini sudah kedaluwarsa."
+  success_applied: "✅ Kupon `{code}` berhasil digunakan! Harga awal `Rp {original}` menjadi `Rp {final}`."
