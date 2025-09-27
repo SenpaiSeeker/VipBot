@@ -1,11 +1,12 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 import pyrogram
 from nsdev import LoggerHandler
 
 import VvipBot as handlers
 from services import initialize_bot_services
+from strings import Language
 
 log = LoggerHandler()
 
@@ -155,3 +156,63 @@ class BotManager:
 
                 except Exception as e:
                     log.print(f"{log.RED}Error saat memeriksa masa aktif bot {bot_id}: {e}")
+
+    async def subscription_checker(self):
+        while True:
+            await asyncio.sleep(3600)
+            log.print(f"{log.CYAN}Menjalankan pemeriksaan langganan anggota...")
+            
+            now = datetime.now(timezone.utc)
+            all_bot_ids = [int(bot["name"]) for bot in self.db.getBots(is_token=True)]
+
+            for bot_id in all_bot_ids:
+                bot_client = self.running_bots.get(bot_id)
+                if not bot_client or not bot_client.is_connected:
+                    continue
+
+                members = self.db.getListVars(bot_id, "vvip_members") or []
+                members_to_keep = []
+                
+                for member in members:
+                    expiry_date_str = member.get("expiry_date")
+                    if not expiry_date_str:
+                        members_to_keep.append(member)
+                        continue
+                    
+                    expiry_date = datetime.fromisoformat(expiry_date_str)
+                    user_id = member["user_id"]
+                    lang = Language(self.db, user_id)
+                    
+                    if now > expiry_date:
+                        try:
+                            chat_id = member["chat_id_kick"]
+                            await bot_client.ban_chat_member(chat_id, user_id)
+                            await asyncio.sleep(1)
+                            await bot_client.unban_chat_member(chat_id, user_id)
+                            await bot_client.send_message(user_id, lang.get("subscription.expired_kick_notif", name=member["vvip_name"]))
+                            log.print(f"{log.ORANGE}Langganan {user_id} di bot {bot_id} habis. Dikeluarkan dari grup.")
+                        except Exception as e:
+                            log.print(f"{log.RED}Gagal kick member {user_id} dari grup: {e}")
+                        continue
+
+                    time_left = expiry_date - now
+                    if timedelta(days=2) < time_left <= timedelta(days=3):
+                        last_notif_key = "last_renewal_notification_date"
+                        last_notif_date_str = self.db.getVars(user_id, f"{last_notif_key}_{bot_id}")
+                        today_str = now.strftime("%Y-%m-%d")
+
+                        if last_notif_date_str != today_str:
+                            try:
+                                btn, txt = bot_client.ns.telegram.button.create_inline_keyboard(f"{lang.get('subscription.renewal_reminder', name=member['vvip_name'], days=time_left.days)}\n\n| {lang.get('subscription.renew_button')} - renew_sub {member['vvip_name']} |")
+                                await bot_client.send_message(user_id, txt, reply_markup=btn)
+                                self.db.setVars(user_id, f"{last_notif_key}_{bot_id}", today_str)
+                            except Exception as e:
+                                log.print(f"{log.RED}Gagal kirim notif perpanjangan ke {user_id}: {e}")
+
+                    members_to_keep.append(member)
+                
+                if len(members_to_keep) != len(members):
+                    self.db.removeVars(bot_id, "vvip_members")
+                    if members_to_keep:
+                        for m in members_to_keep:
+                            self.db.setListVars(bot_id, "vvip_members", m)
