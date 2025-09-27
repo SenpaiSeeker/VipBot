@@ -44,7 +44,7 @@ async def list_members_callback(client, callback_query):
     expiry_date_obj_str = member_data.get("expiry_date")
     if expiry_date_obj_str:
         expiry_date_obj = datetime.fromisoformat(expiry_date_obj_str)
-        expiry_date_str = expiry_date_obj.strftime("%d %b %Y, %H:%M %Z")
+        expiry_date_str = expiry_date_obj.strftime("%d %b %Y, %H:%M UTC")
 
     text = lang.get(
         "member.list.panel",
@@ -59,7 +59,7 @@ async def list_members_callback(client, callback_query):
     )
 
     btn_text_list = [
-        f"| {lang.get('member.list.kick_button', name=client.ns.telegram.arg.getMention(user, no_tag=True) if user.first_name else user.id)} - kick_{user.id}_{vvip_name} |"
+        f"| {lang.get('member.list.kick_button', name=user.first_name or user.id)} - kick_{user.id}_{vvip_name} |"
     ]
     if total_pages > 1:
         prev_page, next_page = (
@@ -83,7 +83,9 @@ async def confirm_kick_member_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
     lang = callback_query.lang
-    _, user_id_str, vvip_name = callback_query.data.split("_", 2)
+    match = callback_query.matches[0]
+    user_id_str = match.group(1)
+    vvip_name = match.group(2)
     user = await client.get_users(int(user_id_str))
 
     text = lang.get(
@@ -105,8 +107,10 @@ async def do_kick_member_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
     lang = callback_query.lang
-    _, user_id_str, vvip_name = callback_query.data.split("_", 2)
-    user_id = int(user_id_str)
+    match = callback_query.matches[0]
+    user_id = int(match.group(1))
+    vvip_name = match.group(2)
+
     members_list = ctx.db.getListVars(client.me.id, "vvip_members") or []
     record_to_remove = next(
         (r for r in members_list if r.get("user_id") == user_id and r.get("vvip_name") == vvip_name),
@@ -127,12 +131,15 @@ async def do_kick_member_callback(client, callback_query):
         await client.unban_chat_member(chat_id_kick, user_id)
         ctx.db.removeListVars(client.me.id, "vvip_members", record_to_remove)
         user_to_kick = await client.get_users(user_id)
+        
+        btn_back, _ = client.ns.telegram.button.create_inline_keyboard(f"| {lang.get('general.back')} - list_members_0 |")
         await callback_query.edit_message_caption(
             lang.get(
                 "member.kick.success",
                 mention=client.ns.telegram.arg.getMention(user_to_kick),
                 name=vvip_name,
-            )
+            ),
+            reply_markup=btn_back
         )
     except Exception as e:
         await callback_query.edit_message_caption(lang.get("member.kick.fail", e=e))
@@ -222,7 +229,8 @@ async def list_active_members_callback(client, callback_query):
         status=member.status.name.title(),
     )
 
-    btn_text_list = [f"| {lang.get('member.list.kick_button', name=client.ns.telegram.arg.getMention(user, no_tag=True) if user.first_name else user.id)} - kick_active_{chat_id}_{user.id}_{page} |"]
+    kick_button_name = user.first_name or user.id
+    btn_text_list = [f"| 🚨 {kick_button_name} - kick_active_{chat_id}_{user.id}_{page} |"]
     if total_members > 1:
         prev_p, next_p = (
             (page - 1 + total_members) % total_members,
