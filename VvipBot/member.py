@@ -1,92 +1,6 @@
 from . import *
 
 
-async def _send_my_access_panel(client, update):
-    lang = update.lang
-    user_id = update.from_user.id
-    all_members = ctx.db.getListVars(client.me.id, "vvip_members") or []
-    user_memberships = [m for m in all_members if m.get("user_id") == user_id]
-
-    back_btn_text = f"| {lang.get('general.back_to_main_menu')} - start |"
-
-    if not user_memberships:
-        text = lang.get("member_portal.no_access")
-        btn, final_text = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{back_btn_text}")
-    else:
-        text = lang.get("member_portal.panel_title")
-        btn_list = []
-        
-        for membership in user_memberships:
-            name = membership.get("vvip_name", "N/A")
-            join_date_obj = datetime.fromisoformat(membership.get("join_date"))
-            join_date_str = join_date_obj.strftime("%d %b %Y")
-            
-            expiry_date_str = lang.get("member_portal.permanent")
-            expiry_date_obj_str = membership.get("expiry_date")
-            if expiry_date_obj_str:
-                expiry_date_obj = datetime.fromisoformat(expiry_date_obj_str)
-                expiry_date_str = expiry_date_obj.strftime("%d %b %Y")
-
-            text += lang.get("member_portal.membership_entry",
-                             name=name,
-                             join_date=join_date_str,
-                             expiry_date=expiry_date_str)
-            
-            btn_list.append(f"| {lang.get('member_portal.resend_link_button', name=name)} - resend_link {name} |")
-
-        btn_list.append(back_btn_text)
-        btn, final_text = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n" + "\n".join(btn_list))
-
-    if isinstance(update, pyrogram.types.Message):
-        await update.reply_text(final_text, reply_markup=btn)
-    elif isinstance(update, pyrogram.types.CallbackQuery):
-        if update.message.photo:
-            await update.edit_message_caption(final_text, reply_markup=btn)
-        else:
-            await update.edit_message_text(final_text, reply_markup=btn)
-
-
-@command(lambda ctx: filters.command("myaccess") & filters.private)
-async def my_access_command(client, message):
-    await _send_my_access_panel(client, message)
-
-
-@command(lambda ctx: filters.regex("^my_access$"), handler_type="callback")
-async def my_access_callback(client, callback_query):
-    await _send_my_access_panel(client, callback_query)
-
-
-@command(lambda ctx: filters.regex(r"^resend_link\s(.+)"), handler_type="callback")
-async def resend_link_callback(client, callback_query):
-    lang = callback_query.lang
-    user_id = callback_query.from_user.id
-    vvip_name = callback_query.data.split(" ", 1)[1]
-
-    all_members = ctx.db.getListVars(client.me.id, "vvip_members") or []
-    membership = next((m for m in all_members if m.get("user_id") == user_id and m.get("vvip_name") == vvip_name), None)
-
-    if not membership:
-        return await callback_query.answer(lang.get("member_portal.not_found"), show_alert=True)
-    
-    chat_id = membership.get("chat_id_kick")
-    if not chat_id:
-        return await callback_query.answer(lang.get("member_portal.chat_id_missing"), show_alert=True)
-        
-    try:
-        expire_date_link = datetime.now() + timedelta(hours=2)
-        invite_link_obj = await client.create_chat_invite_link(
-            chat_id=chat_id,
-            member_limit=1,
-            expire_date=expire_date_link
-        )
-        link = invite_link_obj.invite_link
-        await client.send_message(user_id, lang.get("member_portal.link_resent", name=vvip_name, link=link), protect_content=True)
-        await callback_query.answer(lang.get("member_portal.link_sent_alert"), show_alert=True)
-    except Exception as e:
-        ctx.log.print(f"{ctx.log.RED}Gagal kirim ulang link untuk {user_id}: {e}")
-        await callback_query.answer(lang.get("general.error", e=e), show_alert=True)
-
-
 @command(lambda ctx: filters.regex(r"^list_members_(\-?\d+)$"), handler_type="callback")
 async def list_members_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
@@ -126,11 +40,11 @@ async def list_members_callback(client, callback_query):
 
     join_dt_utc = datetime.fromisoformat(join_date_iso)
     
-    expiry_date_str = lang.get("member_portal.permanent")
+    expiry_date_str = lang.get("member.permanent_access")
     expiry_date_obj_str = member_data.get("expiry_date")
     if expiry_date_obj_str:
         expiry_date_obj = datetime.fromisoformat(expiry_date_obj_str)
-        expiry_date_str = expiry_date_obj.strftime("%d %b %Y, %H:%M %Z")
+        expiry_date_str = expiry_date_obj.strftime("%d %b %Y, %H:%M UTC")
 
     text = lang.get(
         "member.list.panel",
@@ -140,7 +54,7 @@ async def list_members_callback(client, callback_query):
         id=user.id,
         category=vvip_name,
         type=pay_type.title(),
-        date=join_dt_utc.strftime("%d %b %Y, %H:%M %Z"),
+        date=join_dt_utc.strftime("%d %b %Y, %H:%M UTC"),
         expiry=expiry_date_str,
     )
 
