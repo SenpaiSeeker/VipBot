@@ -58,8 +58,9 @@ async def list_members_callback(client, callback_query):
         expiry=expiry_date_str,
     )
 
+    button_name = (user.first_name or str(user.id))[:15]
     btn_text_list = [
-        f"| {lang.get('member.list.kick_button', name=user.first_name or user.id)} - kick_{user.id}_{vvip_name} |"
+        f"| {lang.get('member.list.kick_button', name=button_name)} - kick_{user.id}_{vvip_name} |"
     ]
     if total_pages > 1:
         prev_page, next_page = (
@@ -86,6 +87,7 @@ async def confirm_kick_member_callback(client, callback_query):
     match = callback_query.matches[0]
     user_id_str = match.group(1)
     vvip_name = match.group(2)
+    
     user = await client.get_users(int(user_id_str))
 
     text = lang.get(
@@ -228,9 +230,9 @@ async def list_active_members_callback(client, callback_query):
         id=user.id,
         status=member.status.name.title(),
     )
-
-    kick_button_name = user.first_name or user.id
-    btn_text_list = [f"| 🚨 {kick_button_name} - kick_active_{chat_id}_{user.id}_{page} |"]
+    
+    button_name = (user.first_name or str(user.id))[:15]
+    btn_text_list = [f"| {lang.get('member.list.kick_button', name=button_name)} - kick_active_{chat_id}_{user.id}_{page} |"]
     if total_members > 1:
         prev_p, next_p = (
             (page - 1 + total_members) % total_members,
