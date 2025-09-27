@@ -30,6 +30,7 @@ start:
   my_bots: "📦 My Bots"
   settings_panel: "⚙️ Settings Panel ⚙️"
   list_vvip: "📚 View VVIP List 📚"
+  my_access: "🎟️ My Access"
   donate: "❤️ Donate"
   about_bot: "ℹ️ About Bot ℹ️"
   ai_feature: "✨ AI Features ✨"
@@ -134,6 +135,13 @@ admin:
     cancelled: "Cancelled."
     timeout: "Timeout."
     fail: "Failed to send message: {e}"
+  dashboard:
+    panel: "**📊 Platform Dashboard**\n\n**Platform Stats:**\n- Total Active Bots: {total_bots}\n- Total Unique Users: {total_users}\n- Most Popular Bot: {top_bot}\n\n**Server Health:**\n{server_stats}"
+    server_stats: "- CPU: `{cpu}%`\n- RAM: `{ram}%`\n- Disk: `{disk}%`"
+    server_stats_fail: "Failed to retrieve server stats: `{e}`"
+  broadcast_owners:
+    usage: "Usage: `/broadcast_owners <message>` or reply to a message."
+    no_owners: "There are no bot owners to broadcast to."
 
 bot_management:
   create:
@@ -181,7 +189,7 @@ bot_management:
 member:
   list:
     empty: "✅ No VVIP members recorded in the database."
-    panel: "**👥 VVIP Members List ({page}/{total})**\n\n**Name:** {mention}\n**ID:** `{id}`\n**Category:** `{category}` ({type})\n**Joined:** `{date}`\n**Membership Duration:** `{duration}` days"
+    panel: "**👥 VVIP Members List ({page}/{total})**\n\n**Name:** {mention}\n**ID:** `{id}`\n**Category:** `{category}` ({type})\n**Joined:** `{date}`\n**Expires:** `{expiry}`"
     data_error: "This member's data seems corrupted or the user is no longer accessible.\n`Error: {e}`\n\nThis entry has been removed from the list to maintain data cleanliness."
     kick_button: "🚨 Kick {name}"
   kick:
@@ -207,6 +215,22 @@ member:
     kick_confirm_no_button: "❌ No, Cancel"
     kick_processing: "⏳ `Processing user kick...`"
     kick_success: "✅ **Success!**\nUser **{mention}** has been kicked from the group."
+
+member_portal:
+  panel_title: "**🎟️ Your VVIP Access Portal**\n\nHere is a list of your active subscriptions:"
+  membership_entry: "\n\n- **Package:** `{name}`\n- **Joined on:** `{join_date}`\n- **Expires on:** `{expiry_date}`"
+  no_access: "You do not have any VVIP access at the moment."
+  permanent: "Permanent"
+  resend_link_button: "🔗 Resend Link for {name}"
+  not_found: "Membership data not found."
+  chat_id_missing: "Failed: The admin has not set a destination group for this package."
+  link_resent: "✅ **New Access Link**\n\nHere is your new access link for the **{name}** package:\n\n{link}"
+  link_sent_alert: "✅ A new link has been sent to your private chat."
+
+subscription:
+  renewal_reminder: "🔔 **Subscription Reminder**\n\nYour subscription for the **{name}** package will expire in **{days} days**. Renew now to avoid losing access!"
+  renew_button: "🔄 Renew Now"
+  expired_kick_notif: "⌛ **Subscription Expired**\n\nYour subscription for the **{name}** package has ended. You have been removed from the group."
 
 payment:
   notes:
@@ -281,6 +305,7 @@ settings:
   broadcast: "📢 Create Broadcast"
   stats_button: "⭐ Stars Statistics"
   list_all_users: "👥 List All Users"
+  coupons: "🎟️ Manage Coupons"
   
   set_photo_prompt: "🖼️ **Set Start Photo**\n\nPlease send the new photo you want to use as the image in the /start message.\n\nType `/empty` to remove the current photo and revert to default."
   set_photo_fail: "❌ **Failed:** The message sent is not a photo. Process canceled."
@@ -298,13 +323,14 @@ settings:
   broadcast_done: "**📢 Broadcast Finished!**\n✔️ **Sent:** `{success}`\n❌ **Failed:** `{fail}` (failed users have been removed from the database)"
 
   setup_vvip:
-    step1_name: "**✍️ Step 1/7: Category Name**\nExample: `Monthly VVIP`"
-    step2_price: "**💰 Step 2/7: Normal Price**\nExample: `50000` (without dots or commas)"
-    step3_chat_id: "**🆔 Step 3/7: Normal Group Chat ID**\nExample: `-100123456789`. This is the destination group for members."
-    step4_promo_price: "**🎉 Step 4/7: Promo Price**\nSend `0` if there is no promo price."
-    step5_promo_chat_id: "**🆔 Step 5/7: Promo Group Chat ID**\nFill in if Promo Price > 0."
-    step6_promo_text: "**📝 Step 6/7: Promo Description Text**\nUse `{name}` and `{promo_price}`."
-    step7_normal_text: "**📝 Step 7/7: Normal Description Text**\nUse `{name}` and `{price}`."
+    step1_name: "**✍️ Step 1/8: Category Name**\nExample: `Monthly VVIP`"
+    step2_price: "**💰 Step 2/8: Normal Price**\nExample: `50000` (without dots or commas)"
+    step3_duration: "**⏳ Step 3/8: Membership Duration (Days)**\nSend `0` for permanent access."
+    step4_chat_id: "**🆔 Step 4/8: Normal Group Chat ID**\nExample: `-100123456789`. This is the destination group for members."
+    step5_promo_price: "**🎉 Step 5/8: Promo Price**\nSend `0` if there is no promo price."
+    step6_promo_chat_id: "**🆔 Step 6/8: Promo Group Chat ID**\nFill in if Promo Price > 0."
+    step7_promo_text: "**📝 Step 7/8: Promo Description Text**\nUse `{name}` and `{promo_price}`."
+    step8_normal_text: "**📝 Step 8/8: Normal Description Text**\nUse `{name}` and `{price}`."
     err_must_be_number: "Input must be a number."
     err_must_be_link: "Input must be a valid link (starting with http/https)."
     err_must_be_chat_id: "Input must be a numeric chat ID (usually starts with -100)."
@@ -339,3 +365,25 @@ stats:
   no_transactions: "No Stars transactions have been recorded yet."
   prev_button: "« Previous"
   next_button: "Next »"
+
+coupons:
+  panel: "**🎟️ Coupon Management**\nManage discount codes for your VVIPs."
+  add_button: "➕ Create New Coupon"
+  list_button: "📋 View Coupons"
+  ask_code: "**1/4:** Enter a unique coupon code (e.g., `NEWDISCOUNT`)."
+  ask_type: "**2/4:** Choose discount type:\n1. Percentage (%)\n2. Fixed Amount (e.g., 10000)"
+  ask_value_percent: "**3/4:** Enter the percentage value (e.g., `15` for 15%)."
+  ask_value_fixed: "**3/4:** Enter the fixed discount amount (e.g., `10000` for IDR 10,000)."
+  ask_uses: "**4/4:** How many times can this coupon be used? (enter a number)"
+  ask_expiry: "**5/5:** For how many days will this coupon be valid? (enter a number)"
+  add_success: "✅ Coupon `{code}` created successfully."
+  list_empty: "No coupons have been created."
+  list_panel: "**📋 Coupon Details ({page}/{total})**\n- Code: `{code}`\n- Type: `{type}`\n- Value: `{value}`\n- Uses Left: `{uses}`\n- Valid until: `{expiry}`"
+  delete_button: "🗑️ Delete This Coupon"
+  delete_success: "✅ Coupon deleted successfully."
+  use_button: "🎟️ Use Coupon"
+  prompt: "Please enter your coupon code."
+  invalid: "❌ Invalid coupon code."
+  limit_reached: "❌ This coupon has reached its usage limit."
+  expired: "❌ This coupon has expired."
+  success_applied: "✅ Coupon `{code}` applied successfully! Original price `IDR {original}` is now `IDR {final}`."
