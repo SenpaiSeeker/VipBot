@@ -30,7 +30,6 @@ start:
   my_bots: "📦 Bot Saya"
   settings_panel: "⚙️ Panel Pengaturan ⚙️"
   list_vvip: "📚 Lihat Daftar VVIP 📚"
-  my_access: "🎟️ Akses Saya"
   donate: "❤️ Donasi"
   about_bot: "ℹ️ Tentang Bot ℹ️"
   ai_feature: "✨ Cek Khodam/AI ✨"
@@ -192,6 +191,7 @@ member:
     panel: "**👥 Daftar Member VVIP ({page}/{total})**\n\n**Nama:** {mention}\n**ID:** `{id}`\n**Kategori:** `{category}` ({type})\n**Bergabung:** `{date}`\n**Kedaluwarsa:** `{expiry}`"
     data_error: "Data member ini tampaknya rusak atau pengguna tidak dapat diakses lagi.\n`Error: {e}`\n\nEntri ini telah dihapus dari daftar untuk menjaga kebersihan data."
     kick_button: "🚨 Tendang {name}"
+    permanent_access: "Permanen"
   kick:
     confirm_panel: "**⚠️ Konfirmasi Penendangan**\n\nAnda yakin ingin menendang **{mention}** dari grup VVIP **{name}**?\n\nPengguna akan dikeluarkan dari grup dan data keanggotaannya akan dihapus."
     confirm_yes_button: "✅ Ya, Tendang"
@@ -215,17 +215,6 @@ member:
     kick_confirm_no_button: "❌ Tidak, Batalkan"
     kick_processing: "⏳ `Memproses penendangan pengguna...`"
     kick_success: "✅ **Sukses!**\nPengguna **{mention}** telah ditendang dari grup."
-
-member_portal:
-  panel_title: "**🎟️ Portal Akses VVIP Anda**\n\nBerikut adalah daftar langganan aktif yang Anda miliki:"
-  membership_entry: "\n\n- **Paket:** `{name}`\n- **Bergabung pada:** `{join_date}`\n- **Berakhir pada:** `{expiry_date}`"
-  no_access: "Anda belum memiliki akses VVIP apapun saat ini."
-  permanent: "Permanen"
-  resend_link_button: "🔗 Minta Ulang Link {name}"
-  not_found: "Data keanggotaan tidak ditemukan."
-  chat_id_missing: "Gagal: Admin belum mengatur grup tujuan untuk paket ini."
-  link_resent: "✅ **Link Akses Baru**\n\nBerikut adalah link akses baru Anda untuk paket **{name}**:\n\n{link}"
-  link_sent_alert: "✅ Link baru telah dikirim ke chat pribadi Anda."
 
 subscription:
   renewal_reminder: "🔔 **Pengingat Langganan**\n\nLangganan Anda untuk paket **{name}** akan berakhir dalam **{days} hari** lagi. Perpanjang sekarang agar tidak kehilangan akses!"
@@ -260,9 +249,10 @@ payment:
       ╰─ ⏳ **PENTING:** Invoice ini akan kedaluwarsa dalam **15 menit**.
   check:
     category_missing: "Kategori VVIP '{name}' tidak lagi ditemukan di database. Pembayaran berhasil, namun link grup gagal diberikan. Mohon hubungi admin."
-    success_customer_full: "🎉 **Pembayaran Dikonfirmasi!**\n\nTerima kasih, berikut adalah link akses Anda untuk paket **{name}**:\n\n{link}"
+    success_customer_full: "🎉 **Pembayaran Dikonfirmasi!**\n\nTerima kasih, berikut adalah link akses Anda untuk paket **{name}**:\n\n{link}\n\n⚠️ Link ini hanya berlaku untuk 1 kali klik dan akan kedaluwarsa dalam 10 menit jika tidak digunakan."
     success_owner_notif: "💰 **Pemasukan Baru!**\n\n**Pengguna:** {mention}\n**Bot:** {bot_mention}\n**Kategori:** `{name}` ({type})"
     expired_msg: "⌛ **Invoice Kedaluwarsa.**\nOrder ID `{id}` telah dibatalkan karena melewati batas waktu pembayaran."
+    link_expired: "⚠️ Link undangan Anda telah kedaluwarsa karena Anda tidak bergabung dalam 10 menit. Silakan hubungi admin jika terjadi masalah."
   donation:
     invoice_title: "Donasi untuk Pengembangan Bot"
     invoice_desc: "Dukungan Anda sebesar {stars} Bintang (Stars) sangat kami hargai. Terima kasih!"
