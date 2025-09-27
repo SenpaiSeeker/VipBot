@@ -54,7 +54,7 @@ async def list_members_callback(client, callback_query):
         id=user.id,
         category=vvip_name,
         type=pay_type.title(),
-        date=join_dt_utc.strftime("%d %b %Y, %H:%M UTC"),
+        date=join_dt_utc.strftime("%d %b %Y, %H:%M %Z"),
         expiry=expiry_date_str,
     )
 
