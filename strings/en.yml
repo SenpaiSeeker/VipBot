@@ -30,7 +30,6 @@ start:
   my_bots: "📦 My Bots"
   settings_panel: "⚙️ Settings Panel ⚙️"
   list_vvip: "📚 View VVIP List 📚"
-  my_access: "🎟️ My Access"
   donate: "❤️ Donate"
   about_bot: "ℹ️ About Bot ℹ️"
   ai_feature: "✨ AI Features ✨"
@@ -192,6 +191,7 @@ member:
     panel: "**👥 VVIP Members List ({page}/{total})**\n\n**Name:** {mention}\n**ID:** `{id}`\n**Category:** `{category}` ({type})\n**Joined:** `{date}`\n**Expires:** `{expiry}`"
     data_error: "This member's data seems corrupted or the user is no longer accessible.\n`Error: {e}`\n\nThis entry has been removed from the list to maintain data cleanliness."
     kick_button: "🚨 Kick {name}"
+    permanent_access: "Permanent"
   kick:
     confirm_panel: "**⚠️ Kick Confirmation**\n\nAre you sure you want to kick **{mention}** from the VVIP group **{name}**?\n\nThe user will be removed from the group and their membership data will be deleted."
     confirm_yes_button: "✅ Yes, Kick"
@@ -215,17 +215,6 @@ member:
     kick_confirm_no_button: "❌ No, Cancel"
     kick_processing: "⏳ `Processing user kick...`"
     kick_success: "✅ **Success!**\nUser **{mention}** has been kicked from the group."
-
-member_portal:
-  panel_title: "**🎟️ Your VVIP Access Portal**\n\nHere is a list of your active subscriptions:"
-  membership_entry: "\n\n- **Package:** `{name}`\n- **Joined on:** `{join_date}`\n- **Expires on:** `{expiry_date}`"
-  no_access: "You do not have any VVIP access at the moment."
-  permanent: "Permanent"
-  resend_link_button: "🔗 Resend Link for {name}"
-  not_found: "Membership data not found."
-  chat_id_missing: "Failed: The admin has not set a destination group for this package."
-  link_resent: "✅ **New Access Link**\n\nHere is your new access link for the **{name}** package:\n\n{link}"
-  link_sent_alert: "✅ A new link has been sent to your private chat."
 
 subscription:
   renewal_reminder: "🔔 **Subscription Reminder**\n\nYour subscription for the **{name}** package will expire in **{days} days**. Renew now to avoid losing access!"
@@ -260,9 +249,10 @@ payment:
       ╰─ ⏳ **IMPORTANT:** This invoice will expire in **15 minutes**.
   check:
     category_missing: "VVIP category '{name}' is no longer found in the database. Payment was successful, but the group link could not be delivered. Please contact the admin."
-    success_customer_full: "🎉 **Payment Confirmed!**\n\nThank you, here is your access link for the **{name}** package:\n\n{link}"
+    success_customer_full: "🎉 **Payment Confirmed!**\n\nThank you, here is your access link for the **{name}** package:\n\n{link}\n\n⚠️ This link is for one-time use only and will expire in 10 minutes if not used."
     success_owner_notif: "💰 **New Income!**\n\n**User:** {mention}\n**Bot:** {bot_mention}\n**Category:** `{name}` ({type})"
     expired_msg: "⌛ **Invoice Expired.**\nOrder ID `{id}` has been canceled due to exceeding the payment time limit."
+    link_expired: "⚠️ Your invitation link has expired because you did not join within 10 minutes. Please contact the admin if you have any issues."
   donation:
     invoice_title: "Donation for Bot Development"
     invoice_desc: "Your support of {stars} Stars is greatly appreciated. Thank you!"
