@@ -130,7 +130,7 @@ async def list_members_callback(client, callback_query):
     expiry_date_obj_str = member_data.get("expiry_date")
     if expiry_date_obj_str:
         expiry_date_obj = datetime.fromisoformat(expiry_date_obj_str)
-        expiry_date_str = expiry_date_obj.strftime("%d %b %Y, %H:%M UTC")
+        expiry_date_str = expiry_date_obj.strftime("%d %b %Y, %H:%M %Z")
 
     text = lang.get(
         "member.list.panel",
@@ -140,12 +140,12 @@ async def list_members_callback(client, callback_query):
         id=user.id,
         category=vvip_name,
         type=pay_type.title(),
-        date=join_dt_utc.strftime("%d %b %Y, %H:%M UTC"),
+        date=join_dt_utc.strftime("%d %b %Y, %H:%M %Z"),
         expiry=expiry_date_str,
     )
 
     btn_text_list = [
-        f"| {lang.get('member.list.kick_button', name=user.first_name or user.id)} - kick_{user.id}_{vvip_name} |"
+        f"| {lang.get('member.list.kick_button', name=uclient.ns.telegram.arg.getMention(user, no_tag=True) if user.first_name else user.id)} - kick_{user.id}_{vvip_name} |"
     ]
     if total_pages > 1:
         prev_page, next_page = (
@@ -308,8 +308,7 @@ async def list_active_members_callback(client, callback_query):
         status=member.status.name.title(),
     )
 
-    kick_button_name = user.first_name or user.id
-    btn_text_list = [f"| 🚨 {kick_button_name} - kick_active_{chat_id}_{user.id}_{page} |"]
+    btn_text_list = [f"| {lang.get('member.list.kick_button', name=client.ns.telegram.arg.getMention(user, no_tag=True) if user.first_name else user.id)} - kick_active_{chat_id}_{user.id}_{page} |"]
     if total_members > 1:
         prev_p, next_p = (
             (page - 1 + total_members) % total_members,
