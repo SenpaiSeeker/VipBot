@@ -19,7 +19,11 @@ async def notes_data(client, callback_query):
             else lang.get("payment.defaults.notes_text", name=name, price=f"{price_val:,}")
         )
 
-        btn_text = f"| {lang.get('payment.notes.pay_button')} - paynow {name} normal | {back_btn_text}"
+        btn_text = (
+            f"| {lang.get('payment.notes.pay_button')} - paynow {name} normal {price_val} |\n"
+            f"| {lang.get('coupons.use_button')} - apply_coupon {name} normal {price_val} | | {back_btn_text};same |"
+        )
+
         btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{desc}\n\n{btn_text}")
 
         if callback_query.message.photo:
@@ -53,7 +57,10 @@ async def promo_detail(client, callback_query):
             else lang.get("payment.defaults.promo_text", name=name, promo_price=f"{promo_price_val:,}")
         )
 
-        btn_text = f"| {lang.get('payment.promo.pay_button')} - paynow {name} promo | {back_btn_text}"
+        btn_text = (
+            f"| {lang.get('payment.promo.pay_button')} - paynow {name} promo {promo_price_val} |\n"
+            f"| {lang.get('coupons.use_button')} - apply_coupon {name} promo {promo_price_val} | | {back_btn_text};same |"
+        )
         btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{desc}\n\n{btn_text}")
 
         if callback_query.message.photo:
@@ -67,6 +74,59 @@ async def promo_detail(client, callback_query):
     else:
         await callback_query.edit_message_text(txt, reply_markup=btn)
 
+@command(lambda ctx: filters.regex(r"^apply_coupon\s(.+)\s(normal|promo)\s(\d+)"), handler_type="callback")
+async def apply_coupon_callback(client, callback_query):
+    lang = callback_query.lang
+    chat_id = callback_query.from_user.id
+    parts = callback_query.data.split(" ", 3)
+    name, tipe, original_amount_str = parts[1], parts[2], parts[3]
+    original_amount = int(original_amount_str)
+
+    await callback_query.message.delete()
+    
+    try:
+        ask_msg = await client.ask(chat_id, lang.get("coupons.prompt"), timeout=300)
+        if ask_msg.text.lower() == "/batal":
+            raise listen.UserCancelled
+        
+        coupon_code = ask_msg.text.upper()
+        coupons = ctx.db.getListVars(client.me.id, "coupons") or []
+        coupon = next((c for c in coupons if c.get("code") == coupon_code), None)
+
+        if not coupon:
+            raise ValueError(lang.get("coupons.invalid"))
+
+        if coupon.get("uses_left", 1) <= 0:
+            raise ValueError(lang.get("coupons.limit_reached"))
+
+        expiry_str = coupon.get("expiry_date")
+        if expiry_str and datetime.fromisoformat(expiry_str) < datetime.now(timezone.utc):
+            raise ValueError(lang.get("coupons.expired"))
+        
+        discount_type = coupon["discount_type"]
+        discount_value = coupon["discount_value"]
+        
+        if discount_type == "percentage":
+            final_amount = original_amount - (original_amount * (discount_value / 100))
+        else:
+            final_amount = original_amount - discount_value
+        
+        final_amount = max(0, int(final_amount))
+        
+        await client.send_message(chat_id, lang.get("coupons.success_applied", code=coupon_code, original=f"{original_amount:,}", final=f"{final_amount:,}"))
+        
+        new_callback_data = f"paynow {name} {tipe} {final_amount} {coupon_code}"
+        callback_query.data = new_callback_data
+        await paynow(client, callback_query)
+
+    except listen.UserCancelled:
+        await client.send_message(chat_id, lang.get("general.cancelled"))
+    except asyncio.TimeoutError:
+        await client.send_message(chat_id, lang.get("general.timeout"))
+    except ValueError as e:
+        await client.send_message(chat_id, str(e))
+    except Exception as e:
+        await client.send_message(chat_id, lang.get("general.error", e=e))
 
 @command(lambda ctx: filters.regex(r"^paynow\s(.+)"), handler_type="callback")
 async def paynow(client, callback_query):
@@ -85,19 +145,20 @@ async def paynow(client, callback_query):
             return
         return await callback_query.answer(lang.get("payment.pay.service_inactive_alert"), show_alert=True)
 
-    _, *name_parts, tipe = callback_query.data.split()
-    name = " ".join(name_parts)
-    vvip_list = ctx.db.getListVars(client.me.id, "list_vvip") or []
-    item_found = next((item for item in vvip_list if item.get("name") == name), None)
+    parts = callback_query.data.split()
+    name = parts[1]
+    tipe = parts[2]
+    amount = int(parts[3])
+    coupon_code = parts[4] if len(parts) > 4 else None
 
-    if not item_found:
-        return await callback_query.edit_message_caption(lang.get("payment.pay.not_found"))
-
-    amount = item_found.get("promo_price") if tipe == "promo" else item_found.get("price")
-    if not isinstance(amount, int) or amount <= 0:
+    if not isinstance(amount, int) or amount < 0:
         return await callback_query.edit_message_caption(lang.get("payment.pay.invalid_price"))
 
-    await callback_query.message.delete()
+    if callback_query.message.photo:
+        await callback_query.message.delete()
+    else:
+        await callback_query.edit_message_text(lang.get("general.processing"))
+
     msg = await client.send_message(callback_query.from_user.id, lang.get("general.processing"))
 
     try:
@@ -109,8 +170,12 @@ async def paynow(client, callback_query):
         unique_seed = f"{result.ref_kode}_{result.id_reference}"
         order_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, unique_seed))
         expire_time = datetime.now(timezone.utc) + timedelta(minutes=15)
-
-        ctx.db.setVars(client.me.id, order_id, f"{unique_seed}|{name}|{expire_time.isoformat()}|{tipe}")
+        
+        order_data = f"{unique_seed}|{name}|{expire_time.isoformat()}|{tipe}"
+        if coupon_code:
+            order_data += f"|{coupon_code}"
+        
+        ctx.db.setVars(client.me.id, order_id, order_data)
 
         async with aiohttp.ClientSession() as session, session.get(result.target) as resp:
             qr_bytes = await resp.read() if resp.status == 200 else None
@@ -142,7 +207,9 @@ async def auto_check_payment(client, user, order_id):
     if not ref_data_str:
         return
 
-    unique_seed, name, expire_iso, tipe = ref_data_str.split("|", 3)
+    ref_parts = ref_data_str.split("|")
+    unique_seed, name, expire_iso, tipe = ref_parts[:4]
+    coupon_code = ref_parts[4] if len(ref_parts) > 4 else None
     ref_kode, ref_id = unique_seed.split("_")
     expire_time = datetime.fromisoformat(expire_iso)
     payment_successful = False
@@ -185,6 +252,22 @@ async def auto_check_payment(client, user, order_id):
                     "payment_type": tipe,
                     "chat_id_kick": target_chat_id,
                 }
+                
+                duration = item_found.get("duration", 0)
+                if duration > 0:
+                    expiry_date = datetime.now(timezone.utc) + timedelta(days=duration)
+                    member_data["expiry_date"] = expiry_date.isoformat()
+
+                if coupon_code:
+                    coupons = ctx.db.getListVars(client.me.id, "coupons") or []
+                    for c in coupons:
+                        if c.get("code") == coupon_code:
+                            c["uses_left"] = c.get("uses_left", 1) - 1
+                            break
+                    ctx.db.removeVars(client.me.id, "coupons")
+                    for c in coupons:
+                         ctx.db.setListVars(client.me.id, "coupons", c)
+
                 ctx.db.setListVars(client.me.id, "vvip_members", member_data)
 
                 await client.send_message(
@@ -280,4 +363,4 @@ async def successful_donation_handler(client, message):
 
     ctx.log.print(
         f"{ctx.log.GREEN}Donasi {stars_donated} XTR diterima dari {user.id} ({user.first_name}) melalui bot {current_bot_id}"
-)
+    )
