@@ -13,8 +13,8 @@ async def settings(client, callback_query):
         f"| {lang.get('settings.add_vvip')} - setup_listvvip | | {lang.get('settings.del_vvip')} - delete_listvvip;same |",
         f"| {lang.get('settings.list_all_users')} - list_all_users_0 | | {lang.get('settings.check_members')} - list_members_0;same |",
         f"| {lang.get('settings.check_active_members')} - check_active_menu_init | | {lang.get('settings.broadcast')} - broadcast;same |",
-        f"| {lang.get('settings.api_keys')} - api_settings | | {lang.get('settings.stats_button')} - stats_0;same |",
-        f"| {lang.get('general.back_to_main_menu')} - start |",
+        f"| {lang.get('settings.api_keys')} - api_settings | | {lang.get('settings.coupons')} - manage_coupons;same |",
+        f"| {lang.get('settings.stats_button')} - stats_0 | | {lang.get('general.back_to_main_menu')} - start;same |",
     ]
     btn_text = "\n".join(button_rows)
 
@@ -184,19 +184,20 @@ async def setup_listvvip(client, callback_query):
         vvip_data = {}
         vvip_data["name"] = validate(await ask(lang.get("settings.setup_vvip.step1_name")), lambda t: True, "")
         vvip_data["price"] = int(validate(await ask(lang.get("settings.setup_vvip.step2_price")), is_digit, "settings.setup_vvip.err_must_be_number"))
-        vvip_data["chat_id_normal"] = int(validate(await ask(lang.get("settings.setup_vvip.step3_chat_id")), is_chatid, "settings.setup_vvip.err_must_be_chat_id"))
-        vvip_data["promo_price"] = int(validate(await ask(lang.get("settings.setup_vvip.step4_promo_price")), is_digit, "settings.setup_vvip.err_must_be_number"))
+        vvip_data["duration"] = int(validate(await ask(lang.get("settings.setup_vvip.step3_duration")), is_digit, "settings.setup_vvip.err_must_be_number"))
+        vvip_data["chat_id_normal"] = int(validate(await ask(lang.get("settings.setup_vvip.step4_chat_id")), is_chatid, "settings.setup_vvip.err_must_be_chat_id"))
+        vvip_data["promo_price"] = int(validate(await ask(lang.get("settings.setup_vvip.step5_promo_price")), is_digit, "settings.setup_vvip.err_must_be_number"))
 
         if vvip_data["promo_price"] > 0:
-            vvip_data["chat_id_promo"] = int(validate(await ask(lang.get("settings.setup_vvip.step5_promo_chat_id")), is_chatid, "settings.setup_vvip.err_must_be_chat_id"))
-            prompt_promo = f"{lang.get('settings.setup_vvip.step6_promo_text')}{lang.get('prompts.skip_footer')}{lang.get('prompts.cancel_footer')}"
+            vvip_data["chat_id_promo"] = int(validate(await ask(lang.get("settings.setup_vvip.step6_promo_chat_id")), is_chatid, "settings.setup_vvip.err_must_be_chat_id"))
+            prompt_promo = f"{lang.get('settings.setup_vvip.step7_promo_text')}{lang.get('prompts.skip_footer')}{lang.get('prompts.cancel_footer')}"
             promo_text_msg = await client.ask(chat_id, prompt_promo, timeout=600)
             if promo_text_msg.text and promo_text_msg.text.lower() == "/batal": raise listen.UserCancelled
             vvip_data["promo_text"] = "" if promo_text_msg.text.lower() == "/skip" else promo_text_msg.text
         else:
             vvip_data["chat_id_promo"], vvip_data["promo_text"] = 0, ""
 
-        prompt_normal = f"{lang.get('settings.setup_vvip.step7_normal_text')}{lang.get('prompts.skip_footer')}{lang.get('prompts.cancel_footer')}"
+        prompt_normal = f"{lang.get('settings.setup_vvip.step8_normal_text')}{lang.get('prompts.skip_footer')}{lang.get('prompts.cancel_footer')}"
         normal_text_msg = await client.ask(chat_id, prompt_normal, timeout=600)
         if normal_text_msg.text and normal_text_msg.text.lower() == "/batal": raise listen.UserCancelled
         vvip_data["normal_text"] = "" if normal_text_msg.text.lower() == "/skip" else normal_text_msg.text
@@ -383,3 +384,112 @@ async def do_delete_api_keys(client, callback_query):
 
     await callback_query.answer(lang.get("settings.api_del_success"), show_alert=True)
     await api_settings_callback(client, callback_query)
+
+@command(lambda ctx: filters.regex(r"^manage_coupons"), handler_type="callback")
+async def manage_coupons_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+
+    lang = callback_query.lang
+    text = lang.get("coupons.panel")
+    btn_text = (
+        f"| {lang.get('coupons.add_button')} - add_coupon |\n"
+        f"| {lang.get('coupons.list_button')} - list_coupons_0 |\n"
+        f"| {lang.get('general.back_to_settings')} - settings |"
+    )
+    btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
+
+    if callback_query.message.photo:
+        await callback_query.edit_message_caption(text, reply_markup=btn)
+    else:
+        await callback_query.edit_message_text(text, reply_markup=btn)
+
+@command(lambda ctx: filters.regex(r"^add_coupon"), handler_type="callback")
+async def add_coupon_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id): return
+    lang = callback_query.lang
+    chat_id = callback_query.from_user.id
+    await callback_query.message.delete()
+    
+    try:
+        def ask(text):
+            return client.ask(chat_id, f"{text}{lang.get('prompts.cancel_footer')}", timeout=600)
+
+        code = (await ask(lang.get("coupons.ask_code"))).text.upper()
+        type_msg = await ask(lang.get("coupons.ask_type"))
+        discount_type = "percentage" if "1" in type_msg.text else "fixed"
+        
+        value_prompt = lang.get("coupons.ask_value_percent") if discount_type == "percentage" else lang.get("coupons.ask_value_fixed")
+        discount_value = int((await ask(value_prompt)).text)
+
+        uses_left = int((await ask(lang.get("coupons.ask_uses"))).text)
+        
+        expiry_msg = await ask(lang.get("coupons.ask_expiry"))
+        expiry_date = (datetime.now(timezone.utc) + timedelta(days=int(expiry_msg.text))).isoformat()
+
+        coupon_data = {
+            "code": code,
+            "discount_type": discount_type,
+            "discount_value": discount_value,
+            "uses_left": uses_left,
+            "expiry_date": expiry_date
+        }
+
+        ctx.db.setListVars(client.me.id, "coupons", coupon_data)
+        await client.send_message(chat_id, lang.get("coupons.add_success", code=code))
+
+    except (listen.UserCancelled, asyncio.TimeoutError, ValueError) as e:
+        await client.send_message(chat_id, lang.get("general.cancelled"))
+    except Exception as e:
+        await client.send_message(chat_id, lang.get("general.error", e=e))
+
+@command(lambda ctx: filters.regex(r"^list_coupons_(\d+)"), handler_type="callback")
+async def list_coupons_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id): return
+    lang = callback_query.lang
+    page = int(callback_query.data.split("_")[2])
+    
+    coupons = ctx.db.getListVars(client.me.id, "coupons") or []
+    
+    back_btn = f"| {lang.get('general.back')} - manage_coupons |"
+    
+    if not coupons:
+        text = lang.get("coupons.list_empty")
+        btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{back_btn}")
+        return await callback_query.edit_message_caption(text, reply_markup=btn)
+    
+    total_pages = len(coupons)
+    page = (page + total_pages) % total_pages
+    coupon = coupons[page]
+    
+    text = lang.get("coupons.list_panel",
+        page=page+1, total=total_pages, code=coupon['code'],
+        type=coupon['discount_type'], value=coupon['discount_value'],
+        uses=coupon['uses_left'],
+        expiry=datetime.fromisoformat(coupon['expiry_date']).strftime("%d %b %Y")
+    )
+    
+    btn_text = f"| {lang.get('coupons.delete_button')} - delete_coupon {coupon['code']} {page} |\n"
+    if total_pages > 1:
+        prev_page = (page - 1 + total_pages) % total_pages
+        next_page = (page + 1) % total_pages
+        btn_text += f"| « - list_coupons_{prev_page} | | » - list_coupons_{next_page};same |\n"
+
+    btn_text += back_btn
+    btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
+    await callback_query.edit_message_caption(text, reply_markup=btn)
+
+@command(lambda ctx: filters.regex(r"^delete_coupon\s(.+)\s(\d+)"), handler_type="callback")
+async def delete_coupon_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id): return
+    lang = callback_query.lang
+    _, code, page_str = callback_query.data.split()
+
+    coupons = ctx.db.getListVars(client.me.id, "coupons") or []
+    coupon_to_remove = next((c for c in coupons if c.get("code") == code), None)
+    
+    if coupon_to_remove:
+        ctx.db.removeListVars(client.me.id, "coupons", coupon_to_remove)
+        await callback_query.answer(lang.get("coupons.delete_success"), show_alert=True)
+    
+    await list_coupons_callback(client, callback_query)
