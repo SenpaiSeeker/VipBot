@@ -1,5 +1,33 @@
 from . import *
 
+async def verify_user_join(client, user, chat_id, link_msg):
+    lang = ctx.L(ctx.db, user.id)
+    verification_timeout = 600
+    start_time = time()
+    is_joined = False
+
+    while time() - start_time < verification_timeout:
+        try:
+            await client.get_chat_member(chat_id, user.id)
+            is_joined = True
+            ctx.log.print(f"{ctx.log.GREEN}User {user.id} berhasil diverifikasi bergabung ke {chat_id}.")
+            break
+        except pyrogram.errors.UserNotParticipant:
+            await asyncio.sleep(15)
+        except Exception as e:
+            ctx.log.print(f"{ctx.log.RED}Error saat verifikasi join {user.id} ke {chat_id}: {e}")
+            break
+
+    try:
+        await link_msg.delete()
+    except Exception:
+        pass
+
+    if not is_joined:
+        ctx.log.print(f"{ctx.log.YELLOW}User {user.id} tidak bergabung ke {chat_id} dalam waktu yang ditentukan.")
+        await client.send_message(user.id, lang.get("payment.check.link_expired"))
+
+
 async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=None):
     lang = ctx.L(ctx.db, user.id)
     vmp_service = getattr(client, "services", None) and client.services.vmp
@@ -278,11 +306,13 @@ async def auto_check_payment(client, user, order_id):
 
                 ctx.db.setListVars(client.me.id, "vvip_members", member_data)
 
-                await client.send_message(
+                link_msg = await client.send_message(
                     user.id,
                     lang.get("payment.check.success_customer_full", name=name, link=link),
                     protect_content=True,
                 )
+                
+                asyncio.create_task(verify_user_join(client, user, target_chat_id, link_msg))
 
                 owner_bot_id = ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
                 owner_lang = Language(ctx.db, owner_bot_id)
@@ -371,4 +401,4 @@ async def successful_donation_handler(client, message):
 
     ctx.log.print(
         f"{ctx.log.GREEN}Donasi {stars_donated} XTR diterima dari {user.id} ({user.first_name}) melalui bot {current_bot_id}"
-        )
+)
