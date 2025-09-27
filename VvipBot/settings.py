@@ -424,8 +424,9 @@ async def add_coupon_callback(client, callback_query):
 
         uses_left = int((await ask(lang.get("coupons.ask_uses"))).text)
         
-        expiry_msg = await ask(lang.get("coupons.ask_expiry"))
-        expiry_date = (datetime.now(timezone.utc) + timedelta(days=int(expiry_msg.text))).isoformat()
+        expiry_days_msg = await ask(lang.get("coupons.ask_expiry"))
+        expiry_days = int(expiry_days_msg.text)
+        expiry_date = (datetime.now(timezone.utc) + timedelta(days=expiry_days)).isoformat() if expiry_days > 0 else None
 
         coupon_data = {
             "code": code,
@@ -459,20 +460,24 @@ async def list_coupons_callback(client, callback_query):
         return await callback_query.edit_message_caption(text, reply_markup=btn)
     
     total_pages = len(coupons)
-    page = (page + total_pages) % total_pages
+    page = max(0, min(page, total_pages - 1))
     coupon = coupons[page]
     
+    expiry_text = "Permanent"
+    if coupon.get("expiry_date"):
+        expiry_text = datetime.fromisoformat(coupon['expiry_date']).strftime("%d %b %Y")
+
     text = lang.get("coupons.list_panel",
         page=page+1, total=total_pages, code=coupon['code'],
         type=coupon['discount_type'], value=coupon['discount_value'],
         uses=coupon['uses_left'],
-        expiry=datetime.fromisoformat(coupon['expiry_date']).strftime("%d %b %Y")
+        expiry=expiry_text
     )
     
     btn_text = f"| {lang.get('coupons.delete_button')} - delete_coupon {coupon['code']} {page} |\n"
     if total_pages > 1:
         prev_page = (page - 1 + total_pages) % total_pages
-        next_page = (page + 1) % total_pages
+        next_page = (page + 1) % total_pages if page + 1 < total_pages else page
         btn_text += f"| « - list_coupons_{prev_page} | | » - list_coupons_{next_page};same |\n"
 
     btn_text += back_btn
@@ -492,4 +497,10 @@ async def delete_coupon_callback(client, callback_query):
         ctx.db.removeListVars(client.me.id, "coupons", coupon_to_remove)
         await callback_query.answer(lang.get("coupons.delete_success"), show_alert=True)
     
+    new_page = int(page_str)
+    remaining_coupons = ctx.db.getListVars(client.me.id, "coupons") or []
+    if new_page >= len(remaining_coupons) and len(remaining_coupons) > 0:
+        new_page = len(remaining_coupons) - 1
+
+    callback_query.data = f"list_coupons_{new_page}"
     await list_coupons_callback(client, callback_query)
