@@ -3,7 +3,7 @@ from . import *
 @command(lambda ctx: filters.regex(r"^notes\s(.+)"), handler_type="callback")
 async def notes_data(client, callback_query):
     lang = callback_query.lang
-    _, name = callback_query.data.split(" ", 1)
+    name = callback_query.data.split(" ", 1)[1]
     vvip_list = ctx.db.getListVars(client.me.id, "list_vvip") or []
     item = next((v for v in vvip_list if v.get("name") == name), None)
 
@@ -41,7 +41,7 @@ async def notes_data(client, callback_query):
 @command(lambda ctx: filters.regex(r"^promo_detail\s(.+)"), handler_type="callback")
 async def promo_detail(client, callback_query):
     lang = callback_query.lang
-    _, name = callback_query.data.split(" ", 1)
+    name = callback_query.data.split(" ", 1)[1]
     vvip_list = ctx.db.getListVars(client.me.id, "list_vvip") or []
     item = next((v for v in vvip_list if v.get("name") == name), None)
 
@@ -74,13 +74,15 @@ async def promo_detail(client, callback_query):
     else:
         await callback_query.edit_message_text(txt, reply_markup=btn)
 
-@command(lambda ctx: filters.regex(r"^apply_coupon\s(.+)\s(normal|promo)\s(\d+)"), handler_type="callback")
+@command(lambda ctx: filters.regex(r"^apply_coupon\s(.+?)\s(normal|promo)\s(\d+)"), handler_type="callback")
 async def apply_coupon_callback(client, callback_query):
     lang = callback_query.lang
     chat_id = callback_query.from_user.id
-    parts = callback_query.data.split(" ", 3)
-    name, tipe, original_amount_str = parts[1], parts[2], parts[3]
-    original_amount = int(original_amount_str)
+    
+    match = callback_query.matches[0]
+    name = match.group(1).strip()
+    tipe = match.group(2)
+    original_amount = int(match.group(3))
 
     await callback_query.message.delete()
     
@@ -116,8 +118,15 @@ async def apply_coupon_callback(client, callback_query):
         await client.send_message(chat_id, lang.get("coupons.success_applied", code=coupon_code, original=f"{original_amount:,}", final=f"{final_amount:,}"))
         
         new_callback_data = f"paynow {name} {tipe} {final_amount} {coupon_code}"
-        callback_query.data = new_callback_data
-        await paynow(client, callback_query)
+        
+        mock_callback_query = SimpleNamespace(
+            data=new_callback_data,
+            message=await client.send_message(chat_id, lang.get("general.processing")),
+            from_user=callback_query.from_user,
+            lang=lang
+        )
+
+        await paynow(client, mock_callback_query)
 
     except listen.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"))
@@ -138,7 +147,7 @@ async def paynow(client, callback_query):
             text = lang.get("payment.pay.service_inactive_panel")
             btn_text = f"| {lang.get('payment.pay.setup_api_button')} - api_settings |"
             btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
-            if callback_query.message.photo:
+            if hasattr(callback_query.message, 'photo') and callback_query.message.photo:
                 await callback_query.edit_message_caption(txt, reply_markup=btn)
             else:
                 await callback_query.edit_message_text(txt, reply_markup=btn)
@@ -146,20 +155,35 @@ async def paynow(client, callback_query):
         return await callback_query.answer(lang.get("payment.pay.service_inactive_alert"), show_alert=True)
 
     parts = callback_query.data.split()
-    name = parts[1]
-    tipe = parts[2]
-    amount = int(parts[3])
-    coupon_code = parts[4] if len(parts) > 4 else None
+    name_parts = []
+    tipe = None
+    amount = None
+    coupon_code = None
+
+    i = 1
+    while i < len(parts):
+        if parts[i] in ["normal", "promo"]:
+            tipe = parts[i]
+            amount = int(parts[i+1])
+            if i + 2 < len(parts):
+                coupon_code = parts[i+2]
+            break
+        name_parts.append(parts[i])
+        i += 1
+    name = " ".join(name_parts)
 
     if not isinstance(amount, int) or amount < 0:
-        return await callback_query.edit_message_caption(lang.get("payment.pay.invalid_price"))
+        if hasattr(callback_query.message, 'photo') and callback_query.message.photo:
+             return await callback_query.edit_message_caption(lang.get("payment.pay.invalid_price"))
+        return await callback_query.edit_message_text(lang.get("payment.pay.invalid_price"))
 
-    if callback_query.message.photo:
+    if hasattr(callback_query.message, 'photo') and callback_query.message.photo:
         await callback_query.message.delete()
+        msg = await client.send_message(callback_query.from_user.id, lang.get("general.processing"))
     else:
         await callback_query.edit_message_text(lang.get("general.processing"))
+        msg = callback_query.message
 
-    msg = await client.send_message(callback_query.from_user.id, lang.get("general.processing"))
 
     try:
         pay = await vmp_service.create_payment(amount=amount)
@@ -354,13 +378,4 @@ async def successful_donation_handler(client, message):
                 super_admin_lang.get(
                     "payment.donation.owner_blocked_notif",
                     stars=stars_donated,
-                    mention=client.ns.telegram.arg.getMention(user),
-                    bot_name=client.me.first_name,
-                ),
-            )
-    except Exception as e:
-        ctx.log.print(f"{ctx.log.RED}Gagal mengirim notifikasi donasi: {e}")
-
-    ctx.log.print(
-        f"{ctx.log.GREEN}Donasi {stars_donated} XTR diterima dari {user.id} ({user.first_name}) melalui bot {current_bot_id}"
-    )
+                    mention=client.ns.telegram.arg.getMention(us
