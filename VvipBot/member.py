@@ -1,10 +1,9 @@
 from . import *
 
 
-@command(lambda ctx: filters.command("myaccess") & filters.private)
-async def my_access_command(client, message):
-    lang = message.lang
-    user_id = message.from_user.id
+async def _send_my_access_panel(client, update):
+    lang = update.lang
+    user_id = update.from_user.id
     all_members = ctx.db.getListVars(client.me.id, "vvip_members") or []
     user_memberships = [m for m in all_members if m.get("user_id") == user_id]
 
@@ -12,33 +11,49 @@ async def my_access_command(client, message):
 
     if not user_memberships:
         text = lang.get("member_portal.no_access")
-        btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{back_btn_text}")
-        return await message.reply_text(text, reply_markup=btn)
-
-    text = lang.get("member_portal.panel_title")
-    btn_list = []
-    
-    for membership in user_memberships:
-        name = membership.get("vvip_name", "N/A")
-        join_date_obj = datetime.fromisoformat(membership.get("join_date"))
-        join_date_str = join_date_obj.strftime("%d %b %Y")
+        btn, final_text = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{back_btn_text}")
+    else:
+        text = lang.get("member_portal.panel_title")
+        btn_list = []
         
-        expiry_date_str = lang.get("member_portal.permanent")
-        expiry_date_obj_str = membership.get("expiry_date")
-        if expiry_date_obj_str:
-            expiry_date_obj = datetime.fromisoformat(expiry_date_obj_str)
-            expiry_date_str = expiry_date_obj.strftime("%d %b %Y")
+        for membership in user_memberships:
+            name = membership.get("vvip_name", "N/A")
+            join_date_obj = datetime.fromisoformat(membership.get("join_date"))
+            join_date_str = join_date_obj.strftime("%d %b %Y")
+            
+            expiry_date_str = lang.get("member_portal.permanent")
+            expiry_date_obj_str = membership.get("expiry_date")
+            if expiry_date_obj_str:
+                expiry_date_obj = datetime.fromisoformat(expiry_date_obj_str)
+                expiry_date_str = expiry_date_obj.strftime("%d %b %Y")
 
-        text += lang.get("member_portal.membership_entry",
-                         name=name,
-                         join_date=join_date_str,
-                         expiry_date=expiry_date_str)
-        
-        btn_list.append(f"| {lang.get('member_portal.resend_link_button', name=name)} - resend_link {name} |")
+            text += lang.get("member_portal.membership_entry",
+                             name=name,
+                             join_date=join_date_str,
+                             expiry_date=expiry_date_str)
+            
+            btn_list.append(f"| {lang.get('member_portal.resend_link_button', name=name)} - resend_link {name} |")
 
-    btn_list.append(back_btn_text)
-    btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n" + "\n".join(btn_list))
-    await message.reply_text(text, reply_markup=btn)
+        btn_list.append(back_btn_text)
+        btn, final_text = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n" + "\n".join(btn_list))
+
+    if isinstance(update, pyrogram.types.Message):
+        await update.reply_text(final_text, reply_markup=btn)
+    elif isinstance(update, pyrogram.types.CallbackQuery):
+        if update.message.photo:
+            await update.edit_message_caption(final_text, reply_markup=btn)
+        else:
+            await update.edit_message_text(final_text, reply_markup=btn)
+
+
+@command(lambda ctx: filters.command("myaccess") & filters.private)
+async def my_access_command(client, message):
+    await _send_my_access_panel(client, message)
+
+
+@command(lambda ctx: filters.regex("^my_access$"), handler_type="callback")
+async def my_access_callback(client, callback_query):
+    await _send_my_access_panel(client, callback_query)
 
 
 @command(lambda ctx: filters.regex(r"^resend_link\s(.+)"), handler_type="callback")
