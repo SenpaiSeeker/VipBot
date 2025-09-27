@@ -71,7 +71,7 @@ class BotManager:
 
     async def expiration_checker(self):
         while True:
-            await asyncio.sleep(3600)
+            await asyncio.sleep(60 * 60)
             log.print(f"{log.CYAN}Menjalankan pemeriksaan masa aktif bot...")
 
             all_bot_ids = [bot["name"] for bot in self.db.getBots(is_token=True)]
@@ -159,7 +159,7 @@ class BotManager:
 
     async def subscription_checker(self):
         while True:
-            await asyncio.sleep(3600)
+            await asyncio.sleep(60 * 60 * 12)
             log.print(f"{log.CYAN}Menjalankan pemeriksaan langganan anggota...")
             
             now = datetime.now(timezone.utc)
