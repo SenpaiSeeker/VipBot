@@ -22,9 +22,6 @@ async def get_start_keyboard_and_content(client, user):
         )
     if is_owner:
         button_rows.append(f"| {lang.get('start.settings_panel')} - settings |")
-    
-    if not is_main_bot:
-        button_rows.append(f"| {lang.get('start.my_access')} - my_access |")
 
     button_rows.append(
         f"| {lang.get('start.list_vvip')} - list_vvip | | {lang.get('start.donate')} - donate_stars;same |"
@@ -312,6 +309,8 @@ async def renew_subscription_callback(client, callback_query):
         return await callback_query.answer(lang.get("payment.notes.not_found"), show_alert=True)
 
     if item.get("promo_price", 0) > 0:
+        callback_query.data = f"promo_detail {name}"
         await promo_detail(client, callback_query)
     else:
+        callback_query.data = f"notes {name}"
         await notes_data(client, callback_query)
