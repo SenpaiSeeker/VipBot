@@ -1,5 +1,57 @@
 from . import *
 
+async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=None):
+    lang = ctx.L(ctx.db, user.id)
+    vmp_service = getattr(client, "services", None) and client.services.vmp
+    
+    if not vmp_service:
+        if await is_bot_owner(client, user.id):
+            text = lang.get("payment.pay.service_inactive_panel")
+            btn_text = f"| {lang.get('payment.pay.setup_api_button')} - api_settings |"
+            btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
+            await client.send_message(user.id, txt, reply_markup=btn)
+        else:
+            await client.send_message(user.id, lang.get("payment.pay.service_inactive_alert"))
+        return
+
+    msg = await client.send_message(user.id, lang.get("general.processing"))
+
+    try:
+        pay = await vmp_service.create_payment(amount=amount)
+        if not pay.status:
+            raise Exception(f"API payment gateway mengembalikan error: {pay}")
+
+        result = pay.data
+        unique_seed = f"{result.ref_kode}_{result.id_reference}"
+        order_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, unique_seed))
+        expire_time = datetime.now(timezone.utc) + timedelta(minutes=15)
+        
+        order_data = f"{unique_seed}|{name}|{expire_time.isoformat()}|{tipe}"
+        if coupon_code:
+            order_data += f"|{coupon_code}"
+        
+        ctx.db.setVars(client.me.id, order_id, order_data)
+
+        async with aiohttp.ClientSession() as session, session.get(result.target) as resp:
+            qr_bytes = await resp.read() if resp.status == 200 else None
+
+        if qr_bytes:
+            caption = lang.get(
+                "payment.pay.invoice_full",
+                name=name,
+                type=tipe.title(),
+                amount=f"{int(result.nominal):,}",
+                id=order_id,
+            )
+            await client.send_photo(user.id, photo=BytesIO(qr_bytes), caption=caption)
+            asyncio.create_task(auto_check_payment(client, user, order_id))
+        else:
+            raise Exception(lang.get("payment.pay.qr_fail"))
+        await msg.delete()
+    except Exception as e:
+        await msg.edit(lang.get("general.error", e=e))
+
+
 @command(lambda ctx: filters.regex(r"^notes\s(.+)"), handler_type="callback")
 async def notes_data(client, callback_query):
     lang = callback_query.lang
@@ -117,16 +169,7 @@ async def apply_coupon_callback(client, callback_query):
         
         await client.send_message(chat_id, lang.get("coupons.success_applied", code=coupon_code, original=f"{original_amount:,}", final=f"{final_amount:,}"))
         
-        new_callback_data = f"paynow {name} {tipe} {final_amount} {coupon_code}"
-        
-        mock_callback_query = SimpleNamespace(
-            data=new_callback_data,
-            message=await client.send_message(chat_id, lang.get("general.processing")),
-            from_user=callback_query.from_user,
-            lang=lang
-        )
-
-        await paynow(client, mock_callback_query)
+        await _create_payment_invoice(client, callback_query.from_user, name, tipe, final_amount, coupon_code)
 
     except listen.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"))
@@ -139,86 +182,27 @@ async def apply_coupon_callback(client, callback_query):
 
 @command(lambda ctx: filters.regex(r"^paynow\s(.+)"), handler_type="callback")
 async def paynow(client, callback_query):
-    lang = callback_query.lang
-    vmp_service = getattr(client, "services", None) and client.services.vmp
-
-    if not vmp_service:
-        if await is_bot_owner(client, callback_query.from_user.id):
-            text = lang.get("payment.pay.service_inactive_panel")
-            btn_text = f"| {lang.get('payment.pay.setup_api_button')} - api_settings |"
-            btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
-            if hasattr(callback_query.message, 'photo') and callback_query.message.photo:
-                await callback_query.edit_message_caption(txt, reply_markup=btn)
-            else:
-                await callback_query.edit_message_text(txt, reply_markup=btn)
-            return
-        return await callback_query.answer(lang.get("payment.pay.service_inactive_alert"), show_alert=True)
-
     parts = callback_query.data.split()
     name_parts = []
     tipe = None
     amount = None
-    coupon_code = None
 
     i = 1
     while i < len(parts):
         if parts[i] in ["normal", "promo"]:
             tipe = parts[i]
             amount = int(parts[i+1])
-            if i + 2 < len(parts):
-                coupon_code = parts[i+2]
             break
         name_parts.append(parts[i])
         i += 1
     name = " ".join(name_parts)
 
-    if not isinstance(amount, int) or amount < 0:
-        if hasattr(callback_query.message, 'photo') and callback_query.message.photo:
-             return await callback_query.edit_message_caption(lang.get("payment.pay.invalid_price"))
-        return await callback_query.edit_message_text(lang.get("payment.pay.invalid_price"))
-
-    if hasattr(callback_query.message, 'photo') and callback_query.message.photo:
+    if callback_query.message.photo:
         await callback_query.message.delete()
-        msg = await client.send_message(callback_query.from_user.id, lang.get("general.processing"))
     else:
-        await callback_query.edit_message_text(lang.get("general.processing"))
-        msg = callback_query.message
+        await callback_query.edit_message_text(callback_query.lang.get("general.processing"))
 
-
-    try:
-        pay = await vmp_service.create_payment(amount=amount)
-        if not pay.status:
-            raise Exception(f"API payment gateway mengembalikan error: {pay}")
-
-        result = pay.data
-        unique_seed = f"{result.ref_kode}_{result.id_reference}"
-        order_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, unique_seed))
-        expire_time = datetime.now(timezone.utc) + timedelta(minutes=15)
-        
-        order_data = f"{unique_seed}|{name}|{expire_time.isoformat()}|{tipe}"
-        if coupon_code:
-            order_data += f"|{coupon_code}"
-        
-        ctx.db.setVars(client.me.id, order_id, order_data)
-
-        async with aiohttp.ClientSession() as session, session.get(result.target) as resp:
-            qr_bytes = await resp.read() if resp.status == 200 else None
-
-        if qr_bytes:
-            caption = lang.get(
-                "payment.pay.invoice_full",
-                name=name,
-                type=tipe.title(),
-                amount=f"{int(result.nominal):,}",
-                id=order_id,
-            )
-            await client.send_photo(callback_query.from_user.id, photo=BytesIO(qr_bytes), caption=caption)
-            asyncio.create_task(auto_check_payment(client, callback_query.from_user, order_id))
-        else:
-            raise Exception(lang.get("payment.pay.qr_fail"))
-        await msg.delete()
-    except Exception as e:
-        await msg.edit(lang.get("general.error", e=e))
+    await _create_payment_invoice(client, callback_query.from_user, name, tipe, amount)
 
 
 async def auto_check_payment(client, user, order_id):
