@@ -378,4 +378,13 @@ async def successful_donation_handler(client, message):
                 super_admin_lang.get(
                     "payment.donation.owner_blocked_notif",
                     stars=stars_donated,
-                    mention=client.ns.telegram.arg.getMention(us
+                    mention=client.ns.telegram.arg.getMention(user),
+                    bot_name=client.me.first_name,
+                ),
+            )
+    except Exception as e:
+        ctx.log.print(f"{ctx.log.RED}Gagal mengirim notifikasi donasi: {e}")
+
+    ctx.log.print(
+        f"{ctx.log.GREEN}Donasi {stars_donated} XTR diterima dari {user.id} ({user.first_name}) melalui bot {current_bot_id}"
+        )
