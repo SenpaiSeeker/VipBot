@@ -210,6 +210,7 @@ async def list_active_members_callback(client, callback_query):
         try:
             await callback_query.answer(lang.get("member.active_list.fetching"), show_alert=False)
             members = [m async for m in client.get_chat_members(chat_id) if not m.user.is_bot]
+            random.shuffle(members)
             ctx.ACTIVE_MEMBERS_CACHE[chat_id] = members
         except Exception as e:
             return await callback_query.edit_message_caption(lang.get("member.active_list.fetch_fail", e=e))
