@@ -18,7 +18,6 @@ def initialize_bot_services(client, db_instance):
                 secret_key=violet_secret_key,
                 live=True,
             )
-            log.print(f"{log.GREEN}Layanan Violet untuk Bot ID {bot_id} berhasil diinisialisasi.")
         except Exception as e:
             log.print(f"{log.RED}Gagal inisialisasi Violet untuk Bot ID {bot_id}: {e}")
 
@@ -26,6 +25,5 @@ def initialize_bot_services(client, db_instance):
     if gemini_api_key:
         try:
             client.services.gemini = client.ns.ai.gemini(api_key=gemini_api_key)
-            log.print(f"{log.GREEN}Layanan Gemini untuk Bot ID {bot_id} berhasil diinisialisasi.")
         except Exception as e:
             log.print(f"{log.RED}Gagal inisialisasi Gemini untuk Bot ID {bot_id}: {e}")
