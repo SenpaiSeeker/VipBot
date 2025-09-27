@@ -44,6 +44,7 @@ async def main():
         await manager.start_all_bots()
         
         asyncio.create_task(manager.expiration_checker())
+        asyncio.create_task(manager.subscription_checker())
         
         log.print(f"{log.CYAN}Bot sekarang berjalan. Tekan Ctrl+C untuk berhenti.")
 
