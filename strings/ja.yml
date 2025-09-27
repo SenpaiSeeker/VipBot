@@ -30,7 +30,6 @@ start:
   my_bots: "📦 マイボット"
   settings_panel: "⚙️ 設定パネル ⚙️"
   list_vvip: "📚 VVIPリストを見る 📚"
-  my_access: "🎟️ マイアクセス"
   donate: "❤️ 寄付する"
   about_bot: "ℹ️ ボットについて ℹ️"
   ai_feature: "✨ AI機能 ✨"
@@ -192,6 +191,7 @@ member:
     panel: "**👥 VVIPメンバーリスト ({page}/{total})**\n\n**名前:** {mention}\n**ID:** `{id}`\n**カテゴリ:** `{category}` ({type})\n**参加日:** `{date}`\n**有効期限:** `{expiry}`"
     data_error: "このメンバーのデータは破損しているか、ユーザーにアクセスできなくなっているようです。\n`エラー: {e}`\n\nデータの整合性を保つため、このエントリはリストから削除されました。"
     kick_button: "🚨 {name}を追放"
+    permanent_access: "無期限"
   kick:
     confirm_panel: "**⚠️ 追放の確認**\n\n本当に **{mention}** をVVIPグループ **{name}** から追放しますか？\n\nユーザーはグループから削除され、メンバーシップデータも消去されます。"
     confirm_yes_button: "✅ はい、追放します"
@@ -215,17 +215,6 @@ member:
     kick_confirm_no_button: "❌ いいえ"
     kick_processing: "⏳ `ユーザーを追放中...`"
     kick_success: "✅ **成功！**\nユーザー **{mention}** はグループから追放されました。"
-
-member_portal:
-  panel_title: "🎟️ あなたのVVIPアクセスポータル\n\n現在有効なサブスクリプションのリストです:"
-  membership_entry: "\n\n- **パッケージ:** `{name}`\n- **参加日:** `{join_date}`\n- **有効期限:** `{expiry_date}`"
-  no_access: "現在、VVIPアクセス権をお持ちではありません。"
-  permanent: "無期限"
-  resend_link_button: "🔗 {name}のリンクを再送"
-  not_found: "メンバーシップデータが見つかりませんでした。"
-  chat_id_missing: "失敗: 管理者がこのパッケージの宛先グループを設定していません。"
-  link_resent: "✅ **新しいアクセスリンク**\n\nこちらが **{name}** パッケージの新しいアクセスリンクです:\n\n{link}"
-  link_sent_alert: "✅ 新しいリンクをあなたの個人チャットに送信しました。"
 
 subscription:
   renewal_reminder: "🔔 **サブスクリプション更新のお知らせ**\n\n**{name}** パッケージのサブスクリプションはあと**{days}日**で期限切れとなります。アクセスを失わないように、今すぐ更新してください！"
@@ -260,9 +249,10 @@ payment:
       ╰─ ⏳ **重要:** この請求書は**15分**で有効期限が切れます。
   check:
     category_missing: "VVIPカテゴリ「{name}」がデータベースに見つかりません。支払いは成功しましたが、グループリンクを提供できませんでした。管理者に連絡してください。"
-    success_customer_full: "🎉 **支払いが確認されました！**\n\nありがとうございます。こちらが **{name}** パッケージのアクセスリンクです:\n\n{link}"
+    success_customer_full: "🎉 **支払いが確認されました！**\n\nありがとうございます。こちらが **{name}** パッケージのアクセスリンクです:\n\n{link}\n\n⚠️ このリンクは一度しか使用できず、10分以内に使用されない場合は無効になります。"
     success_owner_notif: "💰 **新規収入！**\n\n**ユーザー:** {mention}\n**ボット:** {bot_mention}\n**カテゴリ:** `{name}` ({type})"
     expired_msg: "⌛ **請求書の有効期限が切れました。**\n注文ID `{id}` は支払い期限を超過したためキャンセルされました。"
+    link_expired: "⚠️ 招待リンクの有効期限が切れました。10分以内に参加しなかったためです。問題が発生した場合は、管理者に連絡してください。"
   donation:
     invoice_title: "ボット開発のための寄付"
     invoice_desc: "{stars}スターのご支援、大変感謝いたします。ありがとうございます！"
