@@ -30,6 +30,7 @@ start:
   my_bots: "📦 マイボット"
   settings_panel: "⚙️ 設定パネル ⚙️"
   list_vvip: "📚 VVIPリストを見る 📚"
+  my_access: "🎟️ マイアクセス"
   donate: "❤️ 寄付する"
   about_bot: "ℹ️ ボットについて ℹ️"
   ai_feature: "✨ AI機能 ✨"
@@ -134,6 +135,13 @@ admin:
     cancelled: "キャンセルしました。"
     timeout: "タイムアウトしました。"
     fail: "メッセージの送信に失敗しました: {e}"
+  dashboard:
+    panel: "**📊 プラットフォームダッシュボード**\n\n**プラットフォーム統計:**\n- アクティブなボット総数: {total_bots}\n- ユニークユーザー総数: {total_users}\n- 最も人気のあるボット: {top_bot}\n\n**サーバーの状態:**\n{server_stats}"
+    server_stats: "- CPU: `{cpu}%`\n- RAM: `{ram}%`\n- ディスク: `{disk}%`"
+    server_stats_fail: "サーバー統計の取得に失敗しました: `{e}`"
+  broadcast_owners:
+    usage: "使用法: `/broadcast_owners <メッセージ>` またはメッセージに返信してください。"
+    no_owners: "ブロードキャスト対象のボットオーナーがいません。"
 
 bot_management:
   create:
@@ -181,7 +189,7 @@ bot_management:
 member:
   list:
     empty: "✅ データベースにVVIPメンバーの記録はありません。"
-    panel: "**👥 VVIPメンバーリスト ({page}/{total})**\n\n**名前:** {mention}\n**ID:** `{id}`\n**カテゴリ:** `{category}` ({type})\n**参加日:** `{date}`\n**会員期間:** `{duration}` 日"
+    panel: "**👥 VVIPメンバーリスト ({page}/{total})**\n\n**名前:** {mention}\n**ID:** `{id}`\n**カテゴリ:** `{category}` ({type})\n**参加日:** `{date}`\n**有効期限:** `{expiry}`"
     data_error: "このメンバーのデータは破損しているか、ユーザーにアクセスできなくなっているようです。\n`エラー: {e}`\n\nデータの整合性を保つため、このエントリはリストから削除されました。"
     kick_button: "🚨 {name}を追放"
   kick:
@@ -207,6 +215,22 @@ member:
     kick_confirm_no_button: "❌ いいえ"
     kick_processing: "⏳ `ユーザーを追放中...`"
     kick_success: "✅ **成功！**\nユーザー **{mention}** はグループから追放されました。"
+
+member_portal:
+  panel_title: "🎟️ あなたのVVIPアクセスポータル\n\n現在有効なサブスクリプションのリストです:"
+  membership_entry: "\n\n- **パッケージ:** `{name}`\n- **参加日:** `{join_date}`\n- **有効期限:** `{expiry_date}`"
+  no_access: "現在、VVIPアクセス権をお持ちではありません。"
+  permanent: "無期限"
+  resend_link_button: "🔗 {name}のリンクを再送"
+  not_found: "メンバーシップデータが見つかりませんでした。"
+  chat_id_missing: "失敗: 管理者がこのパッケージの宛先グループを設定していません。"
+  link_resent: "✅ **新しいアクセスリンク**\n\nこちらが **{name}** パッケージの新しいアクセスリンクです:\n\n{link}"
+  link_sent_alert: "✅ 新しいリンクをあなたの個人チャットに送信しました。"
+
+subscription:
+  renewal_reminder: "🔔 **サブスクリプション更新のお知らせ**\n\n**{name}** パッケージのサブスクリプションはあと**{days}日**で期限切れとなります。アクセスを失わないように、今すぐ更新してください！"
+  renew_button: "🔄 今すぐ更新"
+  expired_kick_notif: "⌛ **サブスクリプション期限切れ**\n\n**{name}** パッケージのサブスクリプション期間が終了しました。グループから退出させられました。"
 
 payment:
   notes:
@@ -281,6 +305,7 @@ settings:
   broadcast: "📢 ブロードキャストを作成"
   stats_button: "⭐ スター統計"
   list_all_users: "👥 全ユーザーを一覧表示"
+  coupons: "🎟️ クーポン管理"
   
   set_photo_prompt: "🖼️ **開始写真の設定**\n\n/startメッセージの画像として使用したい新しい写真を送信してください。\n\n現在の写真を削除してデフォルトに戻すには `/empty` と入力してください。"
   set_photo_fail: "❌ **失敗:** 送信されたメッセージは写真ではありません。プロセスはキャンセルされました。"
@@ -298,13 +323,14 @@ settings:
   broadcast_done: "**📢 ブロードキャスト完了！**\n✔️ **送信成功:** `{success}`\n❌ **送信失敗:** `{fail}`（失敗したユーザーはデータベースから削除されました）"
 
   setup_vvip:
-    step1_name: "**✍️ ステップ1/7: カテゴリ名**\n例: `月額VVIP`"
-    step2_price: "**💰 ステップ2/7: 通常価格**\n例: `50000`（ドットやカンマなし）"
-    step3_chat_id: "**🆔 ステップ3/7: 通常グループのチャットID**\n例: `-100123456789`。これはメンバーの宛先グループです。"
-    step4_promo_price: "**🎉 ステップ4/7: プロモ価格**\nプロモ価格がない場合は`0`を送信してください。"
-    step5_promo_chat_id: "**🆔 ステップ5/7: プロモグループのチャットID**\nプロモ価格 > 0の場合に入力。"
-    step6_promo_text: "**📝 ステップ6/7: プロモ説明テキスト**\n`{name}`と`{promo_price}`を使用。"
-    step7_normal_text: "**📝 ステップ7/7: 通常説明テキスト**\n`{name}`と`{price}`を使用。"
+    step1_name: "**✍️ ステップ1/8: カテゴリ名**\n例: `月額VVIP`"
+    step2_price: "**💰 ステップ2/8: 通常価格**\n例: `50000`（ドットやカンマなし）"
+    step3_duration: "**⏳ ステップ3/8: 会員期間（日数）**\n無期限アクセスの場合は`0`を送信してください。"
+    step4_chat_id: "**🆔 ステップ4/8: 通常グループのチャットID**\n例: `-100123456789`。これはメンバーの宛先グループです。"
+    step5_promo_price: "**🎉 ステップ5/8: プロモ価格**\nプロモ価格がない場合は`0`を送信してください。"
+    step6_promo_chat_id: "**🆔 ステップ6/8: プロモグループのチャットID**\nプロモ価格 > 0の場合に入力。"
+    step7_promo_text: "**📝 ステップ7/8: プロモ説明テキスト**\n`{name}`と`{promo_price}`を使用。"
+    step8_normal_text: "**📝 ステップ8/8: 通常説明テキスト**\n`{name}`と`{price}`を使用。"
     err_must_be_number: "入力は数字でなければなりません。"
     err_must_be_link: "入力は有効なリンク（http/httpsで始まる）でなければなりません。"
     err_must_be_chat_id: "入力は数字のチャットID（通常-100で始まる）でなければなりません。"
@@ -339,3 +365,25 @@ stats:
   no_transactions: "まだスターの取引は記録されていません。"
   prev_button: "« 前へ"
   next_button: "次へ »"
+
+coupons:
+  panel: "**🎟️ クーポン管理**\nVVIP用の割引コードを管理します。"
+  add_button: "➕ 新規クーポンを作成"
+  list_button: "📋 クーポンを表示"
+  ask_code: "**1/4:** ユニークなクーポンコードを入力してください（例: `NEW2024`）。"
+  ask_type: "**2/4:** 割引タイプを選択してください:\n1. パーセンテージ (%)\n2. 固定額割引 (例: 1000)"
+  ask_value_percent: "**3/4:** パーセンテージ値を入力してください（例: `15`で15%）。"
+  ask_value_fixed: "**3/4:** 固定割引額を入力してください（例: `1000`で1000円割引）。"
+  ask_uses: "**4/4:** このクーポンは何回使用できますか？（数字を入力）"
+  ask_expiry: "**5/5:** このクーポンは何日間有効ですか？（数字を入力）"
+  add_success: "✅ クーポン `{code}` が正常に作成されました。"
+  list_empty: "作成されたクーポンはありません。"
+  list_panel: "**📋 クーポン詳細 ({page}/{total})**\n- コード: `{code}`\n- タイプ: `{type}`\n- 値: `{value}`\n- 残り使用回数: `{uses}`\n- 有効期限: `{expiry}`"
+  delete_button: "🗑️ このクーポンを削除"
+  delete_success: "✅ クーポンは正常に削除されました。"
+  use_button: "🎟️ クーポンを使用"
+  prompt: "クーポンコードを入力してください。"
+  invalid: "❌ 無効なクーポンコードです。"
+  limit_reached: "❌ このクーポンは使用上限に達しました。"
+  expired: "❌ このクーポンは有効期限が切れています。"
+  success_applied: "✅ クーポン `{code}` が適用されました！元の価格 `Rp {original}` が `Rp {final}` になりました。"
