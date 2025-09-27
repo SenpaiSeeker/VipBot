@@ -518,3 +518,79 @@ async def message_user_callback(client, callback_query):
         await client.send_message(callback_query.from_user.id, lang.get("admin.message_user.timeout"))
     except Exception as e:
         await client.send_message(callback_query.from_user.id, lang.get("admin.message_user.fail", e=e))
+
+
+@command(lambda ctx: filters.command("dashboard") & filters.user(ctx.owner_id))
+async def dashboard_command_handler(client, message):
+    lang = message.lang
+    msg = await message.reply_text(lang.get("general.processing"))
+
+    all_bots_data = ctx.db.getBots(is_token=True)
+    total_bots = len(all_bots_data)
+    
+    unique_users = set()
+    bot_user_counts = {}
+    for bot_data in all_bots_data:
+        bot_id = int(bot_data['name'])
+        user_ids = ctx.db.getListVars(bot_id, "user_ids") or []
+        bot_user_counts[bot_id] = len(user_ids)
+        for user_id in user_ids:
+            unique_users.add(user_id)
+    
+    total_users = len(unique_users)
+    
+    top_bot_id = max(bot_user_counts, key=bot_user_counts.get) if bot_user_counts else None
+    top_bot_info = "N/A"
+    if top_bot_id:
+        top_bot_instance = ctx.manager.running_bots.get(top_bot_id)
+        top_bot_name = top_bot_instance.me.first_name if top_bot_instance else f"ID {top_bot_id}"
+        top_bot_info = f"{top_bot_name} ({bot_user_counts[top_bot_id]} pengguna)"
+
+    try:
+        stats = client.ns.server.monitor.get_stats()
+        server_stats_text = lang.get("admin.dashboard.server_stats",
+                                     cpu=stats.cpu_percent,
+                                     ram=stats.ram_percent,
+                                     disk=stats.disk_percent)
+    except Exception as e:
+        server_stats_text = lang.get("admin.dashboard.server_stats_fail", e=e)
+
+    dashboard_text = lang.get("admin.dashboard.panel",
+                              total_bots=total_bots,
+                              total_users=total_users,
+                              top_bot=top_bot_info,
+                              server_stats=server_stats_text)
+
+    await msg.edit_text(dashboard_text)
+
+
+@command(lambda ctx: filters.command("broadcast_owners") & filters.user(ctx.owner_id))
+async def broadcast_owners_handler(client, message):
+    lang = message.lang
+    
+    broadcast_msg = client.ns.telegram.arg.getMessage(message)
+    if not broadcast_msg:
+        return await message.reply_text(lang.get("admin.broadcast_owners.usage"))
+        
+    all_bots_data = ctx.db.getBots(is_token=True)
+    owner_ids = {ctx.db.getVars(int(bot['name']), "owner_id") for bot in all_bots_data}
+    owner_ids.discard(None)
+
+    if not owner_ids:
+        return await message.reply_text(lang.get("admin.broadcast_owners.no_owners"))
+
+    progress_msg = await message.reply_text(lang.get("settings.broadcast_start", count=len(owner_ids)))
+    
+    success_count = 0
+    fail_count = 0
+    
+    for owner_id in owner_ids:
+        try:
+            await broadcast_msg.copy(owner_id)
+            success_count += 1
+        except Exception as e:
+            ctx.log.print(f"{ctx.log.RED}Gagal broadcast ke owner {owner_id}: {e}")
+            fail_count += 1
+        await asyncio.sleep(0.2)
+        
+    await progress_msg.edit(lang.get("settings.broadcast_done", success=success_count, fail=fail_count))
