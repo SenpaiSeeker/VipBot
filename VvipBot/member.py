@@ -145,7 +145,7 @@ async def list_members_callback(client, callback_query):
     )
 
     btn_text_list = [
-        f"| {lang.get('member.list.kick_button', name=uclient.ns.telegram.arg.getMention(user, no_tag=True) if user.first_name else user.id)} - kick_{user.id}_{vvip_name} |"
+        f"| {lang.get('member.list.kick_button', name=client.ns.telegram.arg.getMention(user, no_tag=True) if user.first_name else user.id)} - kick_{user.id}_{vvip_name} |"
     ]
     if total_pages > 1:
         prev_page, next_page = (
