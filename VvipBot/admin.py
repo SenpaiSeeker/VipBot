@@ -465,12 +465,12 @@ async def list_all_users_callback(client, callback_query):
     i = 0
     while i < len(page_user_data):
         user1 = page_user_data[i]
-        btn1_text = lang.get("admin.list_users.send_message_button", name=user1.first_name[:10])
+        btn1_text = lang.get("admin.list_users.send_message_button", name=user1.first_name[:10] if user1.first_name else user1.id)
         btn1_str = f"| {btn1_text} - message_user_{user1.id}_{page} |"
 
         if i + 1 < len(page_user_data):
             user2 = page_user_data[i + 1]
-            btn2_text = lang.get("admin.list_users.send_message_button", name=user2.first_name[:10])
+            btn2_text = lang.get("admin.list_users.send_message_button", name=user2.first_name[:10] if user2.first_name else user2.id)
             btn2_str = f"| {btn2_text} - message_user_{user2.id}_{page};same |"
             btn_text_list.append(f"{btn1_str}{btn2_str}")
             i += 2
