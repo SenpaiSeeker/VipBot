@@ -94,6 +94,11 @@ pip3 install -r requirements.txt
 
 Bot akan dimulai dengan banner selamat datang di terminal.
 
+## Jika terjadi error silakan instal 
+```bash
+sudo apt-get install -y libzbar0 ffmpeg 
+```
+
 ## 📖 Panduan Penggunaan
 
 ### 👑 Untuk Owner Utama (Super Admin)
