@@ -79,7 +79,6 @@ async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=
     except Exception as e:
         await msg.edit(lang.get("general.error", e=e))
 
-
 @command(lambda ctx: filters.regex(r"^notes\s(.+)"), handler_type="callback")
 async def notes_data(client, callback_query):
     lang = callback_query.lang
@@ -101,7 +100,7 @@ async def notes_data(client, callback_query):
 
         btn_text = (
             f"| {lang.get('payment.notes.pay_button')} - paynow {name} normal {price_val} |\n"
-            f"| {lang.get('coupons.use_button')} - apply_coupon {name} normal {price_val} | | {back_btn_text};same |"
+            f"| {lang.get('payment.manual.pay_button')} - pay_manual {name} normal {price_val} | | {lang.get('coupons.use_button')} - apply_coupon {name} normal {price_val} | | {back_btn_text};same |"
         )
 
         btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{desc}\n\n{btn_text}")
@@ -116,7 +115,6 @@ async def notes_data(client, callback_query):
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
         await callback_query.edit_message_text(txt, reply_markup=btn)
-
 
 @command(lambda ctx: filters.regex(r"^promo_detail\s(.+)"), handler_type="callback")
 async def promo_detail(client, callback_query):
@@ -139,7 +137,7 @@ async def promo_detail(client, callback_query):
 
         btn_text = (
             f"| {lang.get('payment.promo.pay_button')} - paynow {name} promo {promo_price_val} |\n"
-            f"| {lang.get('coupons.use_button')} - apply_coupon {name} promo {promo_price_val} | | {back_btn_text};same |"
+            f"| {lang.get('payment.manual.pay_button')} - pay_manual {name} promo {promo_price_val} | | {lang.get('coupons.use_button')} - apply_coupon {name} promo {promo_price_val} | | {back_btn_text};same |"
         )
         btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{desc}\n\n{btn_text}")
 
