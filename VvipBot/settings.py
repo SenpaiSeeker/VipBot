@@ -1,6 +1,5 @@
 from . import *
 
-
 @command(lambda ctx: filters.regex("^settings$"), handler_type="callback")
 async def settings(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
@@ -13,6 +12,7 @@ async def settings(client, callback_query):
         f"| {lang.get('settings.add_vvip')} - setup_listvvip | | {lang.get('settings.del_vvip')} - delete_listvvip;same |",
         f"| {lang.get('settings.list_all_users')} - list_all_users_0 | | {lang.get('settings.check_members')} - list_members_0;same |",
         f"| {lang.get('settings.check_active_members')} - check_active_menu_init | | {lang.get('settings.broadcast')} - broadcast;same |",
+        f"| {lang.get('settings.set_qris')} - set_qris_photo | | {lang.get('settings.set_qris_text')} - set_qris_text;same |",
         f"| {lang.get('settings.api_keys')} - api_settings | | {lang.get('settings.coupons')} - manage_coupons;same |",
         f"| {lang.get('settings.stats_button')} - stats_0 | | {lang.get('general.back_to_main_menu')} - start;same |",
     ]
@@ -100,6 +100,81 @@ async def set_start_text_callback(client, callback_query):
         await client.send_message(chat_id, lang.get("general.error", e=e), reply_markup=back_btn)
 
 
+@command(lambda ctx: filters.regex("^set_qris_photo$"), handler_type="callback")
+async def set_qris_photo_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+    chat_id = callback_query.from_user.id
+    lang = callback_query.lang
+    await callback_query.message.delete()
+
+    back_btn_text = f"| {lang.get('general.back_to_settings')} - settings |"
+    back_btn = client.ns.telegram.button.create_inline_keyboard(back_btn_text)[0]
+
+    try:
+        prompt = f"{lang.get('settings.set_qris_photo_prompt')}{lang.get('prompts.cancel_footer')}"
+        ask_msg = await client.ask(chat_id, prompt, timeout=300)
+        if ask_msg.text:
+            if ask_msg.text.lower() == "/batal":
+                raise listen.UserCancelled
+            if ask_msg.text.lower() == "/empty":
+                ctx.db.removeVars(client.me.id, "qris_photo_id")
+                ctx.db.removeVars(client.me.id, "qris_text")
+                return await client.send_message(chat_id, lang.get("settings.qris_emptied"), reply_markup=back_btn)
+        if not ask_msg.photo:
+            return await client.send_message(chat_id, lang.get("settings.set_photo_no_photo"), reply_markup=back_btn)
+        file_id = ask_msg.photo.sizes[-1].file_id
+        ctx.db.setVars(client.me.id, "qris_photo_id", file_id)
+        await client.send_message(chat_id, lang.get("settings.set_qris_photo_saved"), reply_markup=back_btn)
+        prompt_text = lang.get("settings.set_qris_text_prompt")
+        text_msg = await client.ask(chat_id, f"{prompt_text}{lang.get('prompts.cancel_footer')}", timeout=300)
+        if text_msg.text and text_msg.text.lower() == "/batal":
+            raise listen.UserCancelled
+        if text_msg.text and text_msg.text.lower() == "/empty":
+            ctx.db.removeVars(client.me.id, "qris_text")
+            return await client.send_message(chat_id, lang.get("settings.qris_text_emptied"), reply_markup=back_btn)
+        if text_msg.text:
+            ctx.db.setVars(client.me.id, "qris_text", text_msg.text)
+            await client.send_message(chat_id, lang.get("settings.set_qris_text_saved"), reply_markup=back_btn)
+    except listen.UserCancelled:
+        await client.send_message(chat_id, lang.get("general.cancelled"), reply_markup=back_btn)
+    except asyncio.TimeoutError:
+        await client.send_message(chat_id, lang.get("general.timeout"), reply_markup=back_btn)
+    except Exception as e:
+        await client.send_message(chat_id, lang.get("general.error", e=e), reply_markup=back_btn)
+
+
+@command(lambda ctx: filters.regex("^set_qris_text$"), handler_type="callback")
+async def set_qris_text_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+    chat_id = callback_query.from_user.id
+    lang = callback_query.lang
+    await callback_query.message.delete()
+
+    back_btn_text = f"| {lang.get('general.back_to_settings')} - settings |"
+    back_btn = client.ns.telegram.button.create_inline_keyboard(back_btn_text)[0]
+
+    try:
+        prompt = f"{lang.get('settings.set_qris_text_prompt')}{lang.get('prompts.cancel_footer')}"
+        ask_text_msg = await client.ask(chat_id, prompt, timeout=600)
+        if not ask_text_msg.text:
+            return await client.send_message(chat_id, lang.get("settings.set_text_fail"), reply_markup=back_btn)
+        if ask_text_msg.text.lower() == "/batal":
+            raise listen.UserCancelled
+        if ask_text_msg.text.lower() == "/empty":
+            ctx.db.removeVars(client.me.id, "qris_text")
+            return await client.send_message(chat_id, lang.get("settings.qris_text_emptied"), reply_markup=back_btn)
+        ctx.db.setVars(client.me.id, "qris_text", ask_text_msg.text)
+        await client.send_message(chat_id, lang.get("settings.set_qris_text_saved"), reply_markup=back_btn)
+    except listen.UserCancelled:
+        await client.send_message(chat_id, lang.get("general.cancelled"), reply_markup=back_btn)
+    except asyncio.TimeoutError:
+        await client.send_message(chat_id, lang.get("general.timeout"), reply_markup=back_btn)
+    except Exception as e:
+        await client.send_message(chat_id, lang.get("general.error", e=e), reply_markup=back_btn)
+
+
 @command(lambda ctx: filters.regex("^broadcast$"), handler_type="callback")
 async def broadcast_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
@@ -158,7 +233,6 @@ async def broadcast_callback(client, callback_query):
     except Exception as e:
         await client.send_message(chat_id, lang.get("general.error", e=e))
 
-
 @command(lambda ctx: filters.regex("^setup_listvvip$"), handler_type="callback")
 async def setup_listvvip(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
@@ -212,7 +286,6 @@ async def setup_listvvip(client, callback_query):
     except Exception as e:
         await client.send_message(chat_id, lang.get("general.error", e=e))
 
-
 @command(lambda ctx: filters.regex("^delete_listvvip$"), handler_type="callback")
 async def delete_listvvip(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
@@ -245,7 +318,6 @@ async def delete_listvvip(client, callback_query):
     else:
         await callback_query.edit_message_text(text, reply_markup=btn)
 
-
 @command(lambda ctx: filters.regex(r"^delete_vvip\s(.+)"), handler_type="callback")
 async def confirm_delete_vvip(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
@@ -271,7 +343,6 @@ async def confirm_delete_vvip(client, callback_query):
         await callback_query.edit_message_caption(message, reply_markup=btn)
     else:
         await callback_query.edit_message_text(message, reply_markup=btn)
-
 
 @command(lambda ctx: filters.regex("^api_settings$"), handler_type="callback")
 async def api_settings_callback(client, callback_query):
@@ -301,7 +372,6 @@ async def api_settings_callback(client, callback_query):
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
         await callback_query.edit_message_text(text, reply_markup=btn)
-
 
 @command(lambda ctx: filters.regex(r"^set_api\s(.+)"), handler_type="callback")
 async def set_api_key_prompt(client, callback_query):
@@ -352,7 +422,6 @@ async def set_api_key_prompt(client, callback_query):
     except Exception as e:
         await client.send_message(chat_id, lang.get("general.error", e=e), reply_markup=back_btn)
 
-
 @command(lambda ctx: filters.regex("^del_api_confirm$"), handler_type="callback")
 async def confirm_delete_api_keys(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
@@ -367,7 +436,6 @@ async def confirm_delete_api_keys(client, callback_query):
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
         await callback_query.edit_message_text(text, reply_markup=btn)
-
 
 @command(lambda ctx: filters.regex("^do_del_api$"), handler_type="callback")
 async def do_delete_api_keys(client, callback_query):
