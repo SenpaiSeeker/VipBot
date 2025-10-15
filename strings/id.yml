@@ -222,6 +222,32 @@ subscription:
   expired_kick_notif: "⌛ **Langganan Berakhir**\n\nLangganan Anda untuk paket **{name}** telah berakhir. Anda telah dikeluarkan dari grup."
 
 payment:
+  manual:
+    pay_button: "💳 Bayar Manual"
+    default_instructions: "Silakan scan QRIS di bawah lalu unggah bukti pembayaran (foto)."
+    instructions_header: "Pembayaran Manual untuk {name}\nJumlah: IDR {amount}"
+    upload_proof_button: "📤 Unggah Bukti Pembayaran"
+    ask_upload: "Silakan kirim foto bukti pembayaran sekarang."
+    must_send_photo: "Harap kirim foto sebagai bukti pembayaran."
+    uploaded_thanks: "Terima kasih. Bukti pembayaran Anda telah dikirim dan menunggu persetujuan."
+    owner_notif: "🧾 Bukti Pembayaran Baru\n{mention}\nKategori: {name}\nTipe: {type}\nNominal: IDR {amount}\nID Pengajuan: {id}"
+    approve: "✅ Setujui"
+    reject: "❌ Tolak"
+    success_customer: "🎉 Pembayaran Anda disetujui untuk {name}. Berikut tautan undangan:\n{link}"
+    approved_owner: "✅ Bukti pembayaran {id} telah disetujui."
+    proof_not_found: "Bukti pembayaran tidak ditemukan."
+    vvip_missing: "Paket VVIP tidak ditemukan."
+    chat_missing: "Chat ID tujuan untuk paket VVIP ini belum disetel."
+    invite_fail: "Gagal membuat tautan undangan: {e}"
+    rejected_customer: "❌ Bukti pembayaran Anda untuk {name} ditolak. Silakan hubungi admin."
+    rejected_owner: "❌ Bukti pembayaran {id} telah ditolak."
+  join:
+    not_member: "Anda belum terdaftar untuk paket {name}."
+    expired: "Keanggotaan Anda untuk {name} telah kadaluarsa. Silakan daftar ulang."
+    vvip_missing: "Paket VVIP tidak ditemukan."
+    chat_missing: "Chat ID paket belum disetel."
+    link_sent: "Berikut tautan untuk bergabung ke {name}:\n{link}"
+    invite_fail: "Gagal membuat tautan undangan: {e}"
   notes:
     not_found: "❌ Paket VVIP tidak ditemukan."
     pay_button: "💸 Bayar Harga Normal"
@@ -285,6 +311,15 @@ payment:
 
 settings:
   panel: "**🛠️ Panel Pengaturan Owner**\n\nSelamat datang di pusat kendali bot Anda! Silakan pilih menu di bawah untuk mengelola berbagai aspek bot."
+  set_qris: "🏷️ Atur QRIS Manual"
+  set_qris_text: "✏️ Atur Instruksi QRIS"
+  set_qris_photo_prompt: "📷 Kirim foto QRIS yang akan digunakan untuk pembayaran manual."
+  qris_emptied: "✅ Foto QRIS dan instruksi telah dihapus."
+  set_qris_photo_saved: "✅ Foto QRIS tersimpan."
+  set_qris_text_prompt: "✏️ Kirim teks instruksi pembayaran (mis. no rekening/nama/catatan)."
+  set_qris_text_saved: "✅ Teks instruksi QRIS tersimpan."
+  set_photo_no_photo: "❌ Pesan tidak berisi foto. Proses dibatalkan."
+  qris_text_emptied: "✅ Teks instruksi QRIS telah dihapus."
   set_start_photo: "🖼️ Atur Foto Start"
   set_start_text: "✍️ Atur Teks Start"
   add_vvip: "➕ Tambah VVIP"
