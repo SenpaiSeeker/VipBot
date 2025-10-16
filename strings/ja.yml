@@ -222,6 +222,32 @@ subscription:
   expired_kick_notif: "⌛ **サブスクリプション期限切れ**\n\n**{name}** パッケージのサブスクリプション期間が終了しました。グループから退出させられました。"
 
 payment:
+  manual:
+    pay_button: "💳 手動支払い"
+    default_instructions: "下のQRISをスキャンしてから、支払い証明（写真）をアップロードしてください。"
+    instructions_header: "{name} の手動支払い\n金額: IDR {amount}"
+    upload_proof_button: "📤 支払い証明をアップロード"
+    ask_upload: "支払い証明の写真を送信してください。"
+    must_send_photo: "支払い証明は写真で送信する必要があります。"
+    uploaded_thanks: "ありがとうございます。支払い証明は送信され、承認を待っています。"
+    owner_notif: "🧾 新しい支払い証明\n{mention}\nカテゴリ: {name}\nタイプ: {type}\n金額: IDR {amount}\n申請ID: {id}"
+    approve: "✅ 承認"
+    reject: "❌ 拒否"
+    success_customer: "🎉 支払いが承認されました: {name}\n招待リンクはこちらです:\n{link}"
+    approved_owner: "✅ 支払い証明 {id} が承認されました。"
+    proof_not_found: "支払い証明が見つかりません。"
+    vvip_missing: "VVIPパッケージが見つかりません。"
+    chat_missing: "このVVIPパッケージのチャットIDが設定されていません。"
+    invite_fail: "招待リンクの作成に失敗しました: {e}"
+    rejected_customer: "❌ あなたの支払い証明（{name}）は拒否されました。管理者に連絡してください。"
+    rejected_owner: "❌ 支払い証明 {id} は拒否されました。"
+  join:
+    not_member: "{name} パッケージに登録されていません。"
+    expired: "{name} の会員期限が切れています。再度申し込みしてください。"
+    vvip_missing: "VVIPパッケージが見つかりません。"
+    chat_missing: "パッケージのチャットIDが設定されていません。"
+    link_sent: "{name} への招待リンクを送信しました:\n{link}"
+    invite_fail: "招待リンクの作成に失敗しました: {e}"
   notes:
     not_found: "❌ VVIPパッケージが見つかりません。"
     pay_button: "💸 通常価格で支払う"
@@ -285,6 +311,15 @@ payment:
 
 settings:
   panel: "**🛠️ オーナー設定パネル**\n\nボットのコントロールセンターへようこそ！下のメニューを選択して、ボットの様々な側面を管理してください。"
+  set_qris: "🏷️ 手動QRISを設定"
+  set_qris_text: "✏️ QRISの説明を設定"
+  set_qris_photo_prompt: "📷 手動支払いで使用するQRISの写真を送信してください。"
+  qris_emptied: "✅ QRISの写真と説明が削除されました。"
+  set_qris_photo_saved: "✅ QRISの写真が保存されました。"
+  set_qris_text_prompt: "✏️ 支払いの説明テキストを送信してください（例: 口座名義など）。"
+  set_qris_text_saved: "✅ QRISの説明テキストが保存されました。"
+  set_photo_no_photo: "❌ 写真が検出されませんでした。処理を中止します。"
+  qris_text_emptied: "✅ QRISの説明テキストが削除されました。"
   set_start_photo: "🖼️ 開始写真の設定"
   set_start_text: "✍️ 開始テキストの設定"
   add_vvip: "➕ VVIPを追加"
