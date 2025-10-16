@@ -222,6 +222,32 @@ subscription:
   expired_kick_notif: "⌛ **Subscription Expired**\n\nYour subscription for the **{name}** package has ended. You have been removed from the group."
 
 payment:
+  manual:
+    pay_button: "💳 Pay Manual"
+    default_instructions: "Please scan the QRIS below and then upload your payment proof (photo)."
+    instructions_header: "Manual Payment for {name}\nAmount: IDR {amount}"
+    upload_proof_button: "📤 Upload Payment Proof"
+    ask_upload: "Please send the payment proof photo now."
+    must_send_photo: "You must send a photo as payment proof."
+    uploaded_thanks: "Thank you. Your payment proof has been submitted and is awaiting approval."
+    owner_notif: "🧾 New Payment Proof\n{mention}\nCategory: {name}\nType: {type}\nAmount: IDR {amount}\nSubmission ID: {id}"
+    approve: "✅ Approve"
+    reject: "❌ Reject"
+    success_customer: "🎉 Your payment has been approved for {name}. Here is your invitation link:\n{link}"
+    approved_owner: "✅ Payment proof {id} has been approved."
+    proof_not_found: "Payment proof not found."
+    vvip_missing: "VVIP package not found."
+    chat_missing: "Target chat ID for this VVIP package is not configured."
+    invite_fail: "Failed to create invite link: {e}"
+    rejected_customer: "❌ Your payment proof for {name} has been rejected. Please contact the admin."
+    rejected_owner: "❌ Payment proof {id} has been rejected."
+  join:
+    not_member: "You are not registered for the {name} package."
+    expired: "Your membership for {name} has expired. Please register again."
+    vvip_missing: "VVIP package not found."
+    chat_missing: "Target chat ID for this package is not configured."
+    link_sent: "Here is your invitation link for {name}:\n{link}"
+    invite_fail: "Failed to create invite link: {e}"
   notes:
     not_found: "❌ VVIP package not found."
     pay_button: "💸 Pay Normal Price"
@@ -285,6 +311,15 @@ payment:
 
 settings:
   panel: "**🛠️ Owner Settings Panel**\n\nWelcome to your bot's control center! Please select a menu below to manage various aspects of the bot."
+  set_qris: "🏷️ Set Manual QRIS"
+  set_qris_text: "✏️ Set QRIS Instructions"
+  set_qris_photo_prompt: "📷 Please send the QRIS photo that will be used for manual payments."
+  qris_emptied: "✅ QRIS photo and instructions have been removed."
+  set_qris_photo_saved: "✅ QRIS photo saved successfully."
+  set_qris_text_prompt: "✏️ Please send the payment instructions text (eg. account/name/notes)."
+  set_qris_text_saved: "✅ QRIS instruction text saved successfully."
+  set_photo_no_photo: "❌ The message did not contain a photo. Process canceled."
+  qris_text_emptied: "✅ QRIS instruction text removed."
   set_start_photo: "🖼️ Set Start Photo"
   set_start_text: "✍️ Set Start Text"
   add_vvip: "➕ Add VVIP"
