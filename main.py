@@ -11,7 +11,7 @@ from nsdev import LoggerHandler
 import VvipBot as handlers
 from bot_manager import BotManager
 from config import API_HASH, API_ID, BOT_TOKEN, OWNER_ID
-from database import db
+from database import db, schedule
 from services import initialize_bot_services
 
 log = LoggerHandler()
@@ -40,6 +40,9 @@ async def main():
         manager.running_bots[app.me.id] = app
         
         await manager.start_all_bots()
+
+        if schedule.jobs:
+            schedule.start()
         
         asyncio.create_task(manager.expiration_checker())
         asyncio.create_task(manager.subscription_checker())
