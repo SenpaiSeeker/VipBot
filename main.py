@@ -31,8 +31,6 @@ async def main():
     handlers.register_all_handlers(app, db, manager, OWNER_ID)
 
     try:
-        await db.start_services()
-
         await app.start()
         log.print(f"{log.GREEN}Bot utama '{app.me.first_name}' berhasil dimulai.")
         initialize_bot_services(app, db)
