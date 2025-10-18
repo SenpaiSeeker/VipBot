@@ -2,6 +2,8 @@ import nsdev
 
 from config import BOT_TOKEN, DB_KEY, DB_NAME, OWNER_ID
 
+schedule = nsdev.Scheduler()
+
 db = nsdev.DataBase(
     storage_type="local",
     file_name=DB_NAME,
@@ -10,5 +12,6 @@ db = nsdev.DataBase(
     auto_backup=True,
     backup_bot_token=BOT_TOKEN,
     backup_chat_id=OWNER_ID,
-    backup_interval_hours=6,
+    backup_cron_spec="0 */3 * * *",
+    scheduler_instance=schedule,
 )
