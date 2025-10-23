@@ -101,7 +101,7 @@ async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code
 async def manual_check_payment_callback(client, callback_query):
     order_id = callback_query.data.split(" ", 1)[1]
     user = callback_query.from_user
-    lang = user.lang
+    lang = callback_query.lang
     
     await callback_query.answer(lang.get("payment.check.checking"))
 
