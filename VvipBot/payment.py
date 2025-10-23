@@ -81,7 +81,7 @@ async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code
             expired_dt_naive = datetime.strptime(result.expired_at, "%d/%m/%Y %H:%M:%S")
             expired_dt_utc = expired_dt_naive.replace(tzinfo=timezone.utc)
             expired_dt_jakarta = expired_dt_utc.astimezone(jakarta_tz)
-            expire_str = expired_dt_jakarta.strftime('%H:%M:%S WIB')
+            expire_str = expired_dt_jakarta.strftime('%H:%M:%S %Z')
         except (ValueError, TypeError):
             expire_str = "15 menit"
 
