@@ -57,21 +57,21 @@ async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=
             email=f"user{user.id}@bot.mail",
             message=f"Pembelian {name} ({tipe}) via @{client.me.username}",
         )
-
-        if pay.status != "Success" or not hasattr(pay, "result") or not hasattr(pay.result, "data"):
-             raise Exception(f"API payment gateway mengembalikan error: {getattr(pay.result, 'msg', pay)}")
+        if pay.status != "Success":
+            error_message = getattr(pay, 'result', pay)
+            raise Exception(f"API payment gateway mengembalikan error: {error_message}")
 
         result = pay.result.data
         payment_id = result.id
         order_id = str(uuid.uuid4())
-        expire_time = datetime.now(timezone.utc) + timedelta(minutes=15)
+        expire_time = datetime.fromisoformat(result.expired_at.replace(' GMT', '+00:00'))
 
         order_data = f"{payment_id}|{name}|{expire_time.isoformat()}|{tipe}"
         if coupon_code:
             order_data += f"|{coupon_code}"
 
         ctx.db.setVars(client.me.id, order_id, order_data)
-        
+
         qr_image_base64 = result.qr_image.split(",", 1)[1]
         qr_bytes = base64.b64decode(qr_image_base64)
 
@@ -348,7 +348,6 @@ async def auto_check_payment(client, user, order_id):
                 return
         except Exception as e:
             ctx.log.print(f"{ctx.log.RED}Error auto-check {order_id}: {e}")
-            await client.send_message(user.id, lang.get("general.error", e=e))
             break
 
     if not payment_successful and ctx.db.getVars(client.me.id, order_id):
