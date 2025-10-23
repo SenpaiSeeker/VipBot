@@ -90,8 +90,8 @@ async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=
         await msg.delete()
     except Exception as e:
         await msg.edit(lang.get("general.error", e=e))
-
-
+        ctx.log.error(pay)
+        
 @command(lambda ctx: filters.regex(r"^notes\s(.+)"), handler_type="callback")
 async def notes_data(client, callback_query):
     lang = callback_query.lang
