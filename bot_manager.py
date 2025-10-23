@@ -22,7 +22,7 @@ class BotManager:
     async def start_bot(self, bot_data):
         bot_id = int(bot_data["name"])
         if bot_id in self.running_bots:
-            log.print(f"{log.YELLOW}Bot {bot_id} sudah berjalan.")
+            log.warning(f"Bot {bot_id} sudah berjalan.")
             return
 
         try:
@@ -41,7 +41,7 @@ class BotManager:
             initialize_bot_services(client, self.db)
 
             self.running_bots[client.me.id] = client
-            log.print(f"{log.GREEN}Bot {client.me.first_name} (ID: {client.me.id}) berhasil diaktifkan.")
+            log.info(f"Bot {client.me.first_name} (ID: {client.me.id}) berhasil diaktifkan.")
         except Exception as e:
             error_str = str(e).upper()
             common_errors = ["USER_DEACTIVATED_BAN", "BOT_TOKEN_INVALID", "ACCESS_TOKEN_EXPIRED"]
@@ -49,7 +49,7 @@ class BotManager:
             log.print(f"{log.RED}Gagal memulai bot {bot_id}: {e}")
             if any(err in error_str for err in common_errors):
                 self.db.removeBot(bot_id)
-                log.print(f"{log.ORANGE}Data bot {bot_id} dihapus karena token tidak valid/terblokir.")
+                log.debug(f"Data bot {bot_id} dihapus karena token tidak valid/terblokir.")
 
     async def start_all_bots(self):
         all_bots_data = self.db.getBots(is_token=True)
@@ -62,16 +62,16 @@ class BotManager:
                 client = self.running_bots[bot_id]
                 if client.is_connected:
                     await client.stop()
-                log.print(f"{log.YELLOW}Bot {bot_id} berhasil dihentikan.")
+                log.debug(f"Bot {bot_id} berhasil dihentikan.")
             except Exception as e:
-                log.print(f"{log.RED}Error saat menghentikan bot {bot_id}: {e}")
+                log.error(f"Error saat menghentikan bot {bot_id}: {e}")
             finally:
                 del self.running_bots[bot_id]
 
     async def expiration_checker(self):
         while True:
             await asyncio.sleep(60 * 60)
-            log.print(f"{log.CYAN}Menjalankan pemeriksaan masa aktif bot...")
+            log.info(f"Menjalankan pemeriksaan masa aktif bot...")
 
             all_bot_ids = [bot["name"] for bot in self.db.getBots(is_token=True)]
 
@@ -95,7 +95,7 @@ class BotManager:
                         continue
 
                     if days_left < 1:
-                        log.print(f"{log.ORANGE}Masa aktif bot {bot_id} telah habis. Menghapus bot...")
+                        log.debug(f"Masa aktif bot {bot_id} telah habis. Menghapus bot...")
                         try:
                             bot_instance = self.running_bots.get(bot_id)
                             bot_name = (
@@ -111,7 +111,7 @@ class BotManager:
                         await self.stop_bot(bot_id)
                         self.db.removeBot(bot_id)
                         self.db.removeAllVars(bot_id)
-                        log.print(f"{log.YELLOW}Bot {bot_id} telah dihapus karena kedaluwarsa.")
+                        log.warning(f"Bot {bot_id} telah dihapus karena kedaluwarsa.")
                         continue
 
                     target_warning_days = [10, 5, 3, 1]
@@ -151,15 +151,15 @@ class BotManager:
                         last_notif_date_key = "last_warning_notification_date"
                         if self.db.getVars(bot_id, last_notif_date_key):
                             self.db.removeVars(bot_id, last_notif_date_key)
-                            log.print(f"{log.GREEN}Mereset flag tanggal notifikasi untuk bot {bot_id}.")
+                            log.info(f"Mereset flag tanggal notifikasi untuk bot {bot_id}.")
 
                 except Exception as e:
-                    log.print(f"{log.RED}Error saat memeriksa masa aktif bot {bot_id}: {e}")
+                    log.error(f"Error saat memeriksa masa aktif bot {bot_id}: {e}")
 
     async def subscription_checker(self):
         while True:
             await asyncio.sleep(60 * 60 * 12)
-            log.print(f"{log.CYAN}Menjalankan pemeriksaan langganan anggota...")
+            log.info(f"Menjalankan pemeriksaan langganan anggota...")
             
             now = datetime.now(timezone.utc)
             all_bot_ids = [int(bot["name"]) for bot in self.db.getBots(is_token=True)]
@@ -189,9 +189,9 @@ class BotManager:
                             await asyncio.sleep(1)
                             await bot_client.unban_chat_member(chat_id, user_id)
                             await bot_client.send_message(user_id, lang.get("subscription.expired_kick_notif", name=member["vvip_name"]))
-                            log.print(f"{log.ORANGE}Langganan {user_id} di bot {bot_id} habis. Dikeluarkan dari grup.")
+                            log.debug(f"Langganan {user_id} di bot {bot_id} habis. Dikeluarkan dari grup.")
                         except Exception as e:
-                            log.print(f"{log.RED}Gagal kick member {user_id} dari grup: {e}")
+                            log.error(f"Gagal kick member {user_id} dari grup: {e}")
                         continue
 
                     time_left = expiry_date - now
