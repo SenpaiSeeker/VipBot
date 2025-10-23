@@ -238,7 +238,7 @@ payment:
     invoice_full: |
       **✅ Payment Ready!**
 
-      Please scan the QRIS above to make the payment.
+      Please scan the QRIS above to pay. After paying, press the **Confirm Payment** button.
 
       ╭─ **Billing Details**
       │
@@ -248,6 +248,10 @@ payment:
       │
       ╰─ ⏳ **IMPORTANT:** This invoice will expire in **15 minutes**.
   check:
+    confirm_button: "✅ Confirm Payment"
+    checking: "🔍 Checking payment status..."
+    not_paid: "❌ Payment not detected yet. Please try again after a few moments."
+    expired_or_completed: "⚠️ This invoice is no longer valid or has already been completed."
     category_missing: "VVIP category '{name}' is no longer found in the database. Payment was successful, but the group link could not be delivered. Please contact the admin."
     success_customer_full: "🎉 **Payment Confirmed!**\n\nThank you, here is your access link for the **{name}** package:\n\n{link}\n\n⚠️ This link is for one-time use only and will expire in 10 minutes if not used."
     success_owner_notif: "💰 **New Income!**\n\n**User:** {mention}\n**Bot:** {bot_mention}\n**Category:** `{name}` ({type})"
