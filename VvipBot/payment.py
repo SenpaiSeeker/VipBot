@@ -82,7 +82,7 @@ async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code
         if qr_bytes:
             caption = lang.get(
                 "payment.pay.invoice_full",
-                name=name,
+                name=names,
                 type=tipe.title(),
                 amount=f"{int(result.amount_raw):,}",
                 id=order_id,
