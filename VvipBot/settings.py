@@ -371,33 +371,32 @@ async def set_api_key_prompt(client, callback_query):
                 user_data = await saweria_temp.get_user_id(username=username_msg.text)
 
                 if user_data.status != "Success":
-                    raise Exception(user_data.result.msg)
+                    raise Exception(user_data.result.msg if hasattr(user_data, "result") else "Unknown Error")
 
-                saweria_user_id = user_data.result.data.user_id
+                saweria_user_id = user_data.result.userId
 
                 ctx.db.setVars(client.me.id, "SAWERIA_API_KEY", api_key_msg.text)
                 ctx.db.setVars(client.me.id, "SAWERIA_USERNAME", username_msg.text)
                 ctx.db.setVars(client.me.id, "SAWERIA_USER_ID", saweria_user_id)
-
-                await processing_msg.edit_text(lang.get("settings.api_set_success_saweria"), reply_markup=back_btn)
+                await processing_msg.delete()
+                await client.send_message(chat_id, lang.get("settings.api_set_success_saweria"), reply_markup=back_btn)
+                key_name = "Saweria"
 
             except Exception as e:
                 await processing_msg.edit_text(lang.get("settings.api_set_fail_saweria", e=e), reply_markup=back_btn)
                 return
-
         else:
             prompt = lang.get("settings.api_set_gemini_prompt", key_name=key_name)
             key_value_msg = await ask(prompt)
             if key_value_msg.text and key_value_msg.text.lower() == "/batal":
                 raise listen.UserCancelled
             ctx.db.setVars(client.me.id, key_name, key_value_msg.text)
+            await client.send_message(
+                chat_id, lang.get("settings.api_set_success", key_name=key_name), reply_markup=back_btn
+            )
 
         from services import initialize_bot_services
-
         initialize_bot_services(client, ctx.db)
-        await client.send_message(
-            chat_id, lang.get("settings.api_set_success", key_name=key_name), reply_markup=back_btn
-        )
 
     except listen.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"), reply_markup=back_btn)
@@ -436,7 +435,6 @@ async def do_delete_api_keys(client, callback_query):
     ctx.db.removeVars(client.me.id, "GEMINI_API_KEY")
 
     from services import initialize_bot_services
-
     initialize_bot_services(client, ctx.db)
 
     await callback_query.answer(lang.get("settings.api_del_success"), show_alert=True)
