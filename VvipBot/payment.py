@@ -70,7 +70,7 @@ async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code
         order_id = str(uuid.uuid4())
         expire_time = datetime.now(timezone.utc) + timedelta(minutes=15)
 
-        order_data = f"{payment_id}|{name}|{expire_time.isoformat()}|{tipe}"
+        order_data = f"{payment_id}|{names}|{expire_time.isoformat()}|{tipe}"
         if coupon_code:
             order_data += f"|{coupon_code}"
 
