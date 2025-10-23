@@ -51,20 +51,21 @@ async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=
             raise Exception("Konfigurasi Saweria (User ID) tidak ditemukan di bot ini oleh admin.")
 
         pay = await saweria_service.create_payment(
-            user_id=str(saweria_user_id),
+            user_id=saweria_user_id,
             amount=int(amount),
             name=f"User {user.first_name} ({user.id})",
             email=f"user{user.id}@bot.mail",
             message=f"Pembelian {name} ({tipe}) via @{client.me.username}",
         )
-        if pay.status != "Success":
-            error_message = getattr(pay, 'result', pay)
-            raise Exception(f"API payment gateway mengembalikan error: {error_message}")
+        
+        if not (hasattr(pay, "result") and hasattr(pay.result, "status") and pay.result.status is True):
+            error_msg = pay.result.msg if hasattr(pay, "result") and hasattr(pay.result, "msg") else "Unknown Saweria API error"
+            raise Exception(f"API payment gateway mengembalikan error: {error_msg}")
 
         result = pay.result.data
         payment_id = result.id
         order_id = str(uuid.uuid4())
-        expire_time = datetime.fromisoformat(result.expired_at.replace(' GMT', '+00:00'))
+        expire_time = datetime.now(timezone.utc) + timedelta(minutes=15)
 
         order_data = f"{payment_id}|{name}|{expire_time.isoformat()}|{tipe}"
         if coupon_code:
@@ -90,8 +91,8 @@ async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=
         await msg.delete()
     except Exception as e:
         await msg.edit(lang.get("general.error", e=e))
-        ctx.log.error(pay)
-        
+
+
 @command(lambda ctx: filters.regex(r"^notes\s(.+)"), handler_type="callback")
 async def notes_data(client, callback_query):
     lang = callback_query.lang
@@ -348,6 +349,7 @@ async def auto_check_payment(client, user, order_id):
                 return
         except Exception as e:
             ctx.log.print(f"{ctx.log.RED}Error auto-check {order_id}: {e}")
+            await client.send_message(user.id, lang.get("general.error", e=e))
             break
 
     if not payment_successful and ctx.db.getVars(client.me.id, order_id):
