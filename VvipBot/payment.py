@@ -112,17 +112,13 @@ async def manual_check_payment_callback(client, callback_query):
     user = callback_query.from_user
     lang = callback_query.lang
     
-    await callback_query.answer(lang.get("payment.check.checking"))
-
     saweria_service = getattr(client, "services", None) and client.services.saweria
     if not saweria_service:
-        await callback_query.answer(lang.get("payment.pay.service_inactive_alert"), show_alert=True)
-        return
+        return await callback_query.answer(lang.get("payment.pay.service_inactive_alert"), show_alert=True)
 
     ref_data_str = ctx.db.getVars(client.me.id, order_id)
     if not ref_data_str:
-        await callback_query.edit_message_caption(lang.get("payment.check.expired_or_completed"))
-        return
+        return await callback_query.edit_message_caption(lang.get("payment.check.expired_or_completed"))
 
     ref_parts = ref_data_str.split("|")
     payment_id = ref_parts[0]
@@ -132,8 +128,7 @@ async def manual_check_payment_callback(client, callback_query):
     
     saweria_user_id = ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
     if not saweria_user_id:
-        await callback_query.answer(lang.get("general.error", e="SAWERIA_USER_ID not configured."), show_alert=True)
-        return
+        return await callback_query.answer(lang.get("general.error", e="SAWERIA_USER_ID not configured."), show_alert=True)
 
     try:
         pay_check = await saweria_service.check_payment(user_id=saweria_user_id, payment_id=payment_id)
