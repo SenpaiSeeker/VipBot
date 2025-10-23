@@ -50,14 +50,12 @@ async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code
         if not saweria_user_id:
             raise Exception("Konfigurasi Saweria (User ID) tidak ditemukan di bot ini oleh admin.")
 
-        info = client.ns.utils.faker.generate()
-        #mention = client.ns.telegram.arg.getMention(user, logs=True)
-                                                    
+        fakeinfo = client.ns.utils.faker.generate()
         pay = await saweria_service.create_payment(
             user_id=saweria_user_id,
             amount=int(amount),
             name=f"user_id: {user.id}",
-            email=info.email,
+            email=fakeinfo.email,
             message=f"Pembelian {names} ({tipe}) via @{client.me.username}",
         )
         
@@ -77,6 +75,16 @@ async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code
 
         qr_image_base64 = result.qr_image.split(",", 1)[1]
         qr_bytes = base64.b64decode(qr_image_base64)
+        
+        jakarta_tz = ZoneInfo("Asia/Jakarta")
+        try:
+            expired_dt_naive = datetime.strptime(result.expired_at, "%d/%m/%Y %H:%M:%S")
+            expired_dt_utc = expired_dt_naive.replace(tzinfo=timezone.utc)
+            expired_dt_jakarta = expired_dt_utc.astimezone(jakarta_tz)
+            expire_str = expired_dt_jakarta.strftime('%H:%M:%S WIB')
+        except (ValueError, TypeError):
+            expire_str = "15 menit"
+
 
         if qr_bytes:
             caption = lang.get(
@@ -85,6 +93,7 @@ async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code
                 type=tipe.title(),
                 amount=f"{int(result.amount_raw):,}",
                 id=order_id,
+                expire_time=expire_str,
             )
             btn_text = f"| {lang.get('payment.check.confirm_button')} - confirm_payment {order_id} |"
             btn, _ = client.ns.telegram.button.create_inline_keyboard(btn_text)
