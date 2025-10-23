@@ -60,7 +60,7 @@ async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=
         if pay.status != "Success":
             raise Exception(f"API payment gateway mengembalikan error: {pay.result.msg}")
 
-        result = pay.result.data
+        result = pay.result
         payment_id = result.id
         order_id = str(uuid.uuid4())
         expire_time = datetime.now(timezone.utc) + timedelta(minutes=15)
