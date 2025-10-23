@@ -40,7 +40,7 @@ async def list_members_callback(client, callback_query):
 
     join_dt_utc = datetime.fromisoformat(join_date_iso)
     
-    expiry_date_str = lang.get("member.permanent_access")
+    expiry_date_str = lang.get("member.list.permanent_access")
     expiry_date_obj_str = member_data.get("expiry_date")
     if expiry_date_obj_str:
         expiry_date_obj = datetime.fromisoformat(expiry_date_obj_str)
