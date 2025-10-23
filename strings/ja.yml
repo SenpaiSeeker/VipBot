@@ -296,12 +296,12 @@ settings:
   stats_button: "⭐ スター統計"
   list_all_users: "👥 全ユーザーを一覧表示"
   coupons: "🎟️ クーポン管理"
-  
+
   set_photo_prompt: "🖼️ **開始写真の設定**\n\n/startメッセージの画像として使用したい新しい写真を送信してください。\n\n現在の写真を削除してデフォルトに戻すには `/empty` と入力してください。"
   set_photo_fail: "❌ **失敗:** 送信されたメッセージは写真ではありません。プロセスはキャンセルされました。"
   set_photo_success: "✅ **成功！** /start写真が更新されました。"
   photo_emptied: "✅ **成功！** /start写真が削除され、デフォルトに戻ります。"
-  
+
   set_text_prompt: "✍️ **開始テキストの設定**\n\n/startメッセージ用の新しいテキストを送信してください。ユーザーに挨拶するために `{mention}` 変数を使用できます。\n\n**例:** `こんにちは{mention}、私のボットへようこそ！`\n\nカスタムテキストを削除してデフォルトに戻すには `/empty` と入力してください。"
   set_text_fail: "❌ **失敗:** 送信されたメッセージにテキストが含まれていません。"
   set_text_success: "✅ **成功！** /startテキストが更新されました。"
@@ -332,22 +332,25 @@ settings:
   delete_vvip_button: "🗑️ {name}を削除"
   delete_vvip_success: "✅ **成功！** パッケージ **{name}** が削除されました。"
   delete_vvip_fail: "❌ **失敗！** パッケージ **{name}** はもう見つかりません。"
-  
-  api_panel: "**🔑 {mention}用APIキーマネージャー**\n\n支払い機能やAI機能を有効にするために、サードパーティサービスのAPIキーを設定します。\n\n**サービス状況:**\n- `支払いゲートウェイ (Violet)`: **{violet_status}**\n- `AIアシスタント (Gemini)`: **{gemini_status}**\n\nアクションを選択してください:"
+
+  api_panel: "**🔑 {mention}用APIキーマネージャー**\n\n支払い機能やAI機能を有効にするために、サードパーティサービスのAPIキーを設定します。\n\n**サービス状況:**\n- `支払いゲートウェイ (Saweria)`: **{saweria_status}**\n- `AIアシスタント (Gemini)`: **{gemini_status}**\n\nアクションを選択してください:"
   api_status_active: "✅ アクティブ"
+  api_status_saweria_active: "✅ アクティブ (ユーザー: {username})"
   api_status_inactive: "❌ 未設定"
-  api_set_violet: "💳 Violetキーを設定"
+  api_set_saweria: "💳 Saweriaキーを設定"
   api_set_gemini: "🤖 Geminiキーを設定"
   api_del_all: "🗑️ すべてのキーを削除"
-  api_set_violet_1: "**1/2:** **VIOLET_API_KEY**を送信してください。"
-  api_set_violet_2: "**2/2:** **VIOLET_SECRET_KEY**を送信してください。"
+  api_set_saweria_1: "**1/2:** [Maelyn API](https://api.maelyn.sbs) から **APIキー** を送信してください。"
+  api_set_saweria_2: "**2/2:** **Saweriaのユーザー名** を送信してください。"
+  api_set_fail_saweria: "❌ **失敗！**\nSaweriaのユーザー名が見つからないか、APIキーが間違っています。\n\n`エラー: {e}`"
+  api_set_success_saweria: "✅ **成功！**\nSaweriaキーが検証され、保存されました。"
   api_set_gemini_prompt: "🔑 **{key_name}**を送信してください。"
   api_set_success: "✅ **成功！**\n`{key_name}`のキーが保存され、関連サービスが有効になりました。"
-  api_del_confirm_panel: "**⚠️ 確認**\n\n本当にこのボットの**すべて**のAPIキー（Violet & Gemini）を削除しますか？"
+  api_del_confirm_panel: "**⚠️ 確認**\n\n本当にこのボットの**すべて**のAPIキー（Saweria & Gemini）を削除しますか？"
   api_del_confirm_yes_button: "✅ はい、すべて削除します"
   api_del_confirm_no_button: "❌ いいえ、キャンセルします"
   api_del_success: "✅ このボットのすべてのAPIキーが正常に削除されました。"
-  
+
 stats:
   panel: "**📊 スター収入統計**\n\n💰 **現在の残高:** `{balance}` ⭐\n📈 **総収入:** `{income}` ⭐\n📉 **総返金:** `{refunds}` ⭐\n🔄 **総取引数（表示分）:** `{count}`\n\n**📜 最近の取引 ({page}/{total_pages})**\n{transactions}"
   transaction_entry: "• `{date}`: **{amount_str}⭐** from {peer}"
