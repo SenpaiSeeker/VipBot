@@ -238,7 +238,7 @@ payment:
     invoice_full: |
       **✅ Pembayaran Siap Dilakukan!**
 
-      Silakan scan QRIS di atas untuk melakukan pembayaran.
+      Silakan scan QRIS di atas untuk melakukan pembayaran. Setelah membayar, tekan tombol **Konfirmasi Pembayaran**.
 
       ╭─ **Detail Tagihan**
       │
@@ -248,6 +248,10 @@ payment:
       │
       ╰─ ⏳ **PENTING:** Invoice ini akan kedaluwarsa dalam **15 menit**.
   check:
+    confirm_button: "✅ Konfirmasi Pembayaran"
+    checking: "🔍 Memeriksa status pembayaran..."
+    not_paid: "❌ Pembayaran belum terdeteksi. Silakan coba lagi setelah beberapa saat."
+    expired_or_completed: "⚠️ Invoice ini sudah tidak valid atau telah selesai."
     category_missing: "Kategori VVIP '{name}' tidak lagi ditemukan di database. Pembayaran berhasil, namun link grup gagal diberikan. Mohon hubungi admin."
     success_customer_full: "🎉 **Pembayaran Dikonfirmasi!**\n\nTerima kasih, berikut adalah link akses Anda untuk paket **{name}**:\n\n{link}\n\n⚠️ Link ini hanya berlaku untuk 1 kali klik dan akan kedaluwarsa dalam 10 menit jika tidak digunakan."
     success_owner_notif: "💰 **Pemasukan Baru!**\n\n**Pengguna:** {mention}\n**Bot:** {bot_mention}\n**Kategori:** `{name}` ({type})"
