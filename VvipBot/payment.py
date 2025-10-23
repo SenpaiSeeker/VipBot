@@ -51,12 +51,12 @@ async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code
             raise Exception("Konfigurasi Saweria (User ID) tidak ditemukan di bot ini oleh admin.")
 
         info = client.ns.utils.faker.generate()
-        mention = client.ns.telegram.arg.getMention(user, logs=True)
+        #mention = client.ns.telegram.arg.getMention(user, logs=True)
                                                     
         pay = await saweria_service.create_payment(
             user_id=saweria_user_id,
             amount=int(amount),
-            name=mention,
+            name=f"user_id: {user.id}",
             email=info.email,
             message=f"Pembelian {names} ({tipe}) via @{client.me.username}",
         )
