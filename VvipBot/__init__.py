@@ -1,6 +1,6 @@
 import asyncio
 import glob
-import random 
+import random
 import importlib
 import math
 import os
@@ -15,7 +15,6 @@ from time import time
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
-import aiohttp
 import nsdev
 import pyrogram
 from nsdev import listen
