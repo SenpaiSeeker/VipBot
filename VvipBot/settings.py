@@ -168,6 +168,7 @@ async def setup_listvvip(client, callback_query):
     await callback_query.message.delete()
 
     try:
+
         def ask(text):
             return client.ask(chat_id, f"{text}{lang.get('prompts.cancel_footer')}", timeout=600)
 
@@ -188,12 +189,16 @@ async def setup_listvvip(client, callback_query):
         vvip_data["name"] = validate(await ask(lang.get("settings.setup_vvip.step1_name")), lambda t: True, "")
         vvip_data["price"] = int(
             validate(
-                await ask(lang.get("settings.setup_vvip.step2_price")), is_digit, "settings.setup_vvip.err_must_be_number"
+                await ask(lang.get("settings.setup_vvip.step2_price")),
+                is_digit,
+                "settings.setup_vvip.err_must_be_number",
             )
         )
         vvip_data["duration"] = int(
             validate(
-                await ask(lang.get("settings.setup_vvip.step3_duration")), is_digit, "settings.setup_vvip.err_must_be_number"
+                await ask(lang.get("settings.setup_vvip.step3_duration")),
+                is_digit,
+                "settings.setup_vvip.err_must_be_number",
             )
         )
         vvip_data["chat_id_normal"] = int(
@@ -396,6 +401,7 @@ async def set_api_key_prompt(client, callback_query):
             )
 
         from services import initialize_bot_services
+
         initialize_bot_services(client, ctx.db)
 
     except listen.UserCancelled:
@@ -413,9 +419,7 @@ async def confirm_delete_api_keys(client, callback_query):
     lang = callback_query.lang
 
     text = lang.get("settings.api_del_confirm_panel")
-    btn_text = (
-        f"| {lang.get('settings.api_del_confirm_yes_button')} - do_del_api | | {lang.get('settings.api_del_confirm_no_button')} - api_settings |"
-    )
+    btn_text = f"| {lang.get('settings.api_del_confirm_yes_button')} - do_del_api | | {lang.get('settings.api_del_confirm_no_button')} - api_settings |"
     btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
 
     if callback_query.message.photo:
@@ -435,6 +439,7 @@ async def do_delete_api_keys(client, callback_query):
     ctx.db.removeVars(client.me.id, "GEMINI_API_KEY")
 
     from services import initialize_bot_services
+
     initialize_bot_services(client, ctx.db)
 
     await callback_query.answer(lang.get("settings.api_del_success"), show_alert=True)
@@ -470,6 +475,7 @@ async def add_coupon_callback(client, callback_query):
     await callback_query.message.delete()
 
     try:
+
         def ask(text):
             return client.ask(chat_id, f"{text}{lang.get('prompts.cancel_footer')}", timeout=600)
 
@@ -477,14 +483,20 @@ async def add_coupon_callback(client, callback_query):
         type_msg = await ask(lang.get("coupons.ask_type"))
         discount_type = "percentage" if "1" in type_msg.text else "fixed"
 
-        value_prompt = lang.get("coupons.ask_value_percent") if discount_type == "percentage" else lang.get("coupons.ask_value_fixed")
+        value_prompt = (
+            lang.get("coupons.ask_value_percent")
+            if discount_type == "percentage"
+            else lang.get("coupons.ask_value_fixed")
+        )
         discount_value = int((await ask(value_prompt)).text)
 
         uses_left = int((await ask(lang.get("coupons.ask_uses"))).text)
 
         expiry_days_msg = await ask(lang.get("coupons.ask_expiry"))
         expiry_days = int(expiry_days_msg.text)
-        expiry_date = (datetime.now(timezone.utc) + timedelta(days=expiry_days)).isoformat() if expiry_days > 0 else None
+        expiry_date = (
+            (datetime.now(timezone.utc) + timedelta(days=expiry_days)).isoformat() if expiry_days > 0 else None
+        )
 
         coupon_data = {
             "code": code,

@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pyrogram
 from nsdev import LoggerHandler
@@ -160,7 +160,7 @@ class BotManager:
         while True:
             await asyncio.sleep(60 * 60 * 12)
             log.info(f"Menjalankan pemeriksaan langganan anggota...")
-            
+
             now = datetime.now(timezone.utc)
             all_bot_ids = [int(bot["name"]) for bot in self.db.getBots(is_token=True)]
 
@@ -171,24 +171,26 @@ class BotManager:
 
                 members = self.db.getListVars(bot_id, "vvip_members") or []
                 members_to_keep = []
-                
+
                 for member in members:
                     expiry_date_str = member.get("expiry_date")
                     if not expiry_date_str:
                         members_to_keep.append(member)
                         continue
-                    
+
                     expiry_date = datetime.fromisoformat(expiry_date_str)
                     user_id = member["user_id"]
                     lang = Language(self.db, user_id)
-                    
+
                     if now > expiry_date:
                         try:
                             chat_id = member["chat_id_kick"]
                             await bot_client.ban_chat_member(chat_id, user_id)
                             await asyncio.sleep(1)
                             await bot_client.unban_chat_member(chat_id, user_id)
-                            await bot_client.send_message(user_id, lang.get("subscription.expired_kick_notif", name=member["vvip_name"]))
+                            await bot_client.send_message(
+                                user_id, lang.get("subscription.expired_kick_notif", name=member["vvip_name"])
+                            )
                             log.debug(f"Langganan {user_id} di bot {bot_id} habis. Dikeluarkan dari grup.")
                         except Exception as e:
                             log.error(f"Gagal kick member {user_id} dari grup: {e}")
@@ -202,14 +204,16 @@ class BotManager:
 
                         if last_notif_date_str != today_str:
                             try:
-                                btn, txt = bot_client.ns.telegram.button.create_inline_keyboard(f"{lang.get('subscription.renewal_reminder', name=member['vvip_name'], days=time_left.days)}\n\n| {lang.get('subscription.renew_button')} - renew_sub {member['vvip_name']} |")
+                                btn, txt = bot_client.ns.telegram.button.create_inline_keyboard(
+                                    f"{lang.get('subscription.renewal_reminder', name=member['vvip_name'], days=time_left.days)}\n\n| {lang.get('subscription.renew_button')} - renew_sub {member['vvip_name']} |"
+                                )
                                 await bot_client.send_message(user_id, txt, reply_markup=btn)
                                 self.db.setVars(user_id, f"{last_notif_key}_{bot_id}", today_str)
                             except Exception as e:
                                 log.print(f"{log.RED}Gagal kirim notif perpanjangan ke {user_id}: {e}")
 
                     members_to_keep.append(member)
-                
+
                 if len(members_to_keep) != len(members):
                     self.db.removeVars(bot_id, "vvip_members")
                     if members_to_keep:

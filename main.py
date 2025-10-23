@@ -1,20 +1,18 @@
 import asyncio
+import logging
 import os
 import signal
-import sys
 import traceback
-import logging 
 
 import pyrogram
-from tornado.ioloop import IOLoop
 from nsdev import CustomLogHandler, LoggerHandler
+from tornado.ioloop import IOLoop
 
 import VvipBot as handlers
 from bot_manager import BotManager
 from config import API_HASH, API_ID, BOT_TOKEN, OWNER_ID
 from database import db, schedule
 from services import initialize_bot_services
-
 
 log = LoggerHandler()
 
@@ -34,14 +32,14 @@ async def main():
     os.system("rm -f *.session*")
 
     manager = BotManager(db, OWNER_ID)
-    
+
     app = pyrogram.Client(
         name="vvip_manager_main",
         api_id=API_ID,
         api_hash=API_HASH,
         bot_token=BOT_TOKEN,
     )
-    
+
     handlers.register_all_handlers(app, db, manager, OWNER_ID)
 
     try:
@@ -54,15 +52,15 @@ async def main():
         manager.main_bot_client = app
         manager.main_bot_id = app.me.id
         manager.running_bots[app.me.id] = app
-        
+
         await manager.start_all_bots()
 
         if schedule.jobs:
             schedule.start()
-        
+
         asyncio.create_task(manager.expiration_checker())
         asyncio.create_task(manager.subscription_checker())
-        
+
         log.print(f"{log.CYAN}Bot sekarang berjalan. Tekan Ctrl+C untuk berhenti.")
 
     except Exception as e:
@@ -72,18 +70,18 @@ async def main():
 
 def stop_all_clients():
     log.print(f"{log.YELLOW}Memulai proses penghentian bot...")
-    
+
     loop = IOLoop.current()
 
     async def gather_stops():
         manager = handlers.ctx.manager
         stop_tasks = [manager.stop_bot(bot_id) for bot_id in list(manager.running_bots.keys())]
-        
+
         if stop_tasks:
             await asyncio.gather(*stop_tasks)
 
         await db.close_async()
-        
+
         loop.stop()
 
     loop.add_callback(lambda: asyncio.ensure_future(gather_stops()))
@@ -91,13 +89,14 @@ def stop_all_clients():
 
 
 if __name__ == "__main__":
+
     def handle_exit_signal(sig, frame):
         log.print(f"{log.ORANGE}Menerima sinyal berhenti ({sig})...")
         IOLoop.current().add_callback_from_signal(stop_all_clients)
 
     signal.signal(signal.SIGINT, handle_exit_signal)
     signal.signal(signal.SIGTERM, handle_exit_signal)
-    
+
     try:
         IOLoop.current().add_callback(main)
         IOLoop.current().start()

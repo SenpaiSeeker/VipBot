@@ -297,14 +297,15 @@ async def process_donation_callback(client, callback_query):
         ctx.log.print(f"{ctx.log.RED}Gagal mengirim invoice Stars: {e}")
         await callback_query.answer(lang.get("payment.donation.invoice_fail"), show_alert=True)
 
+
 @command(lambda ctx: filters.regex(r"^renew_sub\s(.+)"), handler_type="callback")
 async def renew_subscription_callback(client, callback_query):
     lang = callback_query.lang
     name = callback_query.data.split(" ", 1)[1]
-    
+
     vvip_list = ctx.db.getListVars(client.me.id, "list_vvip") or []
     item = next((v for v in vvip_list if v.get("name") == name), None)
-    
+
     if not item:
         return await callback_query.answer(lang.get("payment.notes.not_found"), show_alert=True)
 

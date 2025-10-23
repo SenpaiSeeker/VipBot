@@ -465,12 +465,16 @@ async def list_all_users_callback(client, callback_query):
     i = 0
     while i < len(page_user_data):
         user1 = page_user_data[i]
-        btn1_text = lang.get("admin.list_users.send_message_button", name=user1.first_name[:10] if user1.first_name else user1.id)
+        btn1_text = lang.get(
+            "admin.list_users.send_message_button", name=user1.first_name[:10] if user1.first_name else user1.id
+        )
         btn1_str = f"| {btn1_text} - message_user_{user1.id}_{page} |"
 
         if i + 1 < len(page_user_data):
             user2 = page_user_data[i + 1]
-            btn2_text = lang.get("admin.list_users.send_message_button", name=user2.first_name[:10] if user2.first_name else user2.id)
+            btn2_text = lang.get(
+                "admin.list_users.send_message_button", name=user2.first_name[:10] if user2.first_name else user2.id
+            )
             btn2_str = f"| {btn2_text} - message_user_{user2.id}_{page};same |"
             btn_text_list.append(f"{btn1_str}{btn2_str}")
             i += 2
@@ -527,18 +531,18 @@ async def dashboard_command_handler(client, message):
 
     all_bots_data = ctx.db.getBots(is_token=True)
     total_bots = len(all_bots_data)
-    
+
     unique_users = set()
     bot_user_counts = {}
     for bot_data in all_bots_data:
-        bot_id = int(bot_data['name'])
+        bot_id = int(bot_data["name"])
         user_ids = ctx.db.getListVars(bot_id, "user_ids") or []
         bot_user_counts[bot_id] = len(user_ids)
         for user_id in user_ids:
             unique_users.add(user_id)
-    
+
     total_users = len(unique_users)
-    
+
     top_bot_id = max(bot_user_counts, key=bot_user_counts.get) if bot_user_counts else None
     top_bot_info = "N/A"
     if top_bot_id:
@@ -548,18 +552,19 @@ async def dashboard_command_handler(client, message):
 
     try:
         stats = client.ns.server.monitor.get_stats()
-        server_stats_text = lang.get("admin.dashboard.server_stats",
-                                     cpu=stats.cpu_percent,
-                                     ram=stats.ram_percent,
-                                     disk=stats.disk_percent)
+        server_stats_text = lang.get(
+            "admin.dashboard.server_stats", cpu=stats.cpu_percent, ram=stats.ram_percent, disk=stats.disk_percent
+        )
     except Exception as e:
         server_stats_text = lang.get("admin.dashboard.server_stats_fail", e=e)
 
-    dashboard_text = lang.get("admin.dashboard.panel",
-                              total_bots=total_bots,
-                              total_users=total_users,
-                              top_bot=top_bot_info,
-                              server_stats=server_stats_text)
+    dashboard_text = lang.get(
+        "admin.dashboard.panel",
+        total_bots=total_bots,
+        total_users=total_users,
+        top_bot=top_bot_info,
+        server_stats=server_stats_text,
+    )
 
     await msg.edit_text(dashboard_text)
 
@@ -567,23 +572,23 @@ async def dashboard_command_handler(client, message):
 @command(lambda ctx: filters.command("broadcast_owners") & filters.user(ctx.owner_id))
 async def broadcast_owners_handler(client, message):
     lang = message.lang
-    
+
     broadcast_msg = client.ns.telegram.arg.getMessage(message)
     if not broadcast_msg:
         return await message.reply_text(lang.get("admin.broadcast_owners.usage"))
-        
+
     all_bots_data = ctx.db.getBots(is_token=True)
-    owner_ids = {ctx.db.getVars(int(bot['name']), "owner_id") for bot in all_bots_data}
+    owner_ids = {ctx.db.getVars(int(bot["name"]), "owner_id") for bot in all_bots_data}
     owner_ids.discard(None)
 
     if not owner_ids:
         return await message.reply_text(lang.get("admin.broadcast_owners.no_owners"))
 
     progress_msg = await message.reply_text(lang.get("settings.broadcast_start", count=len(owner_ids)))
-    
+
     success_count = 0
     fail_count = 0
-    
+
     for owner_id in owner_ids:
         try:
             await broadcast_msg.copy(owner_id)
@@ -592,5 +597,5 @@ async def broadcast_owners_handler(client, message):
             ctx.log.print(f"{ctx.log.RED}Gagal broadcast ke owner {owner_id}: {e}")
             fail_count += 1
         await asyncio.sleep(0.2)
-        
+
     await progress_msg.edit(lang.get("settings.broadcast_done", success=success_count, fail=fail_count))
