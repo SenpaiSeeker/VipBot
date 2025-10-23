@@ -45,10 +45,10 @@ async def main():
     handlers.register_all_handlers(app, db, manager, OWNER_ID)
 
     try:
-        app.ns.utils.grad.render_text("VVIP")
+        app.ns.utils.grad.render_text("VVIP Meneger")
         log.print(f"{log.MAGENTA}Developed by NorSodikin")
         await app.start()
-        log.print(f"{log.GREEN}Bot utama '{app.me.first_name}' berhasil dimulai.")
+        log.info(f"Bot utama '{app.me.first_name}' berhasil dimulai.")
         initialize_bot_services(app, db)
 
         manager.main_bot_client = app
