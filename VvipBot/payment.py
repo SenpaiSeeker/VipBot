@@ -57,8 +57,9 @@ async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=
             email=f"user{user.id}@bot.mail",
             message=f"Pembelian {name} ({tipe}) via @{client.me.username}",
         )
-        if pay.status != "Success":
-            raise Exception(f"API payment gateway mengembalikan error: {pay}")
+
+        if pay.status != "Success" or not hasattr(pay, "result") or not hasattr(pay.result, "data"):
+             raise Exception(f"API payment gateway mengembalikan error: {getattr(pay.result, 'msg', pay)}")
 
         result = pay.result.data
         payment_id = result.id
@@ -70,7 +71,7 @@ async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=
             order_data += f"|{coupon_code}"
 
         ctx.db.setVars(client.me.id, order_id, order_data)
-
+        
         qr_image_base64 = result.qr_image.split(",", 1)[1]
         qr_bytes = base64.b64decode(qr_image_base64)
 
