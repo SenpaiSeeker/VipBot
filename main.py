@@ -3,10 +3,11 @@ import os
 import signal
 import sys
 import traceback
+import logging 
 
 import pyrogram
 from tornado.ioloop import IOLoop
-from nsdev import LoggerHandler
+from nsdev import CustomLogHandler, LoggerHandler
 
 import VvipBot as handlers
 from bot_manager import BotManager
@@ -14,7 +15,20 @@ from config import API_HASH, API_ID, BOT_TOKEN, OWNER_ID
 from database import db, schedule
 from services import initialize_bot_services
 
+
 log = LoggerHandler()
+
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+
+for handler in root_logger.handlers[:]:
+    root_logger.removeHandler(handler)
+
+root_logger.addHandler(CustomLogHandler())
+
+pyrogram_logger = logging.getLogger("pyrogram")
+pyrogram_logger.setLevel(logging.INFO)
+
 
 async def main():
     os.system("rm -f *.session*")
@@ -31,6 +45,8 @@ async def main():
     handlers.register_all_handlers(app, db, manager, OWNER_ID)
 
     try:
+        app.ns.utils.grad.render_text("VVIP")
+        ctx.log.print(f"{ctx.log.MAGENTA}Developed by NorSodikin")
         await app.start()
         log.print(f"{log.GREEN}Bot utama '{app.me.first_name}' berhasil dimulai.")
         initialize_bot_services(app, db)
