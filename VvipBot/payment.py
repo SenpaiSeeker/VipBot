@@ -29,7 +29,7 @@ async def verify_user_join(client, user, chat_id, link_msg):
         await client.send_message(user.id, lang.get("payment.check.link_expired"))
 
 
-async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=None):
+async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code=None):
     lang = ctx.L(ctx.db, user.id)
     saweria_service = getattr(client, "services", None) and client.services.saweria
 
@@ -50,12 +50,15 @@ async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=
         if not saweria_user_id:
             raise Exception("Konfigurasi Saweria (User ID) tidak ditemukan di bot ini oleh admin.")
 
+        info = client.ns.utils.faker.generate()
+        mention = client.ns.telegram.arg.getMention(user, logs=True]
+                                                    
         pay = await saweria_service.create_payment(
             user_id=saweria_user_id,
             amount=int(amount),
-            name=f"User {user.first_name} ({user.id})",
-            email=f"user{user.id}@bot.mail",
-            message=f"Pembelian {name} ({tipe}) via @{client.me.username}",
+            name=mention,
+            email=info.email,
+            message=f"Pembelian {names} ({tipe}) via @{client.me.username}",
         )
         
         if not (hasattr(pay, "result") and hasattr(pay.result, "status") and pay.result.status is True):
