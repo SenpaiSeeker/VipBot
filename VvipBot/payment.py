@@ -51,7 +51,7 @@ async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=
             raise Exception("Konfigurasi Saweria (User ID) tidak ditemukan di bot ini oleh admin.")
 
         pay = await saweria_service.create_payment(
-            user_id=saweria_user_id,
+            user_id=str(saweria_user_id),
             amount=int(amount),
             name=f"User {user.first_name} ({user.id})",
             email=f"user{user.id}@bot.mail",
