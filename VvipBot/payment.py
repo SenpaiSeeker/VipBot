@@ -57,11 +57,13 @@ async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=
             email=f"user{user.id}@bot.mail",
             message=f"Pembelian {name} ({tipe}) via @{client.me.username}",
         )
-        if pay.status != "Success":
-            raise Exception(f"API payment gateway mengembalikan error: {pay.result.msg}")
 
-        result = pay.result
-        payment_id = result.id
+        if pay.status != "Success" or not pay.result.status:
+            error_message = pay.result.msg if hasattr(pay, "result") and hasattr(pay.result, "msg") else "Unknown API Error"
+            raise Exception(f"API payment gateway mengembalikan error: {error_message}")
+
+        result_data = pay.result.data
+        payment_id = result_data.id
         order_id = str(uuid.uuid4())
         expire_time = datetime.now(timezone.utc) + timedelta(minutes=15)
 
@@ -71,7 +73,7 @@ async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=
 
         ctx.db.setVars(client.me.id, order_id, order_data)
 
-        qr_image_base64 = result.qr_image.split(",", 1)[1]
+        qr_image_base64 = result_data.qr_image.split(",", 1)[1]
         qr_bytes = base64.b64decode(qr_image_base64)
 
         if qr_bytes:
@@ -79,7 +81,7 @@ async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=
                 "payment.pay.invoice_full",
                 name=name,
                 type=tipe.title(),
-                amount=f"{int(result.amount_raw):,}",
+                amount=f"{int(result_data.amount_raw):,}",
                 id=order_id,
             )
             await client.send_photo(user.id, photo=BytesIO(qr_bytes), caption=caption)
@@ -274,7 +276,7 @@ async def auto_check_payment(client, user, order_id):
         try:
             pay_check = await saweria_service.check_payment(user_id=saweria_user_id, payment_id=payment_id)
 
-            if pay_check.result.status is True:
+            if hasattr(pay_check, "result") and pay_check.result.status is True:
                 payment_successful = True
                 ctx.db.removeVars(client.me.id, order_id)
 
