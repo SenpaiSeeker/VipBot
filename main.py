@@ -46,7 +46,7 @@ async def main():
 
     try:
         app.ns.utils.grad.render_text("VVIP")
-        ctx.log.print(f"{ctx.log.MAGENTA}Developed by NorSodikin")
+        log.print(f"{ctx.log.MAGENTA}Developed by NorSodikin")
         await app.start()
         log.print(f"{log.GREEN}Bot utama '{app.me.first_name}' berhasil dimulai.")
         initialize_bot_services(app, db)
