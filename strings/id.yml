@@ -238,7 +238,7 @@ payment:
     invoice_full: |
       **✅ Pembayaran Siap Dilakukan!**
 
-      Silakan scan QRIS di atas untuk melakukan pembayaran. Setelah membayar, tekan tombol **Konfirmasi Pembayaran**.
+      Silakan scan QRIS di atas untuk membayar. Setelah itu, tekan tombol **Konfirmasi Pembayaran**.
 
       ╭─ **Detail Tagihan**
       │
@@ -246,7 +246,7 @@ payment:
       ├─ 💳 **Jumlah:** `Rp {amount}`
       ├─ 🆔 **Order ID:** `{id}`
       │
-      ╰─ ⏳ **PENTING:** Invoice ini akan kedaluwarsa dalam **15 menit**.
+      ╰─ ⏳ **PENTING:** Invoice ini akan kedaluwarsa pukul **{expire_time}**.
   check:
     confirm_button: "✅ Konfirmasi Pembayaran"
     checking: "🔍 Memeriksa status pembayaran..."
