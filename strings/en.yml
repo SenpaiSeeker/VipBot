@@ -296,12 +296,12 @@ settings:
   stats_button: "⭐ Stars Statistics"
   list_all_users: "👥 List All Users"
   coupons: "🎟️ Manage Coupons"
-  
+
   set_photo_prompt: "🖼️ **Set Start Photo**\n\nPlease send the new photo you want to use as the image in the /start message.\n\nType `/empty` to remove the current photo and revert to default."
   set_photo_fail: "❌ **Failed:** The message sent is not a photo. Process canceled."
   set_photo_success: "✅ **Success!** The /start photo has been updated."
   photo_emptied: "✅ **Success!** The /start photo has been removed and will revert to default."
-  
+
   set_text_prompt: "✍️ **Set Start Text**\n\nPlease send the new text for the /start message. You can use the `{mention}` variable to greet users.\n\n**Example:** `Hello {mention}, welcome to my bot!`\n\nType `/empty` to remove the custom text and revert to default."
   set_text_fail: "❌ **Failed:** The message sent does not contain text. Process canceled."
   set_text_success: "✅ **Success!** The /start text has been updated."
@@ -332,22 +332,25 @@ settings:
   delete_vvip_button: "🗑️ Delete {name}"
   delete_vvip_success: "✅ **Success!** Package **{name}** has been deleted."
   delete_vvip_fail: "❌ **Failed!** Package **{name}** is no longer found."
-  
-  api_panel: "**🔑 API Key Manager for {mention}**\n\nSet up API keys for third-party services to enable payment and AI features.\n\n**Service Status:**\n- `Payment Gateway (Violet)`: **{violet_status}**\n- `AI Assistant (Gemini)`: **{gemini_status}**\n\nSelect an action:"
+
+  api_panel: "**🔑 API Key Manager for {mention}**\n\nSet up API keys for third-party services to enable payment and AI features.\n\n**Service Status:**\n- `Payment Gateway (Saweria)`: **{saweria_status}**\n- `AI Assistant (Gemini)`: **{gemini_status}**\n\nSelect an action:"
   api_status_active: "✅ Active"
+  api_status_saweria_active: "✅ Active (User: {username})"
   api_status_inactive: "❌ Not Set"
-  api_set_violet: "💳 Set Violet Keys"
+  api_set_saweria: "💳 Set Saweria Keys"
   api_set_gemini: "🤖 Set Gemini Key"
   api_del_all: "🗑️ Delete All Keys"
-  api_set_violet_1: "**1/2:** Send your **VIOLET_API_KEY**."
-  api_set_violet_2: "**2/2:** Send your **VIOLET_SECRET_KEY**."
+  api_set_saweria_1: "**1/2:** Send your **API Key** from [Maelyn API](https://api.maelyn.sbs)."
+  api_set_saweria_2: "**2/2:** Send your **Saweria Username**."
+  api_set_fail_saweria: "❌ **Failed!**\nSaweria username not found or API Key is wrong.\n\n`Error: {e}`"
+  api_set_success_saweria: "✅ **Success!**\nSaweria key verified and saved."
   api_set_gemini_prompt: "🔑 Send your **{key_name}**."
   api_set_success: "✅ **Success!**\nThe key for `{key_name}` has been saved and the related service has been enabled."
-  api_del_confirm_panel: "**⚠️ Confirmation**\n\nAre you sure you want to delete **ALL** API keys (Violet & Gemini) for this bot?"
+  api_del_confirm_panel: "**⚠️ Confirmation**\n\nAre you sure you want to delete **ALL** API keys (Saweria & Gemini) for this bot?"
   api_del_confirm_yes_button: "✅ Yes, Delete All"
   api_del_confirm_no_button: "❌ No, Cancel"
   api_del_success: "✅ All API keys for this bot have been successfully deleted."
-  
+
 stats:
   panel: "**📊 Stars Revenue Statistics**\n\n💰 **Current Balance:** `{balance}` ⭐\n📈 **Total Income:** `{income}` ⭐\n📉 **Total Refunds:** `{refunds}` ⭐\n🔄 **Total Transactions (Shown):** `{count}`\n\n**📜 Recent Transactions ({page}/{total_pages})**\n{transactions}"
   transaction_entry: "• `{date}`: **{amount_str}⭐** from {peer}"
