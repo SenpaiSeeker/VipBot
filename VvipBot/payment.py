@@ -1,5 +1,6 @@
 from . import *
 
+
 async def verify_user_join(client, user, chat_id, link_msg):
     lang = ctx.L(ctx.db, user.id)
     verification_timeout = 600
@@ -28,54 +29,145 @@ async def verify_user_join(client, user, chat_id, link_msg):
         await client.send_message(user.id, lang.get("payment.check.link_expired"))
 
 
+async def auto_check_payment(client, user, order_id):
+    lang = ctx.L(ctx.db, user.id)
+    saweria_service = getattr(client, "services", None) and client.services.saweria
+    if not saweria_service:
+        return
+
+    order_data_str = ctx.db.getVars(client.me.id, order_id)
+    if not order_data_str:
+        return
+
+    parts = order_data_str.split("|")
+    saweria_user_id, saweria_payment_id, name, expire_iso, tipe, coupon_code = (parts + [None] * 6)[:6]
+
+    expire_time = datetime.fromisoformat(expire_iso)
+    payment_successful = False
+
+    while datetime.now(timezone.utc) < expire_time and not payment_successful:
+        await asyncio.sleep(20)
+        try:
+            pay_check = await saweria_service.check_payment(user_id=saweria_user_id, payment_id=saweria_payment_id)
+            if pay_check.data.status_id == 1:
+                payment_successful = True
+                ctx.db.removeVars(client.me.id, order_id)
+
+                vvip_list = ctx.db.getListVars(client.me.id, "list_vvip") or []
+                item_found = next((item for item in vvip_list if item.get("name") == name), None)
+                if not item_found:
+                    raise ValueError(lang.get("payment.check.category_missing", name=name))
+
+                is_promo = tipe == "promo"
+                target_chat_id = item_found.get("chat_id_promo") if is_promo else item_found.get("chat_id_normal")
+                
+                if not target_chat_id:
+                    raise ValueError("Chat ID untuk paket VVIP ini belum diatur oleh admin.")
+
+                try:
+                    expire_date_link = datetime.now() + timedelta(hours=2)
+                    invite_link_obj = await client.create_chat_invite_link(
+                        chat_id=target_chat_id, member_limit=1, expire_date=expire_date_link
+                    )
+                    link = invite_link_obj.invite_link
+                except Exception as e:
+                    ctx.log.print(f"{ctx.log.RED}Gagal membuat invite link untuk {target_chat_id}: {e}")
+                    raise Exception(f"Gagal membuat link undangan. Pastikan bot adalah admin di grup tujuan dengan hak 'Invite Users'.")
+                
+                member_data = {
+                    "user_id": user.id, "vvip_name": name,
+                    "join_date": datetime.now(timezone.utc).isoformat(), "payment_type": tipe,
+                    "chat_id_kick": target_chat_id
+                }
+
+                duration = item_found.get("duration", 0)
+                if duration > 0:
+                    expiry_date = datetime.now(timezone.utc) + timedelta(days=duration)
+                    member_data["expiry_date"] = expiry_date.isoformat()
+                
+                if coupon_code:
+                    coupons = ctx.db.getListVars(client.me.id, "coupons") or []
+                    for c in coupons:
+                        if c.get("code") == coupon_code: c["uses_left"] -= 1; break
+                    ctx.db.removeVars(client.me.id, "coupons")
+                    for c in coupons: ctx.db.setListVars(client.me.id, "coupons", c)
+
+                ctx.db.setListVars(client.me.id, "vvip_members", member_data)
+                
+                link_msg = await client.send_message(user.id, lang.get("payment.check.success_customer_full", name=name, link=link), protect_content=True)
+                asyncio.create_task(verify_user_join(client, user, target_chat_id, link_msg))
+                
+                owner_bot_id = ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
+                owner_lang = Language(ctx.db, owner_bot_id)
+                await client.send_message(
+                    owner_bot_id,
+                    owner_lang.get("payment.check.success_owner_notif", mention=client.ns.telegram.arg.getMention(user), bot_mention=client.me.mention, name=name, type=tipe.title()),
+                )
+                return
+
+        except Exception as e:
+            ctx.log.print(f"{ctx.log.RED}Error auto-check {order_id}: {e}")
+            await client.send_message(user.id, lang.get("general.error", e=e))
+            break
+            
+    if not payment_successful and ctx.db.getVars(client.me.id, order_id):
+        ctx.db.removeVars(client.me.id, order_id)
+        await client.send_message(user.id, lang.get("payment.check.expired_msg", id=order_id))
+
+
 async def _create_payment_invoice(client, user, name, tipe, amount, coupon_code=None):
     lang = ctx.L(ctx.db, user.id)
-    vmp_service = getattr(client, "services", None) and client.services.vmp
-    
-    if not vmp_service:
+    saweria_service = getattr(client, "services", None) and client.services.saweria
+
+    if not saweria_service:
         if await is_bot_owner(client, user.id):
-            text = lang.get("payment.pay.service_inactive_panel")
-            btn_text = f"| {lang.get('payment.pay.setup_api_button')} - api_settings |"
-            btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
+            btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{lang.get('payment.pay.service_inactive_panel')}\n\n| {lang.get('payment.pay.setup_api_button')} - api_settings |")
             await client.send_message(user.id, txt, reply_markup=btn)
         else:
             await client.send_message(user.id, lang.get("payment.pay.service_inactive_alert"))
         return
 
     msg = await client.send_message(user.id, lang.get("general.processing"))
-
+    
     try:
-        pay = await vmp_service.create_payment(amount=amount)
-        if not pay.status:
-            raise Exception(f"API payment gateway mengembalikan error: {pay}")
+        saweria_username = ctx.db.getVars(client.me.id, "SAWERIA_USERNAME")
+        if not saweria_username:
+            raise Exception("Username Saweria belum diatur oleh pemilik bot.")
+        
+        user_id_response = await saweria_service.get_user_id(saweria_username)
+        if not user_id_response.status == "success":
+            raise Exception(f"Gagal mendapatkan ID user Saweria: {user_id_response.message}")
+        saweria_user_id = user_id_response.data.user_id
 
+        payment_message = f"Pembayaran untuk {name} ({tipe}) - {user.id}"
+        pay = await saweria_service.create_payment(
+            user_id=saweria_user_id,
+            amount=amount,
+            name=user.first_name,
+            email=f"{user.id}@telegram.user",
+            message=payment_message
+        )
+        if not pay.status == "success":
+            raise Exception(f"API Saweria mengembalikan error: {pay.message}")
+            
         result = pay.data
-        unique_seed = f"{result.ref_kode}_{result.id_reference}"
-        order_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, unique_seed))
+        order_id = str(uuid.uuid4().hex)
         expire_time = datetime.now(timezone.utc) + timedelta(minutes=15)
         
-        order_data = f"{unique_seed}|{name}|{expire_time.isoformat()}|{tipe}"
+        order_data = f"{saweria_user_id}|{result.id}|{name}|{expire_time.isoformat()}|{tipe}"
         if coupon_code:
             order_data += f"|{coupon_code}"
-        
+
         ctx.db.setVars(client.me.id, order_id, order_data)
 
-        async with aiohttp.ClientSession() as session, session.get(result.target) as resp:
-            qr_bytes = await resp.read() if resp.status == 200 else None
-
-        if qr_bytes:
-            caption = lang.get(
-                "payment.pay.invoice_full",
-                name=name,
-                type=tipe.title(),
-                amount=f"{int(result.nominal):,}",
-                id=order_id,
-            )
-            await client.send_photo(user.id, photo=BytesIO(qr_bytes), caption=caption)
-            asyncio.create_task(auto_check_payment(client, user, order_id))
-        else:
-            raise Exception(lang.get("payment.pay.qr_fail"))
+        caption = lang.get("payment.pay.invoice_full", name=name, type=tipe.title(), amount=f"{int(amount):,}", id=order_id)
+        
+        btn, _ = client.ns.telegram.button.create_inline_keyboard(f"DUMMY\n| Buka Link Pembayaran - {result.pay_link} |")
+        
+        await client.send_photo(user.id, photo=result.qr_image, caption=caption, reply_markup=btn)
         await msg.delete()
+
+        asyncio.create_task(auto_check_payment(client, user, order_id))
     except Exception as e:
         await msg.edit(lang.get("general.error", e=e))
 
@@ -154,23 +246,24 @@ async def promo_detail(client, callback_query):
     else:
         await callback_query.edit_message_text(txt, reply_markup=btn)
 
+
 @command(lambda ctx: filters.regex(r"^apply_coupon\s(.+?)\s(normal|promo)\s(\d+)"), handler_type="callback")
 async def apply_coupon_callback(client, callback_query):
     lang = callback_query.lang
     chat_id = callback_query.from_user.id
-    
+
     match = callback_query.matches[0]
     name = match.group(1).strip()
     tipe = match.group(2)
     original_amount = int(match.group(3))
 
     await callback_query.message.delete()
-    
+
     try:
         ask_msg = await client.ask(chat_id, lang.get("coupons.prompt"), timeout=300)
         if ask_msg.text.lower() == "/batal":
             raise listen.UserCancelled
-        
+
         coupon_code = ask_msg.text.upper()
         coupons = ctx.db.getListVars(client.me.id, "coupons") or []
         coupon = next((c for c in coupons if c.get("code") == coupon_code), None)
@@ -184,19 +277,21 @@ async def apply_coupon_callback(client, callback_query):
         expiry_str = coupon.get("expiry_date")
         if expiry_str and datetime.fromisoformat(expiry_str) < datetime.now(timezone.utc):
             raise ValueError(lang.get("coupons.expired"))
-        
+
         discount_type = coupon["discount_type"]
         discount_value = coupon["discount_value"]
-        
+
         if discount_type == "percentage":
             final_amount = original_amount - (original_amount * (discount_value / 100))
         else:
             final_amount = original_amount - discount_value
-        
+
         final_amount = max(0, int(final_amount))
-        
-        await client.send_message(chat_id, lang.get("coupons.success_applied", code=coupon_code, original=f"{original_amount:,}", final=f"{final_amount:,}"))
-        
+
+        await client.send_message(
+            chat_id, lang.get("coupons.success_applied", code=coupon_code, original=f"{original_amount:,}", final=f"{final_amount:,}")
+        )
+
         await _create_payment_invoice(client, callback_query.from_user, name, tipe, final_amount, coupon_code)
 
     except listen.UserCancelled:
@@ -207,6 +302,7 @@ async def apply_coupon_callback(client, callback_query):
         await client.send_message(chat_id, str(e))
     except Exception as e:
         await client.send_message(chat_id, lang.get("general.error", e=e))
+
 
 @command(lambda ctx: filters.regex(r"^paynow\s(.+)"), handler_type="callback")
 async def paynow(client, callback_query):
@@ -219,7 +315,7 @@ async def paynow(client, callback_query):
     while i < len(parts):
         if parts[i] in ["normal", "promo"]:
             tipe = parts[i]
-            amount = int(parts[i+1])
+            amount = int(parts[i + 1])
             break
         name_parts.append(parts[i])
         i += 1
@@ -231,110 +327,6 @@ async def paynow(client, callback_query):
         await callback_query.edit_message_text(callback_query.lang.get("general.processing"))
 
     await _create_payment_invoice(client, callback_query.from_user, name, tipe, amount)
-
-
-async def auto_check_payment(client, user, order_id):
-    lang = ctx.L(ctx.db, user.id)
-    vmp_service = getattr(client, "services", None) and client.services.vmp
-    if not vmp_service:
-        return
-
-    ref_data_str = ctx.db.getVars(client.me.id, order_id)
-    if not ref_data_str:
-        return
-
-    ref_parts = ref_data_str.split("|")
-    unique_seed, name, expire_iso, tipe = ref_parts[:4]
-    coupon_code = ref_parts[4] if len(ref_parts) > 4 else None
-    ref_kode, ref_id = unique_seed.split("_")
-    expire_time = datetime.fromisoformat(expire_iso)
-    payment_successful = False
-
-    while datetime.now(timezone.utc) < expire_time and not payment_successful:
-        await asyncio.sleep(15)
-        try:
-            pay_check = await vmp_service.check_transaction(ref_kode, ref_id)
-            if pay_check.data.status == "success":
-                payment_successful = True
-                ctx.db.removeVars(client.me.id, order_id)
-
-                vvip_list = ctx.db.getListVars(client.me.id, "list_vvip") or []
-                item_found = next((item for item in vvip_list if item.get("name") == name), None)
-                if not item_found:
-                    raise ValueError(lang.get("payment.check.category_missing", name=name))
-
-                is_promo = tipe == "promo"
-                target_chat_id = item_found.get("chat_id_promo") if is_promo else item_found.get("chat_id_normal")
-                
-                if not target_chat_id:
-                    raise ValueError("Chat ID untuk paket VVIP ini belum diatur oleh admin.")
-                
-                try:
-                    expire_date_link = datetime.now() + timedelta(hours=2)
-                    invite_link_obj = await client.create_chat_invite_link(
-                        chat_id=target_chat_id,
-                        member_limit=1,
-                        expire_date=expire_date_link
-                    )
-                    link = invite_link_obj.invite_link
-                except Exception as e:
-                    ctx.log.print(f"{ctx.log.RED}Gagal membuat invite link untuk {target_chat_id}: {e}")
-                    raise Exception(f"Gagal membuat link undangan. Pastikan bot adalah admin di grup tujuan dengan hak 'Invite Users'.")
-
-                member_data = {
-                    "user_id": user.id,
-                    "vvip_name": name,
-                    "join_date": datetime.now(timezone.utc).isoformat(),
-                    "payment_type": tipe,
-                    "chat_id_kick": target_chat_id,
-                }
-                
-                duration = item_found.get("duration", 0)
-                if duration > 0:
-                    expiry_date = datetime.now(timezone.utc) + timedelta(days=duration)
-                    member_data["expiry_date"] = expiry_date.isoformat()
-
-                if coupon_code:
-                    coupons = ctx.db.getListVars(client.me.id, "coupons") or []
-                    for c in coupons:
-                        if c.get("code") == coupon_code:
-                            c["uses_left"] = c.get("uses_left", 1) - 1
-                            break
-                    ctx.db.removeVars(client.me.id, "coupons")
-                    for c in coupons:
-                         ctx.db.setListVars(client.me.id, "coupons", c)
-
-                ctx.db.setListVars(client.me.id, "vvip_members", member_data)
-
-                link_msg = await client.send_message(
-                    user.id,
-                    lang.get("payment.check.success_customer_full", name=name, link=link),
-                    protect_content=True,
-                )
-                
-                asyncio.create_task(verify_user_join(client, user, target_chat_id, link_msg))
-
-                owner_bot_id = ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
-                owner_lang = Language(ctx.db, owner_bot_id)
-                await client.send_message(
-                    owner_bot_id,
-                    owner_lang.get(
-                        "payment.check.success_owner_notif",
-                        mention=client.ns.telegram.arg.getMention(user),
-                        bot_mention=client.me.mention,
-                        name=name,
-                        type=tipe.title(),
-                    ),
-                )
-                return
-        except Exception as e:
-            ctx.log.print(f"{ctx.log.RED}Error auto-check {order_id}: {e}")
-            await client.send_message(user.id, lang.get("general.error", e=e))
-            break 
-
-    if not payment_successful and ctx.db.getVars(client.me.id, order_id):
-        ctx.db.removeVars(client.me.id, order_id)
-        await client.send_message(user.id, lang.get("payment.check.expired_msg", id=order_id))
 
 
 @command(lambda ctx: filters.PreCheckoutQuery, handler_type="pre_checkout")
@@ -401,4 +393,23 @@ async def successful_donation_handler(client, message):
 
     ctx.log.print(
         f"{ctx.log.GREEN}Donasi {stars_donated} XTR diterima dari {user.id} ({user.first_name}) melalui bot {current_bot_id}"
-)
+    )
+
+
+@command(lambda ctx: filters.regex(r"^renew_sub\s(.+)"), handler_type="callback")
+async def renew_subscription_callback(client, callback_query):
+    lang = callback_query.lang
+    name = callback_query.data.split(" ", 1)[1]
+
+    vvip_list = ctx.db.getListVars(client.me.id, "list_vvip") or []
+    item = next((v for v in vvip_list if v.get("name") == name), None)
+
+    if not item:
+        return await callback_query.answer(lang.get("payment.notes.not_found"), show_alert=True)
+
+    if item.get("promo_price", 0) > 0:
+        callback_query.data = f"promo_detail {name}"
+        await promo_detail(client, callback_query)
+    else:
+        callback_query.data = f"notes {name}"
+        await notes_data(client, callback_query)
