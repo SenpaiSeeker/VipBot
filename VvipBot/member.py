@@ -6,7 +6,7 @@ async def list_members_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
     lang = callback_query.lang
-    members_list = (await ctx.db.getListVars(client.me.id, "vvip_members")) or []
+    members_list = await ctx.db.getListVars(client.me.id, "vvip_members") or []
 
     back_btn_text = f"| {lang.get('general.back_to_settings')} - settings |"
 
@@ -111,7 +111,7 @@ async def do_kick_member_callback(client, callback_query):
     user_id = int(match.group(1))
     vvip_name = match.group(2)
 
-    members_list = (await ctx.db.getListVars(client.me.id, "vvip_members")) or []
+    members_list = await ctx.db.getListVars(client.me.id, "vvip_members") or []
     record_to_remove = next(
         (r for r in members_list if r.get("user_id") == user_id and r.get("vvip_name") == vvip_name),
         None,
@@ -155,7 +155,7 @@ async def check_active_menu_callback(client, callback_query):
     if "init" in callback_query.data:
         ctx.ACTIVE_MEMBERS_CACHE = {}
 
-    vvip_list = (await ctx.db.getListVars(client.me.id, "list_vvip")) or []
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     btn_text_list = []
     for item in vvip_list:
         name, chat_id_norm, chat_id_promo = (
@@ -289,7 +289,7 @@ async def do_kick_active_callback(client, callback_query):
         await client.ban_chat_member(chat_id, user_id)
         await client.unban_chat_member(chat_id, user_id)
 
-        members_list = (await ctx.db.getListVars(client.me.id, "vvip_members")) or []
+        members_list = await ctx.db.getListVars(client.me.id, "vvip_members") or []
         record_to_remove = next(
             (r for r in members_list if r.get("user_id") == user_id and r.get("chat_id_kick") == chat_id),
             None,
