@@ -38,7 +38,7 @@ class BotManager:
 
             await client.start()
 
-            initialize_bot_services(client, self.db)
+            await initialize_bot_services(client, self.db)
 
             self.running_bots[client.me.id] = client
             log.info(f"Bot {client.me.first_name} (ID: {client.me.id}) berhasil diaktifkan.")
