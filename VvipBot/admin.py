@@ -1,5 +1,6 @@
 from . import *
-
+import tempfile
+import shutil
 
 @command(lambda ctx: filters.command("eval") & filters.user(ctx.owner_id))
 async def eval_bot_handler(client, message):
@@ -59,37 +60,44 @@ async def restore_database_handler(client, message):
 
     status_msg = await message.reply_text(lang.get("admin.restore.processing"))
     downloaded_zip_path = None
-    restored_files = []
-    
     try:
         downloaded_zip_path = await client.download_media(message.reply_to_message)
-        with zipfile.ZipFile(downloaded_zip_path, "r") as zf:
-            if not zf.namelist():
-                raise ValueError(lang.get("admin.restore.empty_zip"))
-
-            for filename_in_zip in zf.namelist():
-                zf.extract(filename_in_zip, path=".")
-
-                if filename_in_zip.endswith((".db", ".json")):
-                    db_path = getattr(ctx.db, "data_file", getattr(ctx.db, "db_file", ""))
-                    if db_path and os.path.exists(filename_in_zip) and filename_in_zip != db_path:
-                        if os.path.exists(db_path):
-                            os.remove(db_path)
-                        os.rename(filename_in_zip, db_path)
-                        restored_files.append(db_path)
-                    else:
-                        restored_files.append(filename_in_zip)
-
-                elif filename_in_zip.endswith(".env"):
-                    restored_files.append(filename_in_zip)
         
-        if not restored_files:
-             raise ValueError("Tidak ada file database atau .env yang ditemukan di dalam arsip.")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with zipfile.ZipFile(downloaded_zip_path, "r") as zf:
+                if not zf.namelist():
+                    raise ValueError(lang.get("admin.restore.empty_zip"))
+                zf.extractall(path=temp_dir)
+            
+            project_root = os.getcwd()
+            restored_files = []
+            
+            current_db_path = getattr(ctx.db, "data_file", getattr(ctx.db, "db_file", None))
+            
+            for root, _, files in os.walk(temp_dir):
+                for filename in files:
+                    source_path = os.path.join(root, filename)
+                    
+                    is_db_file = current_db_path and (filename.endswith('.db') or filename.endswith('.json'))
+                    is_env_file = filename.endswith('.env')
 
-        restored_files_str = ", ".join([f"`{f}`" for f in restored_files])
-        await status_msg.edit_text(lang.get("admin.restore.success", db_path=restored_files_str))
-        ctx.log.print(f"{ctx.log.GREEN}File-file berikut telah dipulihkan oleh admin: {restored_files_str}")
+                    destination_path = None
+                    if is_db_file:
+                        destination_path = current_db_path
+                    elif is_env_file:
+                        destination_path = os.path.join(project_root, filename)
 
+                    if destination_path:
+                        shutil.move(source_path, destination_path)
+                        restored_files.append(os.path.basename(destination_path))
+
+            if not restored_files:
+                raise ValueError("Tidak ada file database atau .env yang valid ditemukan dalam arsip.")
+
+            success_message = lang.get("admin.restore.success", db_path=", ".join(restored_files))
+            await status_msg.edit_text(success_message)
+            ctx.log.print(f"{ctx.log.GREEN}File-file berikut dipulihkan: {', '.join(restored_files)} oleh admin.")
+            
     except Exception as e:
         await status_msg.edit_text(lang.get("admin.restore.fail", e=str(e)))
         ctx.log.print(f"{ctx.log.RED}Restore failed: {e}")
