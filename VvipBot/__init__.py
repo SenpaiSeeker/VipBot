@@ -20,7 +20,7 @@ import pyrogram
 from nsdev import listen
 from pyrogram import filters
 
-from strings import Language
+from strings import Language, get_lang
 
 ALL_HANDLERS = []
 
@@ -45,7 +45,7 @@ def seller_only(func):
     async def wrapper(client, update, *args, **kwargs):
         user_id = update.from_user.id
 
-        seller_list = (await ctx.db.getListVars(ctx.owner_id, "seller_id_list")) or []
+        seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
 
         if user_id == ctx.owner_id or user_id in seller_list:
             return await func(client, update, *args, **kwargs)
@@ -68,13 +68,14 @@ async def is_bot_owner(client, user_id):
 
 async def check_new_user(client, message):
     user_id = message.from_user.id
-    user_list = (await ctx.db.getListVars(client.me.id, "user_ids")) or []
+    user_list = await ctx.db.getListVars(client.me.id, "user_ids") or []
     if user_id not in user_list:
         await ctx.db.setListVars(client.me.id, "user_ids", user_id)
-        owner_of_this_bot = (await ctx.db.getVars(client.me.id, "owner_id")) or ctx.owner_id
+        owner_of_this_bot = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
 
         try:
-            owner_lang = Language(ctx.db, owner_of_this_bot)
+            owner_lang_code = await get_lang(ctx.db, owner_of_this_bot)
+            owner_lang = Language(ctx.db, owner_of_this_bot, owner_lang_code)
             notification_text = owner_lang.get(
                 "bot_management.create.new_user_notification",
                 mention=client.me.mention,
@@ -134,12 +135,14 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
             continue
 
         async def handler_wrapper(original_func, c, u):
+            user_id_for_lang = 0
             if hasattr(u, "from_user") and u.from_user:
-                u.lang = Language(db_instance, u.from_user.id)
+                user_id_for_lang = u.from_user.id
             elif hasattr(u, "sender_chat") and u.sender_chat:
-                u.lang = Language(db_instance, u.sender_chat.id)
-            else:
-                u.lang = Language(db_instance, 0)
+                user_id_for_lang = u.sender_chat.id
+
+            lang_code = await get_lang(db_instance, user_id_for_lang)
+            u.lang = Language(db_instance, user_id_for_lang, lang_code)
 
             try:
                 await original_func(c, u)
