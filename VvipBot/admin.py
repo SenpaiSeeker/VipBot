@@ -465,16 +465,12 @@ async def list_all_users_callback(client, callback_query):
     i = 0
     while i < len(page_user_data):
         user1 = page_user_data[i]
-        btn1_text = lang.get(
-            "admin.list_users.send_message_button", name=user1.first_name[:10] if user1.first_name else user1.id
-        )
+        btn1_text = lang.get("admin.list_users.send_message_button", name=user1.first_name[:10] if user1.first_name else user1.id)
         btn1_str = f"| {btn1_text} - message_user_{user1.id}_{page} |"
 
         if i + 1 < len(page_user_data):
             user2 = page_user_data[i + 1]
-            btn2_text = lang.get(
-                "admin.list_users.send_message_button", name=user2.first_name[:10] if user2.first_name else user2.id
-            )
+            btn2_text = lang.get("admin.list_users.send_message_button", name=user2.first_name[:10] if user2.first_name else user2.id)
             btn2_str = f"| {btn2_text} - message_user_{user2.id}_{page};same |"
             btn_text_list.append(f"{btn1_str}{btn2_str}")
             i += 2
@@ -535,7 +531,7 @@ async def dashboard_command_handler(client, message):
     unique_users = set()
     bot_user_counts = {}
     for bot_data in all_bots_data:
-        bot_id = int(bot_data["name"])
+        bot_id = int(bot_data['name'])
         user_ids = await ctx.db.getListVars(bot_id, "user_ids") or []
         bot_user_counts[bot_id] = len(user_ids)
         for user_id in user_ids:
@@ -552,19 +548,18 @@ async def dashboard_command_handler(client, message):
 
     try:
         stats = client.ns.server.monitor.get_stats()
-        server_stats_text = lang.get(
-            "admin.dashboard.server_stats", cpu=stats.cpu_percent, ram=stats.ram_percent, disk=stats.disk_percent
-        )
+        server_stats_text = lang.get("admin.dashboard.server_stats",
+                                     cpu=stats.cpu_percent,
+                                     ram=stats.ram_percent,
+                                     disk=stats.disk_percent)
     except Exception as e:
         server_stats_text = lang.get("admin.dashboard.server_stats_fail", e=e)
 
-    dashboard_text = lang.get(
-        "admin.dashboard.panel",
-        total_bots=total_bots,
-        total_users=total_users,
-        top_bot=top_bot_info,
-        server_stats=server_stats_text,
-    )
+    dashboard_text = lang.get("admin.dashboard.panel",
+                              total_bots=total_bots,
+                              total_users=total_users,
+                              top_bot=top_bot_info,
+                              server_stats=server_stats_text)
 
     await msg.edit_text(dashboard_text)
 
@@ -578,9 +573,11 @@ async def broadcast_owners_handler(client, message):
         return await message.reply_text(lang.get("admin.broadcast_owners.usage"))
 
     all_bots_data = await ctx.db.getBots(is_token=True)
-    owner_ids_tasks = [ctx.db.getVars(int(bot["name"]), "owner_id") for bot in all_bots_data]
-    owner_ids_results = await asyncio.gather(*owner_ids_tasks)
-    owner_ids = {owner_id for owner_id in owner_ids_results if owner_id}
+    owner_ids = set()
+    for bot in all_bots_data:
+        owner_id = await ctx.db.getVars(int(bot['name']), "owner_id")
+        if owner_id:
+            owner_ids.add(owner_id)
 
     if not owner_ids:
         return await message.reply_text(lang.get("admin.broadcast_owners.no_owners"))
