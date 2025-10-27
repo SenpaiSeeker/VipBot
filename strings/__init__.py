@@ -13,8 +13,8 @@ if os.path.isdir(strings_path):
             LANGS[lang_code] = yaml.loadAndConvert(os.path.join(strings_path, file))
 
 
-def get_lang(db, user_id):
-    return db.getVars(user_id, "language", var_key="user_info") or "id"
+async def get_lang(db, user_id):
+    return (await db.getVars(user_id, "language", var_key="user_info")) or "id"
 
 
 def get_string(lang_code, key):
@@ -37,7 +37,10 @@ class Language:
     def __init__(self, db, user_id):
         self.db = db
         self.user_id = user_id
-        self.lang_code = get_lang(self.db, self.user_id)
+        self.lang_code = "id"
+
+    async def load(self):
+        self.lang_code = await get_lang(self.db, self.user_id)
 
     def get(self, key, *args, **kwargs):
         raw_string = get_string(self.lang_code, key)
