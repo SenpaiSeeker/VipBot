@@ -18,7 +18,6 @@ async def create_bot_callback(client, callback_query):
     await callback_query.message.delete()
 
     try:
-
         def ask(text):
             return client.ask(chat_id, f"{text}{lang.get('prompts.cancel_footer')}", timeout=600)
 
@@ -74,16 +73,13 @@ async def create_bot_callback(client, callback_query):
 async def list_my_bots_callback(client, callback_query):
     user_id = callback_query.from_user.id
     lang = callback_query.lang
-    all_bots = await ctx.db.getBots(is_token=True)
-    my_bots_tasks = [
-        (b, ctx.db.getVars(int(b["name"]), "owner_id")) for b in all_bots
-    ]
-    my_bots_results = await asyncio.gather(*(task for _, task in my_bots_tasks))
-    
-    my_bots = [
-        bot_data for (bot_data, owner_id) in zip([b for b, _ in my_bots_tasks], my_bots_results)
-        if (owner_id or 0) == user_id
-    ]
+
+    my_bots = []
+    all_bots_data = await ctx.db.getBots(is_token=True)
+    for b in all_bots_data:
+        owner = await ctx.db.getVars(int(b["name"]), "owner_id")
+        if (owner or 0) == user_id:
+            my_bots.append(b)
 
     if not my_bots:
         return await callback_query.answer(lang.get("bot_management.my_bots.empty"), show_alert=True)
