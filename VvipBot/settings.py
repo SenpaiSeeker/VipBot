@@ -116,7 +116,7 @@ async def broadcast_callback(client, callback_query):
         if ask_message.text and ask_message.text.lower() == "/batal":
             raise listen.UserCancelled
 
-        user_ids = (await ctx.db.getListVars(client.me.id, "user_ids")) or []
+        user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
         if not user_ids:
             return await client.send_message(chat_id, lang.get("settings.broadcast_no_users"))
 
@@ -254,7 +254,7 @@ async def delete_listvvip(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
     lang = callback_query.lang
-    vvip_list = (await ctx.db.getListVars(client.me.id, "list_vvip")) or []
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
     back_btn = f"| {lang.get('general.back_to_settings')} - settings |"
 
@@ -289,7 +289,7 @@ async def confirm_delete_vvip(client, callback_query):
     lang = callback_query.lang
     _, name = callback_query.data.split(" ", 1)
 
-    vvip_list = (await ctx.db.getListVars(client.me.id, "list_vvip")) or []
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     item_to_remove = next((item for item in vvip_list if item.get("name") == name), None)
 
     back_btn = f"| {lang.get('general.back_to_settings')} - delete_listvvip |"
@@ -522,18 +522,14 @@ async def list_coupons_callback(client, callback_query):
     lang = callback_query.lang
     page = int(callback_query.data.split("_")[2])
 
-    coupons = (await ctx.db.getListVars(client.me.id, "coupons")) or []
+    coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
 
     back_btn = f"| {lang.get('general.back')} - manage_coupons |"
 
     if not coupons:
         text = lang.get("coupons.list_empty")
         btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{back_btn}")
-        if callback_query.message.photo:
-            await callback_query.edit_message_caption(text, reply_markup=btn)
-        else:
-            await callback_query.edit_message_text(text, reply_markup=btn)
-        return
+        return await callback_query.edit_message_caption(text, reply_markup=btn)
 
     total_pages = len(coupons)
     page = max(0, min(page, total_pages - 1))
@@ -562,11 +558,7 @@ async def list_coupons_callback(client, callback_query):
 
     btn_text += back_btn
     btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
-    
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+    await callback_query.edit_message_caption(text, reply_markup=btn)
 
 
 @command(lambda ctx: filters.regex(r"^delete_coupon\s(.+)\s(\d+)"), handler_type="callback")
@@ -576,7 +568,7 @@ async def delete_coupon_callback(client, callback_query):
     lang = callback_query.lang
     _, code, page_str = callback_query.data.split()
 
-    coupons = (await ctx.db.getListVars(client.me.id, "coupons")) or []
+    coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
     coupon_to_remove = next((c for c in coupons if c.get("code") == code), None)
 
     if coupon_to_remove:
@@ -584,7 +576,7 @@ async def delete_coupon_callback(client, callback_query):
         await callback_query.answer(lang.get("coupons.delete_success"), show_alert=True)
 
     new_page = int(page_str)
-    remaining_coupons = (await ctx.db.getListVars(client.me.id, "coupons")) or []
+    remaining_coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
     if new_page >= len(remaining_coupons) and len(remaining_coupons) > 0:
         new_page = len(remaining_coupons) - 1
 
