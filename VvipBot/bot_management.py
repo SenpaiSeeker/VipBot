@@ -5,7 +5,7 @@ from . import *
 async def create_bot_callback(client, callback_query):
     user_id = callback_query.from_user.id
     lang = callback_query.lang
-    access_list = ctx.db.getListVars(client.me.id, "create_bot_access") or []
+    access_list = await ctx.db.getListVars(client.me.id, "create_bot_access") or []
 
     if user_id != ctx.owner_id and user_id not in access_list:
         owner_user = await client.get_users(ctx.owner_id)
@@ -53,13 +53,13 @@ async def create_bot_callback(client, callback_query):
         }
         await ctx.manager.start_bot(bot_data)
 
-        ctx.db.saveBot(new_bot_id, api_id, api_hash, token, is_token=True)
+        await ctx.db.saveBot(new_bot_id, api_id, api_hash, token, is_token=True)
         expiry_date = datetime.now(timezone.utc) + timedelta(days=30)
-        ctx.db.setVars(new_bot_id, "bot_expiration_date", expiry_date.isoformat())
-        ctx.db.setVars(new_bot_id, "owner_id", user_id)
+        await ctx.db.setVars(new_bot_id, "bot_expiration_date", expiry_date.isoformat())
+        await ctx.db.setVars(new_bot_id, "owner_id", user_id)
 
         if user_id != ctx.owner_id:
-            ctx.db.removeListVars(client.me.id, "create_bot_access", user_id)
+            await ctx.db.removeListVars(client.me.id, "create_bot_access", user_id)
 
         await msg.edit(lang.get("bot_management.create.success", name=new_bot_name.first_name))
     except listen.UserCancelled:
@@ -74,7 +74,7 @@ async def create_bot_callback(client, callback_query):
 async def list_my_bots_callback(client, callback_query):
     user_id = callback_query.from_user.id
     lang = callback_query.lang
-    my_bots = [b for b in ctx.db.getBots(is_token=True) if (ctx.db.getVars(int(b["name"]), "owner_id") or 0) == user_id]
+    my_bots = [b for b in await ctx.db.getBots(is_token=True) if (await ctx.db.getVars(int(b["name"]), "owner_id") or 0) == user_id]
     if not my_bots:
         return await callback_query.answer(lang.get("bot_management.my_bots.empty"), show_alert=True)
 
@@ -95,7 +95,7 @@ async def list_my_bots_callback(client, callback_query):
     except Exception:
         bot_name = f"ID {bot_id} ({lang.get('admin.allbots.error')})"
 
-    exp_date_str = ctx.db.getVars(bot_id, "bot_expiration_date")
+    exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
     days_left = (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days if exp_date_str else "N/A"
 
     text = lang.get(
@@ -127,7 +127,7 @@ async def manage_bot_callback(client, callback_query):
     bot_id_to_manage = int(callback_query.data.split(" ", 1)[1])
     user_id = callback_query.from_user.id
     lang = callback_query.lang
-    owner_of_target_bot = ctx.db.getVars(bot_id_to_manage, "owner_id") or 0
+    owner_of_target_bot = await ctx.db.getVars(bot_id_to_manage, "owner_id") or 0
 
     if user_id != owner_of_target_bot and user_id != ctx.owner_id:
         return await callback_query.answer(lang.get("general.not_your_bot"), show_alert=True)
@@ -140,7 +140,7 @@ async def manage_bot_callback(client, callback_query):
     except Exception:
         pass
 
-    exp_date_str = ctx.db.getVars(bot_id_to_manage, "bot_expiration_date")
+    exp_date_str = await ctx.db.getVars(bot_id_to_manage, "bot_expiration_date")
     days_left_text = lang.get("bot_management.manage.not_set")
     if exp_date_str:
         days_left = (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days
@@ -224,10 +224,10 @@ async def owner_approve_extension_callback(client, callback_query):
             30,
         )
 
-        exp_date_str = ctx.db.getVars(bot_id_to_extend, "bot_expiration_date")
+        exp_date_str = await ctx.db.getVars(bot_id_to_extend, "bot_expiration_date")
         current_exp_date = datetime.fromisoformat(exp_date_str) if exp_date_str else datetime.now(timezone.utc)
         new_exp_date = current_exp_date + timedelta(days=days_to_add)
-        ctx.db.setVars(bot_id_to_extend, "bot_expiration_date", new_exp_date.isoformat())
+        await ctx.db.setVars(bot_id_to_extend, "bot_expiration_date", new_exp_date.isoformat())
 
         await callback_query.edit_message_text(
             lang.get(
@@ -295,7 +295,7 @@ async def do_delete_bot_callback(client, callback_query):
     bot_id_to_manage = int(callback_query.data.split(" ", 1)[1])
     user_id = callback_query.from_user.id
     lang = callback_query.lang
-    owner_of_target_bot = ctx.db.getVars(bot_id_to_manage, "owner_id") or 0
+    owner_of_target_bot = await ctx.db.getVars(bot_id_to_manage, "owner_id") or 0
 
     if user_id != owner_of_target_bot and user_id != ctx.owner_id:
         return await callback_query.answer(lang.get("bot_management.delete.no_permission"), show_alert=True)
@@ -304,8 +304,8 @@ async def do_delete_bot_callback(client, callback_query):
 
     try:
         await ctx.manager.stop_bot(bot_id_to_manage)
-        ctx.db.removeBot(bot_id_to_manage)
-        ctx.db.removeAllVars(bot_id_to_manage)
+        await ctx.db.removeBot(bot_id_to_manage)
+        await ctx.db.removeAllVars(bot_id_to_manage)
         ctx.log.print(f"{ctx.log.ORANGE}Bot {bot_id_to_manage} telah dihapus oleh owner-nya ({user_id}).")
 
         btn_text = f"| {lang.get('general.back_to_bot_list')} - list_my_bots_0 |"

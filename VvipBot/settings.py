@@ -46,14 +46,14 @@ async def set_start_photo_callback(client, callback_query):
             if ask_photo_msg.text.lower() == "/batal":
                 raise listen.UserCancelled
             if ask_photo_msg.text.lower() == "/empty":
-                ctx.db.removeVars(client.me.id, "start_photo_id")
+                await ctx.db.removeVars(client.me.id, "start_photo_id")
                 return await client.send_message(chat_id, lang.get("settings.photo_emptied"), reply_markup=back_btn)
 
         if not ask_photo_msg.photo:
             return await client.send_message(chat_id, lang.get("settings.set_photo_fail"), reply_markup=back_btn)
 
         photo_id = ask_photo_msg.photo.sizes[-1].file_id
-        ctx.db.setVars(client.me.id, "start_photo_id", photo_id)
+        await ctx.db.setVars(client.me.id, "start_photo_id", photo_id)
         await client.send_message(chat_id, lang.get("settings.set_photo_success"), reply_markup=back_btn)
 
     except listen.UserCancelled:
@@ -86,10 +86,10 @@ async def set_start_text_callback(client, callback_query):
             raise listen.UserCancelled
 
         if ask_text_msg.text.lower() == "/empty":
-            ctx.db.removeVars(client.me.id, "start_text_template")
+            await ctx.db.removeVars(client.me.id, "start_text_template")
             return await client.send_message(chat_id, lang.get("settings.text_emptied"), reply_markup=back_btn)
 
-        ctx.db.setVars(client.me.id, "start_text_template", ask_text_msg.text)
+        await ctx.db.setVars(client.me.id, "start_text_template", ask_text_msg.text)
         await client.send_message(chat_id, lang.get("settings.set_text_success"), reply_markup=back_btn)
 
     except listen.UserCancelled:
@@ -116,7 +116,7 @@ async def broadcast_callback(client, callback_query):
         if ask_message.text and ask_message.text.lower() == "/batal":
             raise listen.UserCancelled
 
-        user_ids = ctx.db.getListVars(client.me.id, "user_ids") or []
+        user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
         if not user_ids:
             return await client.send_message(chat_id, lang.get("settings.broadcast_no_users"))
 
@@ -145,7 +145,7 @@ async def broadcast_callback(client, callback_query):
                 await send_to_user(user_id)
                 success_count += 1
             except Exception:
-                ctx.db.removeListVars(client.me.id, "user_ids", user_id)
+                await ctx.db.removeListVars(client.me.id, "user_ids", user_id)
                 fail_count += 1
             await asyncio.sleep(0.1)
 
@@ -238,7 +238,7 @@ async def setup_listvvip(client, callback_query):
             raise listen.UserCancelled
         vvip_data["normal_text"] = "" if normal_text_msg.text.lower() == "/skip" else normal_text_msg.text
 
-        ctx.db.setListVars(client.me.id, "list_vvip", vvip_data)
+        await ctx.db.setListVars(client.me.id, "list_vvip", vvip_data)
         await client.send_message(chat_id, lang.get("settings.setup_vvip.success", name=vvip_data["name"]))
 
     except listen.UserCancelled:
@@ -254,7 +254,7 @@ async def delete_listvvip(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
     lang = callback_query.lang
-    vvip_list = ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
     back_btn = f"| {lang.get('general.back_to_settings')} - settings |"
 
@@ -289,13 +289,13 @@ async def confirm_delete_vvip(client, callback_query):
     lang = callback_query.lang
     _, name = callback_query.data.split(" ", 1)
 
-    vvip_list = ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     item_to_remove = next((item for item in vvip_list if item.get("name") == name), None)
 
     back_btn = f"| {lang.get('general.back_to_settings')} - delete_listvvip |"
 
     if item_to_remove:
-        ctx.db.removeListVars(client.me.id, "list_vvip", item_to_remove)
+        await ctx.db.removeListVars(client.me.id, "list_vvip", item_to_remove)
         ctx.log.print(f"{ctx.log.ORANGE}Owner bot {client.me.id} menghapus VVIP: {name}")
         message = lang.get("settings.delete_vvip_success", name=name)
         btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{message}\n\n{back_btn}")
@@ -315,7 +315,7 @@ async def api_settings_callback(client, callback_query):
         return
     lang = callback_query.lang
 
-    saweria_username = ctx.db.getVars(client.me.id, "SAWERIA_USERNAME")
+    saweria_username = await ctx.db.getVars(client.me.id, "SAWERIA_USERNAME")
     if saweria_username:
         saweria_status = lang.get("settings.api_status_saweria_active", username=saweria_username)
     else:
@@ -323,7 +323,7 @@ async def api_settings_callback(client, callback_query):
 
     gemini_status = (
         lang.get("settings.api_status_active")
-        if ctx.db.getVars(client.me.id, "GEMINI_API_KEY")
+        if await ctx.db.getVars(client.me.id, "GEMINI_API_KEY")
         else lang.get("settings.api_status_inactive")
     )
 
@@ -380,9 +380,9 @@ async def set_api_key_prompt(client, callback_query):
 
                 saweria_user_id = user_data.result.userId
 
-                ctx.db.setVars(client.me.id, "SAWERIA_API_KEY", api_key_msg.text)
-                ctx.db.setVars(client.me.id, "SAWERIA_USERNAME", username_msg.text)
-                ctx.db.setVars(client.me.id, "SAWERIA_USER_ID", saweria_user_id)
+                await ctx.db.setVars(client.me.id, "SAWERIA_API_KEY", api_key_msg.text)
+                await ctx.db.setVars(client.me.id, "SAWERIA_USERNAME", username_msg.text)
+                await ctx.db.setVars(client.me.id, "SAWERIA_USER_ID", saweria_user_id)
                 await processing_msg.delete()
                 await client.send_message(chat_id, lang.get("settings.api_set_success_saweria"), reply_markup=back_btn)
                 key_name = "Saweria"
@@ -395,14 +395,14 @@ async def set_api_key_prompt(client, callback_query):
             key_value_msg = await ask(prompt)
             if key_value_msg.text and key_value_msg.text.lower() == "/batal":
                 raise listen.UserCancelled
-            ctx.db.setVars(client.me.id, key_name, key_value_msg.text)
+            await ctx.db.setVars(client.me.id, key_name, key_value_msg.text)
             await client.send_message(
                 chat_id, lang.get("settings.api_set_success", key_name=key_name), reply_markup=back_btn
             )
 
         from services import initialize_bot_services
 
-        initialize_bot_services(client, ctx.db)
+        initialize_bot_services(client, await ctx.db.
 
     except listen.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"), reply_markup=back_btn)
@@ -433,14 +433,14 @@ async def do_delete_api_keys(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
     lang = callback_query.lang
-    ctx.db.removeVars(client.me.id, "SAWERIA_API_KEY")
-    ctx.db.removeVars(client.me.id, "SAWERIA_USERNAME")
-    ctx.db.removeVars(client.me.id, "SAWERIA_USER_ID")
-    ctx.db.removeVars(client.me.id, "GEMINI_API_KEY")
+    await ctx.db.removeVars(client.me.id, "SAWERIA_API_KEY")
+    await ctx.db.removeVars(client.me.id, "SAWERIA_USERNAME")
+    await ctx.db.removeVars(client.me.id, "SAWERIA_USER_ID")
+    await ctx.db.removeVars(client.me.id, "GEMINI_API_KEY")
 
     from services import initialize_bot_services
 
-    initialize_bot_services(client, ctx.db)
+    initialize_bot_services(client, await ctx.db.
 
     await callback_query.answer(lang.get("settings.api_del_success"), show_alert=True)
     await api_settings_callback(client, callback_query)
@@ -506,7 +506,7 @@ async def add_coupon_callback(client, callback_query):
             "expiry_date": expiry_date,
         }
 
-        ctx.db.setListVars(client.me.id, "coupons", coupon_data)
+        await ctx.db.setListVars(client.me.id, "coupons", coupon_data)
         await client.send_message(chat_id, lang.get("coupons.add_success", code=code))
 
     except (listen.UserCancelled, asyncio.TimeoutError, ValueError) as e:
@@ -522,7 +522,7 @@ async def list_coupons_callback(client, callback_query):
     lang = callback_query.lang
     page = int(callback_query.data.split("_")[2])
 
-    coupons = ctx.db.getListVars(client.me.id, "coupons") or []
+    coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
 
     back_btn = f"| {lang.get('general.back')} - manage_coupons |"
 
@@ -568,15 +568,15 @@ async def delete_coupon_callback(client, callback_query):
     lang = callback_query.lang
     _, code, page_str = callback_query.data.split()
 
-    coupons = ctx.db.getListVars(client.me.id, "coupons") or []
+    coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
     coupon_to_remove = next((c for c in coupons if c.get("code") == code), None)
 
     if coupon_to_remove:
-        ctx.db.removeListVars(client.me.id, "coupons", coupon_to_remove)
+        await ctx.db.removeListVars(client.me.id, "coupons", coupon_to_remove)
         await callback_query.answer(lang.get("coupons.delete_success"), show_alert=True)
 
     new_page = int(page_str)
-    remaining_coupons = ctx.db.getListVars(client.me.id, "coupons") or []
+    remaining_coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
     if new_page >= len(remaining_coupons) and len(remaining_coupons) > 0:
         new_page = len(remaining_coupons) - 1
 

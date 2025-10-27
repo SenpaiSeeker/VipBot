@@ -67,7 +67,7 @@ async def restore_database_handler(client, message):
             db_filename_in_zip = zf.namelist()[0]
             zf.extractall(path=".")
 
-        db_path = getattr(ctx.db, "data_file", getattr(ctx.db, "db_file", ""))
+        db_path = getattr(await ctx.db. "data_file", getattr(await ctx.db. "db_file", ""))
         if db_path and os.path.exists(db_filename_in_zip) and db_filename_in_zip != db_path:
             if os.path.exists(db_path):
                 os.remove(db_path)
@@ -93,7 +93,7 @@ async def access_command_handler(client, message):
 
     try:
         target_user = await client.get_users(user_id_target)
-        access_list = ctx.db.getListVars(client.me.id, "create_bot_access") or []
+        access_list = await ctx.db.getListVars(client.me.id, "create_bot_access") or []
 
         status_text = (
             lang.get("admin.access.has_access") if target_user.id in access_list else lang.get("admin.access.no_access")
@@ -126,20 +126,20 @@ async def manage_access_callback(client, callback_query):
     try:
         target_user = await client.get_users(target_id)
         mention = client.ns.telegram.arg.getMention(target_user)
-        access_list = ctx.db.getListVars(client.me.id, "create_bot_access") or []
+        access_list = await ctx.db.getListVars(client.me.id, "create_bot_access") or []
 
         text = ""
         alert_text = ""
 
         if action == "give_access":
             if target_id not in access_list:
-                ctx.db.setListVars(client.me.id, "create_bot_access", target_id)
+                await ctx.db.setListVars(client.me.id, "create_bot_access", target_id)
             alert_text = lang.get("admin.access.give_success_alert", target_id=target_id)
             text = lang.get("admin.access.give_success_panel", mention=mention)
 
         elif action == "revoke_access":
             if target_id in access_list:
-                ctx.db.removeListVars(client.me.id, "create_bot_access", target_id)
+                await ctx.db.removeListVars(client.me.id, "create_bot_access", target_id)
             alert_text = lang.get("admin.access.revoke_success_alert", target_id=target_id)
             text = lang.get("admin.access.revoke_success_panel", mention=mention)
 
@@ -162,16 +162,16 @@ async def extend_command_handler(client, message):
         bot_id = int(bot_id_str)
         days_to_add = int(days_str)
 
-        exp_date_str = ctx.db.getVars(bot_id, "bot_expiration_date")
+        exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
         current_exp_date = datetime.fromisoformat(exp_date_str) if exp_date_str else datetime.now(timezone.utc)
         new_exp_date = current_exp_date + timedelta(days=days_to_add)
-        ctx.db.setVars(bot_id, "bot_expiration_date", new_exp_date.isoformat())
+        await ctx.db.setVars(bot_id, "bot_expiration_date", new_exp_date.isoformat())
 
         await message.reply_text(
             lang.get("admin.extend.success", bot_id=bot_id, new_date=new_exp_date.strftime("%d %b %Y"))
         )
 
-        owner_bot_id = ctx.db.getVars(bot_id, "owner_id")
+        owner_bot_id = await ctx.db.getVars(bot_id, "owner_id")
         if owner_bot_id:
             try:
                 bot_instance = ctx.manager.running_bots.get(bot_id)
@@ -186,7 +186,7 @@ async def extend_command_handler(client, message):
 
 
 async def _send_allbots_list(client, message_or_query, page):
-    all_bots = ctx.db.getBots(is_token=True)
+    all_bots = await ctx.db.getBots(is_token=True)
     lang = message_or_query.lang
 
     if not all_bots:
@@ -211,7 +211,7 @@ async def _send_allbots_list(client, message_or_query, page):
     except Exception:
         bot_name = f"ID {bot_id} {lang.get('admin.allbots.error')}"
 
-    owner_id = ctx.db.getVars(bot_id, "owner_id")
+    owner_id = await ctx.db.getVars(bot_id, "owner_id")
     owner_text = lang.get("admin.allbots.unknown")
     if owner_id:
         try:
@@ -220,7 +220,7 @@ async def _send_allbots_list(client, message_or_query, page):
         except Exception:
             owner_text = f"ID `{owner_id}`"
 
-    exp_date_str = ctx.db.getVars(bot_id, "bot_expiration_date")
+    exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
     days_left = (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days if exp_date_str else "N/A"
 
     text = lang.get(
@@ -270,7 +270,7 @@ async def refund_stars_callback(client, callback_query):
     try:
         refund_key = callback_query.data.split("_")[2]
         db_key = f"refund_{refund_key}"
-        refund_data = ctx.db.getVars(client.me.id, db_key)
+        refund_data = await ctx.db.getVars(client.me.id, db_key)
 
         if not refund_data:
             return await callback_query.edit_message_text(
@@ -294,7 +294,7 @@ async def refund_stars_callback(client, callback_query):
         await callback_query.edit_message_text(callback_query.message.text + lang.get("admin.refund.fail_text", e=e))
     finally:
         if db_key:
-            ctx.db.removeVars(client.me.id, db_key)
+            await ctx.db.removeVars(client.me.id, db_key)
 
 
 @command(lambda ctx: filters.regex(r"^stats_(\d+)"), handler_type="callback")
@@ -408,7 +408,7 @@ async def list_all_users_callback(client, callback_query):
 
     if is_refresh or bot_id not in ctx.all_users_cache:
         await callback_query.answer(lang.get("admin.list_users.refreshing_data"), show_alert=False)
-        user_ids = ctx.db.getListVars(bot_id, "user_ids") or []
+        user_ids = await ctx.db.getListVars(bot_id, "user_ids") or []
         user_data_cache = []
         if user_ids:
             for i in range(0, len(user_ids), 200):
@@ -529,14 +529,14 @@ async def dashboard_command_handler(client, message):
     lang = message.lang
     msg = await message.reply_text(lang.get("general.processing"))
 
-    all_bots_data = ctx.db.getBots(is_token=True)
+    all_bots_data = await ctx.db.getBots(is_token=True)
     total_bots = len(all_bots_data)
 
     unique_users = set()
     bot_user_counts = {}
     for bot_data in all_bots_data:
         bot_id = int(bot_data["name"])
-        user_ids = ctx.db.getListVars(bot_id, "user_ids") or []
+        user_ids = await ctx.db.getListVars(bot_id, "user_ids") or []
         bot_user_counts[bot_id] = len(user_ids)
         for user_id in user_ids:
             unique_users.add(user_id)
@@ -577,8 +577,8 @@ async def broadcast_owners_handler(client, message):
     if not broadcast_msg:
         return await message.reply_text(lang.get("admin.broadcast_owners.usage"))
 
-    all_bots_data = ctx.db.getBots(is_token=True)
-    owner_ids = {ctx.db.getVars(int(bot["name"]), "owner_id") for bot in all_bots_data}
+    all_bots_data = await ctx.db.getBots(is_token=True)
+    owner_ids = {await ctx.db.getVars(int(bot["name"]), "owner_id") for bot in all_bots_data}
     owner_ids.discard(None)
 
     if not owner_ids:
