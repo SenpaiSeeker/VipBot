@@ -139,9 +139,8 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
                 user_id = u.from_user.id
             elif hasattr(u, "sender_chat") and u.sender_chat:
                 user_id = u.sender_chat.id
-
-            lang_code = await db_instance.getVars(user_id, "language", var_key="user_info") or "id"
-            u.lang = Language(db_instance, user_id, lang_code)
+            
+            u.lang = await Language.create(db_instance, user_id)
 
             try:
                 await original_func(c, u)
