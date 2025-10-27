@@ -74,7 +74,7 @@ async def check_new_user(client, message):
         owner_of_this_bot = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
 
         try:
-            owner_lang = Language(await ctx.db. owner_of_this_bot)
+            owner_lang = Language(await ctx.db,, owner_of_this_bot)
             notification_text = owner_lang.get(
                 "bot_management.create.new_user_notification",
                 mention=client.me.mention,

@@ -200,7 +200,7 @@ async def manual_check_payment_callback(client, callback_query):
             asyncio.create_task(verify_user_join(client, user, target_chat_id, link_msg))
 
             owner_bot_id = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
-            owner_lang = Language(await ctx.db. owner_bot_id)
+            owner_lang = Language(await ctx.db,, owner_bot_id)
             await client.send_message(
                 owner_bot_id,
                 owner_lang.get(
@@ -402,7 +402,7 @@ async def successful_donation_handler(client, message):
     )
 
     owner_of_this_bot = await ctx.db.getVars(current_bot_id, "owner_id") or super_admin_id
-    owner_lang = Language(await ctx.db. owner_of_this_bot)
+    owner_lang = Language(await ctx.db,, owner_of_this_bot)
 
     main_bot_client = ctx.manager.main_bot_client
 
@@ -428,7 +428,7 @@ async def successful_donation_handler(client, message):
     except pyrogram.errors.UserIsBlocked:
         ctx.log.warning(f"Gagal kirim notif donasi, Owner {owner_of_this_bot} memblokir bot {current_bot_id}")
         if main_bot_client and owner_of_this_bot != super_admin_id:
-            super_admin_lang = Language(await ctx.db. super_admin_id)
+            super_admin_lang = Language(await ctx.db,, super_admin_id)
             await main_bot_client.send_message(
                 super_admin_id,
                 super_admin_lang.get(
