@@ -93,7 +93,7 @@ async def access_command_handler(client, message):
 
     try:
         target_user = await client.get_users(user_id_target)
-        access_list = (await ctx.db.getListVars(client.me.id, "create_bot_access")) or []
+        access_list = await ctx.db.getListVars(client.me.id, "create_bot_access") or []
 
         status_text = (
             lang.get("admin.access.has_access") if target_user.id in access_list else lang.get("admin.access.no_access")
@@ -126,7 +126,7 @@ async def manage_access_callback(client, callback_query):
     try:
         target_user = await client.get_users(target_id)
         mention = client.ns.telegram.arg.getMention(target_user)
-        access_list = (await ctx.db.getListVars(client.me.id, "create_bot_access")) or []
+        access_list = await ctx.db.getListVars(client.me.id, "create_bot_access") or []
 
         text = ""
         alert_text = ""
@@ -408,7 +408,7 @@ async def list_all_users_callback(client, callback_query):
 
     if is_refresh or bot_id not in ctx.all_users_cache:
         await callback_query.answer(lang.get("admin.list_users.refreshing_data"), show_alert=False)
-        user_ids = (await ctx.db.getListVars(bot_id, "user_ids")) or []
+        user_ids = await ctx.db.getListVars(bot_id, "user_ids") or []
         user_data_cache = []
         if user_ids:
             for i in range(0, len(user_ids), 200):
@@ -536,7 +536,7 @@ async def dashboard_command_handler(client, message):
     bot_user_counts = {}
     for bot_data in all_bots_data:
         bot_id = int(bot_data["name"])
-        user_ids = (await ctx.db.getListVars(bot_id, "user_ids")) or []
+        user_ids = await ctx.db.getListVars(bot_id, "user_ids") or []
         bot_user_counts[bot_id] = len(user_ids)
         for user_id in user_ids:
             unique_users.add(user_id)
@@ -580,8 +580,7 @@ async def broadcast_owners_handler(client, message):
     all_bots_data = await ctx.db.getBots(is_token=True)
     owner_ids_tasks = [ctx.db.getVars(int(bot["name"]), "owner_id") for bot in all_bots_data]
     owner_ids_results = await asyncio.gather(*owner_ids_tasks)
-    owner_ids = set(owner_ids_results)
-    owner_ids.discard(None)
+    owner_ids = {owner_id for owner_id in owner_ids_results if owner_id}
 
     if not owner_ids:
         return await message.reply_text(lang.get("admin.broadcast_owners.no_owners"))
