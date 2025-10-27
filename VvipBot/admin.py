@@ -59,22 +59,37 @@ async def restore_database_handler(client, message):
 
     status_msg = await message.reply_text(lang.get("admin.restore.processing"))
     downloaded_zip_path = None
+    restored_files = []
+    
     try:
         downloaded_zip_path = await client.download_media(message.reply_to_message)
         with zipfile.ZipFile(downloaded_zip_path, "r") as zf:
             if not zf.namelist():
                 raise ValueError(lang.get("admin.restore.empty_zip"))
-            db_filename_in_zip = zf.namelist()[0]
-            zf.extractall(path=".")
 
-        db_path = getattr(ctx.db, "data_file", getattr(ctx.db, "db_file", ""))
-        if db_path and os.path.exists(db_filename_in_zip) and db_filename_in_zip != db_path:
-            if os.path.exists(db_path):
-                os.remove(db_path)
-            os.rename(db_filename_in_zip, db_path)
+            for filename_in_zip in zf.namelist():
+                zf.extract(filename_in_zip, path=".")
 
-        await status_msg.edit_text(lang.get("admin.restore.success", db_path=db_path))
-        ctx.log.print(f"{ctx.log.GREEN}Database '{db_path}' restored by admin.")
+                if filename_in_zip.endswith((".db", ".json")):
+                    db_path = getattr(ctx.db, "data_file", getattr(ctx.db, "db_file", ""))
+                    if db_path and os.path.exists(filename_in_zip) and filename_in_zip != db_path:
+                        if os.path.exists(db_path):
+                            os.remove(db_path)
+                        os.rename(filename_in_zip, db_path)
+                        restored_files.append(db_path)
+                    else:
+                        restored_files.append(filename_in_zip)
+
+                elif filename_in_zip.endswith(".env"):
+                    restored_files.append(filename_in_zip)
+        
+        if not restored_files:
+             raise ValueError("Tidak ada file database atau .env yang ditemukan di dalam arsip.")
+
+        restored_files_str = ", ".join([f"`{f}`" for f in restored_files])
+        await status_msg.edit_text(lang.get("admin.restore.success", db_path=restored_files_str))
+        ctx.log.print(f"{ctx.log.GREEN}File-file berikut telah dipulihkan oleh admin: {restored_files_str}")
+
     except Exception as e:
         await status_msg.edit_text(lang.get("admin.restore.fail", e=str(e)))
         ctx.log.print(f"{ctx.log.RED}Restore failed: {e}")
