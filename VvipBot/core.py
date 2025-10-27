@@ -1,13 +1,14 @@
 from . import *
 
 
-async def get_start_keyboard_and_content(client, user):
+async def get_start_keyboard_and_content(client, update):
+    user = update.from_user
     is_owner = await is_bot_owner(client, user.id)
     is_main_bot = client.me.id == ctx.manager.main_bot_id
-    lang = ctx.L(ctx.db, user.id)
+    lang = update.lang
 
     main_text_template = await ctx.db.getVars(client.me.id, "start_text_template")
-    photo_id = (await ctx.db.getVars(client.me.id, "start_photo_id")) or "https://files.catbox.moe/ozzvtz.jpg"
+    photo_id = await ctx.db.getVars(client.me.id, "start_photo_id") or "https://files.catbox.moe/ozzvtz.jpg"
 
     if not main_text_template:
         key = "start.welcome_main_bot" if is_main_bot else "start.welcome_clone_bot"
@@ -40,13 +41,13 @@ async def get_start_keyboard_and_content(client, user):
 @command(lambda ctx: filters.command("start") & filters.private)
 async def start_bot(client, message):
     await check_new_user(client, message)
-    btn, txt, photo_id = await get_start_keyboard_and_content(client, message.from_user)
+    btn, txt, photo_id = await get_start_keyboard_and_content(client, message)
     await message.reply_photo(photo=photo_id, caption=txt, reply_markup=btn)
 
 
 @command(lambda ctx: filters.regex("^start$"), handler_type="callback")
 async def start_callback(client, callback_query):
-    btn, txt, photo_id = await get_start_keyboard_and_content(client, callback_query.from_user)
+    btn, txt, photo_id = await get_start_keyboard_and_content(client, callback_query)
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
@@ -96,8 +97,11 @@ async def set_lang_callback(client, callback_query):
 async def change_lang_callback(client, callback_query):
     lang_code = callback_query.data.split("_")[-1]
     await ctx.db.setVars(callback_query.from_user.id, "language", lang_code, var_key="user_info")
-    lang = ctx.L(ctx.db, callback_query.from_user.id)
-    await callback_query.answer(lang.get("lang.selected"), show_alert=True)
+    
+    new_lang_code = await get_lang(ctx.db, callback_query.from_user.id)
+    callback_query.lang = Language(ctx.db, callback_query.from_user.id, new_lang_code)
+
+    await callback_query.answer(callback_query.lang.get("lang.selected"), show_alert=True)
     await start_callback(client, callback_query)
 
 
@@ -112,7 +116,7 @@ async def close_panel_callback(client, callback_query):
 @command(lambda ctx: filters.regex("^list_vvip$"), handler_type="callback")
 async def list_vvip_bot(client, callback_query):
     lang = callback_query.lang
-    vvip_list = (await ctx.db.getListVars(client.me.id, "list_vvip")) or []
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
     back_btn_text = f"| {lang.get('general.back_to_main_menu')} - start |"
 
@@ -198,7 +202,7 @@ async def gemini_bot_ai(client, callback_query):
                 )
 
             elif mode == "chatbot":
-                vvip_list = (await ctx.db.getListVars(client.me.id, "list_vvip")) or []
+                vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
                 vvip_info_text = ""
                 if vvip_list:
                     vvip_info_text = "\n".join(
@@ -303,7 +307,7 @@ async def renew_subscription_callback(client, callback_query):
     lang = callback_query.lang
     name = callback_query.data.split(" ", 1)[1]
 
-    vvip_list = (await ctx.db.getListVars(client.me.id, "list_vvip")) or []
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     item = next((v for v in vvip_list if v.get("name") == name), None)
 
     if not item:
