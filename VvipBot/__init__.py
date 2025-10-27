@@ -1,9 +1,9 @@
 import asyncio
 import glob
+import random
 import importlib
 import math
 import os
-import random
 import sys
 import traceback
 import uuid
@@ -20,7 +20,7 @@ import pyrogram
 from nsdev import listen
 from pyrogram import filters
 
-from strings import Language, get_lang
+from strings import Language
 
 ALL_HANDLERS = []
 
@@ -74,8 +74,7 @@ async def check_new_user(client, message):
         owner_of_this_bot = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
 
         try:
-            owner_lang_code = await get_lang(ctx.db, owner_of_this_bot)
-            owner_lang = Language(ctx.db, owner_of_this_bot, owner_lang_code)
+            owner_lang = await Language.create(ctx.db, owner_of_this_bot)
             notification_text = owner_lang.get(
                 "bot_management.create.new_user_notification",
                 mention=client.me.mention,
@@ -135,14 +134,14 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
             continue
 
         async def handler_wrapper(original_func, c, u):
-            user_id_for_lang = 0
+            user_id = 0
             if hasattr(u, "from_user") and u.from_user:
-                user_id_for_lang = u.from_user.id
+                user_id = u.from_user.id
             elif hasattr(u, "sender_chat") and u.sender_chat:
-                user_id_for_lang = u.sender_chat.id
+                user_id = u.sender_chat.id
 
-            lang_code = await get_lang(db_instance, user_id_for_lang)
-            u.lang = Language(db_instance, user_id_for_lang, lang_code)
+            lang_code = await db_instance.getVars(user_id, "language", var_key="user_info") or "id"
+            u.lang = Language(db_instance, user_id, lang_code)
 
             try:
                 await original_func(c, u)
