@@ -4,7 +4,7 @@ from . import *
 
 
 async def verify_user_join(client, user, chat_id, link_msg):
-    lang = ctx.L(await ctx.db. user.id)
+    lang = ctx.L(ctx.db, user.id)
     verification_timeout = 600
     start_time = time()
     is_joined = False
@@ -32,7 +32,7 @@ async def verify_user_join(client, user, chat_id, link_msg):
 
 
 async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code=None):
-    lang = ctx.L(await ctx.db. user.id)
+    lang = ctx.L(ctx.db, user.id)
     saweria_service = getattr(client, "services", None) and client.services.saweria
 
     if not saweria_service:
@@ -143,7 +143,7 @@ async def manual_check_payment_callback(client, callback_query):
 
             await ctx.db.removeVars(client.me.id, order_id)
 
-            vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+            vvip_list = (await ctx.db.getListVars(client.me.id, "list_vvip")) or []
             item_found = next((item for item in vvip_list if item.get("name") == name), None)
             if not item_found:
                 raise ValueError(lang.get("payment.check.category_missing", name=name))
@@ -180,7 +180,7 @@ async def manual_check_payment_callback(client, callback_query):
                 member_data["expiry_date"] = expiry_date.isoformat()
 
             if coupon_code:
-                coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
+                coupons = (await ctx.db.getListVars(client.me.id, "coupons")) or []
                 for c in coupons:
                     if c.get("code") == coupon_code:
                         c["uses_left"] = c.get("uses_left", 1) - 1
@@ -199,8 +199,8 @@ async def manual_check_payment_callback(client, callback_query):
             await callback_query.message.delete()
             asyncio.create_task(verify_user_join(client, user, target_chat_id, link_msg))
 
-            owner_bot_id = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
-            owner_lang = Language(await ctx.db,, owner_bot_id)
+            owner_bot_id = (await ctx.db.getVars(client.me.id, "owner_id")) or ctx.owner_id
+            owner_lang = Language(ctx.db, owner_bot_id)
             await client.send_message(
                 owner_bot_id,
                 owner_lang.get(
@@ -223,7 +223,7 @@ async def manual_check_payment_callback(client, callback_query):
 async def notes_data(client, callback_query):
     lang = callback_query.lang
     name = callback_query.data.split(" ", 1)[1]
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = (await ctx.db.getListVars(client.me.id, "list_vvip")) or []
     item = next((v for v in vvip_list if v.get("name") == name), None)
 
     back_btn_text = f"| {lang.get('general.back_to_vvip_list')} - list_vvip |"
@@ -261,7 +261,7 @@ async def notes_data(client, callback_query):
 async def promo_detail(client, callback_query):
     lang = callback_query.lang
     name = callback_query.data.split(" ", 1)[1]
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = (await ctx.db.getListVars(client.me.id, "list_vvip")) or []
     item = next((v for v in vvip_list if v.get("name") == name), None)
 
     back_btn_text = f"| {lang.get('general.back_to_vvip_list')} - list_vvip |"
@@ -312,7 +312,7 @@ async def apply_coupon_callback(client, callback_query):
             raise listen.UserCancelled
 
         coupon_code = ask_msg.text.upper()
-        coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
+        coupons = (await ctx.db.getListVars(client.me.id, "coupons")) or []
         coupon = next((c for c in coupons if c.get("code") == coupon_code), None)
 
         if not coupon:
@@ -401,8 +401,8 @@ async def successful_donation_handler(client, message):
         text=lang.get("payment.donation.success_msg", name=user.first_name, stars=stars_donated),
     )
 
-    owner_of_this_bot = await ctx.db.getVars(current_bot_id, "owner_id") or super_admin_id
-    owner_lang = Language(await ctx.db,, owner_of_this_bot)
+    owner_of_this_bot = (await ctx.db.getVars(current_bot_id, "owner_id")) or super_admin_id
+    owner_lang = Language(ctx.db, owner_of_this_bot)
 
     main_bot_client = ctx.manager.main_bot_client
 
@@ -428,7 +428,7 @@ async def successful_donation_handler(client, message):
     except pyrogram.errors.UserIsBlocked:
         ctx.log.warning(f"Gagal kirim notif donasi, Owner {owner_of_this_bot} memblokir bot {current_bot_id}")
         if main_bot_client and owner_of_this_bot != super_admin_id:
-            super_admin_lang = Language(await ctx.db,, super_admin_id)
+            super_admin_lang = Language(ctx.db, super_admin_id)
             await main_bot_client.send_message(
                 super_admin_id,
                 super_admin_lang.get(
@@ -451,7 +451,7 @@ async def renew_subscription_callback(client, callback_query):
     lang = callback_query.lang
     name = callback_query.data.split(" ", 1)[1]
 
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = (await ctx.db.getListVars(client.me.id, "list_vvip")) or []
     item = next((v for v in vvip_list if v.get("name") == name), None)
 
     if not item:
