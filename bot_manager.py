@@ -6,7 +6,7 @@ from nsdev import LoggerHandler
 
 import VvipBot as handlers
 from services import initialize_bot_services
-from strings import Language
+from strings import Language, get_lang
 
 log = LoggerHandler()
 
@@ -38,7 +38,7 @@ class BotManager:
 
             await client.start()
 
-            await initialize_bot_services(client, self.db)
+            initialize_bot_services(client, self.db)
 
             self.running_bots[client.me.id] = client
             log.info(f"Bot {client.me.first_name} (ID: {client.me.id}) berhasil diaktifkan.")
@@ -73,7 +73,7 @@ class BotManager:
             await asyncio.sleep(60 * 60)
             log.info(f"Menjalankan pemeriksaan masa aktif bot...")
 
-            all_bot_ids = [bot["name"] for bot in (await self.db.getBots(is_token=True))]
+            all_bot_ids = [bot["name"] for bot in await self.db.getBots(is_token=True)]
 
             for bot_id_str in all_bot_ids:
                 bot_id = int(bot_id_str)
@@ -162,14 +162,14 @@ class BotManager:
             log.info(f"Menjalankan pemeriksaan langganan anggota...")
 
             now = datetime.now(timezone.utc)
-            all_bot_ids = [int(bot["name"]) for bot in (await self.db.getBots(is_token=True))]
+            all_bot_ids = [int(bot["name"]) for bot in await self.db.getBots(is_token=True)]
 
             for bot_id in all_bot_ids:
                 bot_client = self.running_bots.get(bot_id)
                 if not bot_client or not bot_client.is_connected:
                     continue
 
-                members = (await self.db.getListVars(bot_id, "vvip_members")) or []
+                members = await self.db.getListVars(bot_id, "vvip_members") or []
                 members_to_keep = []
 
                 for member in members:
@@ -180,8 +180,8 @@ class BotManager:
 
                     expiry_date = datetime.fromisoformat(expiry_date_str)
                     user_id = member["user_id"]
-                    lang = Language(self.db, user_id)
-                    await lang.load()
+                    lang_code = await get_lang(self.db, user_id)
+                    lang = Language(self.db, user_id, lang_code)
 
                     if now > expiry_date:
                         try:
