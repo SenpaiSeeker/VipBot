@@ -5,7 +5,7 @@ from . import *
 async def create_bot_callback(client, callback_query):
     user_id = callback_query.from_user.id
     lang = callback_query.lang
-    access_list = (await ctx.db.getListVars(client.me.id, "create_bot_access")) or []
+    access_list = await ctx.db.getListVars(client.me.id, "create_bot_access") or []
 
     if user_id != ctx.owner_id and user_id not in access_list:
         owner_user = await client.get_users(ctx.owner_id)
@@ -74,13 +74,16 @@ async def create_bot_callback(client, callback_query):
 async def list_my_bots_callback(client, callback_query):
     user_id = callback_query.from_user.id
     lang = callback_query.lang
-
     all_bots = await ctx.db.getBots(is_token=True)
     my_bots_tasks = [
         (b, ctx.db.getVars(int(b["name"]), "owner_id")) for b in all_bots
     ]
     my_bots_results = await asyncio.gather(*(task for _, task in my_bots_tasks))
-    my_bots = [bot_data for (bot_data, owner_id) in zip([b for b, _ in my_bots_tasks], my_bots_results) if (owner_id or 0) == user_id]
+    
+    my_bots = [
+        bot_data for (bot_data, owner_id) in zip([b for b, _ in my_bots_tasks], my_bots_results)
+        if (owner_id or 0) == user_id
+    ]
 
     if not my_bots:
         return await callback_query.answer(lang.get("bot_management.my_bots.empty"), show_alert=True)
@@ -134,7 +137,7 @@ async def manage_bot_callback(client, callback_query):
     bot_id_to_manage = int(callback_query.data.split(" ", 1)[1])
     user_id = callback_query.from_user.id
     lang = callback_query.lang
-    owner_of_target_bot = (await ctx.db.getVars(bot_id_to_manage, "owner_id")) or 0
+    owner_of_target_bot = await ctx.db.getVars(bot_id_to_manage, "owner_id") or 0
 
     if user_id != owner_of_target_bot and user_id != ctx.owner_id:
         return await callback_query.answer(lang.get("general.not_your_bot"), show_alert=True)
@@ -302,12 +305,12 @@ async def do_delete_bot_callback(client, callback_query):
     bot_id_to_manage = int(callback_query.data.split(" ", 1)[1])
     user_id = callback_query.from_user.id
     lang = callback_query.lang
-    owner_of_target_bot = (await ctx.db.getVars(bot_id_to_manage, "owner_id")) or 0
+    owner_of_target_bot = await ctx.db.getVars(bot_id_to_manage, "owner_id") or 0
 
     if user_id != owner_of_target_bot and user_id != ctx.owner_id:
         return await callback_query.answer(lang.get("bot_management.delete.no_permission"), show_alert=True)
 
-    await callback_query.edit_message_text(lang.get("bot_management.delete.processing", bot_id=bot_id_to_manage))
+    await callback_query.edit_message_caption(lang.get("bot_management.delete.processing", bot_id=bot_id_to_manage))
 
     try:
         await ctx.manager.stop_bot(bot_id_to_manage)
@@ -316,9 +319,9 @@ async def do_delete_bot_callback(client, callback_query):
         ctx.log.print(f"{ctx.log.ORANGE}Bot {bot_id_to_manage} telah dihapus oleh owner-nya ({user_id}).")
 
         btn_text = f"| {lang.get('general.back_to_bot_list')} - list_my_bots_0 |"
-        await callback_query.edit_message_text(
+        await callback_query.edit_message_caption(
             lang.get("bot_management.delete.success", id=bot_id_to_manage),
             reply_markup=client.ns.telegram.button.create_inline_keyboard(btn_text)[0],
         )
     except Exception as e:
-        await callback_query.edit_message_text(lang.get("bot_management.delete.fail", e=e))
+        await callback_query.edit_message_caption(lang.get("bot_management.delete.fail", e=e))
