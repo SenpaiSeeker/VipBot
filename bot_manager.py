@@ -38,7 +38,7 @@ class BotManager:
 
             await client.start()
 
-            initialize_bot_services(client, self.db)
+            await initialize_bot_services(client, self.db)
 
             self.running_bots[client.me.id] = client
             log.info(f"Bot {client.me.first_name} (ID: {client.me.id}) berhasil diaktifkan.")
@@ -181,6 +181,7 @@ class BotManager:
                     expiry_date = datetime.fromisoformat(expiry_date_str)
                     user_id = member["user_id"]
                     lang = Language(self.db, user_id)
+                    await lang.load()
 
                     if now > expiry_date:
                         try:
@@ -210,7 +211,7 @@ class BotManager:
                                 await bot_client.send_message(user_id, txt, reply_markup=btn)
                                 await self.db.setVars(user_id, f"{last_notif_key}_{bot_id}", today_str)
                             except Exception as e:
-                                log.print(f"{ctx.log.RED}Gagal kirim notif perpanjangan ke {user_id}: {e}")
+                                log.print(f"{log.RED}Gagal kirim notif perpanjangan ke {user_id}: {e}")
 
                     members_to_keep.append(member)
 
