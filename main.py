@@ -47,7 +47,7 @@ async def main():
         log.print(f"{log.MAGENTA}Developed by NorSodikin")
         await app.start()
         log.info(f"Bot utama '{app.me.first_name}' berhasil dimulai.")
-        initialize_bot_services(app, db)
+        await initialize_bot_services(app, db)
 
         manager.main_bot_client = app
         manager.main_bot_id = app.me.id
