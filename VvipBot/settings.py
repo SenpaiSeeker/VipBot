@@ -396,7 +396,7 @@ async def set_api_key_prompt(client, callback_query):
             )
 
         from services import initialize_bot_services
-        initialize_bot_services(client, ctx.db)
+        await initialize_bot_services(client, ctx.db)
 
     except listen.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"), reply_markup=back_btn)
