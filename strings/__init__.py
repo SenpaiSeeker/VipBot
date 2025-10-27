@@ -14,7 +14,7 @@ if os.path.isdir(strings_path):
 
 
 async def get_lang(db, user_id):
-    return (await db.getVars(user_id, "language", var_key="user_info")) or "id"
+    return await db.getVars(user_id, "language", var_key="user_info") or "id"
 
 
 def get_string(lang_code, key):
@@ -34,13 +34,15 @@ def get_string(lang_code, key):
 
 
 class Language:
-    def __init__(self, db, user_id):
+    def __init__(self, db, user_id, lang_code):
         self.db = db
         self.user_id = user_id
-        self.lang_code = "id"
+        self.lang_code = lang_code
 
-    async def load(self):
-        self.lang_code = await get_lang(self.db, self.user_id)
+    @classmethod
+    async def create(cls, db, user_id):
+        lang_code = await get_lang(db, user_id)
+        return cls(db, user_id, lang_code)
 
     def get(self, key, *args, **kwargs):
         raw_string = get_string(self.lang_code, key)
