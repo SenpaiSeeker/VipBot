@@ -48,11 +48,11 @@ class BotManager:
 
             log.print(f"{log.RED}Gagal memulai bot {bot_id}: {e}")
             if any(err in error_str for err in common_errors):
-                self.db.removeBot(bot_id)
+                await self.db.removeBot(bot_id)
                 log.debug(f"Data bot {bot_id} dihapus karena token tidak valid/terblokir.")
 
     async def start_all_bots(self):
-        all_bots_data = self.db.getBots(is_token=True)
+        all_bots_data = await self.db.getBots(is_token=True)
         tasks = [self.start_bot(bot_data) for bot_data in all_bots_data]
         await asyncio.gather(*tasks)
 
@@ -73,12 +73,12 @@ class BotManager:
             await asyncio.sleep(60 * 60)
             log.info(f"Menjalankan pemeriksaan masa aktif bot...")
 
-            all_bot_ids = [bot["name"] for bot in self.db.getBots(is_token=True)]
+            all_bot_ids = [bot["name"] for bot in (await self.db.getBots(is_token=True))]
 
             for bot_id_str in all_bot_ids:
                 bot_id = int(bot_id_str)
                 try:
-                    expiry_date_str = self.db.getVars(bot_id, "bot_expiration_date")
+                    expiry_date_str = await self.db.getVars(bot_id, "bot_expiration_date")
                     if not expiry_date_str:
                         continue
 
@@ -86,7 +86,7 @@ class BotManager:
                     time_remaining = expiry_date - datetime.now(timezone.utc)
                     days_left = time_remaining.days
 
-                    owner_id = self.db.getVars(bot_id, "owner_id")
+                    owner_id = await self.db.getVars(bot_id, "owner_id")
                     if not owner_id:
                         continue
 
@@ -109,15 +109,15 @@ class BotManager:
                             log.print(f"{log.RED}Gagal mengirim notifikasi kedaluwarsa ke owner {owner_id}: {e}")
 
                         await self.stop_bot(bot_id)
-                        self.db.removeBot(bot_id)
-                        self.db.removeAllVars(bot_id)
+                        await self.db.removeBot(bot_id)
+                        await self.db.removeAllVars(bot_id)
                         log.warning(f"Bot {bot_id} telah dihapus karena kedaluwarsa.")
                         continue
 
                     target_warning_days = [10, 5, 3, 1]
                     if days_left in target_warning_days:
                         last_notif_date_key = "last_warning_notification_date"
-                        last_notif_date_str = self.db.getVars(bot_id, last_notif_date_key)
+                        last_notif_date_str = await self.db.getVars(bot_id, last_notif_date_key)
                         today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
                         if last_notif_date_str != today_str:
@@ -140,7 +140,7 @@ class BotManager:
                                 )
 
                                 await main_client.send_message(owner_id, warning_message)
-                                self.db.setVars(bot_id, last_notif_date_key, today_str)
+                                await self.db.setVars(bot_id, last_notif_date_key, today_str)
                                 log.print(
                                     f"{log.CYAN}Mengirim notifikasi sisa {days_left} hari ke owner {owner_id} untuk bot {bot_id}"
                                 )
@@ -149,8 +149,8 @@ class BotManager:
 
                     elif days_left > 10:
                         last_notif_date_key = "last_warning_notification_date"
-                        if self.db.getVars(bot_id, last_notif_date_key):
-                            self.db.removeVars(bot_id, last_notif_date_key)
+                        if await self.db.getVars(bot_id, last_notif_date_key):
+                            await self.db.removeVars(bot_id, last_notif_date_key)
                             log.info(f"Mereset flag tanggal notifikasi untuk bot {bot_id}.")
 
                 except Exception as e:
@@ -162,14 +162,14 @@ class BotManager:
             log.info(f"Menjalankan pemeriksaan langganan anggota...")
 
             now = datetime.now(timezone.utc)
-            all_bot_ids = [int(bot["name"]) for bot in self.db.getBots(is_token=True)]
+            all_bot_ids = [int(bot["name"]) for bot in (await self.db.getBots(is_token=True))]
 
             for bot_id in all_bot_ids:
                 bot_client = self.running_bots.get(bot_id)
                 if not bot_client or not bot_client.is_connected:
                     continue
 
-                members = self.db.getListVars(bot_id, "vvip_members") or []
+                members = (await self.db.getListVars(bot_id, "vvip_members")) or []
                 members_to_keep = []
 
                 for member in members:
@@ -199,7 +199,7 @@ class BotManager:
                     time_left = expiry_date - now
                     if timedelta(days=2) < time_left <= timedelta(days=3):
                         last_notif_key = "last_renewal_notification_date"
-                        last_notif_date_str = self.db.getVars(user_id, f"{last_notif_key}_{bot_id}")
+                        last_notif_date_str = await self.db.getVars(user_id, f"{last_notif_key}_{bot_id}")
                         today_str = now.strftime("%Y-%m-%d")
 
                         if last_notif_date_str != today_str:
@@ -208,14 +208,14 @@ class BotManager:
                                     f"{lang.get('subscription.renewal_reminder', name=member['vvip_name'], days=time_left.days)}\n\n| {lang.get('subscription.renew_button')} - renew_sub {member['vvip_name']} |"
                                 )
                                 await bot_client.send_message(user_id, txt, reply_markup=btn)
-                                self.db.setVars(user_id, f"{last_notif_key}_{bot_id}", today_str)
+                                await self.db.setVars(user_id, f"{last_notif_key}_{bot_id}", today_str)
                             except Exception as e:
-                                log.print(f"{log.RED}Gagal kirim notif perpanjangan ke {user_id}: {e}")
+                                log.print(f"{ctx.log.RED}Gagal kirim notif perpanjangan ke {user_id}: {e}")
 
                     members_to_keep.append(member)
 
                 if len(members_to_keep) != len(members):
-                    self.db.removeVars(bot_id, "vvip_members")
+                    await self.db.removeVars(bot_id, "vvip_members")
                     if members_to_keep:
                         for m in members_to_keep:
-                            self.db.setListVars(bot_id, "vvip_members", m)
+                            await self.db.setListVars(bot_id, "vvip_members", m)
