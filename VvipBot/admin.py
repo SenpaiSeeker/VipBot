@@ -623,7 +623,6 @@ async def list_all_users_callback(client, callback_query):
 
 
 @command(lambda ctx: filters.regex(r"^message_user_(\d+)_(\d+)"), handler_type="callback")
-@bot_owner_only
 async def message_user_callback(client, callback_query):
     lang = callback_query.lang
     target_user_id, page = map(int, callback_query.data.split("_")[2:])
