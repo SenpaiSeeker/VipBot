@@ -1,6 +1,8 @@
-from . import *
-import tempfile
 import shutil
+import tempfile
+
+from . import *
+
 
 @command(lambda ctx: filters.command("eval") & filters.user(ctx.owner_id))
 async def eval_bot_handler(client, message):
@@ -62,24 +64,24 @@ async def restore_database_handler(client, message):
     downloaded_zip_path = None
     try:
         downloaded_zip_path = await client.download_media(message.reply_to_message)
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             with zipfile.ZipFile(downloaded_zip_path, "r") as zf:
                 if not zf.namelist():
                     raise ValueError(lang.get("admin.restore.empty_zip"))
                 zf.extractall(path=temp_dir)
-            
+
             project_root = os.getcwd()
             restored_files = []
-            
+
             current_db_path = getattr(ctx.db, "data_file", getattr(ctx.db, "db_file", None))
-            
+
             for root, _, files in os.walk(temp_dir):
                 for filename in files:
                     source_path = os.path.join(root, filename)
-                    
-                    is_db_file = current_db_path and (filename.endswith('.db') or filename.endswith('.json'))
-                    is_env_file = filename.endswith('.env')
+
+                    is_db_file = current_db_path and (filename.endswith(".db") or filename.endswith(".json"))
+                    is_env_file = filename.endswith(".env")
 
                     destination_path = None
                     if is_db_file:
@@ -97,7 +99,7 @@ async def restore_database_handler(client, message):
             success_message = lang.get("admin.restore.success", db_path=", ".join(restored_files))
             await status_msg.edit_text(success_message)
             ctx.log.print(f"{ctx.log.GREEN}File-file berikut dipulihkan: {', '.join(restored_files)} oleh admin.")
-            
+
     except Exception as e:
         await status_msg.edit_text(lang.get("admin.restore.fail", e=str(e)))
         ctx.log.print(f"{ctx.log.RED}Restore failed: {e}")
@@ -488,12 +490,16 @@ async def list_all_users_callback(client, callback_query):
     i = 0
     while i < len(page_user_data):
         user1 = page_user_data[i]
-        btn1_text = lang.get("admin.list_users.send_message_button", name=user1.first_name[:10] if user1.first_name else user1.id)
+        btn1_text = lang.get(
+            "admin.list_users.send_message_button", name=user1.first_name[:10] if user1.first_name else user1.id
+        )
         btn1_str = f"| {btn1_text} - message_user_{user1.id}_{page} |"
 
         if i + 1 < len(page_user_data):
             user2 = page_user_data[i + 1]
-            btn2_text = lang.get("admin.list_users.send_message_button", name=user2.first_name[:10] if user2.first_name else user2.id)
+            btn2_text = lang.get(
+                "admin.list_users.send_message_button", name=user2.first_name[:10] if user2.first_name else user2.id
+            )
             btn2_str = f"| {btn2_text} - message_user_{user2.id}_{page};same |"
             btn_text_list.append(f"{btn1_str}{btn2_str}")
             i += 2
@@ -554,7 +560,7 @@ async def dashboard_command_handler(client, message):
     unique_users = set()
     bot_user_counts = {}
     for bot_data in all_bots_data:
-        bot_id = int(bot_data['name'])
+        bot_id = int(bot_data["name"])
         user_ids = await ctx.db.getListVars(bot_id, "user_ids") or []
         bot_user_counts[bot_id] = len(user_ids)
         for user_id in user_ids:
@@ -571,18 +577,19 @@ async def dashboard_command_handler(client, message):
 
     try:
         stats = client.ns.server.monitor.get_stats()
-        server_stats_text = lang.get("admin.dashboard.server_stats",
-                                     cpu=stats.cpu_percent,
-                                     ram=stats.ram_percent,
-                                     disk=stats.disk_percent)
+        server_stats_text = lang.get(
+            "admin.dashboard.server_stats", cpu=stats.cpu_percent, ram=stats.ram_percent, disk=stats.disk_percent
+        )
     except Exception as e:
         server_stats_text = lang.get("admin.dashboard.server_stats_fail", e=e)
 
-    dashboard_text = lang.get("admin.dashboard.panel",
-                              total_bots=total_bots,
-                              total_users=total_users,
-                              top_bot=top_bot_info,
-                              server_stats=server_stats_text)
+    dashboard_text = lang.get(
+        "admin.dashboard.panel",
+        total_bots=total_bots,
+        total_users=total_users,
+        top_bot=top_bot_info,
+        server_stats=server_stats_text,
+    )
 
     await msg.edit_text(dashboard_text)
 
@@ -598,7 +605,7 @@ async def broadcast_owners_handler(client, message):
     all_bots_data = await ctx.db.getBots(is_token=True)
     owner_ids = set()
     for bot in all_bots_data:
-        owner_id = await ctx.db.getVars(int(bot['name']), "owner_id")
+        owner_id = await ctx.db.getVars(int(bot["name"]), "owner_id")
         if owner_id:
             owner_ids.add(owner_id)
 

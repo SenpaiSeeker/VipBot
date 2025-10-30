@@ -1,9 +1,9 @@
 import asyncio
 import glob
-import random
 import importlib
 import math
 import os
+import random
 import sys
 import traceback
 import uuid
@@ -139,7 +139,7 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
                 user_id = u.from_user.id
             elif hasattr(u, "sender_chat") and u.sender_chat:
                 user_id = u.sender_chat.id
-            
+
             u.lang = await Language.create(db_instance, user_id)
 
             try:

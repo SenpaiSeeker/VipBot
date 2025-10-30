@@ -18,6 +18,7 @@ async def create_bot_callback(client, callback_query):
     await callback_query.message.delete()
 
     try:
+
         def ask(text):
             return client.ask(chat_id, f"{text}{lang.get('prompts.cancel_footer')}", timeout=600)
 

@@ -1,20 +1,18 @@
 import asyncio
+import logging
 import os
 import signal
-import sys
 import traceback
-import logging
 
 import pyrogram
-from tornado.ioloop import IOLoop
 from nsdev import CustomLogHandler, LoggerHandler
+from tornado.ioloop import IOLoop
 
 import VvipBot as handlers
 from bot_manager import BotManager
 from config import API_HASH, API_ID, BOT_TOKEN, OWNER_ID
 from database import db, schedule
 from services import initialize_bot_services
-
 
 log = LoggerHandler()
 
@@ -88,6 +86,7 @@ def stop_all_clients():
 
 
 if __name__ == "__main__":
+
     def handle_exit_signal(sig, frame):
         log.print(f"{log.ORANGE}Menerima sinyal berhenti ({sig})...")
         IOLoop.current().add_callback_from_signal(stop_all_clients)

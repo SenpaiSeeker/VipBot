@@ -1,5 +1,7 @@
-from . import *
 import base64
+
+from . import *
+
 
 async def verify_user_join(client, user, chat_id, link_msg):
     lang = await ctx.L.create(ctx.db, user.id)
@@ -58,15 +60,17 @@ async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code
             email=fakeinfo.email,
             message=f"Pembelian {names} ({tipe}) via @{client.me.username}",
         )
-        
+
         if not (hasattr(pay, "result") and hasattr(pay.result, "status") and pay.result.status is True):
-            error_msg = pay.result.msg if hasattr(pay, "result") and hasattr(pay.result, "msg") else "Unknown Saweria API error"
+            error_msg = (
+                pay.result.msg if hasattr(pay, "result") and hasattr(pay.result, "msg") else "Unknown Saweria API error"
+            )
             raise Exception(f"API payment gateway mengembalikan error: {error_msg}")
 
         result = pay.result.data
         payment_id = result.id
         order_id = str(uuid.uuid4())
-        
+
         order_data = f"{payment_id}|{names}|{tipe}"
         if coupon_code:
             order_data += f"|{coupon_code}"
@@ -75,16 +79,15 @@ async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code
 
         qr_image_base64 = result.qr_image.split(",", 1)[1]
         qr_bytes = base64.b64decode(qr_image_base64)
-        
+
         jakarta_tz = ZoneInfo("Asia/Jakarta")
         try:
             expired_dt_naive = datetime.strptime(result.expired_at, "%d/%m/%Y %H:%M:%S")
             expired_dt_utc = expired_dt_naive.replace(tzinfo=timezone.utc)
             expired_dt_jakarta = expired_dt_utc.astimezone(jakarta_tz)
-            expire_str = expired_dt_jakarta.strftime('%H:%M:%S %Z')
+            expire_str = expired_dt_jakarta.strftime("%H:%M:%S %Z")
         except (ValueError, TypeError):
             expire_str = "15 menit"
-
 
         if qr_bytes:
             caption = lang.get(
@@ -97,7 +100,7 @@ async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code
             )
             btn_text = f"| {lang.get('payment.check.confirm_button')} - confirm_payment {order_id} |"
             btn, _ = client.ns.telegram.button.create_inline_keyboard(btn_text)
-            
+
             await client.send_photo(user.id, photo=BytesIO(qr_bytes), caption=caption, reply_markup=btn)
         else:
             raise Exception(lang.get("payment.pay.qr_fail"))
@@ -111,7 +114,7 @@ async def manual_check_payment_callback(client, callback_query):
     order_id = callback_query.data.split(" ", 1)[1]
     user = callback_query.from_user
     lang = callback_query.lang
-    
+
     saweria_service = getattr(client, "services", None) and client.services.saweria
     if not saweria_service:
         return await callback_query.answer(lang.get("payment.pay.service_inactive_alert"), show_alert=True)
@@ -125,17 +128,19 @@ async def manual_check_payment_callback(client, callback_query):
     name = ref_parts[1]
     tipe = ref_parts[2]
     coupon_code = ref_parts[3] if len(ref_parts) > 3 else None
-    
+
     saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
     if not saweria_user_id:
-        return await callback_query.answer(lang.get("general.error", e="SAWERIA_USER_ID not configured."), show_alert=True)
+        return await callback_query.answer(
+            lang.get("general.error", e="SAWERIA_USER_ID not configured."), show_alert=True
+        )
 
     try:
         pay_check = await saweria_service.check_payment(user_id=saweria_user_id, payment_id=payment_id)
 
         if hasattr(pay_check, "result") and getattr(pay_check.result, "status", False) is True:
             await callback_query.edit_message_reply_markup(None)
-            
+
             await ctx.db.removeVars(client.me.id, order_id)
 
             vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
@@ -157,7 +162,9 @@ async def manual_check_payment_callback(client, callback_query):
                 link = invite_link_obj.invite_link
             except Exception as e:
                 ctx.log.print(f"{ctx.log.RED}Gagal membuat invite link untuk {target_chat_id}: {e}")
-                raise Exception("Gagal membuat link undangan. Pastikan bot adalah admin di grup tujuan dengan hak 'Invite Users'.")
+                raise Exception(
+                    "Gagal membuat link undangan. Pastikan bot adalah admin di grup tujuan dengan hak 'Invite Users'."
+                )
 
             member_data = {
                 "user_id": user.id,
@@ -206,7 +213,7 @@ async def manual_check_payment_callback(client, callback_query):
             )
         else:
             await callback_query.answer(lang.get("payment.check.not_paid"), show_alert=True)
-            
+
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED}Error manual-check {order_id}: {e}")
         await callback_query.answer(lang.get("general.error", e=e), show_alert=True)
@@ -329,7 +336,10 @@ async def apply_coupon_callback(client, callback_query):
         final_amount = max(0, int(final_amount))
 
         await client.send_message(
-            chat_id, lang.get("coupons.success_applied", code=coupon_code, original=f"{original_amount:,}", final=f"{final_amount:,}")
+            chat_id,
+            lang.get(
+                "coupons.success_applied", code=coupon_code, original=f"{original_amount:,}", final=f"{final_amount:,}"
+            ),
         )
 
         await _create_payment_invoice(client, callback_query.from_user, name, tipe, final_amount, coupon_code)
