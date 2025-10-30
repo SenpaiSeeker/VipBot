@@ -1,8 +1,6 @@
-import shutil
-import tempfile
-
 from . import *
-
+import tempfile
+import shutil
 
 @command(lambda ctx: filters.command("eval") & filters.user(ctx.owner_id))
 async def eval_bot_handler(client, message):
@@ -64,24 +62,24 @@ async def restore_database_handler(client, message):
     downloaded_zip_path = None
     try:
         downloaded_zip_path = await client.download_media(message.reply_to_message)
-
+        
         with tempfile.TemporaryDirectory() as temp_dir:
             with zipfile.ZipFile(downloaded_zip_path, "r") as zf:
                 if not zf.namelist():
                     raise ValueError(lang.get("admin.restore.empty_zip"))
                 zf.extractall(path=temp_dir)
-
+            
             project_root = os.getcwd()
             restored_files = []
-
+            
             current_db_path = getattr(ctx.db, "data_file", getattr(ctx.db, "db_file", None))
-
+            
             for root, _, files in os.walk(temp_dir):
                 for filename in files:
                     source_path = os.path.join(root, filename)
-
-                    is_db_file = current_db_path and (filename.endswith(".db") or filename.endswith(".json"))
-                    is_env_file = filename.endswith(".env")
+                    
+                    is_db_file = current_db_path and (filename.endswith('.db') or filename.endswith('.json'))
+                    is_env_file = filename.endswith('.env')
 
                     destination_path = None
                     if is_db_file:
@@ -99,7 +97,7 @@ async def restore_database_handler(client, message):
             success_message = lang.get("admin.restore.success", db_path=", ".join(restored_files))
             await status_msg.edit_text(success_message)
             ctx.log.print(f"{ctx.log.GREEN}File-file berikut dipulihkan: {', '.join(restored_files)} oleh admin.")
-
+            
     except Exception as e:
         await status_msg.edit_text(lang.get("admin.restore.fail", e=str(e)))
         ctx.log.print(f"{ctx.log.RED}Restore failed: {e}")
@@ -265,8 +263,11 @@ async def _send_allbots_list(client, message_or_query, page):
         next_page = (page + 1) % total_pages
         btn_text += f"| {lang.get('admin.allbots.prev_button')} - allbots_{prev_page} | | {lang.get('admin.allbots.next_button')} - allbots_{next_page};same |\n"
 
+    btn_text += f"| {lang.get('admin.allbots.delete_button')} - confirm_delete_bot_{bot_id} |\n"
+    btn_text += f"| {lang.get('admin.allbots.manage_duration_button')} - manage_duration_bot_{bot_id}_{page} |\n"
     btn_text += f"| {lang.get('general.close_panel')} - close_panel |"
-    btn, _ = client.ns.telegram.button.create_inline_keyboard(btn_text)
+    
+    btn, _ = client.ns.telegram.button.create_inline_keyboard(f"DUMMY\n{btn_text}")
 
     if isinstance(message_or_query, pyrogram.types.Message):
         await message_or_query.reply_text(text, reply_markup=btn)
@@ -281,7 +282,108 @@ async def allbots_command_handler(client, message):
 
 @command(lambda ctx: filters.regex(r"^allbots_(\-?\d+)"), handler_type="callback")
 async def allbots_callback_handler(client, callback_query):
+    if callback_query.from_user.id != ctx.owner_id: return
     page = int(callback_query.data.split("_")[1])
+    await _send_allbots_list(client, callback_query, page)
+
+
+@command(lambda ctx: filters.regex(r"^confirm_delete_bot_(\d+)"), handler_type="callback")
+async def confirm_delete_bot_callback(client, callback_query):
+    if callback_query.from_user.id != ctx.owner_id: return
+    lang = callback_query.lang
+    bot_id = int(callback_query.matches[0].group(1))
+    text = lang.get("admin.allbots.delete_confirm", bot_id=bot_id)
+    btn_text = f"| {lang.get('admin.allbots.delete_confirm_yes')} - do_delete_bot_{bot_id} | | {lang.get('admin.allbots.delete_confirm_no')} - allbots_0 |"
+    markup, _ = client.ns.telegram.button.create_inline_keyboard(f"DUMMY\n{btn_text}")
+    await callback_query.edit_message_text(text, reply_markup=markup)
+
+
+@command(lambda ctx: filters.regex(r"^do_delete_bot_(\d+)"), handler_type="callback")
+async def do_delete_bot_callback(client, callback_query):
+    if callback_query.from_user.id != ctx.owner_id: return
+    lang = callback_query.lang
+    bot_id = int(callback_query.matches[0].group(1))
+    await callback_query.edit_message_text(lang.get("admin.allbots.deleting"))
+    try:
+        await ctx.manager.stop_bot(bot_id)
+        await asyncio.sleep(1)
+        await ctx.db.removeBot(bot_id)
+        await ctx.db.removeAllVars(bot_id)
+        await _send_allbots_list(client, callback_query, 0)
+        await callback_query.answer(lang.get("admin.allbots.delete_success"), show_alert=True)
+    except Exception as e:
+        await callback_query.answer(lang.get("admin.allbots.delete_fail", e=e), show_alert=True)
+        await _send_allbots_list(client, callback_query, 0)
+
+
+@command(lambda ctx: filters.regex(r"^manage_duration_bot_(\d+)_(\d+)"), handler_type="callback")
+async def manage_duration_callback(client, callback_query):
+    if callback_query.from_user.id != ctx.owner_id: return
+    lang = callback_query.lang
+    bot_id, page = map(int, callback_query.data.split("_")[3:])
+    text = lang.get("admin.allbots.manage_duration_panel", bot_id=bot_id)
+    btn_text = f"""
+    | {lang.get('admin.allbots.add_duration_button')} - extend_bot_{bot_id}_{page} |
+    | {lang.get('admin.allbots.reduce_duration_button')} - reduce_bot_{bot_id}_{page} |
+    | {lang.get('general.back')} - allbots_{page} |
+    """
+    markup, _ = client.ns.telegram.button.create_inline_keyboard(f"DUMMY\n{btn_text}")
+    await callback_query.edit_message_text(text, reply_markup=markup)
+
+
+@command(lambda ctx: filters.regex(r"^extend_bot_(\d+)_(\d+)"), handler_type="callback")
+async def extend_bot_callback(client, callback_query):
+    if callback_query.from_user.id != ctx.owner_id: return
+    lang = callback_query.lang
+    bot_id, page = map(int, callback_query.data.split("_")[2:])
+    text = lang.get("admin.allbots.add_duration_select", bot_id=bot_id)
+    buttons = [{"text": f"+{days} {lang.get('admin.allbots.days')}", "callback_data": f"do_extend_{bot_id}_{days}_{page}"} for days in [7, 30, 90]]
+    back_button = [{"text": lang.get('general.back'), "callback_data": f"manage_duration_bot_{bot_id}_{page}"}]
+    markup = client.ns.telegram.button.build_button_grid(buttons=buttons, row_inline=back_button, row_width=3)
+    await callback_query.edit_message_text(text, reply_markup=markup)
+
+
+@command(lambda ctx: filters.regex(r"^do_extend_(\d+)_(\d+)_(\d+)"), handler_type="callback")
+async def do_extend_bot_callback(client, callback_query):
+    if callback_query.from_user.id != ctx.owner_id: return
+    lang = callback_query.lang
+    bot_id, days, page = map(int, callback_query.data.split("_")[2:])
+    current_expiry_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
+    start_date = datetime.now(timezone.utc)
+    if current_expiry_str:
+        current_expiry = datetime.fromisoformat(current_expiry_str)
+        if current_expiry > start_date:
+            start_date = current_expiry
+    new_expiry_date = start_date + timedelta(days=days)
+    await ctx.db.setVars(bot_id, "bot_expiration_date", new_expiry_date.isoformat())
+    await callback_query.answer(lang.get("admin.allbots.add_duration_success", days=days, bot_id=bot_id), show_alert=True)
+    await _send_allbots_list(client, callback_query, page)
+
+
+@command(lambda ctx: filters.regex(r"^reduce_bot_(\d+)_(\d+)"), handler_type="callback")
+async def reduce_bot_callback(client, callback_query):
+    if callback_query.from_user.id != ctx.owner_id: return
+    lang = callback_query.lang
+    bot_id, page = map(int, callback_query.data.split("_")[2:])
+    text = lang.get("admin.allbots.reduce_duration_select", bot_id=bot_id)
+    buttons = [{"text": f"-{days} {lang.get('admin.allbots.days')}", "callback_data": f"do_reduce_{bot_id}_{days}_{page}"} for days in [7, 30, 90]]
+    back_button = [{"text": lang.get('general.back'), "callback_data": f"manage_duration_bot_{bot_id}_{page}"}]
+    markup = client.ns.telegram.button.build_button_grid(buttons=buttons, row_inline=back_button, row_width=3)
+    await callback_query.edit_message_text(text, reply_markup=markup)
+
+
+@command(lambda ctx: filters.regex(r"^do_reduce_(\d+)_(\d+)_(\d+)"), handler_type="callback")
+async def do_reduce_bot_callback(client, callback_query):
+    if callback_query.from_user.id != ctx.owner_id: return
+    lang = callback_query.lang
+    bot_id, days, page = map(int, callback_query.data.split("_")[2:])
+    current_expiry_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
+    if not current_expiry_str:
+        return await callback_query.answer(lang.get("admin.allbots.reduce_duration_no_expiry"), show_alert=True)
+    current_expiry = datetime.fromisoformat(current_expiry_str)
+    new_expiry_date = current_expiry - timedelta(days=days)
+    await ctx.db.setVars(bot_id, "bot_expiration_date", new_expiry_date.isoformat())
+    await callback_query.answer(lang.get("admin.allbots.reduce_duration_success", days=days, bot_id=bot_id), show_alert=True)
     await _send_allbots_list(client, callback_query, page)
 
 
@@ -490,16 +592,12 @@ async def list_all_users_callback(client, callback_query):
     i = 0
     while i < len(page_user_data):
         user1 = page_user_data[i]
-        btn1_text = lang.get(
-            "admin.list_users.send_message_button", name=user1.first_name[:10] if user1.first_name else user1.id
-        )
+        btn1_text = lang.get("admin.list_users.send_message_button", name=user1.first_name[:10] if user1.first_name else user1.id)
         btn1_str = f"| {btn1_text} - message_user_{user1.id}_{page} |"
 
         if i + 1 < len(page_user_data):
             user2 = page_user_data[i + 1]
-            btn2_text = lang.get(
-                "admin.list_users.send_message_button", name=user2.first_name[:10] if user2.first_name else user2.id
-            )
+            btn2_text = lang.get("admin.list_users.send_message_button", name=user2.first_name[:10] if user2.first_name else user2.id)
             btn2_str = f"| {btn2_text} - message_user_{user2.id}_{page};same |"
             btn_text_list.append(f"{btn1_str}{btn2_str}")
             i += 2
@@ -525,10 +623,8 @@ async def list_all_users_callback(client, callback_query):
 
 
 @command(lambda ctx: filters.regex(r"^message_user_(\d+)_(\d+)"), handler_type="callback")
+@bot_owner_only
 async def message_user_callback(client, callback_query):
-    if not await is_bot_owner(client, callback_query.from_user.id):
-        return await callback_query.answer(callback_query.lang.get("general.no_access"), show_alert=True)
-
     lang = callback_query.lang
     target_user_id, page = map(int, callback_query.data.split("_")[2:])
 
@@ -560,7 +656,7 @@ async def dashboard_command_handler(client, message):
     unique_users = set()
     bot_user_counts = {}
     for bot_data in all_bots_data:
-        bot_id = int(bot_data["name"])
+        bot_id = int(bot_data['name'])
         user_ids = await ctx.db.getListVars(bot_id, "user_ids") or []
         bot_user_counts[bot_id] = len(user_ids)
         for user_id in user_ids:
@@ -577,19 +673,18 @@ async def dashboard_command_handler(client, message):
 
     try:
         stats = client.ns.server.monitor.get_stats()
-        server_stats_text = lang.get(
-            "admin.dashboard.server_stats", cpu=stats.cpu_percent, ram=stats.ram_percent, disk=stats.disk_percent
-        )
+        server_stats_text = lang.get("admin.dashboard.server_stats",
+                                     cpu=stats.cpu_percent,
+                                     ram=stats.ram_percent,
+                                     disk=stats.disk_percent)
     except Exception as e:
         server_stats_text = lang.get("admin.dashboard.server_stats_fail", e=e)
 
-    dashboard_text = lang.get(
-        "admin.dashboard.panel",
-        total_bots=total_bots,
-        total_users=total_users,
-        top_bot=top_bot_info,
-        server_stats=server_stats_text,
-    )
+    dashboard_text = lang.get("admin.dashboard.panel",
+                              total_bots=total_bots,
+                              total_users=total_users,
+                              top_bot=top_bot_info,
+                              server_stats=server_stats_text)
 
     await msg.edit_text(dashboard_text)
 
@@ -605,7 +700,7 @@ async def broadcast_owners_handler(client, message):
     all_bots_data = await ctx.db.getBots(is_token=True)
     owner_ids = set()
     for bot in all_bots_data:
-        owner_id = await ctx.db.getVars(int(bot["name"]), "owner_id")
+        owner_id = await ctx.db.getVars(int(bot['name']), "owner_id")
         if owner_id:
             owner_ids.add(owner_id)
 
