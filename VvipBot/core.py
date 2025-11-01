@@ -302,24 +302,3 @@ async def process_donation_callback(client, callback_query):
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED}Gagal mengirim invoice Stars: {e}")
         await callback_query.answer(lang.get("payment.donation.invoice_fail"), show_alert=True)
-
-
-@command(lambda ctx: filters.regex(r"^renew_sub_(\d+)"), handler_type="callback")
-async def renew_subscription_callback(client, callback_query):
-    lang = callback_query.lang
-    item_index = int(callback_query.matches[0].group(1))
-
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-    try:
-        item = vvip_list[item_index]
-    except IndexError:
-        return await callback_query.answer(lang.get("payment.notes.not_found"), show_alert=True)
-
-    if item.get("promo_price", 0) > 0:
-        callback_query.data = f"promo_detail_{item_index}"
-        callback_query.matches = [re.match(r"promo_detail_(\d+)", callback_query.data)]
-        await promo_detail(client, callback_query)
-    else:
-        callback_query.data = f"notes_{item_index}"
-        callback_query.matches = [re.match(r"notes_(\d+)", callback_query.data)]
-        await notes_data(client, callback_query)
