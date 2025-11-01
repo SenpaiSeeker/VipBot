@@ -31,9 +31,17 @@ async def verify_user_join(client, user, chat_id, link_msg):
         await client.send_message(user.id, lang.get("payment.check.link_expired"))
 
 
-async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code=None):
+async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon_code=None):
     lang = await ctx.L.create(ctx.db, user.id)
     saweria_service = getattr(client, "services", None) and client.services.saweria
+    
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    try:
+        item = vvip_list[item_index]
+        names = item.get("name")
+    except IndexError:
+        await client.send_message(user.id, lang.get("payment.notes.not_found"))
+        return
 
     if not saweria_service:
         if await is_bot_owner(client, user.id):
@@ -71,7 +79,7 @@ async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code
         payment_id = result.id
         order_id = str(uuid.uuid4())
 
-        order_data = f"{payment_id}|{names}|{tipe}"
+        order_data = f"{payment_id}|{item_index}|{tipe}"
         if coupon_code:
             order_data += f"|{coupon_code}"
 
@@ -125,7 +133,7 @@ async def manual_check_payment_callback(client, callback_query):
 
     ref_parts = ref_data_str.split("|")
     payment_id = ref_parts[0]
-    name = ref_parts[1]
+    item_index = int(ref_parts[1])
     tipe = ref_parts[2]
     coupon_code = ref_parts[3] if len(ref_parts) > 3 else None
 
@@ -144,9 +152,11 @@ async def manual_check_payment_callback(client, callback_query):
             await ctx.db.removeVars(client.me.id, order_id)
 
             vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-            item_found = next((item for item in vvip_list if item.get("name") == name), None)
-            if not item_found:
-                raise ValueError(lang.get("payment.check.category_missing", name=name))
+            try:
+                item_found = vvip_list[item_index]
+                name = item_found.get("name")
+            except IndexError:
+                raise ValueError(lang.get("payment.check.category_missing", name=f"index {item_index}"))
 
             is_promo = tipe == "promo"
             target_chat_id = item_found.get("chat_id_promo") if is_promo else item_found.get("chat_id_normal")
@@ -219,16 +229,21 @@ async def manual_check_payment_callback(client, callback_query):
         await callback_query.answer(lang.get("general.error", e=e), show_alert=True)
 
 
-@command(lambda ctx: filters.regex(r"^notes\s(.+)"), handler_type="callback")
+@command(lambda ctx: filters.regex(r"^notes_(\d+)"), handler_type="callback")
 async def notes_data(client, callback_query):
     lang = callback_query.lang
-    name = callback_query.data.split(" ", 1)[1]
+    item_index = int(callback_query.matches[0].group(1))
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-    item = next((v for v in vvip_list if v.get("name") == name), None)
     
-    back_button = {"text": lang.get('general.back_to_vvip_list'), "callback_data": "list_vvip"}
+    layout = [[{"text": lang.get('general.back_to_vvip_list'), "callback_data": "list_vvip"}]]
+
+    try:
+        item = vvip_list[item_index]
+    except IndexError:
+        item = None
 
     if item:
+        name = item.get("name")
         price_val = item.get("price", 0)
         normal_text = item.get("normal_text", "")
 
@@ -239,10 +254,10 @@ async def notes_data(client, callback_query):
         )
         
         layout = [
-            [{"text": lang.get('payment.notes.pay_button'), "callback_data": f"paynow {name} normal {price_val}"}],
+            [{"text": lang.get('payment.notes.pay_button'), "callback_data": f"paynow_{item_index}_normal_{price_val}"}],
             [
-                {"text": lang.get('coupons.use_button'), "callback_data": f"apply_coupon {name} normal {price_val}"},
-                back_button
+                {"text": lang.get('coupons.use_button'), "callback_data": f"apply_coupon_{item_index}_normal_{price_val}"},
+                {"text": lang.get('general.back_to_vvip_list'), "callback_data": "list_vvip"}
             ]
         ]
         
@@ -253,24 +268,28 @@ async def notes_data(client, callback_query):
         return await callback_query.edit_message_text(desc, reply_markup=btn)
 
     text = lang.get("payment.notes.not_found")
-    btn = client.ns.telegram.button.build_button_grid([[back_button]])
-    
+    btn = client.ns.telegram.button.build_button_grid(layout)
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
         await callback_query.edit_message_text(text, reply_markup=btn)
 
 
-@command(lambda ctx: filters.regex(r"^promo_detail\s(.+)"), handler_type="callback")
+@command(lambda ctx: filters.regex(r"^promo_detail_(\d+)"), handler_type="callback")
 async def promo_detail(client, callback_query):
     lang = callback_query.lang
-    name = callback_query.data.split(" ", 1)[1]
+    item_index = int(callback_query.matches[0].group(1))
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-    item = next((v for v in vvip_list if v.get("name") == name), None)
 
-    back_button = {"text": lang.get('general.back_to_vvip_list'), "callback_data": "list_vvip"}
+    layout = [[{"text": lang.get('general.back_to_vvip_list'), "callback_data": "list_vvip"}]]
+    
+    try:
+        item = vvip_list[item_index]
+    except IndexError:
+        item = None
 
     if item and item.get("promo_price", 0) > 0:
+        name = item.get("name")
         promo_price_val = item.get("promo_price", 0)
         promo_text = item.get("promo_text", "")
 
@@ -281,13 +300,12 @@ async def promo_detail(client, callback_query):
         )
 
         layout = [
-            [{"text": lang.get('payment.promo.pay_button'), "callback_data": f"paynow {name} promo {promo_price_val}"}],
+            [{"text": lang.get('payment.promo.pay_button'), "callback_data": f"paynow_{item_index}_promo_{promo_price_val}"}],
             [
-                {"text": lang.get('coupons.use_button'), "callback_data": f"apply_coupon {name} promo {promo_price_val}"},
-                back_button
+                {"text": lang.get('coupons.use_button'), "callback_data": f"apply_coupon_{item_index}_promo_{promo_price_val}"},
+                {"text": lang.get('general.back_to_vvip_list'), "callback_data": "list_vvip"}
             ]
         ]
-        
         btn = client.ns.telegram.button.build_button_grid(layout)
         
         if callback_query.message.photo:
@@ -295,20 +313,20 @@ async def promo_detail(client, callback_query):
         return await callback_query.edit_message_text(desc, reply_markup=btn)
 
     text = lang.get("payment.promo.not_found")
-    btn = client.ns.telegram.button.build_button_grid([[back_button]])
+    btn = client.ns.telegram.button.build_button_grid(layout)
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
         await callback_query.edit_message_text(text, reply_markup=btn)
 
 
-@command(lambda ctx: filters.regex(r"^apply_coupon\s(.+?)\s(normal|promo)\s(\d+)"), handler_type="callback")
+@command(lambda ctx: filters.regex(r"^apply_coupon_(\d+)_(normal|promo)_(\d+)"), handler_type="callback")
 async def apply_coupon_callback(client, callback_query):
     lang = callback_query.lang
     chat_id = callback_query.from_user.id
 
     match = callback_query.matches[0]
-    name = match.group(1).strip()
+    item_index = int(match.group(1))
     tipe = match.group(2)
     original_amount = int(match.group(3))
 
@@ -350,7 +368,7 @@ async def apply_coupon_callback(client, callback_query):
             ),
         )
 
-        await _create_payment_invoice(client, callback_query.from_user, name, tipe, final_amount, coupon_code)
+        await _create_payment_invoice(client, callback_query.from_user, item_index, tipe, final_amount, coupon_code)
 
     except listen.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"))
@@ -362,29 +380,19 @@ async def apply_coupon_callback(client, callback_query):
         await client.send_message(chat_id, lang.get("general.error", e=e))
 
 
-@command(lambda ctx: filters.regex(r"^paynow\s(.+)"), handler_type="callback")
+@command(lambda ctx: filters.regex(r"^paynow_(\d+)_(normal|promo)_(\d+)"), handler_type="callback")
 async def paynow(client, callback_query):
-    parts = callback_query.data.split()
-    name_parts = []
-    tipe = None
-    amount = None
-
-    i = 1
-    while i < len(parts):
-        if parts[i] in ["normal", "promo"]:
-            tipe = parts[i]
-            amount = int(parts[i + 1])
-            break
-        name_parts.append(parts[i])
-        i += 1
-    name = " ".join(name_parts)
+    match = callback_query.matches[0]
+    item_index = int(match.group(1))
+    tipe = match.group(2)
+    amount = int(match.group(3))
 
     if callback_query.message.photo:
         await callback_query.message.delete()
     else:
         await callback_query.edit_message_text(callback_query.lang.get("general.processing"))
 
-    await _create_payment_invoice(client, callback_query.from_user, name, tipe, amount)
+    await _create_payment_invoice(client, callback_query.from_user, item_index, tipe, amount)
 
 
 @command(lambda ctx: filters.PreCheckoutQuery, handler_type="pre_checkout")
@@ -454,20 +462,22 @@ async def successful_donation_handler(client, message):
     )
 
 
-@command(lambda ctx: filters.regex(r"^renew_sub\s(.+)"), handler_type="callback")
+@command(lambda ctx: filters.regex(r"^renew_sub_(\d+)"), handler_type="callback")
 async def renew_subscription_callback(client, callback_query):
     lang = callback_query.lang
-    name = callback_query.data.split(" ", 1)[1]
+    item_index = int(callback_query.matches[0].group(1))
 
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-    item = next((v for v in vvip_list if v.get("name") == name), None)
-
-    if not item:
+    try:
+        item = vvip_list[item_index]
+    except IndexError:
         return await callback_query.answer(lang.get("payment.notes.not_found"), show_alert=True)
 
     if item.get("promo_price", 0) > 0:
-        callback_query.data = f"promo_detail {name}"
+        callback_query.data = f"promo_detail_{item_index}"
+        callback_query.matches = [re.match(r"promo_detail_(\d+)", callback_query.data)]
         await promo_detail(client, callback_query)
     else:
-        callback_query.data = f"notes {name}"
+        callback_query.data = f"notes_{item_index}"
+        callback_query.matches = [re.match(r"notes_(\d+)", callback_query.data)]
         await notes_data(client, callback_query)
