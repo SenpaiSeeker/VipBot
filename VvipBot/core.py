@@ -126,14 +126,14 @@ async def list_vvip_bot(client, callback_query):
             return await callback_query.edit_message_caption(text, reply_markup=btn)
         return await callback_query.edit_message_text(text, reply_markup=btn)
 
-    for item in vvip_list:
+    for index, item in enumerate(vvip_list):
         name = item.get("name", "N/A")
         promo_price = item.get("promo_price", 0)
         
-        button_row = [{"text": lang.get('vvip_list.button_package', name=name), "callback_data": f"notes {name}"}]
+        button_row = [{"text": lang.get('vvip_list.button_package', name=name), "callback_data": f"notes_{index}"}]
         
         if promo_price > 0:
-            button_row.append({"text": lang.get('vvip_list.button_promo', name=name), "callback_data": f"promo_detail {name}"})
+            button_row.append({"text": lang.get('vvip_list.button_promo', name=name), "callback_data": f"promo_detail_{index}"})
         
         layout.append(button_row)
     
