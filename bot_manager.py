@@ -178,6 +178,7 @@ async def subscription_checker_method():
             continue
 
         members = await manager.db.getListVars(bot_id, "vvip_members") or []
+        vvip_list = await manager.db.getListVars(bot_id, "list_vvip") or []
         members_to_keep = []
 
         for member in members:
@@ -212,11 +213,19 @@ async def subscription_checker_method():
 
                 if last_notif_date_str != today_str:
                     try:
-                        btn, txt = bot_client.ns.telegram.button.create_inline_keyboard(
-                            f"{lang.get('subscription.renewal_reminder', name=member['vvip_name'], days=time_left.days)}\n\n| {lang.get('subscription.renew_button')} - renew_sub {member['vvip_name']} |"
-                        )
-                        await bot_client.send_message(user_id, txt, reply_markup=btn)
-                        await manager.db.setVars(user_id, f"{last_notif_key}_{bot_id}", today_str)
+                        item_index = -1
+                        for i, vvip_item in enumerate(vvip_list):
+                            if vvip_item.get("name") == member["vvip_name"]:
+                                item_index = i
+                                break
+                        
+                        if item_index != -1:
+                            text = lang.get('subscription.renewal_reminder', name=member['vvip_name'], days=time_left.days)
+                            layout = [[{"text": lang.get('subscription.renew_button'), "callback_data": f"renew_sub_{item_index}"}]]
+                            btn = bot_client.ns.telegram.button.build_button_grid(layout)
+                            await bot_client.send_message(user_id, text, reply_markup=btn)
+                            await manager.db.setVars(user_id, f"{last_notif_key}_{bot_id}", today_str)
+
                     except Exception as e:
                         log.print(f"{ctx.log.RED}Gagal kirim notif perpanjangan ke {user_id}: {e}")
 
