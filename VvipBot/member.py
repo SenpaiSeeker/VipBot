@@ -12,7 +12,7 @@ async def list_members_callback(client, callback_query):
 
     if not members_list:
         text = lang.get("member.list.empty")
-        btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=back_row)
+        btn = client.ns.telegram.button.build_button_grid([back_row])
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
         return await callback_query.edit_message_text(text, reply_markup=btn)
@@ -31,7 +31,7 @@ async def list_members_callback(client, callback_query):
         user = await client.get_users(user_id)
     except (KeyError, pyrogram.errors.UserNotParticipant) as e:
         text_error = lang.get("member.list.data_error", e=e)
-        btn_back = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=back_row)
+        btn_back = client.ns.telegram.button.build_button_grid([back_row])
         await callback_query.edit_message_caption(text_error, reply_markup=btn_back)
         await ctx.db.removeListVars(client.me.id, "vvip_members", member_data)
         return
@@ -58,19 +58,21 @@ async def list_members_callback(client, callback_query):
 
     button_name = (user.first_name or str(user.id))[:15]
     
-    pagination_buttons = []
+    layout = []
+    pagination_row = []
     if total_pages > 1:
         prev_page, next_page = ((page - 1 + total_pages) % total_pages, (page + 1) % total_pages)
-        pagination_buttons.extend([
+        pagination_row.extend([
             {"text": lang.get('admin.allbots.prev_button'), "callback_data": f"list_members_{prev_page}"},
             {"text": lang.get('admin.allbots.next_button'), "callback_data": f"list_members_{next_page}"}
         ])
+    if pagination_row:
+        layout.append(pagination_row)
         
-    row_inline = [
-        {"text": lang.get('member.list.kick_button', name=button_name), "callback_data": f"kick_{user.id}_{vvip_name}"}
-    ] + back_row
+    layout.append([{"text": lang.get('member.list.kick_button', name=button_name), "callback_data": f"kick_{user.id}_{vvip_name}"}])
+    layout.append(back_row)
     
-    btn = client.ns.telegram.button.build_button_grid(buttons=pagination_buttons, row_inline=row_inline, row_width=2)
+    btn = client.ns.telegram.button.build_button_grid(layout)
     
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
@@ -95,12 +97,12 @@ async def confirm_kick_member_callback(client, callback_query):
         name=vvip_name,
     )
     
-    buttons = [
+    layout = [[
         {"text": lang.get('member.kick.confirm_yes_button'), "callback_data": f"do_kick_{user_id_str}_{vvip_name}"},
         {"text": lang.get('member.kick.confirm_no_button'), "callback_data": "list_members_0"}
-    ]
+    ]]
     
-    btn = client.ns.telegram.button.build_button_grid(buttons=buttons, row_width=2)
+    btn = client.ns.telegram.button.build_button_grid(layout)
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -137,8 +139,8 @@ async def do_kick_member_callback(client, callback_query):
         await ctx.db.removeListVars(client.me.id, "vvip_members", record_to_remove)
         user_to_kick = await client.get_users(user_id)
 
-        row_inline = [{"text": lang.get('general.back'), "callback_data": "list_members_0"}]
-        btn_back = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=row_inline)
+        layout = [[{"text": lang.get('general.back'), "callback_data": "list_members_0"}]]
+        btn_back = client.ns.telegram.button.build_button_grid(layout)
         await callback_query.edit_message_caption(
             lang.get(
                 "member.kick.success",
@@ -160,7 +162,9 @@ async def check_active_menu_callback(client, callback_query):
         ctx.ACTIVE_MEMBERS_CACHE = {}
 
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-    buttons = []
+    layout = []
+    button_row = []
+    
     for item in vvip_list:
         name, chat_id_norm, chat_id_promo = (
             item.get("name"),
@@ -168,21 +172,29 @@ async def check_active_menu_callback(client, callback_query):
             item.get("chat_id_promo"),
         )
         if name and chat_id_norm:
-            buttons.append({"text": lang.get('member.active_list.button_normal', name=name), "callback_data": f"list_active_{chat_id_norm}_0"})
+            button_row.append({"text": lang.get('member.active_list.button_normal', name=name), "callback_data": f"list_active_{chat_id_norm}_0"})
         if name and chat_id_promo:
-            buttons.append({"text": lang.get('member.active_list.button_promo', name=name), "callback_data": f"list_active_{chat_id_promo}_0"})
+            button_row.append({"text": lang.get('member.active_list.button_promo', name=name), "callback_data": f"list_active_{chat_id_promo}_0"})
+        
+        if len(button_row) == 2:
+            layout.append(button_row)
+            button_row = []
+    
+    if button_row:
+        layout.append(button_row)
 
     back_row = [{"text": lang.get('general.back_to_settings'), "callback_data": "settings"}]
 
-    if not buttons:
+    if not layout:
         text = lang.get("member.active_list.no_valid_chat_id")
-        btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=back_row)
+        btn = client.ns.telegram.button.build_button_grid([back_row])
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
         return await callback_query.edit_message_text(text, reply_markup=btn)
 
+    layout.append(back_row)
     text = lang.get("member.active_list.panel")
-    btn = client.ns.telegram.button.build_button_grid(buttons=buttons, row_inline=back_row, row_width=2)
+    btn = client.ns.telegram.button.build_button_grid(layout)
 
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
@@ -231,22 +243,24 @@ async def list_active_members_callback(client, callback_query):
     )
 
     button_name = (user.first_name or str(user.id))[:15]
+    layout = []
     
-    pagination_buttons = []
+    pagination_row = []
     if total_members > 1:
         prev_p, next_p = ((page - 1 + total_members) % total_members, (page + 1) % total_members)
-        pagination_buttons.extend([
+        pagination_row.extend([
             {"text": "«", "callback_data": f"list_active_{chat_id}_{prev_p}"},
-            {"text": "»", "callback_data": f"list_active_{chat_id}_{next_p}"},
+            {"text": "»", "callback_data": f"list_active_{chat_id}_{next_p}"}
         ])
-
-    row_inline = [
-        {"text": lang.get('member.list.kick_button', name=button_name), "callback_data": f"kick_active_{chat_id}_{user.id}_{page}"},
-        {"text": lang.get('general.back_to_group_selection'), "callback_data": "check_active_menu_init"}
-    ]
+    if pagination_row:
+        layout.append(pagination_row)
+        
+    layout.extend([
+        [{"text": lang.get('member.list.kick_button', name=button_name), "callback_data": f"kick_active_{chat_id}_{user.id}_{page}"}],
+        [{"text": lang.get('general.back_to_group_selection'), "callback_data": "check_active_menu_init"}]
+    ])
     
-    btn = client.ns.telegram.button.build_button_grid(buttons=pagination_buttons, row_inline=row_inline, row_width=2)
-    
+    btn = client.ns.telegram.button.build_button_grid(layout)
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -265,12 +279,11 @@ async def confirm_kick_active_callback(client, callback_query):
     user = await client.get_users(int(user_id_str))
 
     text = lang.get("member.active_list.kick_confirm_panel", mention=client.ns.telegram.arg.getMention(user))
-    buttons = [
+    layout = [[
         {"text": lang.get('member.active_list.kick_confirm_yes_button'), "callback_data": f"do_kick_active_{chat_id_str}_{user_id_str}"},
         {"text": lang.get('member.active_list.kick_confirm_no_button'), "callback_data": f"list_active_{chat_id_str}_{page_str}"}
-    ]
-    btn = client.ns.telegram.button.build_button_grid(buttons=buttons, row_width=2)
-    
+    ]]
+    btn = client.ns.telegram.button.build_button_grid(layout)
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -306,9 +319,8 @@ async def do_kick_active_callback(client, callback_query):
 
         user = await client.get_users(user_id)
         text = lang.get("member.active_list.kick_success", mention=client.ns.telegram.arg.getMention(user))
-        row_inline = [{"text": lang.get('general.back_to_group_selection'), "callback_data": "check_active_menu_init"}]
-        btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=row_inline)
-        
+        layout = [[{"text": lang.get('general.back_to_group_selection'), "callback_data": "check_active_menu_init"}]]
+        btn = client.ns.telegram.button.build_button_grid(layout)
         if callback_query.message.photo:
             await callback_query.edit_message_caption(text, reply_markup=btn)
         else:
