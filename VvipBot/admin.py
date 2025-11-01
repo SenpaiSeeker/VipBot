@@ -129,12 +129,12 @@ async def access_command_handler(client, message):
             status=status_text,
         )
 
-        buttons = [
+        layout = [[
             {"text": lang.get('admin.access.give_button'), "callback_data": f"give_access {target_user.id}"},
             {"text": lang.get('admin.access.revoke_button'), "callback_data": f"revoke_access {target_user.id}"}
-        ]
+        ]]
         
-        btn = client.ns.telegram.button.build_button_grid(buttons=buttons, row_width=2)
+        btn = client.ns.telegram.button.build_button_grid(layout)
         await message.reply_text(text, reply_markup=btn)
 
     except Exception as e:
@@ -169,8 +169,8 @@ async def manage_access_callback(client, callback_query):
 
         await callback_query.answer(alert_text)
         
-        row_inline = [{"text": lang.get('general.close_panel'), "callback_data": "close_panel"}]
-        btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=row_inline)
+        layout = [[{"text": lang.get('general.close_panel'), "callback_data": "close_panel"}]]
+        btn = client.ns.telegram.button.build_button_grid(layout)
         await callback_query.edit_message_text(text, reply_markup=btn)
 
     except Exception as e:
@@ -257,22 +257,25 @@ async def _send_allbots_list(client, message_or_query, page):
         days_left=days_left,
     )
     
-    pagination_buttons = []
+    layout = []
+    pagination_row = []
     if total_pages > 1:
         prev_page = (page - 1 + total_pages) % total_pages
         next_page = (page + 1) % total_pages
-        pagination_buttons.extend([
+        pagination_row.extend([
             {"text": lang.get('admin.allbots.prev_button'), "callback_data": f"allbots_{prev_page}"},
             {"text": lang.get('admin.allbots.next_button'), "callback_data": f"allbots_{next_page}"},
         ])
+    if pagination_row:
+        layout.append(pagination_row)
 
-    row_inline = [
-        {"text": lang.get('admin.allbots.delete_button'), "callback_data": f"confirm_delete_bot_{bot_id}"},
-        {"text": lang.get('admin.allbots.manage_duration_button'), "callback_data": f"manage_duration_bot_{bot_id}_{page}"},
-        {"text": lang.get('general.close_panel'), "callback_data": "close_panel"}
-    ]
+    layout.extend([
+        [{"text": lang.get('admin.allbots.delete_button'), "callback_data": f"confirm_delete_bot_{bot_id}"}],
+        [{"text": lang.get('admin.allbots.manage_duration_button'), "callback_data": f"manage_duration_bot_{bot_id}_{page}"}],
+        [{"text": lang.get('general.close_panel'), "callback_data": "close_panel"}]
+    ])
     
-    btn = client.ns.telegram.button.build_button_grid(buttons=pagination_buttons, row_inline=row_inline, row_width=2)
+    btn = client.ns.telegram.button.build_button_grid(layout)
     
     if isinstance(message_or_query, pyrogram.types.Message):
         await message_or_query.reply_text(text, reply_markup=btn)
@@ -299,11 +302,11 @@ async def confirm_delete_bot_callback(client, callback_query):
     bot_id = int(callback_query.matches[0].group(1))
     text = lang.get("admin.allbots.delete_confirm", bot_id=bot_id)
     
-    buttons = [
+    layout = [[
         {"text": lang.get('admin.allbots.delete_confirm_yes'), "callback_data": f"do_delete_bot_{bot_id}"},
         {"text": lang.get('admin.allbots.delete_confirm_no'), "callback_data": "allbots_0"}
-    ]
-    markup = client.ns.telegram.button.build_button_grid(buttons=buttons, row_width=2)
+    ]]
+    markup = client.ns.telegram.button.build_button_grid(layout)
     await callback_query.edit_message_text(text, reply_markup=markup)
 
 
@@ -332,12 +335,12 @@ async def manage_duration_callback(client, callback_query):
     bot_id, page = map(int, callback_query.data.split("_")[3:])
     text = lang.get("admin.allbots.manage_duration_panel", bot_id=bot_id)
     
-    row_inline = [
-        {"text": lang.get('admin.allbots.add_duration_button'), "callback_data": f"extend_bot_{bot_id}_{page}"},
-        {"text": lang.get('admin.allbots.reduce_duration_button'), "callback_data": f"reduce_bot_{bot_id}_{page}"},
-        {"text": lang.get('general.back'), "callback_data": f"allbots_{page}"}
+    layout = [
+        [{"text": lang.get('admin.allbots.add_duration_button'), "callback_data": f"extend_bot_{bot_id}_{page}"}],
+        [{"text": lang.get('admin.allbots.reduce_duration_button'), "callback_data": f"reduce_bot_{bot_id}_{page}"}],
+        [{"text": lang.get('general.back'), "callback_data": f"allbots_{page}"}]
     ]
-    markup = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=row_inline)
+    markup = client.ns.telegram.button.build_button_grid(layout)
     await callback_query.edit_message_text(text, reply_markup=markup)
 
 
@@ -348,8 +351,8 @@ async def extend_bot_callback(client, callback_query):
     bot_id, page = map(int, callback_query.data.split("_")[2:])
     text = lang.get("admin.allbots.add_duration_select", bot_id=bot_id)
     buttons = [{"text": f"+{days} {lang.get('admin.allbots.days')}", "callback_data": f"do_extend_{bot_id}_{days}_{page}"} for days in [7, 30, 90]]
-    back_button = [{"text": lang.get('general.back'), "callback_data": f"manage_duration_bot_{bot_id}_{page}"}]
-    markup = client.ns.telegram.button.build_button_grid(buttons=buttons, row_inline=back_button, row_width=3)
+    layout = [buttons, [{"text": lang.get('general.back'), "callback_data": f"manage_duration_bot_{bot_id}_{page}"}]]
+    markup = client.ns.telegram.button.build_button_grid(layout)
     await callback_query.edit_message_text(text, reply_markup=markup)
 
 
@@ -377,8 +380,8 @@ async def reduce_bot_callback(client, callback_query):
     bot_id, page = map(int, callback_query.data.split("_")[2:])
     text = lang.get("admin.allbots.reduce_duration_select", bot_id=bot_id)
     buttons = [{"text": f"-{days} {lang.get('admin.allbots.days')}", "callback_data": f"do_reduce_{bot_id}_{days}_{page}"} for days in [7, 30, 90]]
-    back_button = [{"text": lang.get('general.back'), "callback_data": f"manage_duration_bot_{bot_id}_{page}"}]
-    markup = client.ns.telegram.button.build_button_grid(buttons=buttons, row_inline=back_button, row_width=3)
+    layout = [buttons, [{"text": lang.get('general.back'), "callback_data": f"manage_duration_bot_{bot_id}_{page}"}]]
+    markup = client.ns.telegram.button.build_button_grid(layout)
     await callback_query.edit_message_text(text, reply_markup=markup)
 
 
@@ -456,8 +459,8 @@ async def show_stars_stats(client, callback_query):
 
         if not transactions_history:
             text = lang.get("stats.no_transactions")
-            row_inline = [{"text": lang.get('general.back_to_settings'), "callback_data": "settings"}]
-            btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=row_inline)
+            layout = [[{"text": lang.get('general.back_to_settings'), "callback_data": "settings"}]]
+            btn = client.ns.telegram.button.build_button_grid(layout)
             if callback_query.message.photo:
                 return await callback_query.edit_message_caption(text, reply_markup=btn)
             return await callback_query.edit_message_text(text, reply_markup=btn)
@@ -510,17 +513,20 @@ async def show_stars_stats(client, callback_query):
             transactions=transactions_text,
         )
 
-        pagination_buttons = []
+        layout = []
+        pagination_row = []
         if total_pages > 1:
             prev_page = page - 1 if page > 0 else total_pages - 1
             next_page = page + 1 if page < total_pages - 1 else 0
-            pagination_buttons.extend([
+            pagination_row.extend([
                 {"text": lang.get('stats.prev_button'), "callback_data": f"stats_{prev_page}"},
                 {"text": lang.get('stats.next_button'), "callback_data": f"stats_{next_page}"},
             ])
+        if pagination_row:
+            layout.append(pagination_row)
 
-        row_inline = [{"text": lang.get('general.back_to_settings'), "callback_data": "settings"}]
-        btn = client.ns.telegram.button.build_button_grid(buttons=pagination_buttons, row_inline=row_inline, row_width=2)
+        layout.append([{"text": lang.get('general.back_to_settings'), "callback_data": "settings"}])
+        btn = client.ns.telegram.button.build_button_grid(layout)
         
         if callback_query.message.photo:
             await callback_query.edit_message_caption(text, reply_markup=btn)
@@ -567,12 +573,14 @@ async def list_all_users_callback(client, callback_query):
 
     users_data = ctx.all_users_cache.get(bot_id, [])
     
+    layout = []
     back_row = [{"text": lang.get('general.back_to_settings'), "callback_data": "settings"}]
     refresh_row = [{"text": lang.get('admin.list_users.refresh_button'), "callback_data": f"list_all_users_0_refresh"}]
 
     if not users_data:
         text = lang.get("admin.list_users.no_users")
-        btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=refresh_row + back_row)
+        layout = [refresh_row, back_row]
+        btn = client.ns.telegram.button.build_button_grid(layout)
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
         return await callback_query.edit_message_text(text, reply_markup=btn)
@@ -588,24 +596,30 @@ async def list_all_users_callback(client, callback_query):
     for user in page_user_data:
         text += f"• {client.ns.telegram.arg.getMention(user)} (`{user.id}`)\n  - @{user.username or 'N/A'}\n"
 
-    pagination_buttons = []
+    pagination_row = []
     if total_pages > 1:
         if page > 0:
-            pagination_buttons.append({"text": "«", "callback_data": f"list_all_users_{page-1}"})
-        pagination_buttons.append({"text": lang.get("admin.list_users.page_info", page=page+1, total=total_pages), "callback_data": "noop"})
+            pagination_row.append({"text": "«", "callback_data": f"list_all_users_{page-1}"})
+        pagination_row.append({"text": lang.get("admin.list_users.page_info", page=page+1, total=total_pages), "callback_data": "noop"})
         if page < total_pages - 1:
-            pagination_buttons.append({"text": "»", "callback_data": f"list_all_users_{page+1}"})
+            pagination_row.append({"text": "»", "callback_data": f"list_all_users_{page+1}"})
+    if pagination_row:
+        layout.append(pagination_row)
 
     action_buttons = []
     for user in page_user_data:
         btn_text = lang.get("admin.list_users.send_message_button", name=user.first_name[:10] if user.first_name else user.id)
         action_buttons.append({"text": btn_text, "callback_data": f"message_user_{user.id}_{page}"})
+    
+    i = 0
+    while i < len(action_buttons):
+        layout.append(action_buttons[i:i+2])
+        i += 2
+        
+    layout.append(refresh_row)
+    layout.append(back_row)
 
-    markup = client.ns.telegram.button.build_button_grid(
-        buttons=pagination_buttons + action_buttons,
-        row_inline=refresh_row + back_row,
-        row_width=3
-    )
+    markup = client.ns.telegram.button.build_button_grid(layout)
 
     try:
         if callback_query.message.photo:
