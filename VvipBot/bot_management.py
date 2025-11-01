@@ -10,8 +10,8 @@ async def create_bot_callback(client, callback_query):
     if user_id != ctx.owner_id and user_id not in access_list:
         owner_user = await client.get_users(ctx.owner_id)
         text = lang.get('bot_management.create.no_access', mention=owner_user.mention)
-        row_inline = [{"text": lang.get('general.back'), "callback_data": "start"}]
-        btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=row_inline)
+        layout = [[{"text": lang.get('general.back'), "callback_data": "start"}]]
+        btn = client.ns.telegram.button.build_button_grid(layout)
         return await callback_query.edit_message_caption(text, reply_markup=btn)
 
     chat_id = callback_query.from_user.id
@@ -115,21 +115,24 @@ async def list_my_bots_callback(client, callback_query):
         days_left=days_left,
     )
 
-    pagination_buttons = []
+    layout = []
+    pagination_row = []
     if total_pages > 1:
         prev_page = (page - 1 + total_pages) % total_pages
         next_page = (page + 1) % total_pages
-        pagination_buttons.extend([
+        pagination_row.extend([
             {"text": lang.get('admin.allbots.prev_button'), "callback_data": f"list_my_bots_{prev_page}"},
             {"text": lang.get('admin.allbots.next_button'), "callback_data": f"list_my_bots_{next_page}"}
         ])
+    if pagination_row:
+        layout.append(pagination_row)
     
-    row_inline = [
-        {"text": lang.get('bot_management.my_bots.manage_button', name=bot_name), "callback_data": f"manage_bot {bot_id}"},
-        {"text": lang.get('general.back'), "callback_data": "start"}
-    ]
+    layout.extend([
+        [{"text": lang.get('bot_management.my_bots.manage_button', name=bot_name), "callback_data": f"manage_bot {bot_id}"}],
+        [{"text": lang.get('general.back'), "callback_data": "start"}]
+    ])
 
-    btn = client.ns.telegram.button.build_button_grid(buttons=pagination_buttons, row_inline=row_inline, row_width=2)
+    btn = client.ns.telegram.button.build_button_grid(layout)
     
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
@@ -161,10 +164,10 @@ async def manage_bot_callback(client, callback_query):
         days_left = (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days
         days_left_text = f"{days_left} {lang.get('admin.allbots.days')}"
 
-    row_inline = [
-        {"text": lang.get('bot_management.manage.extend_button'), "callback_data": f"request_extend_duration {bot_id_to_manage}"},
-        {"text": lang.get('bot_management.manage.delete_button'), "callback_data": f"confirm_delete_bot {bot_id_to_manage}"},
-        {"text": lang.get('general.back_to_bot_list'), "callback_data": "list_my_bots_0"}
+    layout = [
+        [{"text": lang.get('bot_management.manage.extend_button'), "callback_data": f"request_extend_duration {bot_id_to_manage}"}],
+        [{"text": lang.get('bot_management.manage.delete_button'), "callback_data": f"confirm_delete_bot {bot_id_to_manage}"}],
+        [{"text": lang.get('general.back_to_bot_list'), "callback_data": "list_my_bots_0"}]
     ]
 
     text = lang.get(
@@ -174,7 +177,7 @@ async def manage_bot_callback(client, callback_query):
         days_left=days_left_text,
     )
 
-    btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=row_inline)
+    btn = client.ns.telegram.button.build_button_grid(layout)
     
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
@@ -211,12 +214,12 @@ async def request_extend_duration_callback(client, callback_query):
             bot_id=bot_id_to_request,
         )
 
-        row_inline_owner = [
+        layout_owner = [[
             {"text": lang.get('bot_management.extend.approve_button'), "callback_data": f"approve_extension {bot_id_to_request} {requester.id}"},
             {"text": lang.get('bot_management.extend.reject_button'), "callback_data": f"close_req {bot_id_to_request} {requester.id}"}
-        ]
+        ]]
         
-        btn_owner = main_bot_client.ns.telegram.button.build_button_grid(buttons=[], row_inline=row_inline_owner)
+        btn_owner = main_bot_client.ns.telegram.button.build_button_grid(layout_owner)
         await main_bot_client.send_message(ctx.owner_id, txt_owner, reply_markup=btn_owner)
         await callback_query.answer(lang.get("bot_management.extend.sent_alert"), show_alert=True)
 
@@ -293,12 +296,12 @@ async def confirm_delete_bot_callback(client, callback_query):
         pass
 
     text = lang.get("bot_management.delete.confirm_panel", name=bot_name, id=bot_id_to_manage)
-    row_inline = [
+    layout = [[
         {"text": lang.get('bot_management.delete.confirm_yes_button'), "callback_data": f"do_delete_bot {bot_id_to_manage}"},
         {"text": lang.get('bot_management.delete.confirm_no_button'), "callback_data": f"manage_bot {bot_id_to_manage}"}
-    ]
+    ]]
 
-    btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=row_inline)
+    btn = client.ns.telegram.button.build_button_grid(layout)
     
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
@@ -324,8 +327,8 @@ async def do_delete_bot_callback(client, callback_query):
         await ctx.db.removeAllVars(bot_id_to_manage)
         ctx.log.print(f"{ctx.log.ORANGE}Bot {bot_id_to_manage} telah dihapus oleh owner-nya ({user_id}).")
 
-        row_inline = [{"text": lang.get('general.back_to_bot_list'), "callback_data": "list_my_bots_0"}]
-        btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=row_inline)
+        layout = [[{"text": lang.get('general.back_to_bot_list'), "callback_data": "list_my_bots_0"}]]
+        btn = client.ns.telegram.button.build_button_grid(layout)
         
         await callback_query.edit_message_caption(
             lang.get("bot_management.delete.success", id=bot_id_to_manage),
