@@ -81,8 +81,7 @@ async def set_lang_callback(client, callback_query):
     text = lang.get("lang.select")
 
     layout = [
-        [{"text": lang.get('lang.button_id'), "callback_data": "chg_lang_id"}],
-        [{"text": lang.get('lang.button_en'), "callback_data": "chg_lang_en"}],
+        [{"text": lang.get('lang.button_id'), "callback_data": "chg_lang_id"}, {"text": lang.get('lang.button_en'), "callback_data": "chg_lang_en"}],
         [{"text": lang.get('lang.button_ja'), "callback_data": "chg_lang_ja"}],
         [{"text": lang.get('general.back_to_main_menu'), "callback_data": "start"}]
     ]
