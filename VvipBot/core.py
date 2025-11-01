@@ -116,30 +116,40 @@ async def list_vvip_bot(client, callback_query):
     lang = callback_query.lang
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     
-    back_button = [{"text": lang.get('general.back_to_main_menu'), "callback_data": "start"}]
+    keyboard = []
+    back_button_row = [pyrogram.types.InlineKeyboardButton(lang.get('general.back_to_main_menu'), callback_data="start")]
 
     if not vvip_list:
         text = lang.get("vvip_list.empty")
-        btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=back_button)
+        btn = pyrogram.types.InlineKeyboardMarkup([back_button_row])
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
         return await callback_query.edit_message_text(text, reply_markup=btn)
 
-    buttons = []
     for item in vvip_list:
         name = item.get("name", "N/A")
         promo_price = item.get("promo_price", 0)
-        buttons.append({
-            "text": lang.get('vvip_list.button_package', name=name),
-            "callback_data": f"notes {name}"
-        })
+        
+        button_row = [
+            pyrogram.types.InlineKeyboardButton(
+                text=lang.get('vvip_list.button_package', name=name),
+                callback_data=f"notes {name}"
+            )
+        ]
+        
         if promo_price > 0:
-            buttons.append({
-                "text": lang.get('vvip_list.button_promo', name=name),
-                "callback_data": f"promo_detail {name}"
-            })
+            button_row.append(
+                pyrogram.types.InlineKeyboardButton(
+                    text=lang.get('vvip_list.button_promo', name=name),
+                    callback_data=f"promo_detail {name}"
+                )
+            )
+        
+        keyboard.append(button_row)
     
-    btn = client.ns.telegram.button.build_button_grid(buttons=buttons, row_inline=back_button, row_width=2)
+    keyboard.append(back_button_row)
+    
+    btn = pyrogram.types.InlineKeyboardMarkup(keyboard)
     text = lang.get("vvip_list.panel", mention=client.me.mention)
 
     if callback_query.message.photo:
