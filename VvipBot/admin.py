@@ -129,13 +129,14 @@ async def access_command_handler(client, message):
             status=status_text,
         )
 
-        btn_text = (
-            f"| {lang.get('admin.access.give_button')} - give_access {target_user.id} |\n"
-            f"| {lang.get('admin.access.revoke_button')} - revoke_access {target_user.id};same |"
-        )
-
-        btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
+        buttons = [
+            {"text": lang.get('admin.access.give_button'), "callback_data": f"give_access {target_user.id}"},
+            {"text": lang.get('admin.access.revoke_button'), "callback_data": f"revoke_access {target_user.id}"}
+        ]
+        
+        btn = client.ns.telegram.button.build_button_grid(buttons=buttons, row_width=2)
         await message.reply_text(text, reply_markup=btn)
+
     except Exception as e:
         await message.reply_text(lang.get("admin.access.process_fail", e=e))
 
@@ -167,10 +168,9 @@ async def manage_access_callback(client, callback_query):
             text = lang.get("admin.access.revoke_success_panel", mention=mention)
 
         await callback_query.answer(alert_text)
-
-        btn_text = f"| {lang.get('general.close_panel')} - close_panel |"
-        btn, _ = client.ns.telegram.button.create_inline_keyboard(btn_text)
-
+        
+        row_inline = [{"text": lang.get('general.close_panel'), "callback_data": "close_panel"}]
+        btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=row_inline)
         await callback_query.edit_message_text(text, reply_markup=btn)
 
     except Exception as e:
@@ -256,19 +256,24 @@ async def _send_allbots_list(client, message_or_query, page):
         owner=owner_text,
         days_left=days_left,
     )
-
-    btn_text = ""
+    
+    pagination_buttons = []
     if total_pages > 1:
         prev_page = (page - 1 + total_pages) % total_pages
         next_page = (page + 1) % total_pages
-        btn_text += f"| {lang.get('admin.allbots.prev_button')} - allbots_{prev_page} | | {lang.get('admin.allbots.next_button')} - allbots_{next_page};same |\n"
+        pagination_buttons.extend([
+            {"text": lang.get('admin.allbots.prev_button'), "callback_data": f"allbots_{prev_page}"},
+            {"text": lang.get('admin.allbots.next_button'), "callback_data": f"allbots_{next_page}"},
+        ])
 
-    btn_text += f"| {lang.get('admin.allbots.delete_button')} - confirm_delete_bot_{bot_id} |\n"
-    btn_text += f"| {lang.get('admin.allbots.manage_duration_button')} - manage_duration_bot_{bot_id}_{page} |\n"
-    btn_text += f"| {lang.get('general.close_panel')} - close_panel |"
+    row_inline = [
+        {"text": lang.get('admin.allbots.delete_button'), "callback_data": f"confirm_delete_bot_{bot_id}"},
+        {"text": lang.get('admin.allbots.manage_duration_button'), "callback_data": f"manage_duration_bot_{bot_id}_{page}"},
+        {"text": lang.get('general.close_panel'), "callback_data": "close_panel"}
+    ]
     
-    btn, _ = client.ns.telegram.button.create_inline_keyboard(f"DUMMY\n{btn_text}")
-
+    btn = client.ns.telegram.button.build_button_grid(buttons=pagination_buttons, row_inline=row_inline, row_width=2)
+    
     if isinstance(message_or_query, pyrogram.types.Message):
         await message_or_query.reply_text(text, reply_markup=btn)
     else:
@@ -293,8 +298,12 @@ async def confirm_delete_bot_callback(client, callback_query):
     lang = callback_query.lang
     bot_id = int(callback_query.matches[0].group(1))
     text = lang.get("admin.allbots.delete_confirm", bot_id=bot_id)
-    btn_text = f"| {lang.get('admin.allbots.delete_confirm_yes')} - do_delete_bot_{bot_id} | | {lang.get('admin.allbots.delete_confirm_no')} - allbots_0 |"
-    markup, _ = client.ns.telegram.button.create_inline_keyboard(f"DUMMY\n{btn_text}")
+    
+    buttons = [
+        {"text": lang.get('admin.allbots.delete_confirm_yes'), "callback_data": f"do_delete_bot_{bot_id}"},
+        {"text": lang.get('admin.allbots.delete_confirm_no'), "callback_data": "allbots_0"}
+    ]
+    markup = client.ns.telegram.button.build_button_grid(buttons=buttons, row_width=2)
     await callback_query.edit_message_text(text, reply_markup=markup)
 
 
@@ -322,12 +331,13 @@ async def manage_duration_callback(client, callback_query):
     lang = callback_query.lang
     bot_id, page = map(int, callback_query.data.split("_")[3:])
     text = lang.get("admin.allbots.manage_duration_panel", bot_id=bot_id)
-    btn_text = f"""
-    | {lang.get('admin.allbots.add_duration_button')} - extend_bot_{bot_id}_{page} |
-    | {lang.get('admin.allbots.reduce_duration_button')} - reduce_bot_{bot_id}_{page} |
-    | {lang.get('general.back')} - allbots_{page} |
-    """
-    markup, _ = client.ns.telegram.button.create_inline_keyboard(f"DUMMY\n{btn_text}")
+    
+    row_inline = [
+        {"text": lang.get('admin.allbots.add_duration_button'), "callback_data": f"extend_bot_{bot_id}_{page}"},
+        {"text": lang.get('admin.allbots.reduce_duration_button'), "callback_data": f"reduce_bot_{bot_id}_{page}"},
+        {"text": lang.get('general.back'), "callback_data": f"allbots_{page}"}
+    ]
+    markup = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=row_inline)
     await callback_query.edit_message_text(text, reply_markup=markup)
 
 
@@ -446,11 +456,11 @@ async def show_stars_stats(client, callback_query):
 
         if not transactions_history:
             text = lang.get("stats.no_transactions")
-            btn_text = f"| {lang.get('general.back_to_settings')} - settings |"
-            btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
+            row_inline = [{"text": lang.get('general.back_to_settings'), "callback_data": "settings"}]
+            btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=row_inline)
             if callback_query.message.photo:
-                return await callback_query.edit_message_caption(txt, reply_markup=btn)
-            return await callback_query.edit_message_text(txt, reply_markup=btn)
+                return await callback_query.edit_message_caption(text, reply_markup=btn)
+            return await callback_query.edit_message_text(text, reply_markup=btn)
 
         total_balance = raw_result.balance.amount
         total_income = sum(t.amount.amount for t in transactions_history if t.amount.amount > 0)
@@ -500,19 +510,22 @@ async def show_stars_stats(client, callback_query):
             transactions=transactions_text,
         )
 
-        btn_text = ""
+        pagination_buttons = []
         if total_pages > 1:
             prev_page = page - 1 if page > 0 else total_pages - 1
             next_page = page + 1 if page < total_pages - 1 else 0
-            btn_text += f"| {lang.get('stats.prev_button')} - stats_{prev_page} | | {lang.get('stats.next_button')} - stats_{next_page};same |\n"
+            pagination_buttons.extend([
+                {"text": lang.get('stats.prev_button'), "callback_data": f"stats_{prev_page}"},
+                {"text": lang.get('stats.next_button'), "callback_data": f"stats_{next_page}"},
+            ])
 
-        btn_text += f"| {lang.get('general.back_to_settings')} - settings |"
-
-        btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{text} {btn_text}")
+        row_inline = [{"text": lang.get('general.back_to_settings'), "callback_data": "settings"}]
+        btn = client.ns.telegram.button.build_button_grid(buttons=pagination_buttons, row_inline=row_inline, row_width=2)
+        
         if callback_query.message.photo:
-            await callback_query.edit_message_caption(txt, reply_markup=btn)
+            await callback_query.edit_message_caption(text, reply_markup=btn)
         else:
-            await callback_query.edit_message_text(txt, reply_markup=btn)
+            await callback_query.edit_message_text(text, reply_markup=btn)
 
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED} Error fetching stars stats: {e}\n{traceback.format_exc()}")
@@ -553,13 +566,13 @@ async def list_all_users_callback(client, callback_query):
         ctx.all_users_cache[bot_id] = user_data_cache
 
     users_data = ctx.all_users_cache.get(bot_id, [])
-
-    back_btn_text = f"| {lang.get('general.back_to_settings')} - settings |"
+    
+    back_row = [{"text": lang.get('general.back_to_settings'), "callback_data": "settings"}]
+    refresh_row = [{"text": lang.get('admin.list_users.refresh_button'), "callback_data": f"list_all_users_0_refresh"}]
 
     if not users_data:
         text = lang.get("admin.list_users.no_users")
-        refresh_btn = f"| {lang.get('admin.list_users.refresh_button')} - list_all_users_0_refresh |"
-        btn, _ = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{refresh_btn}\n{back_btn_text}")
+        btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=refresh_row + back_row)
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
         return await callback_query.edit_message_text(text, reply_markup=btn)
@@ -575,46 +588,30 @@ async def list_all_users_callback(client, callback_query):
     for user in page_user_data:
         text += f"• {client.ns.telegram.arg.getMention(user)} (`{user.id}`)\n  - @{user.username or 'N/A'}\n"
 
-    btn_text_list = []
-    pagination_row_parts = []
+    pagination_buttons = []
     if total_pages > 1:
         if page > 0:
-            pagination_row_parts.append(f"| « - list_all_users_{page-1} |")
-        pagination_row_parts.append(
-            f"| {lang.get('admin.list_users.page_info', page=page+1, total=total_pages)} - noop;same |"
-        )
+            pagination_buttons.append({"text": "«", "callback_data": f"list_all_users_{page-1}"})
+        pagination_buttons.append({"text": lang.get("admin.list_users.page_info", page=page+1, total=total_pages), "callback_data": "noop"})
         if page < total_pages - 1:
-            pagination_row_parts.append(f"| » - list_all_users_{page+1};same |")
+            pagination_buttons.append({"text": "»", "callback_data": f"list_all_users_{page+1}"})
 
-    if pagination_row_parts:
-        btn_text_list.append(" ".join(pagination_row_parts))
+    action_buttons = []
+    for user in page_user_data:
+        btn_text = lang.get("admin.list_users.send_message_button", name=user.first_name[:10] if user.first_name else user.id)
+        action_buttons.append({"text": btn_text, "callback_data": f"message_user_{user.id}_{page}"})
 
-    i = 0
-    while i < len(page_user_data):
-        user1 = page_user_data[i]
-        btn1_text = lang.get("admin.list_users.send_message_button", name=user1.first_name[:10] if user1.first_name else user1.id)
-        btn1_str = f"| {btn1_text} - message_user_{user1.id}_{page} |"
-
-        if i + 1 < len(page_user_data):
-            user2 = page_user_data[i + 1]
-            btn2_text = lang.get("admin.list_users.send_message_button", name=user2.first_name[:10] if user2.first_name else user2.id)
-            btn2_str = f"| {btn2_text} - message_user_{user2.id}_{page};same |"
-            btn_text_list.append(f"{btn1_str}{btn2_str}")
-            i += 2
-        else:
-            btn_text_list.append(btn1_str)
-            i += 1
-
-    btn_text_list.append(f"| {lang.get('admin.list_users.refresh_button')} - list_all_users_{page}_refresh |")
-    btn_text_list.append(back_btn_text)
-
-    btn, _ = client.ns.telegram.button.create_inline_keyboard("\n".join(btn_text_list))
+    markup = client.ns.telegram.button.build_button_grid(
+        buttons=pagination_buttons + action_buttons,
+        row_inline=refresh_row + back_row,
+        row_width=3
+    )
 
     try:
         if callback_query.message.photo:
-            await callback_query.edit_message_caption(text, reply_markup=btn)
+            await callback_query.edit_message_caption(text, reply_markup=markup)
         else:
-            await callback_query.edit_message_text(text, reply_markup=btn)
+            await callback_query.edit_message_text(text, reply_markup=markup)
     except pyrogram.errors.MessageNotModified:
         await callback_query.answer(lang.get("admin.list_users.data_updated_answer"), show_alert=False)
     except Exception as e:
