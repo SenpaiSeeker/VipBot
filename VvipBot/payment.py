@@ -38,9 +38,9 @@ async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code
     if not saweria_service:
         if await is_bot_owner(client, user.id):
             text = lang.get("payment.pay.service_inactive_panel")
-            btn_text = f"| {lang.get('payment.pay.setup_api_button')} - api_settings |"
-            btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{btn_text}")
-            await client.send_message(user.id, txt, reply_markup=btn)
+            row_inline = [{"text": lang.get('payment.pay.setup_api_button'), "callback_data": "api_settings"}]
+            btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=row_inline)
+            await client.send_message(user.id, text, reply_markup=btn)
         else:
             await client.send_message(user.id, lang.get("payment.pay.service_inactive_alert"))
         return
@@ -98,8 +98,8 @@ async def _create_payment_invoice(client, user, names, tipe, amount, coupon_code
                 id=order_id,
                 expire_time=expire_str,
             )
-            btn_text = f"| {lang.get('payment.check.confirm_button')} - confirm_payment {order_id} |"
-            btn, _ = client.ns.telegram.button.create_inline_keyboard(btn_text)
+            row_inline = [{"text": lang.get('payment.check.confirm_button'), "callback_data": f"confirm_payment {order_id}"}]
+            btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=row_inline)
 
             await client.send_photo(user.id, photo=BytesIO(qr_bytes), caption=caption, reply_markup=btn)
         else:
@@ -225,8 +225,8 @@ async def notes_data(client, callback_query):
     name = callback_query.data.split(" ", 1)[1]
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     item = next((v for v in vvip_list if v.get("name") == name), None)
-
-    back_btn_text = f"| {lang.get('general.back_to_vvip_list')} - list_vvip |"
+    
+    back_button = [{"text": lang.get('general.back_to_vvip_list'), "callback_data": "list_vvip"}]
 
     if item:
         price_val = item.get("price", 0)
@@ -237,24 +237,28 @@ async def notes_data(client, callback_query):
             if normal_text
             else lang.get("payment.defaults.notes_text", name=name, price=f"{price_val:,}")
         )
-
-        btn_text = (
-            f"| {lang.get('payment.notes.pay_button')} - paynow {name} normal {price_val} |\n"
-            f"| {lang.get('coupons.use_button')} - apply_coupon {name} normal {price_val} | | {back_btn_text};same |"
-        )
-
-        btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{desc}\n\n{btn_text}")
+        
+        buttons = [
+            {"text": lang.get('coupons.use_button'), "callback_data": f"apply_coupon {name} normal {price_val}"}
+        ]
+        
+        row_inline = [
+            {"text": lang.get('payment.notes.pay_button'), "callback_data": f"paynow {name} normal {price_val}"}
+        ] + back_button
+        
+        btn = client.ns.telegram.button.build_button_grid(buttons=buttons, row_inline=row_inline, row_width=1)
 
         if callback_query.message.photo:
-            return await callback_query.edit_message_caption(txt, reply_markup=btn)
-        return await callback_query.edit_message_text(txt, reply_markup=btn)
+            return await callback_query.edit_message_caption(desc, reply_markup=btn)
+        return await callback_query.edit_message_text(desc, reply_markup=btn)
 
     text = lang.get("payment.notes.not_found")
-    btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{back_btn_text}")
+    btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=back_button)
+    
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(txt, reply_markup=btn)
+        await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(txt, reply_markup=btn)
+        await callback_query.edit_message_text(text, reply_markup=btn)
 
 
 @command(lambda ctx: filters.regex(r"^promo_detail\s(.+)"), handler_type="callback")
@@ -264,7 +268,7 @@ async def promo_detail(client, callback_query):
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     item = next((v for v in vvip_list if v.get("name") == name), None)
 
-    back_btn_text = f"| {lang.get('general.back_to_vvip_list')} - list_vvip |"
+    back_button = [{"text": lang.get('general.back_to_vvip_list'), "callback_data": "list_vvip"}]
 
     if item and item.get("promo_price", 0) > 0:
         promo_price_val = item.get("promo_price", 0)
@@ -276,22 +280,25 @@ async def promo_detail(client, callback_query):
             else lang.get("payment.defaults.promo_text", name=name, promo_price=f"{promo_price_val:,}")
         )
 
-        btn_text = (
-            f"| {lang.get('payment.promo.pay_button')} - paynow {name} promo {promo_price_val} |\n"
-            f"| {lang.get('coupons.use_button')} - apply_coupon {name} promo {promo_price_val} | | {back_btn_text};same |"
-        )
-        btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{desc}\n\n{btn_text}")
-
+        buttons = [
+            {"text": lang.get('coupons.use_button'), "callback_data": f"apply_coupon {name} promo {promo_price_val}"}
+        ]
+        row_inline = [
+            {"text": lang.get('payment.promo.pay_button'), "callback_data": f"paynow {name} promo {promo_price_val}"}
+        ] + back_button
+        
+        btn = client.ns.telegram.button.build_button_grid(buttons=buttons, row_inline=row_inline, row_width=1)
+        
         if callback_query.message.photo:
-            return await callback_query.edit_message_caption(txt, reply_markup=btn)
-        return await callback_query.edit_message_text(txt, reply_markup=btn)
+            return await callback_query.edit_message_caption(desc, reply_markup=btn)
+        return await callback_query.edit_message_text(desc, reply_markup=btn)
 
     text = lang.get("payment.promo.not_found")
-    btn, txt = client.ns.telegram.button.create_inline_keyboard(f"{text}\n\n{back_btn_text}")
+    btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=back_button)
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(txt, reply_markup=btn)
+        await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(txt, reply_markup=btn)
+        await callback_query.edit_message_text(text, reply_markup=btn)
 
 
 @command(lambda ctx: filters.regex(r"^apply_coupon\s(.+?)\s(normal|promo)\s(\d+)"), handler_type="callback")
@@ -420,8 +427,8 @@ async def successful_donation_handler(client, message):
         await ctx.db.setVars(current_bot_id, f"refund_{refund_key}", refund_data)
 
         refund_callback_data = f"refund_stars_{refund_key}"
-        refund_button_text = f"| {owner_lang.get('payment.donation.refund_button')} - {refund_callback_data} |"
-        refund_btn, _ = client.ns.telegram.button.create_inline_keyboard(refund_button_text)
+        row_inline = [{"text": owner_lang.get('payment.donation.refund_button'), "callback_data": refund_callback_data}]
+        refund_btn = client.ns.telegram.button.build_button_grid(buttons=[], row_inline=row_inline)
 
         await client.send_message(chat_id=owner_of_this_bot, text=notification_text, reply_markup=refund_btn)
 
