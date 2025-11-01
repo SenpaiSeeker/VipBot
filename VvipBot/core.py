@@ -302,22 +302,3 @@ async def process_donation_callback(client, callback_query):
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED}Gagal mengirim invoice Stars: {e}")
         await callback_query.answer(lang.get("payment.donation.invoice_fail"), show_alert=True)
-
-
-@command(lambda ctx: filters.regex(r"^renew_sub\s(.+)"), handler_type="callback")
-async def renew_subscription_callback(client, callback_query):
-    lang = callback_query.lang
-    name = callback_query.data.split(" ", 1)[1]
-
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-    item = next((v for v in vvip_list if v.get("name") == name), None)
-
-    if not item:
-        return await callback_query.answer(lang.get("payment.notes.not_found"), show_alert=True)
-
-    if item.get("promo_price", 0) > 0:
-        callback_query.data = f"promo_detail {name}"
-        await promo_detail(client, callback_query)
-    else:
-        callback_query.data = f"notes {name}"
-        await notes_data(client, callback_query)
