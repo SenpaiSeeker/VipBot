@@ -78,11 +78,11 @@ async def set_lang_callback(client, callback_query):
     text = lang.get("lang.select")
 
     buttons = [
-        {"text": lang.get('lang.button_en'), "callback_data": "chg_lang_en"}
+        {"text": lang.get('lang.button_id'), "callback_data": "chg_lang_id"},
+        {"text": lang.get('lang.button_en'), "callback_data": "chg_lang_en"},
+        {"text": lang.get('lang.button_ja'), "callback_data": "chg_lang_ja"},
     ]
     row_inline = [
-        {"text": lang.get('lang.button_id'), "callback_data": "chg_lang_id"},
-        {"text": lang.get('lang.button_ja'), "callback_data": "chg_lang_ja"},
         {"text": lang.get('general.back_to_main_menu'), "callback_data": "start"}
     ]
     btn = client.ns.telegram.button.build_button_grid(buttons=buttons, row_inline=row_inline, row_width=1)
