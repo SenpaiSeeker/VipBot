@@ -85,7 +85,7 @@ async def set_lang_callback(client, callback_query):
     row_inline = [
         {"text": lang.get('general.back_to_main_menu'), "callback_data": "start"}
     ]
-    btn = client.ns.telegram.button.build_button_grid(buttons=buttons, row_inline=row_inline, row_width=1)
+    btn = client.ns.telegram.button.build_button_grid(buttons=buttons, row_inline=row_inline, row_width=2)
     
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
