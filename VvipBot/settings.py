@@ -88,7 +88,7 @@ async def set_start_text_callback(client, callback_query):
             await ctx.db.removeVars(client.me.id, "start_text_template")
             return await client.send_message(chat_id, lang.get("settings.text_emptied"), reply_markup=back_btn)
 
-        await ctx.db.setVars(client.me.id, "start_text_template", ask_text_msg.text)
+        await ctx.db.setVars(client.me.id, "start_text_template", ask_text_msg.text.html)
         await client.send_message(chat_id, lang.get("settings.set_text_success"), reply_markup=back_btn)
 
     except listen.UserCancelled:
