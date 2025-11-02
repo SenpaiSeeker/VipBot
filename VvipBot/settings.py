@@ -9,14 +9,32 @@ async def settings(client, callback_query):
     lang = callback_query.lang
 
     layout = [
-        [{"text": lang.get('settings.set_start_photo'), "callback_data": "set_start_photo"}, {"text": lang.get('settings.set_start_text'), "callback_data": "set_start_text"}],
-        [{"text": lang.get('settings.add_vvip'), "callback_data": "setup_listvvip"}, {"text": lang.get('settings.del_vvip'), "callback_data": "delete_listvvip"}],
-        [{"text": lang.get('settings.list_all_users'), "callback_data": "list_all_users_0"}, {"text": lang.get('settings.check_members'), "callback_data": "list_members_0"}],
-        [{"text": lang.get('settings.check_active_members'), "callback_data": "check_active_menu_init"}, {"text": lang.get('settings.broadcast'), "callback_data": "broadcast"}],
-        [{"text": lang.get('settings.api_keys'), "callback_data": "api_settings"}, {"text": lang.get('settings.coupons'), "callback_data": "manage_coupons"}],
-        [{"text": lang.get('settings.stats_button'), "callback_data": "stats_0"}, {"text": lang.get('general.back_to_main_menu'), "callback_data": "start"}],
+        [
+            {"text": lang.get("settings.set_start_photo"), "callback_data": "set_start_photo"},
+            {"text": lang.get("settings.set_start_text"), "callback_data": "set_start_text"},
+        ],
+        [
+            {"text": lang.get("settings.add_vvip"), "callback_data": "setup_listvvip"},
+            {"text": lang.get("settings.del_vvip"), "callback_data": "delete_listvvip"},
+        ],
+        [
+            {"text": lang.get("settings.list_all_users"), "callback_data": "list_all_users_0"},
+            {"text": lang.get("settings.check_members"), "callback_data": "list_members_0"},
+        ],
+        [
+            {"text": lang.get("settings.check_active_members"), "callback_data": "check_active_menu_init"},
+            {"text": lang.get("settings.broadcast"), "callback_data": "broadcast"},
+        ],
+        [
+            {"text": lang.get("settings.api_keys"), "callback_data": "api_settings"},
+            {"text": lang.get("settings.coupons"), "callback_data": "manage_coupons"},
+        ],
+        [
+            {"text": lang.get("settings.stats_button"), "callback_data": "stats_0"},
+            {"text": lang.get("general.back_to_main_menu"), "callback_data": "start"},
+        ],
     ]
-    
+
     txt_content = lang.get("settings.panel")
     btn = client.ns.telegram.button.build_button_grid(layout)
 
@@ -34,7 +52,7 @@ async def set_start_photo_callback(client, callback_query):
     lang = callback_query.lang
     await callback_query.message.delete()
 
-    layout = [[{"text": lang.get('general.back_to_settings'), "callback_data": "settings"}]]
+    layout = [[{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]]
     back_btn = client.ns.telegram.button.build_button_grid(layout)
 
     try:
@@ -71,7 +89,7 @@ async def set_start_text_callback(client, callback_query):
     lang = callback_query.lang
     await callback_query.message.delete()
 
-    layout = [[{"text": lang.get('general.back_to_settings'), "callback_data": "settings"}]]
+    layout = [[{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]]
     back_btn = client.ns.telegram.button.build_button_grid(layout)
 
     try:
@@ -255,10 +273,10 @@ async def delete_listvvip(client, callback_query):
     lang = callback_query.lang
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
-    back_row = [{"text": lang.get('general.back_to_settings'), "callback_data": "settings"}]
+    back_row = [{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]
 
     if not vvip_list:
-        text = lang.get('settings.delete_vvip_empty')
+        text = lang.get("settings.delete_vvip_empty")
         btn = client.ns.telegram.button.build_button_grid([back_row])
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
@@ -268,17 +286,19 @@ async def delete_listvvip(client, callback_query):
     button_row = []
     for item in vvip_list:
         name = item.get("name", "Tanpa Nama")
-        button_row.append({"text": lang.get("settings.delete_vvip_button", name=name), "callback_data": f"delete_vvip {name}"})
+        button_row.append(
+            {"text": lang.get("settings.delete_vvip_button", name=name), "callback_data": f"delete_vvip {name}"}
+        )
         if len(button_row) == 2:
             layout.append(button_row)
             button_row = []
     if button_row:
         layout.append(button_row)
-    
+
     layout.append(back_row)
     text = lang.get("settings.delete_vvip_panel")
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -295,7 +315,7 @@ async def confirm_delete_vvip(client, callback_query):
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     item_to_remove = next((item for item in vvip_list if item.get("name") == name), None)
 
-    back_row = [{"text": lang.get('general.back_to_settings'), "callback_data": "delete_listvvip"}]
+    back_row = [{"text": lang.get("general.back_to_settings"), "callback_data": "delete_listvvip"}]
 
     if item_to_remove:
         await ctx.db.removeListVars(client.me.id, "list_vvip", item_to_remove)
@@ -303,9 +323,9 @@ async def confirm_delete_vvip(client, callback_query):
         message = lang.get("settings.delete_vvip_success", name=name)
     else:
         message = lang.get("settings.delete_vvip_fail", name=name)
-        
+
     btn = client.ns.telegram.button.build_button_grid([back_row])
-    
+
     if callback_query.message.photo:
         await callback_query.edit_message_caption(message, reply_markup=btn)
     else:
@@ -332,18 +352,18 @@ async def api_settings_callback(client, callback_query):
 
     layout = [
         [
-            {"text": lang.get('settings.api_set_saweria'), "callback_data": "set_api SAWERIA"},
-            {"text": lang.get('settings.api_set_gemini'), "callback_data": "set_api GEMINI_API_KEY"}
+            {"text": lang.get("settings.api_set_saweria"), "callback_data": "set_api SAWERIA"},
+            {"text": lang.get("settings.api_set_gemini"), "callback_data": "set_api GEMINI_API_KEY"},
         ],
-        [{"text": lang.get('settings.api_del_all'), "callback_data": "del_api_confirm"}],
-        [{"text": lang.get('general.back_to_settings'), "callback_data": "settings"}]
+        [{"text": lang.get("settings.api_del_all"), "callback_data": "del_api_confirm"}],
+        [{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}],
     ]
-    
+
     text = lang.get(
         "settings.api_panel", mention=client.me.mention, saweria_status=saweria_status, gemini_status=gemini_status
     )
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -359,7 +379,7 @@ async def set_api_key_prompt(client, callback_query):
     _, key_name = callback_query.data.split(" ", 1)
     await callback_query.message.delete()
 
-    layout = [[{"text": lang.get('general.back_to_settings_api'), "callback_data": "api_settings"}]]
+    layout = [[{"text": lang.get("general.back_to_settings_api"), "callback_data": "api_settings"}]]
     back_btn = client.ns.telegram.button.build_button_grid(layout)
 
     try:
@@ -424,12 +444,14 @@ async def confirm_delete_api_keys(client, callback_query):
     lang = callback_query.lang
 
     text = lang.get("settings.api_del_confirm_panel")
-    layout = [[
-        {"text": lang.get('settings.api_del_confirm_yes_button'), "callback_data": "do_del_api"},
-        {"text": lang.get('settings.api_del_confirm_no_button'), "callback_data": "api_settings"}
-    ]]
+    layout = [
+        [
+            {"text": lang.get("settings.api_del_confirm_yes_button"), "callback_data": "do_del_api"},
+            {"text": lang.get("settings.api_del_confirm_no_button"), "callback_data": "api_settings"},
+        ]
+    ]
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -462,12 +484,12 @@ async def manage_coupons_callback(client, callback_query):
     lang = callback_query.lang
     text = lang.get("coupons.panel")
     layout = [
-        [{"text": lang.get('coupons.add_button'), "callback_data": "add_coupon"}],
-        [{"text": lang.get('coupons.list_button'), "callback_data": "list_coupons_0"}],
-        [{"text": lang.get('general.back_to_settings'), "callback_data": "settings"}]
+        [{"text": lang.get("coupons.add_button"), "callback_data": "add_coupon"}],
+        [{"text": lang.get("coupons.list_button"), "callback_data": "list_coupons_0"}],
+        [{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}],
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -532,7 +554,7 @@ async def list_coupons_callback(client, callback_query):
 
     coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
 
-    back_row = [{"text": lang.get('general.back'), "callback_data": "manage_coupons"}]
+    back_row = [{"text": lang.get("general.back"), "callback_data": "manage_coupons"}]
 
     if not coupons:
         text = lang.get("coupons.list_empty")
@@ -563,16 +585,20 @@ async def list_coupons_callback(client, callback_query):
     if total_pages > 1:
         prev_page = (page - 1 + total_pages) % total_pages
         next_page = (page + 1) % total_pages if page + 1 < total_pages else page
-        pagination_row.extend([
-            {"text": "«", "callback_data": f"list_coupons_{prev_page}"},
-            {"text": "»", "callback_data": f"list_coupons_{next_page}"}
-        ])
-    
-    layout.append([{"text": lang.get('coupons.delete_button'), "callback_data": f"delete_coupon {coupon['code']} {page}"}])
+        pagination_row.extend(
+            [
+                {"text": "«", "callback_data": f"list_coupons_{prev_page}"},
+                {"text": "»", "callback_data": f"list_coupons_{next_page}"},
+            ]
+        )
+
+    layout.append(
+        [{"text": lang.get("coupons.delete_button"), "callback_data": f"delete_coupon {coupon['code']} {page}"}]
+    )
     if pagination_row:
         layout.append(pagination_row)
     layout.append(back_row)
-    
+
     btn = client.ns.telegram.button.build_button_grid(layout)
     await callback_query.edit_message_caption(text, reply_markup=btn)
 

@@ -34,7 +34,7 @@ async def verify_user_join(client, user, chat_id, link_msg):
 async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon_code=None):
     lang = await ctx.L.create(ctx.db, user.id)
     saweria_service = getattr(client, "services", None) and client.services.saweria
-    
+
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     try:
         item = vvip_list[item_index]
@@ -46,7 +46,7 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
     if not saweria_service:
         if await is_bot_owner(client, user.id):
             text = lang.get("payment.pay.service_inactive_panel")
-            layout = [[{"text": lang.get('payment.pay.setup_api_button'), "callback_data": "api_settings"}]]
+            layout = [[{"text": lang.get("payment.pay.setup_api_button"), "callback_data": "api_settings"}]]
             btn = client.ns.telegram.button.build_button_grid(layout)
             await client.send_message(user.id, text, reply_markup=btn)
         else:
@@ -106,7 +106,9 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
                 id=order_id,
                 expire_time=expire_str,
             )
-            layout = [[{"text": lang.get('payment.check.confirm_button'), "callback_data": f"confirm_payment {order_id}"}]]
+            layout = [
+                [{"text": lang.get("payment.check.confirm_button"), "callback_data": f"confirm_payment {order_id}"}]
+            ]
             btn = client.ns.telegram.button.build_button_grid(layout)
 
             await client.send_photo(user.id, photo=BytesIO(qr_bytes), caption=caption, reply_markup=btn)
@@ -234,8 +236,8 @@ async def notes_data(client, callback_query):
     lang = callback_query.lang
     item_index = int(callback_query.matches[0].group(1))
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-    
-    layout = [[{"text": lang.get('general.back_to_vvip_list'), "callback_data": "list_vvip"}]]
+
+    layout = [[{"text": lang.get("general.back_to_vvip_list"), "callback_data": "list_vvip"}]]
 
     try:
         item = vvip_list[item_index]
@@ -252,15 +254,23 @@ async def notes_data(client, callback_query):
             if normal_text
             else lang.get("payment.defaults.notes_text", name=name, price=f"{price_val:,}")
         )
-        
+
         layout = [
-            [{"text": lang.get('payment.notes.pay_button'), "callback_data": f"paynow_{item_index}_normal_{price_val}"}],
             [
-                {"text": lang.get('coupons.use_button'), "callback_data": f"apply_coupon_{item_index}_normal_{price_val}"},
-                {"text": lang.get('general.back_to_vvip_list'), "callback_data": "list_vvip"}
-            ]
+                {
+                    "text": lang.get("payment.notes.pay_button"),
+                    "callback_data": f"paynow_{item_index}_normal_{price_val}",
+                }
+            ],
+            [
+                {
+                    "text": lang.get("coupons.use_button"),
+                    "callback_data": f"apply_coupon_{item_index}_normal_{price_val}",
+                },
+                {"text": lang.get("general.back_to_vvip_list"), "callback_data": "list_vvip"},
+            ],
         ]
-        
+
         btn = client.ns.telegram.button.build_button_grid(layout)
 
         if callback_query.message.photo:
@@ -281,8 +291,8 @@ async def promo_detail(client, callback_query):
     item_index = int(callback_query.matches[0].group(1))
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
-    layout = [[{"text": lang.get('general.back_to_vvip_list'), "callback_data": "list_vvip"}]]
-    
+    layout = [[{"text": lang.get("general.back_to_vvip_list"), "callback_data": "list_vvip"}]]
+
     try:
         item = vvip_list[item_index]
     except IndexError:
@@ -300,14 +310,22 @@ async def promo_detail(client, callback_query):
         )
 
         layout = [
-            [{"text": lang.get('payment.promo.pay_button'), "callback_data": f"paynow_{item_index}_promo_{promo_price_val}"}],
             [
-                {"text": lang.get('coupons.use_button'), "callback_data": f"apply_coupon_{item_index}_promo_{promo_price_val}"},
-                {"text": lang.get('general.back_to_vvip_list'), "callback_data": "list_vvip"}
-            ]
+                {
+                    "text": lang.get("payment.promo.pay_button"),
+                    "callback_data": f"paynow_{item_index}_promo_{promo_price_val}",
+                }
+            ],
+            [
+                {
+                    "text": lang.get("coupons.use_button"),
+                    "callback_data": f"apply_coupon_{item_index}_promo_{promo_price_val}",
+                },
+                {"text": lang.get("general.back_to_vvip_list"), "callback_data": "list_vvip"},
+            ],
         ]
         btn = client.ns.telegram.button.build_button_grid(layout)
-        
+
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(desc, reply_markup=btn)
         return await callback_query.edit_message_text(desc, reply_markup=btn)
@@ -436,7 +454,7 @@ async def successful_donation_handler(client, message):
         await ctx.db.setVars(current_bot_id, f"refund_{refund_key}", refund_data)
 
         refund_callback_data = f"refund_stars_{refund_key}"
-        layout = [[{"text": owner_lang.get('payment.donation.refund_button'), "callback_data": refund_callback_data}]]
+        layout = [[{"text": owner_lang.get("payment.donation.refund_button"), "callback_data": refund_callback_data}]]
         refund_btn = client.ns.telegram.button.build_button_grid(layout)
 
         await client.send_message(chat_id=owner_of_this_bot, text=notification_text, reply_markup=refund_btn)

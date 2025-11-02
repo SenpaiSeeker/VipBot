@@ -218,10 +218,19 @@ async def subscription_checker_method():
                             if vvip_item.get("name") == member["vvip_name"]:
                                 item_index = i
                                 break
-                        
+
                         if item_index != -1:
-                            text = lang.get('subscription.renewal_reminder', name=member['vvip_name'], days=time_left.days)
-                            layout = [[{"text": lang.get('subscription.renew_button'), "callback_data": f"renew_sub_{item_index}"}]]
+                            text = lang.get(
+                                "subscription.renewal_reminder", name=member["vvip_name"], days=time_left.days
+                            )
+                            layout = [
+                                [
+                                    {
+                                        "text": lang.get("subscription.renew_button"),
+                                        "callback_data": f"renew_sub_{item_index}",
+                                    }
+                                ]
+                            ]
                             btn = bot_client.ns.telegram.button.build_button_grid(layout)
                             await bot_client.send_message(user_id, text, reply_markup=btn)
                             await manager.db.setVars(user_id, f"{last_notif_key}_{bot_id}", today_str)
