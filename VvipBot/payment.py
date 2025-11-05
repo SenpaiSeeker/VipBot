@@ -86,7 +86,7 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
         qr_bytes = await client.ns.ai.qrcode.generate(
             data=result.qr_string,
             bottom_text="SCAN ME",
-            creator_text=f"Created by: {ctx.ubot_manager.main_bot_client.me.username}"
+            creator_text=f"Created by: {client.me.username}"
         )
 
         jakarta_tz = ZoneInfo("Asia/Jakarta")
