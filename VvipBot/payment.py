@@ -1,5 +1,3 @@
-import base64
-
 from . import *
 
 
@@ -85,8 +83,11 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
 
         await ctx.db.setVars(client.me.id, order_id, order_data)
 
-        qr_image_base64 = result.qr_image.split(",", 1)[1]
-        qr_bytes = base64.b64decode(qr_image_base64)
+        qr_bytes = await client.ns.ai.qrcode.generate(
+            data=result.qr_string,
+            bottom_text="SCAN ME",
+            creator_text=f"Created by: {ctx.ubot_manager.main_bot_client.me.username}"
+        )
 
         jakarta_tz = ZoneInfo("Asia/Jakarta")
         try:
