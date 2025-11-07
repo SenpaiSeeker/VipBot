@@ -100,7 +100,7 @@ async def proceed_bot_payment_callback(client, callback_query):
         order_data = f"{months}|{amount_raw}"
         await ctx.db.setVars(client.me.id, transaction_id, order_data)
 
-        caption = lang.get("payment.pay.invoice_full", name=f"Akses Buat Bot {months} Bulan", type="Langganan", amount=f"{amount_raw:,}", id=transaction_id)
+        caption = lang.get("payment.pay.invoice_full", name=f"Akses Buat Bot {months} Bulan", type="Langganan", amount=f"{amount_raw:,}", id=f"[{transaction_id}](https://saweria.co/qris/{transaction_id})")
         layout = [[{"text": lang.get("payment.check.confirm_button"), "callback_data": f"confirm_bot_payment_{transaction_id}"}]]
         btn = client.ns.telegram.button.build_button_grid(layout)
 
