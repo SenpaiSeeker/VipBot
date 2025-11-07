@@ -9,10 +9,11 @@ async def verify_user_join(client, user, chat_id, link_msg):
 
     while time() - start_time < verification_timeout:
         try:
-            await client.get_chat_member(chat_id, user.id)
-            is_joined = True
-            ctx.log.print(f"{ctx.log.GREEN}User {user.id} berhasil diverifikasi bergabung ke {chat_id}.")
-            break
+            member = await client.get_chat_member(chat_id, user.id)
+            if member.status not in [pyrogram.enums.ChatMemberStatus.LEFT, pyrogram.enums.ChatMemberStatus.BANNED]:
+                is_joined = True
+                ctx.log.print(f"{ctx.log.GREEN}User {user.id} berhasil diverifikasi bergabung ke {chat_id}.")
+                break
         except pyrogram.errors.UserNotParticipant:
             await asyncio.sleep(15)
         except Exception as e:
@@ -57,64 +58,36 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
         saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
         if not saweria_user_id:
             raise Exception("Konfigurasi Saweria (User ID) tidak ditemukan di bot ini oleh admin.")
-
+        
         fakeinfo = client.ns.utils.faker.generate()
-        pay = await saweria_service.create_payment(
+        qr_string, transaction_id, qr_image_stream, amount_raw = await saweria_service.create_payment(
             user_id=saweria_user_id,
             amount=int(amount),
-            name=f"user_id: {user.id}",
+            name=f"User-{user.id}",
             email=fakeinfo.email,
             message=f"Pembelian {names} ({tipe}) via @{client.me.username}",
+            creator_name=client.me.username
         )
 
-        if not (hasattr(pay, "result") and hasattr(pay.result, "status") and pay.result.status is True):
-            error_msg = (
-                pay.result.msg if hasattr(pay, "result") and hasattr(pay.result, "msg") else "Unknown Saweria API error"
-            )
-            raise Exception(f"API payment gateway mengembalikan error: {error_msg}")
-
-        result = pay.result.data
-        payment_id = result.id
-        order_id = str(uuid.uuid4())
-
-        order_data = f"{payment_id}|{item_index}|{tipe}"
+        order_data = f"{item_index}|{tipe}|{amount_raw}"
         if coupon_code:
             order_data += f"|{coupon_code}"
+        
+        await ctx.db.setVars(client.me.id, transaction_id, order_data)
 
-        await ctx.db.setVars(client.me.id, order_id, order_data)
-
-        qr_bytes = await client.ns.ai.qrcode.generate(
-            data=result.qr_string,
-            bottom_text="SCAN ME",
-            creator_text=f"Created by: {client.me.username}"
+        caption = lang.get(
+            "payment.pay.invoice_full",
+            name=names,
+            type=tipe.title(),
+            amount=f"{int(amount_raw):,}",
+            id=f"[{transaction_id}](https://saweria.co/qris/{transaction_id})"
         )
+        layout = [
+            [{"text": lang.get("payment.check.confirm_button"), "callback_data": f"confirm_payment {transaction_id}"}]
+        ]
+        btn = client.ns.telegram.button.build_button_grid(layout)
 
-        jakarta_tz = ZoneInfo("Asia/Jakarta")
-        try:
-            expired_dt_naive = datetime.strptime(result.expired_at, "%d/%m/%Y %H:%M:%S")
-            expired_dt_utc = expired_dt_naive.replace(tzinfo=timezone.utc)
-            expired_dt_jakarta = expired_dt_utc.astimezone(jakarta_tz)
-            expire_str = expired_dt_jakarta.strftime("%H:%M:%S %Z")
-        except (ValueError, TypeError):
-            expire_str = "15 menit"
-
-        if qr_bytes:
-            caption = lang.get(
-                "payment.pay.invoice_full",
-                name=names,
-                type=tipe.title(),
-                amount=f"{int(result.amount_raw):,}",
-                id=order_id,
-                expire_time=expire_str,
-            )
-            layout = [
-                [{"text": lang.get("payment.check.confirm_button"), "callback_data": f"confirm_payment {order_id}"}]
-            ]
-            btn = client.ns.telegram.button.build_button_grid(layout)
-
-            await client.send_photo(user.id, photo=BytesIO(qr_bytes), caption=caption, reply_markup=btn)
-        else:
-            raise Exception(lang.get("payment.pay.qr_fail"))
+        await client.send_photo(user.id, photo=qr_image_stream, caption=caption, reply_markup=btn)
         await msg.delete()
     except Exception as e:
         await msg.edit(lang.get("general.error", e=e))
@@ -122,7 +95,7 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
 
 @command(lambda ctx: filters.regex(r"^confirm_payment\s(.+)"), handler_type="callback")
 async def manual_check_payment_callback(client, callback_query):
-    order_id = callback_query.data.split(" ", 1)[1]
+    transaction_id = callback_query.data.split(" ", 1)[1]
     user = callback_query.from_user
     lang = callback_query.lang
 
@@ -130,29 +103,22 @@ async def manual_check_payment_callback(client, callback_query):
     if not saweria_service:
         return await callback_query.answer(lang.get("payment.pay.service_inactive_alert"), show_alert=True)
 
-    ref_data_str = await ctx.db.getVars(client.me.id, order_id)
+    ref_data_str = await ctx.db.getVars(client.me.id, transaction_id)
     if not ref_data_str:
         return await callback_query.edit_message_caption(lang.get("payment.check.expired_or_completed"))
 
     ref_parts = ref_data_str.split("|")
-    payment_id = ref_parts[0]
-    item_index = int(ref_parts[1])
-    tipe = ref_parts[2]
+    item_index = int(ref_parts[0])
+    tipe = ref_parts[1]
+    amount_raw = int(ref_parts[2])
     coupon_code = ref_parts[3] if len(ref_parts) > 3 else None
-
-    saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
-    if not saweria_user_id:
-        return await callback_query.answer(
-            lang.get("general.error", e="SAWERIA_USER_ID not configured."), show_alert=True
-        )
-
+    
     try:
-        pay_check = await saweria_service.check_payment(user_id=saweria_user_id, payment_id=payment_id)
+        is_paid = await saweria_service.check_paid_status(transaction_id)
 
-        if hasattr(pay_check, "result") and getattr(pay_check.result, "status", False) is True:
+        if is_paid:
             await callback_query.edit_message_reply_markup(None)
-
-            await ctx.db.removeVars(client.me.id, order_id)
+            await ctx.db.removeVars(client.me.id, transaction_id)
 
             vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
             try:
@@ -168,7 +134,7 @@ async def manual_check_payment_callback(client, callback_query):
                 raise ValueError("Chat ID untuk paket VVIP ini belum diatur oleh admin.")
 
             try:
-                expire_date_link = datetime.now() + timedelta(hours=2)
+                expire_date_link = datetime.now() + timedelta(minutes=10)
                 invite_link_obj = await client.create_chat_invite_link(
                     chat_id=target_chat_id, member_limit=1, expire_date=expire_date_link
                 )
@@ -209,7 +175,6 @@ async def manual_check_payment_callback(client, callback_query):
                 lang.get("payment.check.success_customer_full", name=name, link=link),
                 protect_content=True,
             )
-            await callback_query.message.delete()
             asyncio.create_task(verify_user_join(client, user, target_chat_id, link_msg))
 
             owner_bot_id = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
@@ -228,7 +193,7 @@ async def manual_check_payment_callback(client, callback_query):
             await callback_query.answer(lang.get("payment.check.not_paid"), show_alert=True)
 
     except Exception as e:
-        ctx.log.print(f"{ctx.log.RED}Error manual-check {order_id}: {e}")
+        ctx.log.print(f"{ctx.log.RED}Error manual-check {transaction_id}: {e}")
         await callback_query.answer(lang.get("general.error", e=e), show_alert=True)
 
 
@@ -378,7 +343,7 @@ async def apply_coupon_callback(client, callback_query):
         else:
             final_amount = original_amount - discount_value
 
-        final_amount = max(0, int(final_amount))
+        final_amount = max(1000, int(final_amount))
 
         await client.send_message(
             chat_id,
