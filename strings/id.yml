@@ -260,9 +260,7 @@ payment:
       │
       ├─ 🛍️ **Produk:** VVIP {name} ({type})
       ├─ 💳 **Jumlah:** `Rp {amount}`
-      ├─ 🆔 **Order ID:** `{id}`
-      │
-      ╰─ ⏳ **PENTING:** Invoice ini akan kedaluwarsa pukul **{expire_time}**.
+      ╰─ 🆔 **Order ID:** `{id}`
   check:
     confirm_button: "✅ Konfirmasi Pembayaran"
     checking: "🔍 Memeriksa status pembayaran..."
