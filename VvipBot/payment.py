@@ -1,6 +1,5 @@
 from . import *
 
-
 async def verify_user_join(client, user, chat_id, link_msg):
     lang = await ctx.L.create(ctx.db, user.id)
     verification_timeout = 600
@@ -29,10 +28,9 @@ async def verify_user_join(client, user, chat_id, link_msg):
         ctx.log.print(f"{ctx.log.YELLOW}User {user.id} tidak bergabung ke {chat_id} dalam waktu yang ditentukan.")
         await client.send_message(user.id, lang.get("payment.check.link_expired"))
 
-
 async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon_code=None):
     lang = await ctx.L.create(ctx.db, user.id)
-    
+
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     try:
         item = vvip_list[item_index]
@@ -52,7 +50,7 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
         return
 
     msg = await client.send_message(user.id, lang.get("general.processing"))
-    
+
     try:
         saweria = client.ns.payment.SaweriaScraper()
         fakeinfo = client.ns.utils.faker.generate()
@@ -103,14 +101,13 @@ async def manual_check_payment_callback(client, callback_query):
     ref_parts = ref_data_str.split("|")
     item_index = int(ref_parts[0])
     tipe = ref_parts[1]
-    amount_raw = int(ref_parts[2])
     coupon_code = ref_parts[3] if len(ref_parts) > 3 else None
 
     saweria = client.ns.payment.SaweriaScraper()
 
     try:
         is_paid = await saweria.check_paid_status(transaction_id)
-
+        
         if is_paid:
             await callback_query.edit_message_reply_markup(None)
             await ctx.db.removeVars(client.me.id, transaction_id)
