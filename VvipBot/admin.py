@@ -113,16 +113,22 @@ async def restore_database_handler(client, message):
 async def access_command_handler(client, message):
     lang = message.lang
     user_id_target, _ = await client.ns.telegram.arg.getReasonAndId(message)
+
     if not user_id_target:
         return await message.reply_text(lang.get("admin.access.usage_error"))
 
     try:
         target_user = await client.get_users(user_id_target)
         access_list = await ctx.db.getListVars(client.me.id, "create_bot_access") or []
-
-        status_text = (
-            lang.get("admin.access.has_access") if target_user.id in access_list else lang.get("admin.access.no_access")
-        )
+        
+        has_access = False
+        user_expiry_str = await ctx.db.getVars(target_user.id, "user_expiry_date")
+        if user_expiry_str:
+            expiry_date = datetime.fromisoformat(user_expiry_str)
+            if expiry_date > datetime.now(timezone.utc):
+                has_access = True
+        
+        status_text = lang.get("admin.access.has_access") if has_access else lang.get("admin.access.no_access")
 
         text = lang.get(
             "admin.access.panel",
@@ -133,8 +139,8 @@ async def access_command_handler(client, message):
 
         layout = [
             [
-                {"text": lang.get("admin.access.give_button"), "callback_data": f"give_access {target_user.id}"},
-                {"text": lang.get("admin.access.revoke_button"), "callback_data": f"revoke_access {target_user.id}"},
+                {"text": lang.get("admin.access.give_button"), "callback_data": f"give_access_{target_user.id}"},
+                {"text": lang.get("admin.access.revoke_button"), "callback_data": f"revoke_access_{target_user.id}"},
             ]
         ]
 
@@ -145,38 +151,80 @@ async def access_command_handler(client, message):
         await message.reply_text(lang.get("admin.access.process_fail", e=e))
 
 
-@command(lambda ctx: filters.regex(r"^(give|revoke)_access\s(\d+)"), handler_type="callback")
-async def manage_access_callback(client, callback_query):
+@command(lambda ctx: filters.regex(r"^give_access_(\d+)"), handler_type="callback")
+@seller_only
+async def give_access_callback(client, callback_query):
     lang = callback_query.lang
-    action, target_id_str = callback_query.data.split(" ", 1)
-    target_id = int(target_id_str.strip())
+    target_id = int(callback_query.data.split("_")[-1])
+    
+    text = lang.get("admin.access.give_duration_panel")
+    
+    layout = []
+    row = []
+    for months in [1, 3, 6, 12]:
+        row.append({"text": f"{months} Bulan", "callback_data": f"do_give_{target_id}_{months}"})
+    layout.append(row)
+    layout.append([{"text": lang.get("general.back"), "callback_data": "close_panel"}])
+
+    btn = client.ns.telegram.button.build_button_grid(layout)
+    await callback_query.edit_message_text(text, reply_markup=btn)
+
+
+@command(lambda ctx: filters.regex(r"^do_give_(\d+)_(\d+)"), handler_type="callback")
+@seller_only
+async def do_give_access_callback(client, callback_query):
+    lang = callback_query.lang
+    _, _, target_id_str, months_str = callback_query.data.split("_")
+    target_id = int(target_id_str)
+    months_to_add = int(months_str)
+
+    try:
+        target_user = await client.get_users(target_id)
+        
+        current_expiry_str = await ctx.db.getVars(target_id, "user_expiry_date")
+        start_date = datetime.now(timezone.utc)
+
+        if current_expiry_str:
+            current_expiry = datetime.fromisoformat(current_expiry_str)
+            if current_expiry > start_date:
+                start_date = current_expiry
+
+        new_expiry_date = start_date + timedelta(days=30 * months_to_add)
+        await ctx.db.setVars(target_id, "user_expiry_date", new_expiry_date.isoformat())
+        
+        expiry_in_jakarta = new_expiry_date.astimezone(ZoneInfo("Asia/Jakarta"))
+
+        success_text = lang.get(
+            "admin.access.give_success_panel_manual",
+            mention=client.ns.telegram.arg.getMention(target_user),
+            months=months_to_add,
+            new_date=expiry_in_jakarta.strftime("%d %B %Y, %H:%M %Z")
+        )
+        await callback_query.edit_message_text(success_text)
+        await callback_query.answer(lang.get("admin.access.give_success_alert", target_id=target_id))
+
+    except Exception as e:
+        await callback_query.answer(lang.get("admin.access.process_fail", e=e), show_alert=True)
+
+
+@command(lambda ctx: filters.regex(r"^revoke_access_(\d+)"), handler_type="callback")
+@seller_only
+async def revoke_access_callback(client, callback_query):
+    lang = callback_query.lang
+    target_id = int(callback_query.data.split("_")[-1])
 
     try:
         target_user = await client.get_users(target_id)
         mention = client.ns.telegram.arg.getMention(target_user)
-        access_list = await ctx.db.getListVars(client.me.id, "create_bot_access") or []
+        
+        await ctx.db.removeVars(target_id, "user_expiry_date")
 
-        text = ""
-        alert_text = ""
-
-        if action == "give_access":
-            if target_id not in access_list:
-                await ctx.db.setListVars(client.me.id, "create_bot_access", target_id)
-            alert_text = lang.get("admin.access.give_success_alert", target_id=target_id)
-            text = lang.get("admin.access.give_success_panel", mention=mention)
-
-        elif action == "revoke_access":
-            if target_id in access_list:
-                await ctx.db.removeListVars(client.me.id, "create_bot_access", target_id)
-            alert_text = lang.get("admin.access.revoke_success_alert", target_id=target_id)
-            text = lang.get("admin.access.revoke_success_panel", mention=mention)
-
+        alert_text = lang.get("admin.access.revoke_success_alert", target_id=target_id)
+        text = lang.get("admin.access.revoke_success_panel", mention=mention)
+        
         await callback_query.answer(alert_text)
-
-        layout = [[{"text": lang.get("general.close_panel"), "callback_data": "close_panel"}]]
-        btn = client.ns.telegram.button.build_button_grid(layout)
-        await callback_query.edit_message_text(text, reply_markup=btn)
-
+        await callback_query.edit_message_text(text)
+        
     except Exception as e:
         await callback_query.answer(lang.get("admin.access.process_fail", e=e), show_alert=True)
 
