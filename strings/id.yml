@@ -260,7 +260,9 @@ payment:
       │
       ├─ 🛍️ **Produk:** VVIP {name} ({type})
       ├─ 💳 **Jumlah:** `Rp {amount}`
-      ╰─ 🆔 **Order ID:** {id}
+      ├─ 🆔 **Order ID:** {id}
+      │
+      ╰─ 👇 **Jika sudah membayar, silakan klik tombol di bawah ini.**
   check:
     confirm_button: "✅ Konfirmasi Pembayaran"
     checking: "🔍 Memeriksa status pembayaran..."
