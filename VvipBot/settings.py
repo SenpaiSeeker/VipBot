@@ -1,6 +1,5 @@
 from . import *
 
-
 @command(lambda ctx: filters.regex("^settings$"), handler_type="callback")
 async def settings(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
@@ -145,26 +144,26 @@ async def broadcast_callback(client, callback_query):
         reply_markup, cleaned_text = client.ns.telegram.button.create_inline_keyboard(text_to_parse)
 
         async def send_to_user(target_user_id):
-            if reply_markup and reply_markup.inline_keyboard:
-                if ask_message.media:
-                    await ask_message.copy(chat_id=target_user_id, reply_markup=reply_markup)
-                else:
-                    await client.send_message(chat_id=target_user_id, text=cleaned_text, reply_markup=reply_markup)
-            else:
-                await ask_message.copy(chat_id=target_user_id)
-
-        for user_id in user_ids:
+            nonlocal success_count, fail_count
             try:
-                await send_to_user(user_id)
+                if reply_markup and reply_markup.inline_keyboard:
+                    if ask_message.media:
+                        await ask_message.copy(chat_id=target_user_id, reply_markup=reply_markup)
+                    else:
+                        await client.send_message(chat_id=target_user_id, text=cleaned_text, reply_markup=reply_markup)
+                else:
+                    await ask_message.copy(chat_id=target_user_id)
                 success_count += 1
             except pyrogram.errors.FloodWait as e:
                 await asyncio.sleep(e.value + 1)
-                await send_to_user(user_id)
-                success_count += 1
+                await send_to_user(target_user_id)
             except Exception:
-                await ctx.db.removeListVars(client.me.id, "user_ids", user_id)
+                await ctx.db.removeListVars(client.me.id, "user_ids", target_user_id)
                 fail_count += 1
             await asyncio.sleep(0.1)
+
+        for user_id in user_ids:
+            await send_to_user(user_id)
 
         await progress_msg.edit(lang.get("settings.broadcast_done", success=success_count, fail=fail_count))
 
@@ -338,12 +337,9 @@ async def api_settings_callback(client, callback_query):
         return
     lang = callback_query.lang
 
-    saweria_username = await ctx.db.getVars(client.me.id, "SAWERIA_USERNAME")
-    if saweria_username:
-        saweria_status = lang.get("settings.api_status_saweria_active", username=saweria_username)
-    else:
-        saweria_status = lang.get("settings.api_status_inactive")
-
+    saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
+    saweria_status = lang.get("settings.api_status_active") if saweria_user_id else lang.get("settings.api_status_inactive")
+    
     gemini_status = (
         lang.get("settings.api_status_active")
         if await ctx.db.getVars(client.me.id, "GEMINI_API_KEY")
@@ -388,29 +384,21 @@ async def set_api_key_prompt(client, callback_query):
             return client.ask(chat_id, f"{p}{lang.get('prompts.cancel_footer')}", timeout=600)
 
         if key_name == "SAWERIA":
-            api_key_msg = await ask(lang.get("settings.api_set_saweria_1"))
-            if api_key_msg.text and api_key_msg.text.lower() == "/batal":
-                raise listen.UserCancelled
             username_msg = await ask(lang.get("settings.api_set_saweria_2"))
             if username_msg.text and username_msg.text.lower() == "/batal":
                 raise listen.UserCancelled
 
             processing_msg = await client.send_message(chat_id, lang.get("general.processing"))
             try:
-                saweria_temp = client.ns.payment.Saweria(api_key=api_key_msg.text)
-                user_data = await saweria_temp.get_user_id(username=username_msg.text)
+                saweria_temp = client.ns.payment.SaweriaScraper()
+                user_id_saweria = await saweria_temp.get_user_id(username=username_msg.text)
+                
+                if not user_id_saweria:
+                    raise Exception("Username Saweria tidak ditemukan atau gagal melewati Cloudflare.")
 
-                if user_data.status != "Success":
-                    raise Exception(user_data.result.msg if hasattr(user_data, "result") else "Unknown Error")
-
-                saweria_user_id = user_data.result.userId
-
-                await ctx.db.setVars(client.me.id, "SAWERIA_API_KEY", api_key_msg.text)
-                await ctx.db.setVars(client.me.id, "SAWERIA_USERNAME", username_msg.text)
-                await ctx.db.setVars(client.me.id, "SAWERIA_USER_ID", saweria_user_id)
+                await ctx.db.setVars(client.me.id, "SAWERIA_USER_ID", user_id_saweria)
                 await processing_msg.delete()
                 await client.send_message(chat_id, lang.get("settings.api_set_success_saweria"), reply_markup=back_btn)
-                key_name = "Saweria"
 
             except Exception as e:
                 await processing_msg.edit_text(lang.get("settings.api_set_fail_saweria", e=e), reply_markup=back_btn)
@@ -463,14 +451,12 @@ async def do_delete_api_keys(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
     lang = callback_query.lang
-    await ctx.db.removeVars(client.me.id, "SAWERIA_API_KEY")
-    await ctx.db.removeVars(client.me.id, "SAWERIA_USERNAME")
     await ctx.db.removeVars(client.me.id, "SAWERIA_USER_ID")
     await ctx.db.removeVars(client.me.id, "GEMINI_API_KEY")
 
     from services import initialize_bot_services
 
-    initialize_bot_services(client, ctx.db)
+    await initialize_bot_services(client, ctx.db)
 
     await callback_query.answer(lang.get("settings.api_del_success"), show_alert=True)
     await api_settings_callback(client, callback_query)
