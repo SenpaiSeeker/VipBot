@@ -258,7 +258,7 @@ payment:
 
       ╭─ **Billing Details**
       │
-      ├─ 🛍️ **Product:** VVIP {name} ({type})
+      ├─ 🛍️ **Product:** {name} ({type})
       ├─ 💳 **Amount:** `IDR {amount}`
       ├─ 🆔 **Order ID:** {id}
       │
