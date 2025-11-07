@@ -84,11 +84,11 @@ async def proceed_bot_payment_callback(client, callback_query):
     if not saweria_user_id:
         return await callback_query.edit_message_caption(lang.get("payment.pay.service_inactive_alert"))
 
-    _, _, amount, _ = calculate_bot_price(months)
+    _, _, amount = calculate_bot_price(months)
     fakeinfo = client.ns.utils.faker.generate()
 
     try:
-        qr_string, transaction_id, qr_stream, amount_raw = await client.services.saweria.create_payment(
+        qr_string, transaction_id, qr_image_stream, amount_raw = await client.services.saweria.create_payment(
             user_id=saweria_user_id,
             amount=int(amount),
             name=f"User-{user_id}",
@@ -98,7 +98,7 @@ async def proceed_bot_payment_callback(client, callback_query):
         )
 
         order_data = f"{months}|{amount_raw}"
-        await ctx.db.setVars(ctx.owner_id, transaction_id, order_data)
+        await ctx.db.setVars(client.me.id, transaction_id, order_data)
 
         caption = lang.get("payment.pay.invoice_full", name=f"Akses Buat Bot {months} Bulan", type="Langganan", amount=f"{amount_raw:,}", id=transaction_id)
         layout = [[{"text": lang.get("payment.check.confirm_button"), "callback_data": f"confirm_bot_payment_{transaction_id}"}]]
@@ -127,7 +127,7 @@ async def confirm_bot_payment_callback(client, callback_query):
     try:
         is_paid = await client.services.saweria.check_paid_status(transaction_id)
         if is_paid:
-            await ctx.db.removeVars(ctx.owner_id, transaction_id)
+            await ctx.db.removeVars(client.me.id, transaction_id)
 
             expiry_date = datetime.now(timezone.utc) + timedelta(days=30 * months)
             await ctx.db.setVars(user.id, "user_expiry_date", expiry_date.isoformat())
