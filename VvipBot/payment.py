@@ -52,10 +52,9 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
     msg = await client.send_message(user.id, lang.get("general.processing"))
 
     try:
-        saweria = client.ns.payment.SaweriaScraper()
         fakeinfo = client.ns.utils.faker.generate()
         
-        qr_string, transaction_id, qr_image_stream, amount_raw = await saweria.create_payment(
+        qr_string, transaction_id, qr_image_stream, amount_raw = await client.services.saweria.create_payment(
             user_id=saweria_user_id,
             amount=int(amount),
             name=f"User-{user.id}",
@@ -103,10 +102,8 @@ async def manual_check_payment_callback(client, callback_query):
     tipe = ref_parts[1]
     coupon_code = ref_parts[3] if len(ref_parts) > 3 else None
 
-    saweria = client.ns.payment.SaweriaScraper()
-
     try:
-        is_paid = await saweria.check_paid_status(transaction_id)
+        is_paid = await client.services.saweria.check_paid_status(transaction_id)
         
         if is_paid:
             await callback_query.edit_message_reply_markup(None)
