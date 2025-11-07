@@ -32,17 +32,16 @@ async def verify_user_join(client, user, chat_id, link_msg):
 
 async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon_code=None):
     lang = await ctx.L.create(ctx.db, user.id)
-    saweria_service = getattr(client, "services", None) and client.services.saweria
-
+    
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     try:
         item = vvip_list[item_index]
         names = item.get("name")
     except IndexError:
-        await client.send_message(user.id, lang.get("payment.notes.not_found"))
-        return
+        return await client.send_message(user.id, lang.get("payment.notes.not_found"))
 
-    if not saweria_service:
+    saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
+    if not saweria_user_id:
         if await is_bot_owner(client, user.id):
             text = lang.get("payment.pay.service_inactive_panel")
             layout = [[{"text": lang.get("payment.pay.setup_api_button"), "callback_data": "api_settings"}]]
@@ -53,14 +52,12 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
         return
 
     msg = await client.send_message(user.id, lang.get("general.processing"))
-
+    
     try:
-        saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
-        if not saweria_user_id:
-            raise Exception("Konfigurasi Saweria (User ID) tidak ditemukan di bot ini oleh admin.")
-        
+        saweria = client.ns.payment.SaweriaScraper()
         fakeinfo = client.ns.utils.faker.generate()
-        qr_string, transaction_id, qr_image_stream, amount_raw = await saweria_service.create_payment(
+        
+        qr_string, transaction_id, qr_image_stream, amount_raw = await saweria.create_payment(
             user_id=saweria_user_id,
             amount=int(amount),
             name=f"User-{user.id}",
@@ -72,7 +69,7 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
         order_data = f"{item_index}|{tipe}|{amount_raw}"
         if coupon_code:
             order_data += f"|{coupon_code}"
-        
+
         await ctx.db.setVars(client.me.id, transaction_id, order_data)
 
         caption = lang.get(
@@ -99,10 +96,6 @@ async def manual_check_payment_callback(client, callback_query):
     user = callback_query.from_user
     lang = callback_query.lang
 
-    saweria_service = getattr(client, "services", None) and client.services.saweria
-    if not saweria_service:
-        return await callback_query.answer(lang.get("payment.pay.service_inactive_alert"), show_alert=True)
-
     ref_data_str = await ctx.db.getVars(client.me.id, transaction_id)
     if not ref_data_str:
         return await callback_query.edit_message_caption(lang.get("payment.check.expired_or_completed"))
@@ -112,9 +105,11 @@ async def manual_check_payment_callback(client, callback_query):
     tipe = ref_parts[1]
     amount_raw = int(ref_parts[2])
     coupon_code = ref_parts[3] if len(ref_parts) > 3 else None
-    
+
+    saweria = client.ns.payment.SaweriaScraper()
+
     try:
-        is_paid = await saweria_service.check_paid_status(transaction_id)
+        is_paid = await saweria.check_paid_status(transaction_id)
 
         if is_paid:
             await callback_query.edit_message_reply_markup(None)
@@ -146,11 +141,9 @@ async def manual_check_payment_callback(client, callback_query):
                 )
 
             member_data = {
-                "user_id": user.id,
-                "vvip_name": name,
+                "user_id": user.id, "vvip_name": name,
                 "join_date": datetime.now(timezone.utc).isoformat(),
-                "payment_type": tipe,
-                "chat_id_kick": target_chat_id,
+                "payment_type": tipe, "chat_id_kick": target_chat_id,
             }
 
             duration = item_found.get("duration", 0)
@@ -171,22 +164,19 @@ async def manual_check_payment_callback(client, callback_query):
             await ctx.db.setListVars(client.me.id, "vvip_members", member_data)
 
             link_msg = await client.send_message(
-                user.id,
-                lang.get("payment.check.success_customer_full", name=name, link=link),
+                user.id, lang.get("payment.check.success_customer_full", name=name, link=link),
                 protect_content=True,
             )
+            await callback_query.message.delete()
             asyncio.create_task(verify_user_join(client, user, target_chat_id, link_msg))
 
             owner_bot_id = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
-            owner_lang = await Language.create(ctx.db, owner_bot_id)
+            owner_lang = await ctx.L.create(ctx.db, owner_bot_id)
             await client.send_message(
-                owner_bot_id,
-                owner_lang.get(
+                owner_bot_id, owner_lang.get(
                     "payment.check.success_owner_notif",
                     mention=client.ns.telegram.arg.getMention(user),
-                    bot_mention=client.me.mention,
-                    name=name,
-                    type=tipe.title(),
+                    bot_mention=client.me.mention, name=name, type=tipe.title(),
                 ),
             )
         else:
@@ -402,7 +392,7 @@ async def successful_donation_handler(client, message):
     )
 
     owner_of_this_bot = await ctx.db.getVars(current_bot_id, "owner_id") or super_admin_id
-    owner_lang = await Language.create(ctx.db, owner_of_this_bot)
+    owner_lang = await ctx.L.create(ctx.db, owner_of_this_bot)
 
     main_bot_client = ctx.manager.main_bot_client
 
@@ -428,7 +418,7 @@ async def successful_donation_handler(client, message):
     except pyrogram.errors.UserIsBlocked:
         ctx.log.warning(f"Gagal kirim notif donasi, Owner {owner_of_this_bot} memblokir bot {current_bot_id}")
         if main_bot_client and owner_of_this_bot != super_admin_id:
-            super_admin_lang = await Language.create(ctx.db, super_admin_id)
+            super_admin_lang = await ctx.L.create(ctx.db, super_admin_id)
             await main_bot_client.send_message(
                 super_admin_id,
                 super_admin_lang.get(
