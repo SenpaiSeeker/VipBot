@@ -1,43 +1,186 @@
 from . import *
 
+BASE_PRICE_BOT = 50000
+
+def calculate_bot_price(months):
+    total = BASE_PRICE_BOT * months
+    discount_percentage = 0
+    if months >= 6:
+        discount_percentage = 0.20
+    elif months >= 3:
+        discount_percentage = 0.10
+    
+    discount = int(total * discount_percentage)
+    final_price = total - discount
+    return total, discount, final_price
+
+async def get_bot_purchase_panel(client, user_id, months=1):
+    lang = await ctx.L.create(ctx.db, user_id)
+    total, discount, final_price = calculate_bot_price(months)
+
+    text = lang.get(
+        "bot_management.payment.panel",
+        price=f"{BASE_PRICE_BOT:,}",
+        months=months,
+        total=f"{total:,}",
+        discount=f"-Rp {discount:,}",
+        final=f"{final_price:,}"
+    )
+
+    layout = [
+        [
+            {"text": "➖", "callback_data": f"adjust_bot_month_{months-1}"},
+            {"text": f"{months} {lang.get('bot_management.payment.month')}", "callback_data": "noop"},
+            {"text": "➕", "callback_data": f"adjust_bot_month_{months+1}"}
+        ],
+        [{"text": lang.get("bot_management.payment.pay_button", final=f"{final_price:,}"), "callback_data": f"pay_bot_qris_{months}"}],
+        [{"text": lang.get("general.back"), "callback_data": "start"}]
+    ]
+    
+    btn = client.ns.telegram.button.build_button_grid(layout)
+    return text, btn
+
 
 @command(lambda ctx: filters.regex("^create_bot$"), handler_type="callback")
 async def create_bot_callback(client, callback_query):
     user_id = callback_query.from_user.id
     lang = callback_query.lang
-    access_list = await ctx.db.getListVars(client.me.id, "create_bot_access") or []
+    
+    user_expiry_str = await ctx.db.getVars(user_id, "user_expiry_date")
+    if user_expiry_str:
+        expiry_date = datetime.fromisoformat(user_expiry_str)
+        if expiry_date > datetime.now(timezone.utc):
+            text = lang.get("bot_management.payment.already_subscribed")
+            layout = [
+                [{"text": lang.get("bot_management.payment.proceed_create_button"), "callback_data": "start_creation_process"}],
+                [{"text": lang.get("general.back"), "callback_data": "start"}]
+            ]
+            btn = client.ns.telegram.button.build_button_grid(layout)
+            return await callback_query.edit_message_caption(text, reply_markup=btn)
+            
+    text, btn = await get_bot_purchase_panel(client, user_id, 1)
+    await callback_query.edit_message_caption(text, reply_markup=btn)
 
-    if user_id != ctx.owner_id and user_id not in access_list:
-        owner_user = await client.get_users(ctx.owner_id)
-        text = lang.get("bot_management.create.no_access", mention=owner_user.mention)
-        layout = [[{"text": lang.get("general.back"), "callback_data": "start"}]]
+
+@command(lambda ctx: filters.regex(r"^adjust_bot_month_(\d+)"), handler_type="callback")
+async def adjust_bot_month_callback(client, callback_query):
+    months = int(callback_query.data.split("_")[-1])
+    if 1 <= months <= 12:
+        text, btn = await get_bot_purchase_panel(client, callback_query.from_user.id, months)
+        await callback_query.edit_message_caption(text, reply_markup=btn)
+    else:
+        await callback_query.answer("Durasi minimal 1 bulan dan maksimal 12 bulan.", show_alert=True)
+
+
+@command(lambda ctx: filters.regex(r"^pay_bot_qris_(\d+)"), handler_type="callback")
+async def proceed_bot_payment_callback(client, callback_query):
+    user_id = callback_query.from_user.id
+    months = int(callback_query.data.split("_")[-1])
+    lang = callback_query.lang
+    
+    await callback_query.edit_message_caption(lang.get("general.processing"))
+
+    saweria_user_id = await ctx.db.getVars(ctx.owner_id, "SAWERIA_USER_ID")
+    if not saweria_user_id:
+        return await callback_query.edit_message_caption(lang.get("payment.pay.service_inactive_alert"))
+
+    _, _, amount, _ = calculate_bot_price(months)
+    fakeinfo = client.ns.utils.faker.generate()
+
+    try:
+        qr_string, transaction_id, qr_stream, amount_raw = await client.services.saweria.create_payment(
+            user_id=saweria_user_id,
+            amount=int(amount),
+            name=f"User-{user_id}",
+            email=fakeinfo.email,
+            message=f"Akses Buat Bot VVIP {months} bulan",
+            creator_name=client.me.username
+        )
+
+        order_data = f"{months}|{amount_raw}"
+        await ctx.db.setVars(ctx.owner_id, transaction_id, order_data)
+
+        caption = lang.get("payment.pay.invoice_full", name=f"Akses Buat Bot {months} Bulan", type="Langganan", amount=f"{amount_raw:,}", id=transaction_id)
+        layout = [[{"text": lang.get("payment.check.confirm_button"), "callback_data": f"confirm_bot_payment_{transaction_id}"}]]
         btn = client.ns.telegram.button.build_button_grid(layout)
-        return await callback_query.edit_message_caption(text, reply_markup=btn)
 
-    chat_id = callback_query.from_user.id
+        await callback_query.message.delete()
+        await client.send_photo(user_id, qr_stream, caption=caption, reply_markup=btn)
+    except Exception as e:
+        await client.send_message(user_id, lang.get("general.error", e=e))
+
+
+@command(lambda ctx: filters.regex(r"^confirm_bot_payment_(.+)"), handler_type="callback")
+async def confirm_bot_payment_callback(client, callback_query):
+    transaction_id = callback_query.data.split("_", 3)[-1]
+    user = callback_query.from_user
+    lang = callback_query.lang
+    
+    order_data_str = await ctx.db.getVars(ctx.owner_id, transaction_id)
+    if not order_data_str:
+        return await callback_query.answer(lang.get("payment.check.expired_or_completed"), show_alert=True)
+
+    months_str, amount_raw_str = order_data_str.split("|")
+    months = int(months_str)
+    amount_raw = int(amount_raw_str)
+    
+    try:
+        is_paid = await client.services.saweria.check_paid_status(transaction_id)
+        if is_paid:
+            await ctx.db.removeVars(ctx.owner_id, transaction_id)
+
+            expiry_date = datetime.now(timezone.utc) + timedelta(days=30 * months)
+            await ctx.db.setVars(user.id, "user_expiry_date", expiry_date.isoformat())
+
+            await callback_query.message.delete()
+
+            success_text = lang.get("bot_management.payment.success", months=months)
+            layout = [[{"text": lang.get("bot_management.payment.proceed_create_button"), "callback_data": "start_creation_process"}]]
+            btn = client.ns.telegram.button.build_button_grid(layout)
+            await client.send_message(user.id, success_text, reply_markup=btn)
+            
+            owner_notif = lang.get(
+                "bot_management.payment.owner_notif", 
+                mention=client.ns.telegram.arg.getMention(user), 
+                months=months,
+                amount=f"{amount_raw:,}"
+            )
+            await client.send_message(ctx.owner_id, owner_notif)
+        else:
+            await callback_query.answer(lang.get("payment.check.not_paid"), show_alert=True)
+
+    except Exception as e:
+        await callback_query.answer(lang.get("general.error", e=e), show_alert=True)
+
+
+@command(lambda ctx: filters.regex("^start_creation_process$"), handler_type="callback")
+async def start_creation_process_callback(client, callback_query):
+    user_id = callback_query.from_user.id
+    lang = callback_query.lang
+    
+    expiry_date_str = await ctx.db.getVars(user_id, "user_expiry_date")
+    if not expiry_date_str or datetime.fromisoformat(expiry_date_str) < datetime.now(timezone.utc):
+        return await callback_query.answer("Langganan Anda tidak valid atau telah berakhir.", show_alert=True)
+
     await callback_query.message.delete()
 
     try:
-
         def ask(text):
-            return client.ask(chat_id, f"{text}{lang.get('prompts.cancel_footer')}", timeout=600)
+            return client.ask(user_id, f"{text}{lang.get('prompts.cancel_footer')}", timeout=600)
 
         api_id_msg = await ask(lang.get("bot_management.create.step1_api_id"))
-        if api_id_msg.text.lower() == "/batal":
-            raise listen.UserCancelled
+        if api_id_msg.text.lower() == "/batal": raise listen.UserCancelled
         api_id = api_id_msg.text
 
         api_hash_msg = await ask(lang.get("bot_management.create.step2_api_hash"))
-        if api_hash_msg.text.lower() == "/batal":
-            raise listen.UserCancelled
+        if api_hash_msg.text.lower() == "/batal": raise listen.UserCancelled
         api_hash = api_hash_msg.text
 
         token_msg = await ask(lang.get("bot_management.create.step3_bot_token"))
-        if token_msg.text.lower() == "/batal":
-            raise listen.UserCancelled
+        if token_msg.text.lower() == "/batal": raise listen.UserCancelled
         token = token_msg.text
 
-        msg = await client.send_message(chat_id, lang.get("bot_management.create.verifying"))
+        msg = await client.send_message(user_id, lang.get("bot_management.create.verifying"))
         new_bot_name = await client.ns.telegram.arg.getNamebot(token)
         if "invalid" in [new_bot_name]:
             raise ValueError(lang.get("bot_management.create.invalid_token"))
@@ -45,29 +188,21 @@ async def create_bot_callback(client, callback_query):
         await msg.edit(lang.get("bot_management.create.saving", name=new_bot_name.first_name))
 
         new_bot_id = int(token.split(":", 1)[0])
-        bot_data = {
-            "name": str(new_bot_id),
-            "api_id": api_id,
-            "api_hash": api_hash,
-            "bot_token": token,
-        }
+        bot_data = {"name": str(new_bot_id), "api_id": api_id, "api_hash": api_hash, "bot_token": token}
         await ctx.manager.start_bot(bot_data)
 
         await ctx.db.saveBot(new_bot_id, api_id, api_hash, token, is_token=True)
-        expiry_date = datetime.now(timezone.utc) + timedelta(days=30)
-        await ctx.db.setVars(new_bot_id, "bot_expiration_date", expiry_date.isoformat())
+        await ctx.db.setVars(new_bot_id, "bot_expiration_date", expiry_date_str)
         await ctx.db.setVars(new_bot_id, "owner_id", user_id)
-
-        if user_id != ctx.owner_id:
-            await ctx.db.removeListVars(client.me.id, "create_bot_access", user_id)
+        await ctx.db.removeVars(user_id, "user_expiry_date")
 
         await msg.edit(lang.get("bot_management.create.success", name=new_bot_name.first_name))
     except listen.UserCancelled:
-        await client.send_message(chat_id, lang.get("general.cancelled"))
+        await client.send_message(user_id, lang.get("general.cancelled"))
     except asyncio.TimeoutError:
-        await client.send_message(chat_id, lang.get("general.timeout"))
+        await client.send_message(user_id, lang.get("general.timeout"))
     except Exception as e:
-        await client.send_message(chat_id, lang.get("bot_management.create.fail", e=e))
+        await client.send_message(user_id, lang.get("bot_management.create.fail", e=e))
 
 
 @command(lambda ctx: filters.regex(r"^list_my_bots(_\d+)?$"), handler_type="callback")
