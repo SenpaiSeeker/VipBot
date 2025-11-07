@@ -105,7 +105,7 @@ async def proceed_bot_payment_callback(client, callback_query):
         btn = client.ns.telegram.button.build_button_grid(layout)
 
         await callback_query.message.delete()
-        await client.send_photo(user_id, qr_stream, caption=caption, reply_markup=btn)
+        await client.send_photo(user_id, qr_image_stream, caption=caption, reply_markup=btn)
     except Exception as e:
         await client.send_message(user_id, lang.get("general.error", e=e))
 
