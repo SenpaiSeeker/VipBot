@@ -80,7 +80,7 @@ async def proceed_bot_payment_callback(client, callback_query):
     
     await callback_query.edit_message_caption(lang.get("general.processing"))
 
-    saweria_user_id = await ctx.db.getVars(ctx.owner_id, "SAWERIA_USER_ID")
+    saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
     if not saweria_user_id:
         return await callback_query.edit_message_caption(lang.get("payment.pay.service_inactive_alert"))
 
