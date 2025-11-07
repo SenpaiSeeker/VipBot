@@ -97,7 +97,8 @@ admin:
     give_success_alert: "✅ Access granted to {target_id}"
     revoke_success_alert: "❌ Access revoked from {target_id}"
     process_fail: "Failed to process. Error: {e}"
-    give_success_panel: "✅ **Access Granted!**\n\nUser {mention} can now create a new bot using this bot."
+    give_duration_panel: "Select the access duration to grant:"
+    give_success_panel_manual: "✅ **Access Granted!**\n\nUser {mention} now has access to create a bot for **{months} month(s)**.\n\nAccess is valid until: `{new_date}`"
     revoke_success_panel: "❌ **Access Revoked!**\n\nUser {mention} no longer has the right to create a bot."
   extend:
     usage_error: "**Invalid format.** Use: `/extend <bot_id> <number_of_days>`\nExample: `/extend 12345678 30`"
