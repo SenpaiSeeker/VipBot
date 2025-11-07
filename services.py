@@ -9,14 +9,12 @@ async def initialize_bot_services(client, db_instance):
     bot_id = client.me.id
     client.services = SimpleNamespace(saweria=None, gemini=None)
 
-    saweria_api_key = await db_instance.getVars(bot_id, "SAWERIA_API_KEY")
-    if saweria_api_key:
+    saweria_user_id = await db_instance.getVars(bot_id, "SAWERIA_USER_ID")
+    if saweria_user_id:
         try:
-            client.services.saweria = client.ns.payment.Saweria(
-                api_key=saweria_api_key,
-            )
+            client.services.saweria = client.ns.payment.SaweriaScraper()
         except Exception as e:
-            log.print(f"{log.RED}Gagal inisialisasi Saweria untuk Bot ID {bot_id}: {e}")
+            log.print(f"{log.RED}Gagal inisialisasi SaweriaScraper untuk Bot ID {bot_id}: {e}")
 
     gemini_api_key = await db_instance.getVars(bot_id, "GEMINI_API_KEY")
     if gemini_api_key:
