@@ -112,11 +112,11 @@ async def proceed_bot_payment_callback(client, callback_query):
 
 @command(lambda ctx: filters.regex(r"^confirm_bot_payment_(.+)"), handler_type="callback")
 async def confirm_bot_payment_callback(client, callback_query):
-    transaction_id = callback_query.data.split("_", 3)[-1]
+    transaction_id = callback_query.data.split("_")[-1]
     user = callback_query.from_user
     lang = callback_query.lang
     
-    order_data_str = await ctx.db.getVars(ctx.owner_id, transaction_id)
+    order_data_str = await ctx.db.getVars(client.me.id, transaction_id)
     if not order_data_str:
         return await callback_query.answer(lang.get("payment.check.expired_or_completed"), show_alert=True)
 
