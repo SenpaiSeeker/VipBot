@@ -258,7 +258,7 @@ payment:
 
       ╭─ **Detail Tagihan**
       │
-      ├─ 🛍️ **Produk:** VVIP {name} ({type})
+      ├─ 🛍️ **Produk:** {name} ({type})
       ├─ 💳 **Jumlah:** `Rp {amount}`
       ├─ 🆔 **Order ID:** {id}
       │
