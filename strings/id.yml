@@ -159,6 +159,14 @@ admin:
     no_owners: "Tidak ada pemilik bot yang bisa di-broadcast."
 
 bot_management:
+  payment:
+    panel: "**💳 Beli Akses Pembuatan Bot**\n\nDapatkan akses untuk membuat bot VVIP Anda sendiri dengan berlangganan.\n\nHarga: `Rp {price}/bulan`\n\n**Diskon:**\n• 3+ Bulan: 10%\n• 6+ Bulan: 20%\n\n**Pilihan Anda:**\n• Durasi: **{months} bulan**\n• Harga Normal: `Rp {total}`\n• Diskon: `{discount}`\n• **Total Bayar: `Rp {final}`**"
+    month: "Bulan"
+    pay_button: "Bayar via QRIS (Rp {final})"
+    already_subscribed: "✅ **Anda Sudah Berlangganan!**\n\nAnda sudah memiliki akses untuk membuat bot. Tekan tombol di bawah untuk memulai proses pembuatan."
+    proceed_create_button: "▶️ Lanjutkan Membuat Bot"
+    success: "✅ **Pembayaran Berhasil!**\n\nTerima kasih! Langganan Anda untuk membuat bot selama **{months} bulan** telah diaktifkan."
+    owner_notif: "💰 **Langganan Akses Baru!**\n\n**Pengguna:** {mention}\n**Durasi:** {months} bulan\n**Jumlah:** `Rp {amount}`"
   create:
     new_user_notification: "**👤 Pengguna Baru Telah Memulai Bot Anda!**\n\n**Bot:** {mention}\n**Pengguna:** {user_mention}\n**ID:** `{user_id}`"
     no_access: "**🚫 Akses Ditolak**\n\nHubungi {mention} untuk meminta akses membuat bot."
