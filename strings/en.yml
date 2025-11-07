@@ -159,6 +159,14 @@ admin:
     no_owners: "There are no bot owners to broadcast to."
 
 bot_management:
+  payment:
+    panel: "**💳 Buy Bot Creation Access**\n\nGet access to create your own VVIP bot by subscribing.\n\nPrice: `IDR {price}/month`\n\n**Discounts:**\n• 3+ Months: 10%\n• 6+ Months: 20%\n\n**Your Selection:**\n• Duration: **{months} month(s)**\n• Normal Price: `IDR {total}`\n• Discount: `{discount}`\n• **Total to Pay: `IDR {final}`**"
+    month: "Month(s)"
+    pay_button: "Pay via QRIS (IDR {final})"
+    already_subscribed: "✅ **You Are Already Subscribed!**\n\nYou already have access to create a bot. Press the button below to start the creation process."
+    proceed_create_button: "▶️ Proceed to Create Bot"
+    success: "✅ **Payment Successful!**\n\nThank you! Your subscription to create a bot for **{months} month(s)** has been activated."
+    owner_notif: "💰 **New Access Subscription!**\n\n**User:** {mention}\n**Duration:** {months} month(s)\n**Amount:** `IDR {amount}`"
   create:
     new_user_notification: "**👤 A New User Has Started Your Bot!**\n\n**Bot:** {mention}\n**User:** {user_mention}\n**ID:** `{user_id}`"
     no_access: "**🚫 Access Denied**\n\nPlease contact {mention} to request bot creation access."
