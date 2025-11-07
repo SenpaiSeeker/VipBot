@@ -260,7 +260,7 @@ payment:
       │
       ├─ 🛍️ **Product:** VVIP {name} ({type})
       ├─ 💳 **Amount:** `IDR {amount}`
-      ╰─  🆔 **Order ID:** `{id}`
+      ╰─  🆔 **Order ID:** {id}
   check:
     confirm_button: "✅ Confirm Payment"
     checking: "🔍 Checking payment status..."
