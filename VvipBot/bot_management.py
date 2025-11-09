@@ -1,6 +1,6 @@
 from . import *
 
-BASE_PRICE_BOT = 50000
+BASE_PRICE_BOT = 75000
 
 def calculate_bot_price(months):
     total = BASE_PRICE_BOT * months
