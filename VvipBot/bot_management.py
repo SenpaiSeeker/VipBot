@@ -2,6 +2,7 @@ from . import *
 
 BASE_PRICE_BOT = 75000
 
+
 def calculate_bot_price(months):
     total = BASE_PRICE_BOT * months
     discount_percentage = 0
@@ -9,10 +10,11 @@ def calculate_bot_price(months):
         discount_percentage = 0.20
     elif months >= 3:
         discount_percentage = 0.10
-    
+
     discount = int(total * discount_percentage)
     final_price = total - discount
     return total, discount, final_price
+
 
 async def get_bot_purchase_panel(client, user_id, months=1):
     lang = await ctx.L.create(ctx.db, user_id)
@@ -24,19 +26,24 @@ async def get_bot_purchase_panel(client, user_id, months=1):
         months=months,
         total=f"{total:,}",
         discount=f"-Rp {discount:,}",
-        final=f"{final_price:,}"
+        final=f"{final_price:,}",
     )
 
     layout = [
         [
             {"text": "➖", "callback_data": f"adjust_bot_month_{months-1}"},
             {"text": f"{months} {lang.get('bot_management.payment.month')}", "callback_data": "noop"},
-            {"text": "➕", "callback_data": f"adjust_bot_month_{months+1}"}
+            {"text": "➕", "callback_data": f"adjust_bot_month_{months+1}"},
         ],
-        [{"text": lang.get("bot_management.payment.pay_button", final=f"{final_price:,}"), "callback_data": f"pay_bot_qris_{months}"}],
-        [{"text": lang.get("general.back"), "callback_data": "start"}]
+        [
+            {
+                "text": lang.get("bot_management.payment.pay_button", final=f"{final_price:,}"),
+                "callback_data": f"pay_bot_qris_{months}",
+            }
+        ],
+        [{"text": lang.get("general.back"), "callback_data": "start"}],
     ]
-    
+
     btn = client.ns.telegram.button.build_button_grid(layout)
     return text, btn
 
@@ -45,19 +52,24 @@ async def get_bot_purchase_panel(client, user_id, months=1):
 async def create_bot_callback(client, callback_query):
     user_id = callback_query.from_user.id
     lang = callback_query.lang
-    
+
     user_expiry_str = await ctx.db.getVars(user_id, "user_expiry_date")
     if user_expiry_str:
         expiry_date = datetime.fromisoformat(user_expiry_str)
         if expiry_date > datetime.now(timezone.utc):
             text = lang.get("bot_management.payment.already_subscribed")
             layout = [
-                [{"text": lang.get("bot_management.payment.proceed_create_button"), "callback_data": "start_creation_process"}],
-                [{"text": lang.get("general.back"), "callback_data": "start"}]
+                [
+                    {
+                        "text": lang.get("bot_management.payment.proceed_create_button"),
+                        "callback_data": "start_creation_process",
+                    }
+                ],
+                [{"text": lang.get("general.back"), "callback_data": "start"}],
             ]
             btn = client.ns.telegram.button.build_button_grid(layout)
             return await callback_query.edit_message_caption(text, reply_markup=btn)
-            
+
     text, btn = await get_bot_purchase_panel(client, user_id, 1)
     await callback_query.edit_message_caption(text, reply_markup=btn)
 
@@ -77,7 +89,7 @@ async def proceed_bot_payment_callback(client, callback_query):
     user_id = callback_query.from_user.id
     months = int(callback_query.data.split("_")[-1])
     lang = callback_query.lang
-    
+
     await callback_query.edit_message_caption(lang.get("general.processing"))
 
     saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
@@ -94,14 +106,27 @@ async def proceed_bot_payment_callback(client, callback_query):
             name=f"User-{user_id}",
             email=fakeinfo.email,
             message=f"Akses Buat Bot VVIP {months} bulan",
-            creator_name=client.me.username
+            creator_name=client.me.username,
         )
 
         order_data = f"{months}|{amount_raw}"
         await ctx.db.setVars(client.me.id, transaction_id, order_data)
 
-        caption = lang.get("payment.pay.invoice_full", name=f"Akses Buat Bot {months} Bulan", type="Langganan", amount=f"{amount_raw:,}", id=f"[{transaction_id}](https://saweria.co/qris/{transaction_id})")
-        layout = [[{"text": lang.get("payment.check.confirm_button"), "callback_data": f"confirm_bot_payment_{transaction_id}"}]]
+        caption = lang.get(
+            "payment.pay.invoice_full",
+            name=f"Akses Buat Bot {months} Bulan",
+            type="Langganan",
+            amount=f"{amount_raw:,}",
+            id=f"[{transaction_id}](https://saweria.co/qris/{transaction_id})",
+        )
+        layout = [
+            [
+                {
+                    "text": lang.get("payment.check.confirm_button"),
+                    "callback_data": f"confirm_bot_payment_{transaction_id}",
+                }
+            ]
+        ]
         btn = client.ns.telegram.button.build_button_grid(layout)
 
         await callback_query.message.delete()
@@ -115,7 +140,7 @@ async def confirm_bot_payment_callback(client, callback_query):
     transaction_id = callback_query.data.split("_")[-1]
     user = callback_query.from_user
     lang = callback_query.lang
-    
+
     order_data_str = await ctx.db.getVars(client.me.id, transaction_id)
     if not order_data_str:
         return await callback_query.answer(lang.get("payment.check.expired_or_completed"), show_alert=True)
@@ -123,7 +148,7 @@ async def confirm_bot_payment_callback(client, callback_query):
     months_str, amount_raw_str = order_data_str.split("|")
     months = int(months_str)
     amount_raw = int(amount_raw_str)
-    
+
     try:
         is_paid = await client.services.saweria.check_paid_status(transaction_id)
         if is_paid:
@@ -135,15 +160,22 @@ async def confirm_bot_payment_callback(client, callback_query):
             await callback_query.message.delete()
 
             success_text = lang.get("bot_management.payment.success", months=months)
-            layout = [[{"text": lang.get("bot_management.payment.proceed_create_button"), "callback_data": "start_creation_process"}]]
+            layout = [
+                [
+                    {
+                        "text": lang.get("bot_management.payment.proceed_create_button"),
+                        "callback_data": "start_creation_process",
+                    }
+                ]
+            ]
             btn = client.ns.telegram.button.build_button_grid(layout)
             await client.send_message(user.id, success_text, reply_markup=btn)
-            
+
             owner_notif = lang.get(
-                "bot_management.payment.owner_notif", 
-                mention=client.ns.telegram.arg.getMention(user), 
+                "bot_management.payment.owner_notif",
+                mention=client.ns.telegram.arg.getMention(user),
                 months=months,
-                amount=f"{amount_raw:,}"
+                amount=f"{amount_raw:,}",
             )
             await client.send_message(ctx.owner_id, owner_notif)
         else:
@@ -157,7 +189,7 @@ async def confirm_bot_payment_callback(client, callback_query):
 async def start_creation_process_callback(client, callback_query):
     user_id = callback_query.from_user.id
     lang = callback_query.lang
-    
+
     expiry_date_str = await ctx.db.getVars(user_id, "user_expiry_date")
     if not expiry_date_str or datetime.fromisoformat(expiry_date_str) < datetime.now(timezone.utc):
         return await callback_query.answer("Langganan Anda tidak valid atau telah berakhir.", show_alert=True)
@@ -165,19 +197,23 @@ async def start_creation_process_callback(client, callback_query):
     await callback_query.message.delete()
 
     try:
+
         def ask(text):
             return client.ask(user_id, f"{text}{lang.get('prompts.cancel_footer')}", timeout=600)
 
         api_id_msg = await ask(lang.get("bot_management.create.step1_api_id"))
-        if api_id_msg.text.lower() == "/batal": raise listen.UserCancelled
+        if api_id_msg.text.lower() == "/batal":
+            raise listen.UserCancelled
         api_id = api_id_msg.text
 
         api_hash_msg = await ask(lang.get("bot_management.create.step2_api_hash"))
-        if api_hash_msg.text.lower() == "/batal": raise listen.UserCancelled
+        if api_hash_msg.text.lower() == "/batal":
+            raise listen.UserCancelled
         api_hash = api_hash_msg.text
 
         token_msg = await ask(lang.get("bot_management.create.step3_bot_token"))
-        if token_msg.text.lower() == "/batal": raise listen.UserCancelled
+        if token_msg.text.lower() == "/batal":
+            raise listen.UserCancelled
         token = token_msg.text
 
         msg = await client.send_message(user_id, lang.get("bot_management.create.verifying"))

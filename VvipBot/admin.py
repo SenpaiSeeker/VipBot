@@ -119,15 +119,15 @@ async def access_command_handler(client, message):
 
     try:
         target_user = await client.get_users(user_id_target)
-        access_list = await ctx.db.getListVars(client.me.id, "create_bot_access") or []
-        
+        await ctx.db.getListVars(client.me.id, "create_bot_access") or []
+
         has_access = False
         user_expiry_str = await ctx.db.getVars(target_user.id, "user_expiry_date")
         if user_expiry_str:
             expiry_date = datetime.fromisoformat(user_expiry_str)
             if expiry_date > datetime.now(timezone.utc):
                 has_access = True
-        
+
         status_text = lang.get("admin.access.has_access") if has_access else lang.get("admin.access.no_access")
 
         text = lang.get(
@@ -156,9 +156,9 @@ async def access_command_handler(client, message):
 async def give_access_callback(client, callback_query):
     lang = callback_query.lang
     target_id = int(callback_query.data.split("_")[-1])
-    
+
     text = lang.get("admin.access.give_duration_panel")
-    
+
     layout = []
     row = []
     for months in [1, 3, 6, 12]:
@@ -180,7 +180,7 @@ async def do_give_access_callback(client, callback_query):
 
     try:
         target_user = await client.get_users(target_id)
-        
+
         current_expiry_str = await ctx.db.getVars(target_id, "user_expiry_date")
         start_date = datetime.now(timezone.utc)
 
@@ -191,14 +191,14 @@ async def do_give_access_callback(client, callback_query):
 
         new_expiry_date = start_date + timedelta(days=30 * months_to_add)
         await ctx.db.setVars(target_id, "user_expiry_date", new_expiry_date.isoformat())
-        
+
         expiry_in_jakarta = new_expiry_date.astimezone(ZoneInfo("Asia/Jakarta"))
 
         success_text = lang.get(
             "admin.access.give_success_panel_manual",
             mention=client.ns.telegram.arg.getMention(target_user),
             months=months_to_add,
-            new_date=expiry_in_jakarta.strftime("%d %B %Y, %H:%M %Z")
+            new_date=expiry_in_jakarta.strftime("%d %B %Y, %H:%M %Z"),
         )
         await callback_query.edit_message_text(success_text)
         await callback_query.answer(lang.get("admin.access.give_success_alert", target_id=target_id))
@@ -216,15 +216,15 @@ async def revoke_access_callback(client, callback_query):
     try:
         target_user = await client.get_users(target_id)
         mention = client.ns.telegram.arg.getMention(target_user)
-        
+
         await ctx.db.removeVars(target_id, "user_expiry_date")
 
         alert_text = lang.get("admin.access.revoke_success_alert", target_id=target_id)
         text = lang.get("admin.access.revoke_success_panel", mention=mention)
-        
+
         await callback_query.answer(alert_text)
         await callback_query.edit_message_text(text)
-        
+
     except Exception as e:
         await callback_query.answer(lang.get("admin.access.process_fail", e=e), show_alert=True)
 

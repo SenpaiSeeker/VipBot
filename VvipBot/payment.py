@@ -1,5 +1,6 @@
 from . import *
 
+
 async def verify_user_join(client, user, chat_id, link_msg):
     lang = await ctx.L.create(ctx.db, user.id)
     verification_timeout = 600
@@ -28,6 +29,7 @@ async def verify_user_join(client, user, chat_id, link_msg):
         ctx.log.print(f"{ctx.log.YELLOW}User {user.id} tidak bergabung ke {chat_id} dalam waktu yang ditentukan.")
         await client.send_message(user.id, lang.get("payment.check.link_expired"))
 
+
 async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon_code=None):
     lang = await ctx.L.create(ctx.db, user.id)
 
@@ -53,14 +55,14 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
 
     try:
         fakeinfo = client.ns.utils.faker.generate()
-        
+
         qr_string, transaction_id, qr_image_stream, amount_raw = await client.services.saweria.create_payment(
             user_id=saweria_user_id,
             amount=int(amount),
             name=f"User-{user.id}",
             email=fakeinfo.email,
             message=f"Pembelian {names} ({tipe}) via @{client.me.username}",
-            creator_name=client.me.username
+            creator_name=client.me.username,
         )
 
         order_data = f"{item_index}|{tipe}|{amount_raw}"
@@ -74,7 +76,7 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
             name=names,
             type=tipe.title(),
             amount=f"{int(amount_raw):,}",
-            id=f"[{transaction_id}](https://saweria.co/qris/{transaction_id})"
+            id=f"[{transaction_id}](https://saweria.co/qris/{transaction_id})",
         )
         layout = [
             [{"text": lang.get("payment.check.confirm_button"), "callback_data": f"confirm_payment {transaction_id}"}]
@@ -104,7 +106,7 @@ async def manual_check_payment_callback(client, callback_query):
 
     try:
         is_paid = await client.services.saweria.check_paid_status(transaction_id)
-        
+
         if is_paid:
             await callback_query.edit_message_reply_markup(None)
             await ctx.db.removeVars(client.me.id, transaction_id)
@@ -135,9 +137,11 @@ async def manual_check_payment_callback(client, callback_query):
                 )
 
             member_data = {
-                "user_id": user.id, "vvip_name": name,
+                "user_id": user.id,
+                "vvip_name": name,
                 "join_date": datetime.now(timezone.utc).isoformat(),
-                "payment_type": tipe, "chat_id_kick": target_chat_id,
+                "payment_type": tipe,
+                "chat_id_kick": target_chat_id,
             }
 
             duration = item_found.get("duration", 0)
@@ -158,7 +162,8 @@ async def manual_check_payment_callback(client, callback_query):
             await ctx.db.setListVars(client.me.id, "vvip_members", member_data)
 
             link_msg = await client.send_message(
-                user.id, lang.get("payment.check.success_customer_full", name=name, link=link),
+                user.id,
+                lang.get("payment.check.success_customer_full", name=name, link=link),
                 protect_content=True,
             )
             await callback_query.message.delete()
@@ -167,10 +172,13 @@ async def manual_check_payment_callback(client, callback_query):
             owner_bot_id = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
             owner_lang = await ctx.L.create(ctx.db, owner_bot_id)
             await client.send_message(
-                owner_bot_id, owner_lang.get(
+                owner_bot_id,
+                owner_lang.get(
                     "payment.check.success_owner_notif",
                     mention=client.ns.telegram.arg.getMention(user),
-                    bot_mention=client.me.mention, name=name, type=tipe.title(),
+                    bot_mention=client.me.mention,
+                    name=name,
+                    type=tipe.title(),
                 ),
             )
         else:

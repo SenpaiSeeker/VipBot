@@ -1,5 +1,6 @@
 from . import *
 
+
 @command(lambda ctx: filters.regex("^settings$"), handler_type="callback")
 async def settings(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
@@ -338,8 +339,10 @@ async def api_settings_callback(client, callback_query):
     lang = callback_query.lang
 
     saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
-    saweria_status = lang.get("settings.api_status_active") if saweria_user_id else lang.get("settings.api_status_inactive")
-    
+    saweria_status = (
+        lang.get("settings.api_status_active") if saweria_user_id else lang.get("settings.api_status_inactive")
+    )
+
     gemini_status = (
         lang.get("settings.api_status_active")
         if await ctx.db.getVars(client.me.id, "GEMINI_API_KEY")
@@ -392,7 +395,7 @@ async def set_api_key_prompt(client, callback_query):
             try:
                 saweria_temp = client.ns.payment.SaweriaScraper()
                 user_id_saweria = await saweria_temp.get_user_id(username=username_msg.text)
-                
+
                 if not user_id_saweria:
                     raise Exception("Username Saweria tidak ditemukan atau gagal melewati Cloudflare.")
 
