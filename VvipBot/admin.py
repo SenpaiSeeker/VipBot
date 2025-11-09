@@ -115,7 +115,7 @@ async def access_command_handler(client, message):
     user_id_target, _ = await client.ns.telegram.arg.getReasonAndId(message)
 
     if not user_id_target:
-        return await message.reply_text(lang.get("admin.access.usage_error"))
+        return await message.reply_text(lang.get("admin.access.usage_error"), parse_mode=ParseMode.MARKDOWN)
 
     try:
         target_user = await client.get_users(user_id_target)
