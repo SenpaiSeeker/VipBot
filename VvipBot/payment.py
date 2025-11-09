@@ -12,7 +12,7 @@ async def verify_user_join(client, user, chat_id, link_msg):
             member = await client.get_chat_member(chat_id, user.id)
             if member.status not in [pyrogram.enums.ChatMemberStatus.LEFT, pyrogram.enums.ChatMemberStatus.BANNED]:
                 is_joined = True
-                ctx.log.print(f"{ctx.log.GREEN}User {user.id} berhasil diverifikasi bergabung ke {chat_id}.")
+                ctx.log.print(f"{ctx.log.GREEN}User {user.id} berhasil diverifikasi bergabung ke {chat_id} dari bot {client.me.username}.")
                 break
         except pyrogram.errors.UserNotParticipant:
             await asyncio.sleep(15)
