@@ -136,7 +136,7 @@ async def expiration_checker_method():
                         warning_message = (
                             f"🔔 **Notifikasi Masa Aktif** 🔔\n\n"
                             f"Halo {mention_owner},\n"
-                            f"Masa aktif bot Anda (**{bot_name}**) tinggal **{days_left} hari** lagi.\n\np
+                            f"Masa aktif bot Anda (**{bot_name}**) tinggal **{days_left} hari** lagi.\n\n"
                             "Silakan hubungi @NorSodikin jika mau diperpanjang."
                         )
 
