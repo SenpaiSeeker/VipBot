@@ -24,12 +24,19 @@ for handler in root_logger.handlers[:]:
 
 root_logger.addHandler(CustomLogHandler())
 
-pyrogram_logger = logging.getLogger("pyrogram")
-pyrogram_logger.setLevel(logging.INFO)
+log_levels = {
+    "pyrogram": logging.WARNING,
+    "pyrogram.client": logging.WARNING,
+    "pyrogram.session.auth": logging.CRITICAL,
+    "pyrogram.session.session": logging.CRITICAL,
+}
+
+for logger_name, level in log_levels.items():
+    logging.getLogger(logger_name).setLevel(level)
 
 
 async def main():
-    os.system("rm -f *.session*")
+    os.system("rm -ff *.session*")
 
     manager = BotManager(db, OWNER_ID)
 
