@@ -114,7 +114,6 @@ async def expiration_checker_method():
 
                 await manager.stop_bot(bot_id)
                 await manager.db.removeBot(bot_id)
-                await manager.db.removeAllVars(bot_id)
                 log.warning(f"Bot {bot_id} telah dihapus karena kedaluwarsa.")
                 continue
 
@@ -137,7 +136,7 @@ async def expiration_checker_method():
                         warning_message = (
                             f"🔔 **Notifikasi Masa Aktif** 🔔\n\n"
                             f"Halo {mention_owner},\n"
-                            f"Masa aktif bot Anda (**{bot_name}**) tinggal **{days_left} hari** lagi.\n\n"
+                            f"Masa aktif bot Anda (**{bot_name}**) tinggal **{days_left} hari** lagi.\n\np
                             "Silakan hubungi @NorSodikin jika mau diperpanjang."
                         )
 
