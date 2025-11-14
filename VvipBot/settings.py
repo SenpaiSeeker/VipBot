@@ -141,7 +141,7 @@ async def broadcast_callback(client, callback_query):
 
         success_count, fail_count = 0, 0
 
-        caption_or_text = source_message.caption or source_message.text
+        caption_or_text = ask_message.caption or ask_message.text
         text_to_parse = caption_or_text.html if caption_or_text else ""
         reply_markup, cleaned_text = client.ns.telegram.button.create_inline_keyboard(text_to_parse)
 
