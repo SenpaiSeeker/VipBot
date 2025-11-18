@@ -117,6 +117,45 @@ async def set_start_text_callback(client, callback_query):
         await client.send_message(chat_id, lang.get("general.error", e=e), reply_markup=back_btn)
 
 
+async def _send_broadcast_message(client, target_user_id, source_message):
+    caption_or_text = source_message.caption or source_message.text
+    text_to_parse = caption_or_text.html if caption_or_text else ""
+    reply_markup, cleaned_text = client.ns.telegram.button.create_inline_keyboard(text_to_parse)
+
+    if source_message.photo:
+        await client.send_photo(
+            chat_id=target_user_id,
+            photo=source_message.photo.sizes[-1].file_id,
+            caption=cleaned_text,
+            reply_markup=(
+                reply_markup
+                if reply_markup.inline_keyboard
+                else source_message.reply_markup if source_message.reply_markup else None
+            ),
+        )
+    elif source_message.text:
+        await client.send_message(
+            chat_id=target_user_id,
+            text=cleaned_text, 
+            reply_markup=(
+                reply_markup
+                if reply_markup.inline_keyboard
+                else source_message.reply_markup if source_message.reply_markup else None
+            ),
+        )
+    else:
+        await source_message.copy(
+            chat_id=target_user_id,
+            caption=cleaned_text,
+            reply_markup=(
+                reply_markup
+                if reply_markup.inline_keyboard
+                else source_message.reply_markup if source_message.reply_markup else None
+            ),
+        )
+
+
+
 @command(lambda ctx: filters.regex("^broadcast$"), handler_type="callback")
 async def broadcast_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
@@ -141,20 +180,10 @@ async def broadcast_callback(client, callback_query):
 
         success_count, fail_count = 0, 0
 
-        caption_or_text = ask_message.caption or ask_message.text
-        text_to_parse = caption_or_text.html if caption_or_text else ""
-        reply_markup, cleaned_text = client.ns.telegram.button.create_inline_keyboard(text_to_parse)
-
         async def send_to_user(target_user_id):
             nonlocal success_count, fail_count
             try:
-                if reply_markup and reply_markup.inline_keyboard:
-                    if ask_message.media:
-                        await ask_message.copy(chat_id=target_user_id, caption=cleaned_text, reply_markup=reply_markup)
-                    else:
-                        await client.send_message(chat_id=target_user_id, text=cleaned_text, reply_markup=reply_markup)
-                else:
-                    await ask_message.copy(chat_id=target_user_id)
+                await _send_broadcast_message(client, target_user_id, ask_message)
                 success_count += 1
             except pyrogram.errors.FloodWait as e:
                 await asyncio.sleep(e.value + 1)
