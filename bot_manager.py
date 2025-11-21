@@ -139,8 +139,10 @@ async def expiration_checker_method():
                             f"Masa aktif bot Anda (**{bot_name}**) tinggal **{days_left} hari** lagi.\n\n"
                             "Silakan hubungi @NorSodikin jika mau diperpanjang."
                         )
-
-                        await main_client.send_message(owner_id, warning_message)
+                        try:
+                            await main_client.send_message(owner_id, warning_message)
+                        except pyrogram.errors.UserIsBlocked:
+                            await bot_instance.send_message(owner_id, warning_message)
                         await manager.db.setVars(bot_id, last_notif_date_key, today_str)
                         log.print(
                             f"{log.CYAN}Mengirim notifikasi sisa {days_left} hari ke owner {owner_id} untuk bot {bot_id}"
