@@ -278,10 +278,10 @@ payment:
     not_paid: "❌ Pembayaran belum terdeteksi. Silakan coba lagi setelah beberapa saat."
     expired_or_completed: "⚠️ Invoice ini sudah tidak valid atau telah selesai."
     category_missing: "Kategori VVIP '{name}' tidak lagi ditemukan di database. Pembayaran berhasil, namun link grup gagal diberikan. Mohon hubungi admin."
-    success_customer_full: "🎉 **Pembayaran Dikonfirmasi!**\n\nTerima kasih, berikut adalah link akses Anda untuk paket **{name}**:\n\n{link}\n\n⚠️ Link ini hanya berlaku untuk 1 kali klik dan akan kedaluwarsa dalam 10 menit jika tidak digunakan."
+    success_customer_full: "🎉 **Pembayaran Dikonfirmasi!**\n\nTerima kasih, berikut adalah link akses Anda untuk paket **{name}**:\n\n{link}\n\n⚠️ Link ini hanya berlaku untuk 1 kali klik dan akan kedaluwarsa dalam 60 menit jika tidak digunakan."
     success_owner_notif: "💰 **Pemasukan Baru!**\n\n**Pengguna:** {mention}\n**Bot:** {bot_mention}\n**Kategori:** `{name}` ({type})"
     expired_msg: "⌛ **Invoice Kedaluwarsa.**\nOrder ID `{id}` telah dibatalkan karena melewati batas waktu pembayaran."
-    link_expired: "⚠️ Link undangan Anda telah kedaluwarsa karena Anda tidak bergabung dalam 10 menit. Silakan hubungi admin jika terjadi masalah."
+    link_expired: "⚠️ Link undangan Anda telah kedaluwarsa karena Anda tidak bergabung dalam 60 menit. Silakan hubungi admin jika terjadi masalah."
   donation:
     invoice_title: "Donasi untuk Pengembangan Bot"
     invoice_desc: "Dukungan Anda sebesar {stars} Bintang (Stars) sangat kami hargai. Terima kasih!"
