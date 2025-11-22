@@ -278,10 +278,10 @@ payment:
     not_paid: "❌ Payment not detected yet. Please try again after a few moments."
     expired_or_completed: "⚠️ This invoice is no longer valid or has already been completed."
     category_missing: "VVIP category '{name}' is no longer found in the database. Payment was successful, but the group link could not be delivered. Please contact the admin."
-    success_customer_full: "🎉 **Payment Confirmed!**\n\nThank you, here is your access link for the **{name}** package:\n\n{link}\n\n⚠️ This link is for one-time use only and will expire in 10 minutes if not used."
+    success_customer_full: "🎉 **Payment Confirmed!**\n\nThank you, here is your access link for the **{name}** package:\n\n{link}\n\n⚠️ This link is for one-time use only and will expire in 60 minutes if not used."
     success_owner_notif: "💰 **New Income!**\n\n**User:** {mention}\n**Bot:** {bot_mention}\n**Category:** `{name}` ({type})"
     expired_msg: "⌛ **Invoice Expired.**\nOrder ID `{id}` has been canceled due to exceeding the payment time limit."
-    link_expired: "⚠️ Your invitation link has expired because you did not join within 10 minutes. Please contact the admin if you have any issues."
+    link_expired: "⚠️ Your invitation link has expired because you did not join within 60 minutes. Please contact the admin if you have any issues."
   donation:
     invoice_title: "Donation for Bot Development"
     invoice_desc: "Your support of {stars} Stars is greatly appreciated. Thank you!"
