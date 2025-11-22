@@ -3,7 +3,7 @@ from . import *
 
 async def verify_user_join(client, user, chat_id, link_msg):
     lang = await ctx.L.create(ctx.db, user.id)
-    verification_timeout = 600
+    verification_timeout = 3600
     start_time = time()
     is_joined = False
 
@@ -125,7 +125,7 @@ async def manual_check_payment_callback(client, callback_query):
                 raise ValueError("Chat ID untuk paket VVIP ini belum diatur oleh admin.")
 
             try:
-                expire_date_link = datetime.now() + timedelta(minutes=10)
+                expire_date_link = datetime.now() + timedelta(minutes=60)
                 invite_link_obj = await client.create_chat_invite_link(
                     chat_id=target_chat_id, member_limit=1, expire_date=expire_date_link
                 )
