@@ -773,7 +773,7 @@ async def dashboard_command_handler(client, message):
         server_stats_text = lang.get(
             "admin.dashboard.server_stats",
             cpu=f"`[{stats.cpu['bar']}] {stats.cpu['percent']}%`",
-            ram=f"`[{stats.ram['bar']}] {stats.ram['percent']}%"`, 
+            ram=f"`[{stats.ram['bar']}] {stats.ram['percent']}%`", 
             disk=f"`[{stats.disk['bar']}] {stats.disk['percent']}%`"
         )
     except Exception as e:
