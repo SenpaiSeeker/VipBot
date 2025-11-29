@@ -769,9 +769,12 @@ async def dashboard_command_handler(client, message):
         top_bot_info = f"{top_bot_name} ({bot_user_counts[top_bot_id]} pengguna)"
 
     try:
-        stats = client.ns.server.monitor.get_stats()
+        stats = client.ns.server.monitor.get_detailed_stats()
         server_stats_text = lang.get(
-            "admin.dashboard.server_stats", cpu=stats.cpu_percent, ram=stats.ram_percent, disk=stats.disk_percent
+            "admin.dashboard.server_stats",
+            cpu=f"CPU  [{stats.cpu['bar']}] {stats.cpu['percent']}%",
+            ram=f"RAM  [{stats.ram['bar']}] {stats.ram['percent']}%", 
+            disk=f"DISK [{stats.disk['bar']}] {stats.disk['percent']}%"
         )
     except Exception as e:
         server_stats_text = lang.get("admin.dashboard.server_stats_fail", e=e)
