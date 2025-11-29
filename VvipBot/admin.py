@@ -772,9 +772,9 @@ async def dashboard_command_handler(client, message):
         stats = client.ns.server.monitor.get_detailed_stats()
         server_stats_text = lang.get(
             "admin.dashboard.server_stats",
-            cpu=f" [{stats.cpu['bar']}] {stats.cpu['percent']}%",
-            ram=f"[{stats.ram['bar']}] {stats.ram['percent']}%", 
-            disk=f" [{stats.disk['bar']}] {stats.disk['percent']}%"
+            cpu=f"`[{stats.cpu['bar']}] {stats.cpu['percent']}%`",
+            ram=f"`[{stats.ram['bar']}] {stats.ram['percent']}%"`, 
+            disk=f"`[{stats.disk['bar']}] {stats.disk['percent']}%`"
         )
     except Exception as e:
         server_stats_text = lang.get("admin.dashboard.server_stats_fail", e=e)
