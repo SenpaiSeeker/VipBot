@@ -85,6 +85,7 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
 
         await client.send_photo(user.id, photo=qr_image_stream, caption=caption, reply_markup=btn)
         await msg.delete()
+        ctx.log.print(f"{ctx.log.CYAN}User {user.id} membuat pembayaran untuk {names}")
     except Exception as e:
         await msg.edit(lang.get("general.error", e=e))
 
@@ -181,11 +182,12 @@ async def manual_check_payment_callback(client, callback_query):
                     type=tipe.title(),
                 ),
             )
+            ctx.log.print(f"{ctx.log.CYAN}Ueer {user.id} telah mengkonfirmasi pembayaran {name}")
         else:
             await callback_query.answer(lang.get("payment.check.not_paid"), show_alert=True)
 
     except Exception as e:
-        ctx.log.print(f"{ctx.log.RED}Error manual-check {transaction_id}: {e}")
+        ctx.log.print(f"{ctx.log.RED}Error manual-check {user.id} {transaction_id}: {e}")
         await callback_query.answer(lang.get("general.error", e=e), show_alert=True)
 
 
