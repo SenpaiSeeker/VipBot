@@ -42,7 +42,7 @@ async def list_members_callback(client, callback_query):
     expiry_date_obj_str = member_data.get("expiry_date")
     if expiry_date_obj_str:
         expiry_date_obj = datetime.fromisoformat(expiry_date_obj_str)
-        expiry_date_str = expiry_date_obj.strftime("%d %b %Y, %H:%M UTC")
+        expiry_date_str = expiry_date_obj.strftime("%d %b %Y, %H:%M %Z")
 
     text = lang.get(
         "member.list.panel",
