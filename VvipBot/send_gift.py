@@ -137,7 +137,7 @@ async def list_gift_handler(client, message):
         await status_msg.delete()
 
     except Exception as e:
-       return await status_msg.edit(f"❌ Gagal mengambil daftar hadiah: {e}")
+       await status_msg.edit(f"❌ Gagal mengambil daftar hadiah: {e}")
 
 @command(lambda ctx: filters.regex(r"^gift_claim_self_(\d+)"), handler_type="callback")
 async def claim_self_gift_callback(client, callback_query):
