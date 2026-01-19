@@ -91,10 +91,29 @@ async def list_gift_handler(client, message):
         output = "**🎁 Daftar Hadiah Tersedia**\n\n"
         
         for gift in gifts:
-            price = gift.stars
-            output += f"• ID: `{gift.id}` - ⭐ {price}\n"
+            price = gift.star_count
+            emoji = ""
+            if hasattr(gift, "sticker") and hasattr(gift.sticker, "emoji"):
+                emoji = f"{gift.sticker.emoji} "
+            
+            output += f"• {emoji}ID: `{gift.id}` - ⭐ {price}\n"
 
-        await status_msg.edit(output)
+        if len(output) > 750:
+            try:
+                paster = client.ns.utils.paste()
+                paste_url = await paster.paste(output)
+                
+                button_layout = [
+                    [{"text": "🔗 Lihat Daftar Lengkap", "url": paste_url}]
+                ]
+                btn = client.ns.telegram.button.build_button_grid(button_layout)
+                
+                preview_text = output[:750] + "...\n\n**(Daftar terlalu panjang, klik tombol di bawah untuk melihat lengkap)**"
+                await status_msg.edit(preview_text, reply_markup=btn)
+            except Exception as e:
+                await status_msg.edit(f"❌ Gagal upload ke pastebin: {e}\n\n{output[:1000]}...") 
+        else:
+            await status_msg.edit(output)
 
     except Exception as e:
         await status_msg.edit(f"❌ Gagal mengambil daftar hadiah: {e}")
