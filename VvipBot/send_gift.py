@@ -98,7 +98,8 @@ async def list_gift_handler(client, message):
             caption += f"<b>🆔 ID:</b> <code>{gift.id}</code>\n"
             caption += f"<b>💰 Harga:</b> <code>{price} Stars</code>\n"
             caption += f"<b>🎭 Emoji:</b> {emoji}"
-
+            caption += f"<b>📦 Stok gift: {'Habis' if gift.is_sold_out else 'Ready'}"
+            
             buttons = [
                 [{"text": "🎁 Kirim ke Teman", "callback_data": f"gift_send_ask_{gift.id}"}],
                 [{"text": "👤 Klaim Sendiri", "callback_data": f"gift_claim_self_{gift.id}"}]
