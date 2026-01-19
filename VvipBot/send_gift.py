@@ -1,6 +1,9 @@
+import asyncio
+import os
 import pyrogram
 from pyrogram import filters
 from pyrogram.raw import functions, types
+from nsdev import listen
 
 from . import command, ctx
 
@@ -73,10 +76,7 @@ async def send_gift_handler(client, message):
         await status_msg.edit(f"✅ Berhasil mengirim hadiah ke {mention}!")
 
     except Exception as e:
-        error_text = str(e)
-        if "BALANCE_TOO_LOW" in error_text:
-            error_text = "Saldo Telegram Stars Anda tidak mencukupi."
-        await message.reply_text(f"❌ Gagal mengirim hadiah: {error_text}")
+        await message.reply_text(f"❌ Gagal mengirim hadiah: {e}")
 
 @command(lambda ctx: filters.command("listgift") & filters.user(ctx.owner_id))
 async def list_gift_handler(client, message):
@@ -88,32 +88,107 @@ async def list_gift_handler(client, message):
         if not gifts:
             return await status_msg.edit("ℹ️ Tidak ada hadiah yang tersedia saat ini.")
 
-        output = "**🎁 Daftar Hadiah Tersedia**\n\n"
-        
         for gift in gifts:
             price = gift.star_count
-            emoji = ""
+            emoji = "❓️"
             if hasattr(gift, "sticker") and hasattr(gift.sticker, "emoji"):
                 emoji = f"{gift.sticker.emoji} "
             
-            output += f"• {emoji}ID: `{gift.id}` - ⭐ {price}\n"
+            caption = "<b>🎁 Gift Info</b>\n\n"
+            caption += f"<b>🆔 ID:</b> <code>{gift.id}</code>\n"
+            caption += f"<b>💰 Harga:</b> <code>{price} Stars</code>\n"
+            caption += f"<b>🎭 Emoji:</b> {emoji}"
 
-        if len(output) > 750:
-            try:
-                paster = client.ns.utils.paste()
-                paste_url = await paster.paste(output)
-                
-                button_layout = [
-                    [{"text": "🔗 Lihat Daftar Lengkap", "url": paste_url}]
-                ]
-                btn = client.ns.telegram.button.build_button_grid(button_layout)
-                
-                preview_text = output[:750] + "...\n\n**(Daftar terlalu panjang, klik tombol di bawah untuk melihat lengkap)**"
-                await status_msg.edit(preview_text, reply_markup=btn)
-            except Exception as e:
-                await status_msg.edit(f"❌ Gagal upload ke pastebin: {e}\n\n{output[:1000]}...") 
-        else:
-            await status_msg.edit(output)
+            buttons = [
+                [{"text": "🎁 Kirim ke Teman", "callback_data": f"gift_send_ask_{gift.id}"}],
+                [{"text": "👤 Klaim Sendiri", "callback_data": f"gift_claim_self_{gift.id}"}]
+            ]
+            markup = client.ns.telegram.button.build_button_grid(buttons)
+
+            if hasattr(gift, "sticker") and gift.sticker.thumbs:
+                thumb = gift.sticker.thumbs[-1]
+                file_path = None
+                try:
+                    file_path = await client.download_media(thumb.file_id)
+                    await client.send_photo(
+                        message.chat.id,
+                        photo=file_path,
+                        caption=caption,
+                        reply_markup=markup
+                    )
+                except Exception:
+                    await client.send_message(
+                        message.chat.id,
+                        text=caption,
+                        reply_markup=markup
+                    )
+                finally:
+                    if file_path and os.path.exists(file_path):
+                        os.remove(file_path)
+            else:
+                await client.send_message(
+                    message.chat.id,
+                    text=caption,
+                    reply_markup=markup
+                )
+            
+            await asyncio.sleep(1.5)
+
+        await status_msg.delete()
 
     except Exception as e:
-        await status_msg.edit(f"❌ Gagal mengambil daftar hadiah: {e}")
+       return await status_msg.edit(f"❌ Gagal mengambil daftar hadiah: {e}")
+
+@command(lambda ctx: filters.regex(r"^gift_claim_self_(\d+)"), handler_type="callback")
+async def claim_self_gift_callback(client, callback_query):
+    if callback_query.from_user.id != ctx.owner_id:
+        return await callback_query.answer("❌ Anda tidak memiliki izin.", show_alert=True)
+
+    gift_id = int(callback_query.data.split("_")[3])
+    user_id = callback_query.from_user.id
+
+    try:
+        await callback_query.answer("🔄 Memproses klaim hadiah...", show_alert=True)
+        await send_star_gift_raw(client, user_id, gift_id)
+        await callback_query.edit_message_caption(f"✅ Berhasil mengklaim hadiah (ID: {gift_id}) untuk diri sendiri!")
+    except Exception as e:
+        await callback_query.answer(f"❌ Gagal klaim: {e}", show_alert=True)
+
+@command(lambda ctx: filters.regex(r"^gift_send_ask_(\d+)"), handler_type="callback")
+async def ask_send_gift_callback(client, callback_query):
+    if callback_query.from_user.id != ctx.owner_id:
+        return await callback_query.answer("❌ Anda tidak memiliki izin.", show_alert=True)
+
+    gift_id = int(callback_query.data.split("_")[3])
+    chat_id = callback_query.message.chat.id
+
+    try:
+        await callback_query.message.delete()
+        
+        ask_msg = await client.ask(
+            chat_id, 
+            "👤 **Kirim Hadiah**\n\nSilakan kirim **User ID** atau **Username** (@username) tujuan penerima hadiah.\n\nKetik `/batal` untuk membatalkan.", 
+            timeout=60
+        )
+
+        if ask_msg.text.lower() == "/batal":
+            return await client.send_message(chat_id, "🚫 Pengiriman dibatalkan.")
+
+        target_input = ask_msg.text
+        processing_msg = await client.send_message(chat_id, f"🔄 Mencari pengguna `{target_input}`...")
+
+        try:
+            target_user = await client.get_users(target_input)
+        except Exception:
+            return await processing_msg.edit("❌ Pengguna tidak ditemukan. Pastikan username/ID benar.")
+
+        await processing_msg.edit(f"🎁 Mengirim hadiah ke **{target_user.first_name}**...")
+        
+        await send_star_gift_raw(client, target_user.id, gift_id)
+        
+        await processing_msg.edit(f"✅ Berhasil mengirim hadiah (ID: {gift_id}) ke **{target_user.first_name}**!")
+
+    except asyncio.TimeoutError:
+        await client.send_message(chat_id, "⏰ Waktu habis. Silakan ulangi proses.")
+    except Exception as e:
+        await client.send_message(chat_id, f"❌ Gagal mengirim: {e}")
