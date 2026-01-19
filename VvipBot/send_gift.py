@@ -148,7 +148,7 @@ async def claim_self_gift_callback(client, callback_query):
     user_id = callback_query.from_user.id
 
     try:
-        await callback_query.answer("🔄 Memproses klaim hadiah...", show_alert=True)
+        await callback_query.edit_message_reply_markup(None)
         await send_star_gift_raw(client, user_id, gift_id)
         await callback_query.edit_message_caption(f"✅ Berhasil mengklaim hadiah (ID: {gift_id}) untuk diri sendiri!")
     except Exception as e:
@@ -163,7 +163,7 @@ async def ask_send_gift_callback(client, callback_query):
     chat_id = callback_query.message.chat.id
 
     try:
-        await callback_query.message.delete()
+        await callback_query.edit_message_reply_markup(None)
         
         ask_msg = await client.ask(
             chat_id, 
