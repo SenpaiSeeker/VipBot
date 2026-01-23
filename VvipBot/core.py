@@ -275,7 +275,7 @@ async def donate_callback(client, callback_query):
     photo_url = "https://files.catbox.moe/1f9j10.jpg"
     text = lang.get("donation.panel")
     layout = [
-        [{"text": "25 ⭐", "callback_data": "donate_pay_26"}, {"text": "50 ⭐", "callback_data": "donate_pay_50"}],
+        [{"text": "25 ⭐", "callback_data": "donate_pay_25"}, {"text": "50 ⭐", "callback_data": "donate_pay_50"}],
         [{"text": "75 ⭐", "callback_data": "donate_pay_75"}, {"text": "100 ⭐", "callback_data": "donate_pay_100"}],
         [{"text": lang.get("general.back_to_main_menu"), "callback_data": "start"}],
     ]
