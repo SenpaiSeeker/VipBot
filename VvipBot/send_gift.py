@@ -97,7 +97,7 @@ async def list_gift_handler(client, message):
             caption = "<b>🎁 Gift Info</b>\n\n"
             caption += f"<b>🆔 ID:</b> <code>{gift.id}</code>\n"
             caption += f"<b>💰 Harga:</b> <code>{price} Stars</code>\n"
-            caption += f"<b>🎭 Emoji:</b> {emoji}"
+            caption += f"<b>🎭 Emoji:</b> {emoji}\n"
             caption += f"<b>📦 Stok gift: {'Habis' if gift.is_sold_out else 'Ready'}"
             
             buttons = [
