@@ -194,7 +194,8 @@ async def broadcast_callback(client, callback_query):
             await asyncio.sleep(0.1)
 
         for user_id in user_ids:
-            await send_to_user(user_id)
+            if user_id != ctx.owner_id:
+                await send_to_user(user_id)
 
         await progress_msg.edit(lang.get("settings.broadcast_done", success=success_count, fail=fail_count))
 
