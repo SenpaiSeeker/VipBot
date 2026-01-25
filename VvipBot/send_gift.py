@@ -94,7 +94,7 @@ async def list_gift_handler(client, message):
                 emoji = "❓️"
                 if hasattr(gift, "sticker") and hasattr(gift.sticker, "emoji"):
                     emoji = f"{gift.sticker.emoji} "
-            
+
                 caption = "<b>🎁 Gift Info</b>\n\n"
                 caption += f"<b>🆔 ID:</b> <code>{gift.id}</code>\n"
                 caption += f"<b>💰 Harga:</b> <code>{price} Stars</code>\n"
@@ -137,8 +137,8 @@ async def list_gift_handler(client, message):
 
             await status_msg.delete()
 
-        except Exception as e:
-            await status_msg.edit(f"❌ Gagal mengambil daftar hadiah: {e}")
+    except Exception as e:
+        await status_msg.edit(f"❌ Gagal mengambil daftar hadiah: {e}")
 
 @command(lambda ctx: filters.regex(r"^gift_claim_self_(\d+)"), handler_type="callback")
 async def claim_self_gift_callback(client, callback_query):
