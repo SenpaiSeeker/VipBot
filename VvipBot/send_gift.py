@@ -89,56 +89,56 @@ async def list_gift_handler(client, message):
             return await status_msg.edit("ℹ️ Tidak ada hadiah yang tersedia saat ini.")
 
         for gift in gifts:
-            price = gift.star_count
-            emoji = "❓️"
-            if hasattr(gift, "sticker") and hasattr(gift.sticker, "emoji"):
-                emoji = f"{gift.sticker.emoji} "
+            if not gift.is_sold_out:
+                price = gift.star_count
+                emoji = "❓️"
+                if hasattr(gift, "sticker") and hasattr(gift.sticker, "emoji"):
+                    emoji = f"{gift.sticker.emoji} "
             
-            caption = "<b>🎁 Gift Info</b>\n\n"
-            caption += f"<b>🆔 ID:</b> <code>{gift.id}</code>\n"
-            caption += f"<b>💰 Harga:</b> <code>{price} Stars</code>\n"
-            caption += f"<b>🎭 Emoji:</b> {emoji}\n"
-            caption += f"<b>📦 Stok gift: {'Habis' if gift.is_sold_out else 'Ready'}"
+                caption = "<b>🎁 Gift Info</b>\n\n"
+                caption += f"<b>🆔 ID:</b> <code>{gift.id}</code>\n"
+                caption += f"<b>💰 Harga:</b> <code>{price} Stars</code>\n"
+                caption += f"<b>🎭 Emoji:</b> {emoji}\n"
             
-            buttons = [
-                [{"text": "🎁 Kirim ke Teman", "callback_data": f"gift_send_ask_{gift.id}"}],
-                [{"text": "👤 Klaim Sendiri", "callback_data": f"gift_claim_self_{gift.id}"}]
-            ]
-            markup = client.ns.telegram.button.build_button_grid(buttons)
+                buttons = [
+                    [{"text": "🎁 Kirim ke Teman", "callback_data": f"gift_send_ask_{gift.id}"}],
+                    [{"text": "👤 Klaim Sendiri", "callback_data": f"gift_claim_self_{gift.id}"}]
+                ]
+                markup = client.ns.telegram.button.build_button_grid(buttons)
 
-            if hasattr(gift, "sticker") and gift.sticker.thumbs:
-                thumb = gift.sticker.thumbs[-1]
-                file_path = None
-                try:
-                    file_path = await client.download_media(thumb.file_id)
-                    await client.send_photo(
-                        message.chat.id,
-                        photo=file_path,
-                        caption=caption,
-                        reply_markup=markup
-                    )
-                except Exception:
+                if hasattr(gift, "sticker") and gift.sticker.thumbs:
+                    thumb = gift.sticker.thumbs[-1]
+                    file_path = None
+                    try:
+                        file_path = await client.download_media(thumb.file_id)
+                        await client.send_photo(
+                            message.chat.id,
+                            photo=file_path,
+                            caption=caption,
+                            reply_markup=markup
+                        )
+                    except Exception:
+                        await client.send_message(
+                            message.chat.id,
+                            text=caption,
+                            reply_markup=markup
+                        )
+                    finally:
+                        if file_path and os.path.exists(file_path):
+                            os.remove(file_path)
+                else:
                     await client.send_message(
                         message.chat.id,
                         text=caption,
                         reply_markup=markup
                     )
-                finally:
-                    if file_path and os.path.exists(file_path):
-                        os.remove(file_path)
-            else:
-                await client.send_message(
-                    message.chat.id,
-                    text=caption,
-                    reply_markup=markup
-                )
             
-            await asyncio.sleep(1.5)
+                await asyncio.sleep(1.5)
 
-        await status_msg.delete()
+            await status_msg.delete()
 
-    except Exception as e:
-       await status_msg.edit(f"❌ Gagal mengambil daftar hadiah: {e}")
+        except Exception as e:
+            await status_msg.edit(f"❌ Gagal mengambil daftar hadiah: {e}")
 
 @command(lambda ctx: filters.regex(r"^gift_claim_self_(\d+)"), handler_type="callback")
 async def claim_self_gift_callback(client, callback_query):
