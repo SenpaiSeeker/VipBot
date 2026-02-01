@@ -141,7 +141,7 @@ async def expiration_checker_method():
                         )
                         try:
                             await main_client.send_message(owner_id, warning_message)
-                        except pyrogram.errors.UserIsBlocked:
+                        except Exception:
                             await bot_instance.send_message(owner_id, warning_message)
                         await manager.db.setVars(bot_id, last_notif_date_key, today_str)
                         log.print(
