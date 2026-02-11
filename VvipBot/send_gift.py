@@ -52,7 +52,7 @@ async def send_gift_handler(client, message):
                 pass
         
         if not user_id_target:
-            return await message.reply_text(lang.get("gift.usage"))
+            return await message.reply_text(lang.get("gift.target_missing"))
 
         if not gift_id_arg or not gift_id_arg.isdigit():
             return await message.reply_text(lang.get("gift.invalid_id"))
@@ -65,12 +65,12 @@ async def send_gift_handler(client, message):
         target_gift = next((g for g in available_gifts if g.id == gift_id), None)
 
         if not target_gift:
-            return await status_msg.edit(lang.get("gift.not_found", gift_id=gift_id))
+            return await status_msg.edit(lang.get("gift.not_found", id=gift_id))
 
         target_user = await client.get_users(user_id_target)
         mention = client.ns.telegram.arg.getMention(target_user)
 
-        await status_msg.edit(lang.get("gift.sending", mention=mention, gift_id=gift_id))
+        await status_msg.edit(lang.get("gift.sending", id=gift_id, mention=mention))
 
         await send_star_gift_raw(client, target_user.id, gift_id)
 
@@ -100,8 +100,8 @@ async def list_gift_handler(client, message):
                 caption = lang.get("gift.info_caption", id=gift.id, price=price, emoji=emoji)
             
                 buttons = [
-                    [{"text": lang.get("gift.btn_send"), "callback_data": f"gift_send_ask_{gift.id}"}],
-                    [{"text": lang.get("gift.btn_claim"), "callback_data": f"gift_claim_self_{gift.id}"}]
+                    [{"text": lang.get("gift.btn_send_friend"), "callback_data": f"gift_send_ask_{gift.id}"}],
+                    [{"text": lang.get("gift.btn_claim_self"), "callback_data": f"gift_claim_self_{gift.id}"}]
                 ]
                 markup = client.ns.telegram.button.build_button_grid(buttons)
 
@@ -137,13 +137,13 @@ async def list_gift_handler(client, message):
             await status_msg.delete()
 
     except Exception as e:
-        await status_msg.edit(lang.get("gift.fail", e=e))
+        await status_msg.edit(lang.get("gift.list_fail", e=e))
 
 @command(lambda ctx: filters.regex(r"^gift_claim_self_(\d+)"), handler_type="callback")
 async def claim_self_gift_callback(client, callback_query):
     lang = callback_query.lang
     if callback_query.from_user.id != ctx.owner_id:
-        return await callback_query.answer(lang.get("general.no_access"), show_alert=True)
+        return await callback_query.answer(lang.get("gift.no_permission"), show_alert=True)
 
     gift_id = int(callback_query.data.split("_")[3])
     user_id = callback_query.from_user.id
@@ -151,15 +151,15 @@ async def claim_self_gift_callback(client, callback_query):
     try:
         await callback_query.edit_message_reply_markup(None)
         await send_star_gift_raw(client, user_id, gift_id)
-        await callback_query.edit_message_caption(lang.get("gift.claim_success", gift_id=gift_id))
+        await callback_query.edit_message_caption(lang.get("gift.claim_success", id=gift_id))
     except Exception as e:
-        await callback_query.answer(lang.get("gift.fail", e=e), show_alert=True)
+        await callback_query.answer(lang.get("gift.claim_fail", e=e), show_alert=True)
 
 @command(lambda ctx: filters.regex(r"^gift_send_ask_(\d+)"), handler_type="callback")
 async def ask_send_gift_callback(client, callback_query):
     lang = callback_query.lang
     if callback_query.from_user.id != ctx.owner_id:
-        return await callback_query.answer(lang.get("general.no_access"), show_alert=True)
+        return await callback_query.answer(lang.get("gift.no_permission"), show_alert=True)
 
     gift_id = int(callback_query.data.split("_")[3])
     chat_id = callback_query.message.chat.id
@@ -169,26 +169,26 @@ async def ask_send_gift_callback(client, callback_query):
         
         ask_msg = await client.ask(
             chat_id, 
-            f"{lang.get('gift.ask_target')}{lang.get('prompts.cancel_footer')}", 
+            lang.get("gift.ask_target_prompt"),
             timeout=60
         )
 
         if ask_msg.text.lower() == "/batal":
-            return await client.send_message(chat_id, lang.get("gift.cancel_msg"))
+            return await client.send_message(chat_id, lang.get("gift.cancel_text"))
 
         target_input = ask_msg.text
-        processing_msg = await client.send_message(chat_id, lang.get("gift.searching", input=target_input))
+        processing_msg = await client.send_message(chat_id, lang.get("gift.searching_user", query=target_input))
 
         try:
             target_user = await client.get_users(target_input)
         except Exception:
             return await processing_msg.edit(lang.get("gift.user_not_found"))
 
-        await processing_msg.edit(lang.get("gift.sending_named", name=target_user.first_name))
+        await processing_msg.edit(lang.get("gift.sending_to_user", name=target_user.first_name))
         
         await send_star_gift_raw(client, target_user.id, gift_id)
         
-        await processing_msg.edit(lang.get("gift.success_named", gift_id=gift_id, name=target_user.first_name))
+        await processing_msg.edit(lang.get("gift.send_to_user_success", id=gift_id, name=target_user.first_name))
 
     except asyncio.TimeoutError:
         await client.send_message(chat_id, lang.get("gift.timeout"))
