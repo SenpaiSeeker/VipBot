@@ -7,11 +7,11 @@ general:
   back_to_group_selection: "• Back to Group Selection •"
   back_to_vvip_list: "• Back to VVIP List •"
   close_panel: "Close Panel"
-  cancelled: "🚫 Process canceled."
-  timeout: "⏰ Timeout. Process canceled."
-  error: "❌ An Error Occurred:\n`{e}`"
-  success: "✅ Success!"
-  processing: "⏳ Please wait..."
+  cancelled: "🚫 **Process Canceled.**"
+  timeout: "⏰ **Timeout**\nProcess has been canceled automatically."
+  error: "❌ **An Error Occurred**\n<pre>{e}</pre>"
+  success: "✅ **Success!**"
+  processing: "⏳ **Processing...**\nPlease wait a moment."
   invalid_input_timeout: "Invalid input or timeout. Process canceled."
   no_access: "🚫 You do not have access to this menu."
   invalid_format: "**Invalid Format.**"
@@ -24,8 +24,8 @@ prompts:
   skip_footer: "\nType `/skip` to use the default text."
 
 start:
-  welcome_main_bot: "**👋🏻 Welcome, {mention}!**\n\nI am the main assistant to create and manage your own VVIP Bots. Explore all available features through the buttons below."
-  welcome_clone_bot: "**👋🏻 Welcome, {mention}!**\n\nI am your personal assistant to access exclusive content. Explore all available features through the buttons below."
+  welcome_main_bot: "👋🏻 **Welcome, {mention}!**\n\nI am the main assistant to create and manage your own 💎 **VVIP Bots**. Explore all available features through the buttons below."
+  welcome_clone_bot: "👋🏻 **Welcome, {mention}!**\n\nI am your personal assistant to access exclusive content. Explore all available features through the buttons below."
   create_bot: "🤖 Create Bot"
   my_bots: "📦 My Bots"
   settings_panel: "⚙️ Settings Panel ⚙️"
@@ -36,11 +36,11 @@ start:
   language: "🌐 Language"
 
 about:
-  panel: "**🌟 About This VVIP Bot**\n\nWelcome! I am an automated assistant designed to provide you with easy access to VVIP groups.\n\n**🤖 My Main Function:**\nI provide a secure automatic payment system via QRIS, ensuring you get instant access to premium content after a successful transaction.\n\n**🚀 Usage Flow:**\n1. **Select a Package:** Browse the list of available VVIPs.\n2. **Make a Payment:** Scan the QRIS I provide.\n3. **Instant Access:** An invitation link will be sent automatically after payment is confirmed.\n\nThe entire process is designed to be fast, secure, and without the need for manual confirmation!"
+  panel: "🌟 **About This VVIP Bot**\n\nWelcome! I am an automated assistant designed to provide you with easy access to VVIP groups.\n\n🤖 **My Main Function:**\nI provide a secure automatic payment system via QRIS, ensuring you get instant access to premium content after a successful transaction.\n\n🚀 **Usage Flow:**\n1. **Select a Package:** Browse the list of available VVIPs.\n2. **Make a Payment:** Scan the QRIS I provide.\n3. **Instant Access:** An invitation link will be sent automatically after payment is confirmed.\n\nThe entire process is designed to be fast, secure, and without the need for manual confirmation!"
   description: "I am an automated assistant designed to give you easy access to VVIP groups, through a secure automatic payment system via QRIS."
 
 lang:
-  select: "**🌐 Select Your Language**"
+  select: "🌐 **Select Your Language**"
   selected: "✅ Language has been changed to English."
   button_en: "🇬🇧 English"
   button_id: "🇮🇩 Indonesian"
@@ -48,18 +48,18 @@ lang:
 
 vvip_list:
   empty: "🗂️ No VVIP packages are available at the moment."
-  panel: "**📚 VVIP Bot List: {mention}**\n\nHere is the list of exclusive packages we offer. Click on a package to see full details and special offers."
+  panel: "📚 **VVIP Bot List: {mention}**\n\nHere is the list of exclusive packages we offer. Click on a package to see full details and special offers."
   button_package: "📂 {name}"
   button_promo: "🎉 Promo {name}"
 
 donation:
-  panel: "**❤️ Support Us with Telegram Stars!**\n\nYour donation is invaluable in helping us continue to develop and maintain this bot.\n\nEvery Star you give encourages us to keep innovating. Select a donation amount below to start.\n\nThank you for your support!"
+  panel: "❤️ **Support Us with Telegram Stars!**\n\nYour donation is invaluable in helping us continue to develop and maintain this bot.\n\nEvery Star you give encourages us to keep innovating. Select a donation amount below to start.\n\nThank you for your support!"
 
 ai:
-  disabled: "**❌ AI Disabled**\nPlease set up the Gemini API Key in the settings panel first."
+  disabled: "❌ **AI Disabled**\nPlease set up the Gemini API Key in the settings panel first."
   unavailable: "Sorry, the AI feature is currently unavailable."
   setup_button: "• Set Up API Key •"
-  panel: "**✨ Gemini AI Assistant**\nChoose an interaction mode."
+  panel: "✨ **Gemini AI Assistant**\nChoose an interaction mode."
   khodam_button: "👻 Check Khodam (Fun)"
   chatbot_button: "💬 Chat with Assistant"
   khodam_prompt: "🔮 **Khodam Divination**\nType your **full name** to be divined."
@@ -71,11 +71,11 @@ ai:
   chatbot_system_instruction: "You are a smart and helpful AI assistant for this Telegram bot. The bot's name is '{bot_name}'. Your task is to answer user questions related to the functionality and offers of this bot. You MUST use the information below as your primary knowledge source.\n\n--- BOT CONTEXT INFORMATION ---\n1. **About the Bot**: {about_bot}\n2. **VVIP Package List and Prices**: {vvip_info}\n3. **How to Purchase**: Users must press the 'View VVIP List' button on the main menu to see package details and start payment.\n4. **Other**: If the question is outside the bot's context, answer generally and friendly as an AI assistant.\n--- END OF INFORMATION ---\n\nAnswer all questions briefly, clearly, and in English."
   session_stopped: "✅ The chat session has been stopped."
   session_expired: "⏰ Session ended due to inactivity."
-  error: "Sorry, there was a problem with the AI system.\n`Error: {e}`"
+  error: "❌ Sorry, there was a problem with the AI system.\n`Error: {e}`"
 
 admin:
   eval:
-    processing: "`🔄 Processing code...`"
+    processing: "🔄 `Processing code...`"
     no_code: "❌ **Command Failed:** Please provide code to evaluate."
     success: "✅ **Execution Successful**"
     output: "**🖥️ OUTPUT:**\n<pre>{output}</pre>\n\n**⏳ Execution Time:** `{time:.4f}` seconds"
@@ -132,10 +132,10 @@ admin:
     reduce_duration_no_expiry: "This bot has no expiration date to reduce."
   refund:
     no_permission: "🚫 You do not have permission to do this."
-    fail_not_found: "\n\n**⚠️ Failed: Transaction not found or already refunded.**"
+    fail_not_found: "\n\n⚠️ **Failed: Transaction not found or already refunded.**"
     success_text: "\n\n✅ Donation has been successfully refunded."
     success_notif: "ℹ️ **Donation Information**\n\nYour Stars donation has been refunded by the admin. Thank you for your understanding."
-    fail_text: "\n\n**❌ Failed to refund donation:**\n`{e}`"
+    fail_text: "\n\n❌ **Failed to refund donation:**\n`{e}`"
   list_users:
     panel_title: "**👥 All Users List (Page {page}/{total_pages})**\n\n"
     no_users: "<b>No users recorded.</b>"
@@ -409,3 +409,24 @@ coupons:
   limit_reached: "❌ This coupon has reached its usage limit."
   expired: "❌ This coupon has expired."
   success_applied: "✅ Coupon `{code}` applied successfully! Original price `IDR {original}` is now `IDR {final}`."
+
+gift:
+  usage_error: "❌ **Target not found.**\nReply to user message or use format:\n`/gift [username] [gift_id]`"
+  invalid_id: "❌ **Invalid Gift ID.**\nUse `/listgift` to see IDs."
+  processing: "🔄 Processing gift sending..."
+  not_found: "❌ Gift ID `{id}` not found or unavailable."
+  sending: "🎁 Sending **Star** gift (ID: `{id}`) to **{mention}**..."
+  success: "✅ Successfully sent gift to **{mention}**!"
+  fail: "❌ Failed to send gift: `{e}`"
+  list_processing: "🔄 Fetching gift list..."
+  list_empty: "ℹ️ No gifts available at the moment."
+  info_caption: "<b>🎁 Gift Info</b>\n\n<b>🆔 ID:</b> <code>{id}</code>\n<b>💰 Price:</b> <code>{price} Stars</code>\n<b>🎭 Emoji:</b> {emoji}\n"
+  btn_send: "🎁 Send to Friend"
+  btn_claim: "👤 Claim Self"
+  claim_self_success: "✅ Successfully claimed gift (ID: {id}) for yourself!"
+  claim_fail: "❌ Claim failed: {e}"
+  ask_target: "👤 **Send Gift**\n\nPlease send the destination **User ID** or **Username** (@username)."
+  cancel_text: "🚫 Sending canceled."
+  finding_user: "🔄 Searching for user `{input}`..."
+  user_not_found: "❌ User not found. Check username/ID."
+  timeout: "⏰ Timeout. Please repeat process."
