@@ -7,14 +7,14 @@ general:
   back_to_group_selection: "• Kembali ke Pemilihan Grup •"
   back_to_vvip_list: "• Kembali ke Daftar VVIP •"
   close_panel: "Tutup Panel"
-  cancelled: "🚫 Proses dibatalkan."
-  timeout: "⏰ Waktu habis. Proses dibatalkan."
-  error: "❌ Terjadi Kesalahan:\n`{e}`"
-  success: "✅ Sukses!"
-  processing: "⏳ Mohon tunggu..."
-  invalid_input_timeout: "Input tidak valid atau waktu habis. Proses dibatalkan."
+  cancelled: "🚫 **Proses Dibatalkan**"
+  timeout: "⏰ **Waktu Habis**\nProses telah dibatalkan otomatis."
+  error: "❌ **Terjadi Kesalahan**\n<pre>{e}</pre>"
+  success: "✅ **Sukses!**"
+  processing: "⏳ **Sedang Memproses...**\nMohon tunggu sebentar."
+  invalid_input_timeout: "**Input Tidak Valid / Timeout**\nProses dibatalkan."
   no_access: "🚫 Anda tidak memiliki akses ke menu ini."
-  invalid_format: "**Format Salah.**"
+  invalid_format: "**Format Salah**"
   not_your_bot: "Ini bukan bot milik Anda."
   invalid_callback: "Data callback tidak valid."
   no_access_decorator: "🚫 **Akses Ditolak!**\nAnda tidak memiliki izin untuk menggunakan perintah ini."
@@ -24,8 +24,8 @@ prompts:
   skip_footer: "\nKetik `/skip` untuk menggunakan teks default."
 
 start:
-  welcome_main_bot: "**👋🏻 Selamat Datang, {mention}!**\n\nSaya adalah asisten utama untuk membuat dan mengelola Bot VVIP Anda sendiri. Jelajahi semua fitur yang tersedia melalui tombol di bawah ini."
-  welcome_clone_bot: "**👋🏻 Selamat Datang, {mention}!**\n\nSaya adalah asisten pribadi Anda untuk mengakses konten eksklusif. Jelajahi semua fitur yang tersedia melalui tombol di bawah ini."
+  welcome_main_bot: "👋🏻 **Selamat Datang, {mention}!**\n\nSaya adalah asisten utama untuk membuat dan mengelola 💎 **Bot VVIP** Anda sendiri. Jelajahi semua fitur yang tersedia melalui tombol di bawah ini."
+  welcome_clone_bot: "👋🏻 **Selamat Datang, {mention}!**\n\nSaya adalah asisten pribadi Anda untuk mengakses konten eksklusif. Jelajahi semua fitur yang tersedia melalui tombol di bawah ini."
   create_bot: "🤖 Buat Bot"
   my_bots: "📦 Bot Saya"
   settings_panel: "⚙️ Panel Pengaturan ⚙️"
@@ -36,11 +36,11 @@ start:
   language: "🌐 Bahasa"
 
 about:
-  panel: "**🌟 Tentang Bot VVIP Ini**\n\nSelamat datang! Saya adalah asisten otomatis yang dirancang untuk memberikan Anda kemudahan dalam mengakses grup VVIP.\n\n**🤖 Fungsi Utama Saya:**\nSaya menyediakan sistem pembayaran otomatis yang aman via QRIS, memastikan Anda mendapatkan akses instan ke konten premium setelah transaksi berhasil.\n\n**🚀 Alur Penggunaan:**\n1. **Pilih Paket:** Jelajahi daftar VVIP yang tersedia.\n2. **Lakukan Pembayaran:** Scan QRIS yang saya berikan.\n3. **Akses Instan:** Link undangan akan otomatis terkirim setelah pembayaran terkonfirmasi.\n\nSemua proses dirancang agar cepat, aman, dan tanpa perlu menunggu konfirmasi manual!"
+  panel: "🌟 **Tentang Bot VVIP Ini**\n\nSelamat datang! Saya adalah asisten otomatis yang dirancang untuk memberikan Anda kemudahan dalam mengakses grup VVIP.\n\n🤖 **Fungsi Utama Saya:**\nSaya menyediakan sistem pembayaran otomatis yang aman via QRIS, memastikan Anda mendapatkan akses instan ke konten premium setelah transaksi berhasil.\n\n🚀 **Alur Penggunaan:**\n1. **Pilih Paket:** Jelajahi daftar VVIP yang tersedia.\n2. **Lakukan Pembayaran:** Scan QRIS yang saya berikan.\n3. **Akses Instan:** Link undangan akan otomatis terkirim setelah pembayaran terkonfirmasi.\n\nSemua proses dirancang agar cepat, aman, dan tanpa perlu menunggu konfirmasi manual!"
   description: "Saya adalah asisten otomatis yang dirancang untuk memberikan Anda kemudahan dalam mengakses grup VVIP, melalui sistem pembayaran otomatis yang aman via QRIS."
 
 lang:
-  select: "**🌐 Pilih Bahasa Anda**"
+  select: "🌐 **Pilih Bahasa Anda**"
   selected: "✅ Bahasa telah diubah ke Bahasa Indonesia."
   button_en: "🇬🇧 English"
   button_id: "🇮🇩 Indonesian"
@@ -48,18 +48,18 @@ lang:
 
 vvip_list:
   empty: "🗂️ Saat ini belum ada paket VVIP yang tersedia."
-  panel: "**📚 Daftar VVIP Bot: {mention}**\n\nBerikut adalah daftar paket eksklusif yang kami tawarkan. Klik pada salah satu paket untuk melihat detail lengkap dan penawaran spesial."
+  panel: "📚 **Daftar VVIP Bot: {mention}**\n\nBerikut adalah daftar paket eksklusif yang kami tawarkan. Klik pada salah satu paket untuk melihat detail lengkap dan penawaran spesial."
   button_package: "📂 {name}"
   button_promo: "🎉 Promo {name}"
 
 donation:
-  panel: "**❤️ Dukung Kami dengan Telegram Stars!**\n\nDonasi Anda sangat berarti untuk membantu kami terus mengembangkan dan memelihara bot ini.\n\nSetiap Star yang Anda berikan memberikan kami semangat untuk terus berinovasi. Pilih jumlah donasi di bawah ini untuk memulai.\n\nTerima kasih atas dukungan Anda!"
+  panel: "❤️ **Dukung Kami dengan Telegram Stars!**\n\nDonasi Anda sangat berarti untuk membantu kami terus mengembangkan dan memelihara bot ini.\n\nSetiap Star yang Anda berikan memberikan kami semangat untuk terus berinovasi. Pilih jumlah donasi di bawah ini untuk memulai.\n\nTerima kasih atas dukungan Anda!"
 
 ai:
-  disabled: "**❌ AI Dinonaktifkan**\nAtur Kunci API Gemini terlebih dahulu di panel pengaturan."
+  disabled: "❌ **AI Dinonaktifkan**\nAtur Kunci API Gemini terlebih dahulu di panel pengaturan."
   unavailable: "Maaf, fitur AI saat ini tidak tersedia."
   setup_button: "• Atur Kunci API •"
-  panel: "**✨ Asisten AI Gemini**\nPilih mode interaksi."
+  panel: "✨ **Asisten AI Gemini**\nPilih mode interaksi."
   khodam_button: "👻 Cek Khodam (Hiburan)"
   chatbot_button: "💬 Ngobrol dengan Asisten"
   khodam_prompt: "🔮 **Penerawangan Khodam**\nKetik **nama lengkapmu** untuk diterawang."
@@ -71,11 +71,11 @@ ai:
   chatbot_system_instruction: "Anda adalah asisten AI yang cerdas dan sangat membantu untuk bot Telegram ini. Nama bot ini adalah '{bot_name}'. Tugas Anda adalah menjawab pertanyaan pengguna yang berkaitan dengan fungsionalitas dan penawaran bot ini. Anda HARUS menggunakan informasi di bawah ini sebagai sumber pengetahuan utama Anda.\n\n--- INFORMASI KONTEKS BOT ---\n1. **Tentang Bot**: {about_bot}\n2. **Daftar Paket VVIP dan Harga**: {vvip_info}\n3. **Cara Pembelian**: Pengguna harus menekan tombol 'Lihat Daftar VVIP' di menu utama untuk melihat detail paket dan memulai pembayaran.\n4. **Lainnya**: Jika pertanyaan di luar konteks bot, jawablah secara umum dan ramah sebagai asisten AI.\n--- AKHIR INFORMASI ---\n\nJawablah semua pertanyaan dengan singkat, jelas, dan dalam Bahasa Indonesia."
   session_stopped: "✅ Sesi obrolan telah dihentikan."
   session_expired: "⏰ Sesi berakhir karena tidak ada aktivitas."
-  error: "Maaf, terjadi gangguan pada sistem AI.\n`Error: {e}`"
+  error: "❌ Maaf, terjadi gangguan pada sistem AI.\n`Error: {e}`"
 
 admin:
   eval:
-    processing: "`🔄 Memproses kode...`"
+    processing: "🔄 `Memproses kode...`"
     no_code: "❌ **Perintah Gagal:** Harap berikan kode untuk dievaluasi."
     success: "✅ **Eksekusi Berhasil**"
     output: "**🖥️ OUTPUT:**\n<pre>{output}</pre>\n\n**⏳ Waktu Eksekusi:** `{time:.4f}` detik"
@@ -132,10 +132,10 @@ admin:
     reduce_duration_no_expiry: "Bot ini tidak memiliki tanggal kedaluwarsa untuk dikurangi."
   refund:
     no_permission: "🚫 Anda tidak memiliki izin untuk melakukan ini."
-    fail_not_found: "\n\n**⚠️ Gagal: Transaksi tidak ditemukan atau sudah di-refund.**"
+    fail_not_found: "\n\n⚠️ **Gagal: Transaksi tidak ditemukan atau sudah di-refund.**"
     success_text: "\n\n✅ Donasi berhasil dikembalikan."
     success_notif: "ℹ️ **Informasi Donasi**\n\nDonasi Stars Anda telah dikembalikan oleh admin. Terima kasih atas pengertiannya."
-    fail_text: "\n\n**❌ Gagal mengembalikan donasi:**\n`{e}`"
+    fail_text: "\n\n❌ **Gagal mengembalikan donasi:**\n`{e}`"
   list_users:
     panel_title: "**👥 Daftar Semua Pengguna (Halaman {page}/{total_pages})**\n\n"
     no_users: "<b>Tidak ada pengguna yang tercatat.</b>"
@@ -409,3 +409,24 @@ coupons:
   limit_reached: "❌ Kupon ini sudah habis digunakan."
   expired: "❌ Kupon ini sudah kedaluwarsa."
   success_applied: "✅ Kupon `{code}` berhasil digunakan! Harga awal `Rp {original}` menjadi `Rp {final}`."
+
+gift:
+  usage_error: "❌ **Target tidak ditemukan.**\nBalas pesan pengguna atau gunakan format:\n`/gift [username] [gift_id]`"
+  invalid_id: "❌ **ID Hadiah tidak valid.**\nGunakan `/listgift` untuk melihat ID."
+  processing: "🔄 Memproses pengiriman hadiah..."
+  not_found: "❌ Gift ID `{id}` tidak ditemukan atau tidak tersedia."
+  sending: "🎁 Mengirim hadiah **Star** (ID: `{id}`) ke **{mention}**..."
+  success: "✅ Berhasil mengirim hadiah ke **{mention}**!"
+  fail: "❌ Gagal mengirim hadiah: `{e}`"
+  list_processing: "🔄 Mengambil daftar hadiah..."
+  list_empty: "ℹ️ Tidak ada hadiah yang tersedia saat ini."
+  info_caption: "<b>🎁 Info Hadiah</b>\n\n<b>🆔 ID:</b> <code>{id}</code>\n<b>💰 Harga:</b> <code>{price} Stars</code>\n<b>🎭 Emoji:</b> {emoji}\n"
+  btn_send: "🎁 Kirim ke Teman"
+  btn_claim: "👤 Klaim Sendiri"
+  claim_self_success: "✅ Berhasil mengklaim hadiah (ID: {id}) untuk diri sendiri!"
+  claim_fail: "❌ Gagal klaim: {e}"
+  ask_target: "👤 **Kirim Hadiah**\n\nSilakan kirim **User ID** atau **Username** (@username) tujuan penerima hadiah."
+  cancel_text: "🚫 Pengiriman dibatalkan."
+  finding_user: "🔄 Mencari pengguna `{input}`..."
+  user_not_found: "❌ Pengguna tidak ditemukan. Pastikan username/ID benar."
+  timeout: "⏰ Waktu habis. Silakan ulangi proses."
