@@ -110,9 +110,9 @@ async def list_gift_handler(client, message):
                     file_path = None
                     try:
                         file_path = await client.download_media(thumb.file_id)
-                        await client.send_photo(
+                        await client.send_animation(
                             message.chat.id,
-                            photo=file_path,
+                            animation=file_path,
                             caption=caption,
                             reply_markup=markup
                         )
