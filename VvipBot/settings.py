@@ -1,6 +1,3 @@
-from . import *
-
-
 @command(lambda ctx: filters.regex("^settings$"), handler_type="callback")
 async def settings(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
@@ -30,7 +27,10 @@ async def settings(client, callback_query):
             {"text": lang.get("settings.coupons"), "callback_data": "manage_coupons"},
         ],
         [
+            {"text": lang.get("settings.vip_revenue"), "callback_data": "vip_revenue_menu"},
             {"text": lang.get("settings.stats_button"), "callback_data": "stats_0"},
+        ],
+        [
             {"text": lang.get("general.back_to_main_menu"), "callback_data": "start"},
         ],
     ]
