@@ -78,7 +78,7 @@ admin:
     processing: "<emoji id=5264727218734524899>🔄</emoji> `コードを処理中...`"
     no_code: "<emoji id=6298671811345254603>❌</emoji> **コマンド失敗:** 評価するコードを提供してください。"
     success: "<emoji id=6296367896398399651>✅</emoji> **実行成功**"
-    output: "**<emoji id=6219796119933683821>🖥️</emoji> 出力:**\n<pre>{output}</pre>\n\n**⏳ 実行時間:** `{time:.4f}` 秒"
+    output: "**<emoji id=6219796119933683821>🖥️</emoji> 出力:**\n<pre>{output}</pre>\n\n**<emoji id=5451732530048802485>⏳</emoji> 実行時間:** `{time:.4f}` 秒"
     too_long_caption: "<emoji id=6219796119933683821>📄</emoji> 評価結果が長すぎます。ファイルとして送信しました。"
   restore:
     usage: "<emoji id=6271786398404055377>⚠️</emoji> **使用方法が正しくありません:**\nボットから送信された `.zip` バックアップファイルに返信してください。"
