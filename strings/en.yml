@@ -11,7 +11,7 @@ general:
   timeout: "<emoji id=5413704112220949842>⏰</emoji> **Timeout**\nProcess has been canceled automatically."
   error: "<emoji id=6298671811345254603>❌</emoji> **An Error Occurred**\n<pre>{e}</pre>"
   success: "<emoji id=6296367896398399651>✅</emoji> **Success!**"
-  processing: "<emoji id=5264727218734524899>⏳</emoji> **Processing...**\nPlease wait a moment."
+  processing: "<emoji id=5451732530048802485>⏳</emoji> **Processing...**\nPlease wait a moment."
   invalid_input_timeout: "**Invalid input or timeout. Process canceled.**"
   no_access: "<emoji id=6298671811345254603>🚫</emoji> You do not have access to this menu."
   invalid_format: "**Invalid Format.**"
@@ -36,7 +36,7 @@ start:
   language: "🌐 Language"
 
 about:
-  panel: "<emoji id=5458799228719472718>🌟</emoji> **About This VVIP Bot**\n\nWelcome! I am an automated assistant designed to provide you with easy access to VVIP groups.\n\n<emoji id=5258093637450866522>🤖</emoji> **My Main Function:**\nI provide a secure automatic payment system via QRIS, ensuring you get instant access to premium content after a successful transaction.\n\n<emoji id=5372917041193828849>🚀</emoji> **Usage Flow:**\n1. **Select a Package:** Browse the list of available VVIPs.\n2. **Make a Payment:** Scan the QRIS I provide.\n3. **Instant Access:** An invitation link will be sent automatically after payment is confirmed.\n\nThe entire process is designed to be fast, secure, and without the need for manual confirmation!"
+  panel: "<emoji id=5458799228719472718>🌟</emoji> **About This VVIP Bot**\n\nWelcome! I am an automated assistant designed to provide you with easy access to VVIP groups.\n\n<emoji id=5372981976804366741>🤖</emoji> **My Main Function:**\nI provide a secure automatic payment system via QRIS, ensuring you get instant access to premium content after a successful transaction.\n\n<emoji id=5372917041193828849>🚀</emoji> **Usage Flow:**\n1. **Select a Package:** Browse the list of available VVIPs.\n2. **Make a Payment:** Scan the QRIS I provide.\n3. **Instant Access:** An invitation link will be sent automatically after payment is confirmed.\n\nThe entire process is designed to be fast, secure, and without the need for manual confirmation!"
   description: "I am an automated assistant designed to give you easy access to VVIP groups, through a secure automatic payment system via QRIS."
 
 lang:
@@ -48,7 +48,7 @@ lang:
 
 vvip_list:
   empty: "<emoji id=5431736674147114227>🗂️</emoji> No VVIP packages are available at the moment."
-  panel: "<emoji id=5373098009640836781>📚</emoji> **VVIP Bot List: {mention}**\n\nHere is the list of exclusive packages we offer. Click on a package to see full details and special offers."
+  panel: "<emoji id=5334882760735598374>📚</emoji> **VVIP Bot List: {mention}**\n\nHere is the list of exclusive packages we offer. Click on a package to see full details and special offers."
   button_package: "📂 {name}"
   button_promo: "🎉 Promo {name}"
 
@@ -83,7 +83,7 @@ admin:
   restore:
     usage: "<emoji id=6271786398404055377>⚠️</emoji> **Incorrect Usage:**\nReply to the `.zip` backup file sent by the bot with this command."
     wrong_format: "<emoji id=6298671811345254603>❌</emoji> **Incorrect File Format:**\nOnly `.zip` backup files can be restored."
-    processing: "<emoji id=5264727218734524899>⏳</emoji> `Downloading & extracting backup file...`"
+    processing: "<emoji id=5451732530048802485>⏳</emoji> `Downloading & extracting backup file...`"
     empty_zip: "This .zip file is empty or corrupted."
     success: "<emoji id=6296367896398399651>✅</emoji> **Restore Successful!**\nDatabase `{db_path}` has been restored.\n\n<emoji id=6271786398404055377>⚠️</emoji> **IMPORTANT:** Please **restart** the bot to use the new database."
     fail: "<emoji id=6298671811345254603>❌</emoji> **Restore Failed!**\n\n**Error:** `{e}`"
@@ -119,7 +119,7 @@ admin:
     delete_confirm: "**<emoji id=6271786398404055377>⚠️</emoji> Deletion Confirmation**\n\nAre you sure you want to permanently delete bot with ID `{bot_id}`?"
     delete_confirm_yes: "✅ Yes, Delete"
     delete_confirm_no: "❌ No"
-    deleting: "<emoji id=5264727218734524899>⏳</emoji> Deleting bot..."
+    deleting: "<emoji id=5451732530048802485>⏳</emoji> Deleting bot..."
     delete_success: "<emoji id=6296367896398399651>✅</emoji> Bot deleted successfully."
     delete_fail: "<emoji id=6298671811345254603>❌</emoji> Failed to delete bot: {e}"
     manage_duration_panel: "**<emoji id=4972341539033318152>🗓️</emoji> Manage Duration for Bot `{bot_id}`**"
@@ -169,11 +169,11 @@ bot_management:
     success: "<emoji id=6296367896398399651>✅</emoji> **Payment Successful!**\n\nThank you! Your subscription to create a bot for **{months} month(s)** has been activated."
     owner_notif: "<emoji id=5375296873982604963>💰</emoji> **New Access Subscription!**\n\n**User:** {mention}\n**Duration:** {months} month(s)\n**Amount:** `IDR {amount}`"
   create:
-    new_user_notification: "**<emoji id=5258362837411045098>👤</emoji> A New User Has Started Your Bot!**\n\n**Bot:** {mention}\n**User:** {user_mention}\n**ID:** `{user_id}`"
+    new_user_notification: "**<emoji id=5373012449597335010>👤</emoji> A New User Has Started Your Bot!**\n\n**Bot:** {mention}\n**User:** {user_mention}\n**ID:** `{user_id}`"
     no_access: "**🚫 Access Denied**\n\nPlease contact {mention} to request bot creation access."
     step1_api_id: "**<emoji id=5472308992514464048>🔐</emoji> 1/3: Enter your API ID.**\nGet it from my.telegram.org."
     step2_api_hash: "**<emoji id=5472308992514464048>🔐</emoji> 2/3: Enter your API Hash.**\nGet it from my.telegram.org."
-    step3_bot_token: "**<emoji id=5258093637450866522>🤖</emoji> 3/3: Enter your Bot Token.**\nGet it from @BotFather."
+    step3_bot_token: "**<emoji id=5372981976804366741>🤖</emoji> 3/3: Enter your Bot Token.**\nGet it from @BotFather."
     verifying: "<emoji id=5188217332748527444>🔍</emoji> `Verifying data & token...`"
     invalid_token: "The bot token you entered is invalid."
     saving: "<emoji id=6296367896398399651>✅</emoji> Bot '{name}' is valid and being saved. `<emoji id=5372917041193828849>🚀</emoji> Starting bot...`"
@@ -185,7 +185,7 @@ bot_management:
     panel: "**<emoji id=6283073379184415506>📦</emoji> My Bots List ({page}/{total})**\n\n• **Bot Name:** {bot_name}\n• **Bot ID:** `{bot_id}`\n• **Bot Username:** @{username}\n• **Expires In:** `{days_left}` days"
     manage_button: "⚙️ Manage {name}"
   manage:
-    panel: "**<emoji id=5258096772776991776>⚙️</emoji> Manage Bot: {name}**\n\n**Bot ID:** `{id}`\n**Remaining Active Time:** `{days_left}`\n\nSelect an action you want to perform:"
+    panel: "**<emoji id=6257780484281997093>⚙️</emoji> Manage Bot: {name}**\n\n**Bot ID:** `{id}`\n**Remaining Active Time:** `{days_left}`\n\nSelect an action you want to perform:"
     not_set: "Not set"
     extend_button: "➕ Request Extension"
     delete_button: "🗑️ Delete This Bot"
@@ -206,7 +206,7 @@ bot_management:
     confirm_yes_button: "✅ Yes, I'm Sure, Delete"
     confirm_no_button: "❌ No, Cancel"
     no_permission: "You are not authorized to delete this bot."
-    processing: "<emoji id=5264727218734524899>⏳</emoji> Stopping and deleting bot `{id}`..."
+    processing: "<emoji id=5451732530048802485>⏳</emoji> Stopping and deleting bot `{id}`..."
     success: "<emoji id=6296367896398399651>✅</emoji> **Deletion Successful!**\nBot `{id}` and its data have been deleted from the system."
     fail: "<emoji id=6298671811345254603>❌</emoji> An error occurred while deleting the bot: `{e}`"
 
@@ -223,22 +223,22 @@ member:
     confirm_no_button: "❌ No"
     record_not_found: "<emoji id=6298671811345254603>❌</emoji> **Failed:** Membership record not found in the database."
     invalid_chat_id: "<emoji id=6298671811345254603>❌</emoji> **Failed:** Chat ID to kick the member is invalid or not set in the VVIP package."
-    processing: "<emoji id=5264727218734524899>⏳</emoji> `Processing member kick from the group...`"
+    processing: "<emoji id=5451732530048802485>⏳</emoji> `Processing member kick from the group...`"
     success: "<emoji id=6296367896398399651>✅</emoji> **Success!**\nUser {mention} has been kicked from **{name}** and removed from the list."
     fail: "<emoji id=6298671811345254603>❌</emoji> **Failed to Kick:** `{e}`"
   active_list:
-    panel: "**<emoji id=5258513401784573443>🕵️</emoji> Check Active Members Real-time**\n\nSelect a group to check its current member list."
+    panel: "**<emoji id=6271786398404055377>🕵️</emoji> Check Active Members Real-time**\n\nSelect a group to check its current member list."
     button_normal: "👥 Check '{name}' Normal"
     button_promo: "👥 Check '{name}' Promo"
     no_valid_chat_id: "No VVIP with a valid Chat ID is configured. Please set it up first."
-    fetching: "<emoji id=5264727218734524899>⏳</emoji> Fetching member data from Telegram servers, please wait..."
+    fetching: "<emoji id=5451732530048802485>⏳</emoji> Fetching member data from Telegram servers, please wait..."
     fetch_fail: "<emoji id=6298671811345254603>❌</emoji> **Failed to Fetch Member List:**\n`{e}`"
     empty: "No members (non-bots) found in this group."
-    member_panel: "**<emoji id=5258513401784573443>🕵️</emoji> Active Member ({page}/{total})**\n\n**Name:** {mention}\n**ID:** `{id}`\n**Status:** `{status}`"
+    member_panel: "**<emoji id=6271786398404055377>🕵️</emoji> Active Member ({page}/{total})**\n\n**Name:** {mention}\n**ID:** `{id}`\n**Status:** `{status}`"
     kick_confirm_panel: "**<emoji id=6271786398404055377>⚠️</emoji> Confirmation**\n\nAre you sure you want to kick **{mention}** from the group?"
     kick_confirm_yes_button: "✅ Yes, Kick"
     kick_confirm_no_button: "❌ No, Cancel"
-    kick_processing: "<emoji id=5264727218734524899>⏳</emoji> `Processing user kick...`"
+    kick_processing: "<emoji id=5451732530048802485>⏳</emoji> `Processing user kick...`"
     kick_success: "<emoji id=6296367896398399651>✅</emoji> **Success!**\nUser **{mention}** has been kicked from the group."
 
 subscription:
@@ -280,7 +280,7 @@ payment:
     category_missing: "VVIP category '{name}' is no longer found in the database. Payment was successful, but the group link could not be delivered. Please contact the admin."
     success_customer_full: "<emoji id=5436040291507247633>🎉</emoji> **Payment Confirmed!**\n\nThank you, here is your access link for the **{name}** package:\n\n{link}\n\n<emoji id=6271786398404055377>⚠️</emoji> This link is for one-time use only and will expire in 60 minutes if not used."
     success_owner_notif: "<emoji id=5375296873982604963>💰</emoji> **New Income!**\n\n**User:** {mention}\n**Bot:** {bot_mention}\n**Category:** `{name}` ({type})"
-    expired_msg: "<emoji id=5264727218734524899>⏳</emoji> **Invoice Expired.**\nOrder ID `{id}` has been canceled due to exceeding the payment time limit."
+    expired_msg: "<emoji id=5451732530048802485>⏳</emoji> **Invoice Expired.**\nOrder ID `{id}` has been canceled due to exceeding the payment time limit."
     link_expired: "<emoji id=6271786398404055377>⚠️</emoji> Your invitation link has expired because you did not join within 60 minutes. Please contact the admin if you have any issues."
   donation:
     invoice_title: "Donation for Bot Development"
@@ -296,8 +296,8 @@ payment:
     notes_text: |
       ╭─ **<emoji id=5472164874886846699>✨</emoji> VVIP Package Details**
       │
-      ├─ <emoji id=5257969839313526622>📂</emoji> **Package Name:** `{name}`
-      ├─ <emoji id=5373098009640836781>📝</emoji> **Description:** Get instant access to premium and exclusive content after a successful payment.
+      ├─ <emoji id=5431721976769027887>📂</emoji> **Package Name:** `{name}`
+      ├─ <emoji id=5334882760735598374>📝</emoji> **Description:** Get instant access to premium and exclusive content after a successful payment.
       │
       ├─ <emoji id=6129870117619634982>💳</emoji> **Normal Price:** `IDR {price}`
       │
@@ -305,15 +305,15 @@ payment:
     promo_text: |
       ╭─ **<emoji id=5436040291507247633>🎉</emoji> Limited Special Offer!**
       │
-      ├─ <emoji id=5257969839313526622>📂</emoji> **Package Name:** `{name}`
-      ├─ <emoji id=5373098009640836781>📝</emoji> **Description:** Don't miss this golden opportunity to join at a much more affordable price!
+      ├─ <emoji id=5431721976769027887>📂</emoji> **Package Name:** `{name}`
+      ├─ <emoji id=5334882760735598374>📝</emoji> **Description:** Don't miss this golden opportunity to join at a much more affordable price!
       │
       ├─ <emoji id=5375296873982604963>💰</emoji> **Promo Price:** `IDR {promo_price}`
       │
       ╰─ Secure your spot now before the promo ends!
 
 settings:
-  panel: "**<emoji id=5258096772776991776>🛠️</emoji> Owner Settings Panel**\n\nWelcome to your bot's control center! Please select a menu below to manage various aspects of the bot."
+  panel: "**<emoji id=6257780484281997093>🛠️</emoji> Owner Settings Panel**\n\nWelcome to your bot's control center! Please select a menu below to manage various aspects of the bot."
   set_start_photo: "🖼️ Set Start Photo"
   set_start_text: "✍️ Set Start Text"
   add_vvip: "➕ Add VVIP"
@@ -326,7 +326,7 @@ settings:
   list_all_users: "👥 List All Users"
   coupons: "🎟️ Manage Coupons"
 
-  set_photo_prompt: "<emoji id=5257974976094412956>🖼️</emoji> **Set Start Photo**\n\nPlease send the new photo you want to use as the image in the /start message.\n\nType `/empty` to remove the current photo and revert to default."
+  set_photo_prompt: "<emoji id=5375074927252621134>🖼️</emoji> **Set Start Photo**\n\nPlease send the new photo you want to use as the image in the /start message.\n\nType `/empty` to remove the current photo and revert to default."
   set_photo_fail: "<emoji id=6298671811345254603>❌</emoji> **Failed:** The message sent is not a photo. Process canceled."
   set_photo_success: "<emoji id=6296367896398399651>✅</emoji> **Success!** The /start photo has been updated."
   photo_emptied: "<emoji id=6296367896398399651>✅</emoji> **Success!** The /start photo has been removed and will revert to default."
@@ -344,19 +344,19 @@ settings:
   setup_vvip:
     step1_name: "**<emoji id=5470060791883374114>✍️</emoji> Step 1/8: Category Name**\nExample: `Monthly VVIP`"
     step2_price: "**<emoji id=5375296873982604963>💰</emoji> Step 2/8: Normal Price**\nExample: `50000` (without dots or commas)"
-    step3_duration: "**<emoji id=5264727218734524899>⏳</emoji> Step 3/8: Membership Duration (Days)**\nSend `0` for permanent access."
+    step3_duration: "**<emoji id=5451732530048802485>⏳</emoji> Step 3/8: Membership Duration (Days)**\nSend `0` for permanent access."
     step4_chat_id: "**<emoji id=6269253325477123346>🆔</emoji> Step 4/8: Normal Group Chat ID**\nExample: `-100123456789`. This is the destination group for members."
     step5_promo_price: "**<emoji id=5436040291507247633>🎉</emoji> Step 5/8: Promo Price**\nSend `0` if there is no promo price."
     step6_promo_chat_id: "**<emoji id=6269253325477123346>🆔</emoji> Step 6/8: Promo Group Chat ID**\nFill in if Promo Price > 0."
-    step7_promo_text: "**<emoji id=5373098009640836781>📝</emoji> Step 7/8: Promo Description Text**\nUse `{name}` and `{promo_price}`."
-    step8_normal_text: "**<emoji id=5373098009640836781>📝</emoji> Step 8/8: Normal Description Text**\nUse `{name}` and `{price}`."
+    step7_promo_text: "**<emoji id=5334882760735598374>📝</emoji> Step 7/8: Promo Description Text**\nUse `{name}` and `{promo_price}`."
+    step8_normal_text: "**<emoji id=5334882760735598374>📝</emoji> Step 8/8: Normal Description Text**\nUse `{name}` and `{price}`."
     err_must_be_number: "Input must be a number."
     err_must_be_link: "Input must be a valid link (starting with http/https)."
     err_must_be_chat_id: "Input must be a numeric chat ID (usually starts with -100)."
     success: "<emoji id=6296367896398399651>✅</emoji> **Success!**\nVVIP package **{name}** has been added."
     cancelled: "<emoji id=6298671811345254603>🚫</emoji> VVIP package setup canceled by user."
 
-  delete_vvip_panel: "**<emoji id=5258130763148172425>🗑️</emoji> Delete VVIP Package**\n\nSelect the VVIP package you want to delete from the list."
+  delete_vvip_panel: "**<emoji id=6156513311585211842>🗑️</emoji> Delete VVIP Package**\n\nSelect the VVIP package you want to delete from the list."
   delete_vvip_empty: "<emoji id=6296367896398399651>✅</emoji> Great! There are no VVIP packages to delete."
   delete_vvip_button: "🗑️ Delete {name}"
   delete_vvip_success: "<emoji id=6296367896398399651>✅</emoji> **Success!** Package **{name}** has been deleted."
@@ -400,7 +400,7 @@ coupons:
   ask_expiry: "**5/5:** For how many days will this coupon be valid? (enter a number)"
   add_success: "<emoji id=6296367896398399651>✅</emoji> Coupon `{code}` created successfully."
   list_empty: "No coupons have been created."
-  list_panel: "**<emoji id=5373098009640836781>📋</emoji> Coupon Details ({page}/{total})**\n- Code: `{code}`\n- Type: `{type}`\n- Value: `{value}`\n- Uses Left: `{uses}`\n- Valid until: `{expiry}`"
+  list_panel: "**<emoji id=5334882760735598374>📋</emoji> Coupon Details ({page}/{total})**\n- Code: `{code}`\n- Type: `{type}`\n- Value: `{value}`\n- Uses Left: `{uses}`\n- Valid until: `{expiry}`"
   delete_button: "🗑️ Delete This Coupon"
   delete_success: "<emoji id=6296367896398399651>✅</emoji> Coupon deleted successfully."
   use_button: "🎟️ Use Coupon"
@@ -425,7 +425,7 @@ gift:
   btn_claim: "👤 Claim Self"
   claim_self_success: "<emoji id=6296367896398399651>✅</emoji> Successfully claimed gift (ID: {id}) for yourself!"
   claim_fail: "<emoji id=6298671811345254603>❌</emoji> Claim failed: {e}"
-  ask_target: "<emoji id=5316727448644103237>👤</emoji> **Send Gift**\n\nPlease send the destination **User ID** or **Username** (@username)."
+  ask_target: "<emoji id=5373012449597335010>👤</emoji> **Send Gift**\n\nPlease send the destination **User ID** or **Username** (@username)."
   cancel_text: "<emoji id=6298671811345254603>🚫</emoji> Sending canceled."
   finding_user: "<emoji id=5264727218734524899>🔄</emoji> Searching for user `{input}`..."
   user_not_found: "<emoji id=6298671811345254603>❌</emoji> User not found. Check username/ID."

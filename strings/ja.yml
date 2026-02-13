@@ -11,7 +11,7 @@ general:
   timeout: "<emoji id=5413704112220949842>⏰</emoji> **タイムアウト**\nプロセスは自動的にキャンセルされました。"
   error: "<emoji id=6298671811345254603>❌</emoji> **エラーが発生しました**\n<pre>{e}</pre>"
   success: "<emoji id=6296367896398399651>✅</emoji> **成功しました！**"
-  processing: "<emoji id=5264727218734524899>⏳</emoji> **処理中...**\nしばらくお待ちください。"
+  processing: "<emoji id=5451732530048802485>⏳</emoji> **処理中...**\nしばらくお待ちください。"
   invalid_input_timeout: "**無効な入力またはタイムアウトしました。プロセスはキャンセルされました。**"
   no_access: "<emoji id=6298671811345254603>🚫</emoji> このメニューへのアクセス権がありません。"
   invalid_format: "**形式が正しくありません。**"
@@ -36,7 +36,7 @@ start:
   language: "🌐 言語"
 
 about:
-  panel: "<emoji id=5458799228719472718>🌟</emoji> **このVVIPボットについて**\n\nようこそ！私はVVIPグループへのアクセスを簡単にするために設計された自動アシスタントです。\n\n<emoji id=5258093637450866522>🤖</emoji> **主な機能:**\nQRIS経由の安全な自動支払いシステムを提供し、取引成功後にプレミアムコンテンツへの即時アクセスを保証します。\n\n<emoji id=5372917041193828849>🚀</emoji> **利用の流れ:**\n1. **パッケージを選択:** 利用可能なVVIPのリストを閲覧します。\n2. **支払いを行う:** 私が提供するQRISをスキャンします。\n3. **即時アクセス:** 支払い確認後、招待リンクが自動的に送信されます。\n\n全てのプロセスは、迅速かつ安全で、手動での確認を待つ必要なく設計されています！"
+  panel: "<emoji id=5458799228719472718>🌟</emoji> **このVVIPボットについて**\n\nようこそ！私はVVIPグループへのアクセスを簡単にするために設計された自動アシスタントです。\n\n<emoji id=5372981976804366741>🤖</emoji> **主な機能:**\nQRIS経由の安全な自動支払いシステムを提供し、取引成功後にプレミアムコンテンツへの即時アクセスを保証します。\n\n<emoji id=5372917041193828849>🚀</emoji> **利用の流れ:**\n1. **パッケージを選択:** 利用可能なVVIPのリストを閲覧します。\n2. **支払いを行う:** 私が提供するQRISをスキャンします。\n3. **即時アクセス:** 支払い確認後、招待リンクが自動的に送信されます。\n\n全てのプロセスは、迅速かつ安全で、手動での確認を待つ必要なく設計されています！"
   description: "私はQRIS経由の安全な自動支払いシステムを通じて、VVIPグループへの簡単なアクセスを提供するように設計された自動アシスタントです。"
 
 lang:
@@ -48,7 +48,7 @@ lang:
 
 vvip_list:
   empty: "<emoji id=5431736674147114227>🗂️</emoji> 現在、利用可能なVVIPパッケージはありません。"
-  panel: "<emoji id=5373098009640836781>📚</emoji> **VVIPボットリスト: {mention}**\n\nこちらが提供する限定パッケージのリストです。パッケージをクリックして詳細と特別オファーをご覧ください。"
+  panel: "<emoji id=5334882760735598374>📚</emoji> **VVIPボットリスト: {mention}**\n\nこちらが提供する限定パッケージのリストです。パッケージをクリックして詳細と特別オファーをご覧ください。"
   button_package: "📂 {name}"
   button_promo: "🎉 プロモ {name}"
 
@@ -83,7 +83,7 @@ admin:
   restore:
     usage: "<emoji id=6271786398404055377>⚠️</emoji> **使用方法が正しくありません:**\nボットから送信された `.zip` バックアップファイルに返信してください。"
     wrong_format: "<emoji id=6298671811345254603>❌</emoji> **ファイル形式が正しくありません:**\n復元できるのは `.zip` 形式のバックアップファイルのみです。"
-    processing: "<emoji id=5264727218734524899>⏳</emoji> `バックアップファイルをダウンロード＆展開中...`"
+    processing: "<emoji id=5451732530048802485>⏳</emoji> `バックアップファイルをダウンロード＆展開中...`"
     empty_zip: "この .zip ファイルは空または破損しています。"
     success: "<emoji id=6296367896398399651>✅</emoji> **復元成功！**\nデータベース `{db_path}` が復元されました。\n\n<emoji id=6271786398404055377>⚠️</emoji> **重要:** 新しいデータベースを使用するために、ボットを**再起動**してください。"
     fail: "<emoji id=6298671811345254603>❌</emoji> **復元失敗！**\n\n**エラー:** `{e}`"
@@ -119,7 +119,7 @@ admin:
     delete_confirm: "**<emoji id=6271786398404055377>⚠️</emoji> 削除の確認**\n\n本当にID `{bot_id}` のボットを完全に削除しますか？"
     delete_confirm_yes: "✅ はい、削除します"
     delete_confirm_no: "❌ いいえ"
-    deleting: "<emoji id=5264727218734524899>⏳</emoji> ボットを削除中..."
+    deleting: "<emoji id=5451732530048802485>⏳</emoji> ボットを削除中..."
     delete_success: "<emoji id=6296367896398399651>✅</emoji> ボットは正常に削除されました。"
     delete_fail: "<emoji id=6298671811345254603>❌</emoji> ボットの削除に失敗しました: {e}"
     manage_duration_panel: "**<emoji id=4972341539033318152>🗓️</emoji> ボット `{bot_id}` の期間を管理**"
@@ -169,11 +169,11 @@ bot_management:
     success: "<emoji id=6296367896398399651>✅</emoji> **支払いが成功しました！**\n\nありがとうございます！ **{months}ヶ月**間のボット作成サブスクリプションが有効になりました。"
     owner_notif: "<emoji id=5375296873982604963>💰</emoji> **新規アクセス購読！**\n\n**ユーザー:** {mention}\n**期間:** {months}ヶ月\n**金額:** `Rp {amount}`"
   create:
-    new_user_notification: "**<emoji id=5258362837411045098>👤</emoji> 新しいユーザーがあなたのボットを開始しました！**\n\n**ボット:** {mention}\n**ユーザー:** {user_mention}\n**ID:** `{user_id}`"
+    new_user_notification: "**<emoji id=5373012449597335010>👤</emoji> 新しいユーザーがあなたのボットを開始しました！**\n\n**ボット:** {mention}\n**ユーザー:** {user_mention}\n**ID:** `{user_id}`"
     no_access: "**🚫 アクセスが拒否されました**\n\n{mention}に連絡してボット作成のアクセスをリクエストしてください。"
     step1_api_id: "**<emoji id=5472308992514464048>🔐</emoji> 1/3: API IDを入力してください。**\nmy.telegram.orgから取得します。"
     step2_api_hash: "**<emoji id=5472308992514464048>🔐</emoji> 2/3: APIハッシュを入力してください。**\nmy.telegram.orgから取得します。"
-    step3_bot_token: "**<emoji id=5258093637450866522>🤖</emoji> 3/3: ボットトークンを入力してください。**\n@BotFatherから取得します。"
+    step3_bot_token: "**<emoji id=5372981976804366741>🤖</emoji> 3/3: ボットトークンを入力してください。**\n@BotFatherから取得します。"
     verifying: "<emoji id=5188217332748527444>🔍</emoji> `データとトークンを確認中...`"
     invalid_token: "入力されたボットトークンは無効です。"
     saving: "<emoji id=6296367896398399651>✅</emoji> ボット「{name}」は有効で保存されました。`<emoji id=5372917041193828849>🚀</emoji> 起動中...`"
@@ -185,7 +185,7 @@ bot_management:
     panel: "**<emoji id=6283073379184415506>📦</emoji> マイボットリスト ({page}/{total})**\n\n• **ボット名:** {bot_name}\n• **ボットID:** `{bot_id}`\n• **ボットユーザー名:** @{username}\n• **有効期限まで:** `{days_left}` 日"
     manage_button: "⚙️ {name}を管理"
   manage:
-    panel: "**<emoji id=5258096772776991776>⚙️</emoji> ボット管理: {name}**\n\n**ボットID:** `{id}`\n**残りの有効期間:** `{days_left}`\n\n実行したいアクションを選択してください:"
+    panel: "**<emoji id=6257780484281997093>⚙️</emoji> ボット管理: {name}**\n\n**ボットID:** `{id}`\n**残りの有効期間:** `{days_left}`\n\n実行したいアクションを選択してください:"
     not_set: "未設定"
     extend_button: "➕ 期間延長をリクエスト"
     delete_button: "🗑️ このボットを削除"
@@ -206,7 +206,7 @@ bot_management:
     confirm_yes_button: "✅ はい、削除します"
     confirm_no_button: "❌ いいえ、キャンセルします"
     no_permission: "あなたはこのボットを削除する権限がありません。"
-    processing: "<emoji id=5264727218734524899>⏳</emoji> ボット `{id}` を停止・削除しています..."
+    processing: "<emoji id=5451732530048802485>⏳</emoji> ボット `{id}` を停止・削除しています..."
     success: "<emoji id=6296367896398399651>✅</emoji> **削除成功！**\nボット `{id}` とそのデータはシステムから削除されました。"
     fail: "<emoji id=6298671811345254603>❌</emoji> ボットの削除中にエラーが発生しました: `{e}`"
 
@@ -223,22 +223,22 @@ member:
     confirm_no_button: "❌ いいえ"
     record_not_found: "<emoji id=6298671811345254603>❌</emoji> **失敗:** メンバーシップ記録がデータベースに見つかりません。"
     invalid_chat_id: "<emoji id=6298671811345254603>❌</emoji> **失敗:** メンバーを追放するためのチャットIDが無効か、VVIPパッケージで設定されていません。"
-    processing: "<emoji id=5264727218734524899>⏳</emoji> `グループからのメンバー追放を処理中...`"
+    processing: "<emoji id=5451732530048802485>⏳</emoji> `グループからのメンバー追放を処理中...`"
     success: "<emoji id=6296367896398399651>✅</emoji> **成功！**\nユーザー{mention}は **{name}** から追放され、リストから削除されました。"
     fail: "<emoji id=6298671811345254603>❌</emoji> **追放失敗:** `{e}`"
   active_list:
-    panel: "**<emoji id=5258513401784573443>🕵️</emoji> アクティブメンバーのリアルタイムチェック**\n\n現在のメンバーリストを確認したいグループを選択してください。"
+    panel: "**<emoji id=6271786398404055377>🕵️</emoji> アクティブメンバーのリアルタイムチェック**\n\n現在のメンバーリストを確認したいグループを選択してください。"
     button_normal: "👥 '{name}' 通常をチェック"
     button_promo: "👥 '{name}' プロモをチェック"
     no_valid_chat_id: "有効なチャットIDが設定されたVVIPがありません。最初に設定してください。"
-    fetching: "<emoji id=5264727218734524899>⏳</emoji> Telegramサーバーからメンバーデータを取得中、お待ちください..."
+    fetching: "<emoji id=5451732530048802485>⏳</emoji> Telegramサーバーからメンバーデータを取得中、お待ちください..."
     fetch_fail: "<emoji id=6298671811345254603>❌</emoji> **メンバーリストの取得に失敗:**\n`{e}`"
     empty: "このグループにはメンバー（非ボット）が見つかりませんでした。"
-    member_panel: "**<emoji id=5258513401784573443>🕵️</emoji> アクティブメンバー ({page}/{total})**\n\n**名前:** {mention}\n**ID:** `{id}`\n**ステータス:** `{status}`"
+    member_panel: "**<emoji id=6271786398404055377>🕵️</emoji> アクティブメンバー ({page}/{total})**\n\n**名前:** {mention}\n**ID:** `{id}`\n**ステータス:** `{status}`"
     kick_confirm_panel: "**<emoji id=6271786398404055377>⚠️</emoji> 確認**\n\n本当に **{mention}** をグループから追放しますか？"
     kick_confirm_yes_button: "✅ はい"
     kick_confirm_no_button: "❌ いいえ"
-    kick_processing: "<emoji id=5264727218734524899>⏳</emoji> `ユーザーを追放中...`"
+    kick_processing: "<emoji id=5451732530048802485>⏳</emoji> `ユーザーを追放中...`"
     kick_success: "<emoji id=6296367896398399651>✅</emoji> **成功！**\nユーザー **{mention}** はグループから追放されました。"
 
 subscription:
@@ -280,7 +280,7 @@ payment:
     category_missing: "VVIPカテゴリ「{name}」がデータベースに見つかりません。支払いは成功しましたが、グループリンクを提供できませんでした。管理者に連絡してください。"
     success_customer_full: "<emoji id=5436040291507247633>🎉</emoji> **支払いが確認されました！**\n\nありがとうございます。こちらが **{name}** パッケージのアクセスリンクです:\n\n{link}\n\n<emoji id=6271786398404055377>⚠️</emoji> このリンクは一度しか使用できず、60分以内に使用されない場合は無効になります。"
     success_owner_notif: "<emoji id=5375296873982604963>💰</emoji> **新規収入！**\n\n**ユーザー:** {mention}\n**ボット:** {bot_mention}\n**カテゴリ:** `{name}` ({type})"
-    expired_msg: "<emoji id=5264727218734524899>⏳</emoji> **請求書の有効期限が切れました。**\n注文ID `{id}` は支払い期限を超過したためキャンセルされました。"
+    expired_msg: "<emoji id=5451732530048802485>⏳</emoji> **請求書の有効期限が切れました。**\n注文ID `{id}` は支払い期限を超過したためキャンセルされました。"
     link_expired: "<emoji id=6271786398404055377>⚠️</emoji> 招待リンクの有効期限が切れました。60分以内に参加しなかったためです。問題が発生した場合は、管理者に連絡してください。"
   donation:
     invoice_title: "ボット開発のための寄付"
@@ -296,8 +296,8 @@ payment:
     notes_text: |
       ╭─ **<emoji id=5472164874886846699>✨</emoji> VVIPパッケージ詳細**
       │
-      ├─ <emoji id=5257969839313526622>📂</emoji> **パッケージ名:** `{name}`
-      ├─ <emoji id=5373098009640836781>📝</emoji> **説明:** 支払い成功後、プレミアムで独占的なコンテンツに即座にアクセスできます。
+      ├─ <emoji id=5431721976769027887>📂</emoji> **パッケージ名:** `{name}`
+      ├─ <emoji id=5334882760735598374>📝</emoji> **説明:** 支払い成功後、プレミアムで独占的なコンテンツに即座にアクセスできます。
       │
       ├─ <emoji id=6129870117619634982>💳</emoji> **通常価格:** `Rp {price}`
       │
@@ -305,15 +305,15 @@ payment:
     promo_text: |
       ╭─ **<emoji id=5436040291507247633>🎉</emoji> 限定特別オファー！**
       │
-      ├─ <emoji id=5257969839313526622>📂</emoji> **パッケージ名:** `{name}`
-      ├─ <emoji id=5373098009640836781>📝</emoji> **説明:** この絶好の機会をお見逃しなく！より手頃な価格で参加できます。
+      ├─ <emoji id=5431721976769027887>📂</emoji> **パッケージ名:** `{name}`
+      ├─ <emoji id=5334882760735598374>📝</emoji> **説明:** この絶好の機会をお見逃しなく！より手頃な価格で参加できます。
       │
       ├─ <emoji id=5375296873982604963>💰</emoji> **プロモ価格:** `Rp {promo_price}`
       │
       ╰─ プロモが終了する前に、今すぐあなたの席を確保してください！
 
 settings:
-  panel: "**<emoji id=5258096772776991776>🛠️</emoji> オーナー設定パネル**\n\nボットのコントロールセンターへようこそ！下のメニューを選択して、ボットの様々な側面を管理してください。"
+  panel: "**<emoji id=6257780484281997093>🛠️</emoji> オーナー設定パネル**\n\nボットのコントロールセンターへようこそ！下のメニューを選択して、ボットの様々な側面を管理してください。"
   set_start_photo: "🖼️ 開始写真の設定"
   set_start_text: "✍️ 開始テキストの設定"
   add_vvip: "➕ VVIPを追加"
@@ -326,7 +326,7 @@ settings:
   list_all_users: "👥 全ユーザーを一覧表示"
   coupons: "🎟️ クーポン管理"
 
-  set_photo_prompt: "<emoji id=5257974976094412956>🖼️</emoji> **開始写真の設定**\n\n/startメッセージの画像として使用したい新しい写真を送信してください。\n\n現在の写真を削除してデフォルトに戻すには `/empty` と入力してください。"
+  set_photo_prompt: "<emoji id=5375074927252621134>🖼️</emoji> **開始写真の設定**\n\n/startメッセージの画像として使用したい新しい写真を送信してください。\n\n現在の写真を削除してデフォルトに戻すには `/empty` と入力してください。"
   set_photo_fail: "<emoji id=6298671811345254603>❌</emoji> **失敗:** 送信されたメッセージは写真ではありません。プロセスはキャンセルされました。"
   set_photo_success: "<emoji id=6296367896398399651>✅</emoji> **成功！** /start写真が更新されました。"
   photo_emptied: "<emoji id=6296367896398399651>✅</emoji> **成功！** /start写真が削除され、デフォルトに戻ります。"
@@ -344,19 +344,19 @@ settings:
   setup_vvip:
     step1_name: "**<emoji id=5470060791883374114>✍️</emoji> ステップ1/8: カテゴリ名**\n例: `月額VVIP`"
     step2_price: "**<emoji id=5375296873982604963>💰</emoji> ステップ2/8: 通常価格**\n例: `50000`（ドットやカンマなし）"
-    step3_duration: "**<emoji id=5264727218734524899>⏳</emoji> ステップ3/8: 会員期間（日数）**\n無期限アクセスの場合は`0`を送信してください。"
+    step3_duration: "**<emoji id=5451732530048802485>⏳</emoji> ステップ3/8: 会員期間（日数）**\n無期限アクセスの場合は`0`を送信してください。"
     step4_chat_id: "**<emoji id=6269253325477123346>🆔</emoji> ステップ4/8: 通常グループのチャットID**\n例: `-100123456789`。これはメンバーの宛先グループです。"
     step5_promo_price: "**<emoji id=5436040291507247633>🎉</emoji> ステップ5/8: プロモ価格**\nプロモ価格がない場合は`0`を送信してください。"
     step6_promo_chat_id: "**<emoji id=6269253325477123346>🆔</emoji> ステップ6/8: プロモグループのチャットID**\nプロモ価格 > 0の場合に入力。"
-    step7_promo_text: "**<emoji id=5373098009640836781>📝</emoji> ステップ7/8: プロモ説明テキスト**\n`{name}`と`{promo_price}`を使用。"
-    step8_normal_text: "**<emoji id=5373098009640836781>📝</emoji> ステップ8/8: 通常説明テキスト**\n`{name}`と`{price}`を使用。"
+    step7_promo_text: "**<emoji id=5334882760735598374>📝</emoji> ステップ7/8: プロモ説明テキスト**\n`{name}`と`{promo_price}`を使用。"
+    step8_normal_text: "**<emoji id=5334882760735598374>📝</emoji> ステップ8/8: 通常説明テキスト**\n`{name}`と`{price}`を使用。"
     err_must_be_number: "入力は数字でなければなりません。"
     err_must_be_link: "入力は有効なリンク（http/httpsで始まる）でなければなりません。"
     err_must_be_chat_id: "入力は数字のチャットID（通常-100で始まる）でなければなりません。"
     success: "<emoji id=6296367896398399651>✅</emoji> **成功！**\nVVIPパッケージ **{name}** が追加されました。"
     cancelled: "<emoji id=6298671811345254603>🚫</emoji> ユーザーによってVVIPパッケージのセットアップがキャンセルされました。"
 
-  delete_vvip_panel: "**<emoji id=5258130763148172425>🗑️</emoji> VVIPパッケージを削除**\n\nリストから削除したいVVIPパッケージを選択してください。"
+  delete_vvip_panel: "**<emoji id=6156513311585211842>🗑️</emoji> VVIPパッケージを削除**\n\nリストから削除したいVVIPパッケージを選択してください。"
   delete_vvip_empty: "<emoji id=6296367896398399651>✅</emoji> 素晴らしい！削除するVVIPパッケージはありません。"
   delete_vvip_button: "🗑️ {name}を削除"
   delete_vvip_success: "<emoji id=6296367896398399651>✅</emoji> **成功！** パッケージ **{name}** が削除されました。"
@@ -400,7 +400,7 @@ coupons:
   ask_expiry: "**5/5:** このクーポンは何日間有効ですか？（数字を入力）"
   add_success: "<emoji id=6296367896398399651>✅</emoji> クーポン `{code}` が正常に作成されました。"
   list_empty: "作成されたクーポンはありません。"
-  list_panel: "**<emoji id=5373098009640836781>📋</emoji> クーポン詳細 ({page}/{total})**\n- コード: `{code}`\n- タイプ: `{type}`\n- 値: `{value}`\n- 残り使用回数: `{uses}`\n- 有効期限: `{expiry}`"
+  list_panel: "**<emoji id=5334882760735598374>📋</emoji> クーポン詳細 ({page}/{total})**\n- コード: `{code}`\n- タイプ: `{type}`\n- 値: `{value}`\n- 残り使用回数: `{uses}`\n- 有効期限: `{expiry}`"
   delete_button: "🗑️ このクーポンを削除"
   delete_success: "<emoji id=6296367896398399651>✅</emoji> クーポンは正常に削除されました。"
   use_button: "🎟️ クーポンを使用"
@@ -425,7 +425,7 @@ gift:
   btn_claim: "👤 自分で受け取る"
   claim_self_success: "<emoji id=6296367896398399651>✅</emoji> ギフト (ID: {id}) を自分自身で受け取りました！"
   claim_fail: "<emoji id=6298671811345254603>❌</emoji> 受け取りに失敗しました: {e}"
-  ask_target: "<emoji id=5316727448644103237>👤</emoji> **ギフトを送る**\n\n宛先の **ユーザーID** または **ユーザー名** (@username) を送信してください。"
+  ask_target: "<emoji id=5373012449597335010>👤</emoji> **ギフトを送る**\n\n宛先の **ユーザーID** または **ユーザー名** (@username) を送信してください。"
   cancel_text: "<emoji id=6298671811345254603>🚫</emoji> 送信がキャンセルされました。"
   finding_user: "<emoji id=5264727218734524899>🔄</emoji> ユーザー `{input}` を検索中..."
   user_not_found: "<emoji id=6298671811345254603>❌</emoji> ユーザーが見つかりません。ユーザー名/IDを確認してください。"
