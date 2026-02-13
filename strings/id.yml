@@ -313,6 +313,7 @@ payment:
       ╰─ Segera amankan slot Anda sebelum promo berakhir!
 
 settings:
+  vip_revenue: "💰 Pendapatan VIP"
   panel: "**<emoji id=6257780484281997093>🛠️</emoji> Panel Pengaturan Owner**\n\nSelamat datang di pusat kendali bot Anda! Silakan pilih menu di bawah untuk mengelola berbagai aspek bot."
   set_start_photo: "🖼️ Atur Foto Start"
   set_start_text: "✍️ Atur Teks Start"
@@ -379,6 +380,16 @@ settings:
   api_del_confirm_yes_button: "✅ Ya, Hapus Semua"
   api_del_confirm_no_button: "❌ Tidak, Batalkan"
   api_del_success: "<emoji id=6296367896398399651>✅</emoji> Semua kunci API untuk bot ini telah berhasil dihapus."
+
+revenue:
+  panel_title: "**<emoji id=5375296873982604963>💰</emoji> Cek Pendapatan VIP**\n\nPilih periode waktu untuk melihat total pendapatan dari penjualan paket VIP."
+  btn_daily: "📅 Harian (Hari Ini)"
+  btn_weekly: "🗓️ Mingguan (7 Hari)"
+  btn_monthly: "📆 Bulanan (Bulan Ini)"
+  period_daily: "Harian"
+  period_weekly: "Mingguan"
+  period_monthly: "Bulanan"
+  result_panel: "**<emoji id=5431577498364158238>📊</emoji> Laporan Pendapatan VIP**\n\n**Periode:** {period}\n\n<emoji id=5375296873982604963>💰</emoji> **Total Pendapatan:** `Rp {total}`\n<emoji id=5264727218734524899>🔄</emoji> **Jumlah Transaksi:** `{count}`"
 
 stats:
   panel: "**<emoji id=5431577498364158238>📊</emoji> Statistik Pendapatan Stars**\n\n<emoji id=5375296873982604963>💰</emoji> **Saldo Saat Ini:** `{balance}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5373001317042101552>📈</emoji> **Total Pemasukan:** `{income}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5361748661640372834>📉</emoji> **Total Pengembalian:** `{refunds}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5264727218734524899>🔄</emoji> **Total Transaksi (Tampil):** `{count}`\n\n**<emoji id=5296348778012361146>📜</emoji> Transaksi Terakhir ({page}/{total_pages})**\n{transactions}"
