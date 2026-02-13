@@ -36,7 +36,7 @@ start:
   language: "🌐 Language"
 
 about:
-  panel: "<emoji id=5458799228719472718>🌟</emoji> **About This VVIP Bot**\n\nWelcome! I am an automated assistant designed to provide you with easy access to VVIP groups.\n\n<emoji id=5372981976804366741>🤖</emoji> **My Main Function:**\nI provide a secure automatic payment system via QRIS, ensuring you get instant access to premium content after a successful transaction.\n\n<emoji id=5372917041193828849>🚀</emoji> **Usage Flow:**\n1. **Select a Package:** Browse the list of available VVIPs.\n2. **Make a Payment:** Scan the QRIS I provide.\n3. **Instant Access:** An invitation link will be sent automatically after payment is confirmed.\n\nThe entire process is designed to be fast, secure, and without the need for manual confirmation!"
+  panel: "<emoji id=5458799228719472718>🌟</emoji> **About This VVIP Bot**\n\nWelcome! I am an automated assistant designed to provide you with easy access to VVIP groups.\n\n<emoji id=5372981976804366741>🤖</emoji> **My Main Function:**\nI provide a secure automatic payment system via QRIS, ensuring you get instant access to premium content after a successful transaction.\n\n<emoji id=5445284980978621387>🚀</emoji> **Usage Flow:**\n1. **Select a Package:** Browse the list of available VVIPs.\n2. **Make a Payment:** Scan the QRIS I provide.\n3. **Instant Access:** An invitation link will be sent automatically after payment is confirmed.\n\nThe entire process is designed to be fast, secure, and without the need for manual confirmation!"
   description: "I am an automated assistant designed to give you easy access to VVIP groups, through a secure automatic payment system via QRIS."
 
 lang:
@@ -176,7 +176,7 @@ bot_management:
     step3_bot_token: "**<emoji id=5372981976804366741>🤖</emoji> 3/3: Enter your Bot Token.**\nGet it from @BotFather."
     verifying: "<emoji id=5188217332748527444>🔍</emoji> `Verifying data & token...`"
     invalid_token: "The bot token you entered is invalid."
-    saving: "<emoji id=6296367896398399651>✅</emoji> Bot '{name}' is valid and being saved. `<emoji id=5372917041193828849>🚀</emoji> Starting bot...`"
+    saving: "<emoji id=6296367896398399651>✅</emoji> Bot '{name}' is valid and being saved. `<emoji id=5445284980978621387>🚀</emoji> Starting bot...`"
     success: "<emoji id=5436040291507247633>🎉</emoji> **Congratulations!** Bot **{name}** has been created and is active for **30 days**."
     fail: "<emoji id=6298671811345254603>❌</emoji> **Bot Creation Error:** `{e}`"
     main_bot_inactive: "Main bot is currently inactive, unable to send notifications."

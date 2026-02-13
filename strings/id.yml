@@ -36,7 +36,7 @@ start:
   language: "🌐 Bahasa"
 
 about:
-  panel: "<emoji id=5458799228719472718>🌟</emoji> **Tentang Bot VVIP Ini**\n\nSelamat datang! Saya adalah asisten otomatis yang dirancang untuk memberikan Anda kemudahan dalam mengakses grup VVIP.\n\n<emoji id=5372981976804366741>🤖</emoji> **Fungsi Utama Saya:**\nSaya menyediakan sistem pembayaran otomatis yang aman via QRIS, memastikan Anda mendapatkan akses instan ke konten premium setelah transaksi berhasil.\n\n<emoji id=5372917041193828849>🚀</emoji> **Alur Penggunaan:**\n1. **Pilih Paket:** Jelajahi daftar VVIP yang tersedia.\n2. **Lakukan Pembayaran:** Scan QRIS yang saya berikan.\n3. **Akses Instan:** Link undangan akan otomatis terkirim setelah pembayaran terkonfirmasi.\n\nSemua proses dirancang agar cepat, aman, dan tanpa perlu menunggu konfirmasi manual!"
+  panel: "<emoji id=5458799228719472718>🌟</emoji> **Tentang Bot VVIP Ini**\n\nSelamat datang! Saya adalah asisten otomatis yang dirancang untuk memberikan Anda kemudahan dalam mengakses grup VVIP.\n\n<emoji id=5372981976804366741>🤖</emoji> **Fungsi Utama Saya:**\nSaya menyediakan sistem pembayaran otomatis yang aman via QRIS, memastikan Anda mendapatkan akses instan ke konten premium setelah transaksi berhasil.\n\n<emoji id=5445284980978621387>🚀</emoji> **Alur Penggunaan:**\n1. **Pilih Paket:** Jelajahi daftar VVIP yang tersedia.\n2. **Lakukan Pembayaran:** Scan QRIS yang saya berikan.\n3. **Akses Instan:** Link undangan akan otomatis terkirim setelah pembayaran terkonfirmasi.\n\nSemua proses dirancang agar cepat, aman, dan tanpa perlu menunggu konfirmasi manual!"
   description: "Saya adalah asisten otomatis yang dirancang untuk memberikan Anda kemudahan dalam mengakses grup VVIP, melalui sistem pembayaran otomatis yang aman via QRIS."
 
 lang:
@@ -176,7 +176,7 @@ bot_management:
     step3_bot_token: "**<emoji id=5372981976804366741>🤖</emoji> 3/3: Masukkan Bot Token Anda.**\nDapatkan dari @BotFather."
     verifying: "<emoji id=5188217332748527444>🔍</emoji> `Memverifikasi data & token...`"
     invalid_token: "Token bot yang Anda masukkan tidak valid."
-    saving: "<emoji id=6296367896398399651>✅</emoji> Bot '{name}' valid dan sedang disimpan. `<emoji id=5372917041193828849>🚀</emoji> Memulai bot...`"
+    saving: "<emoji id=6296367896398399651>✅</emoji> Bot '{name}' valid dan sedang disimpan. `<emoji id=5445284980978621387>🚀</emoji> Memulai bot...`"
     success: "<emoji id=5436040291507247633>🎉</emoji> **Selamat!** Bot **{name}** berhasil dibuat dan aktif selama **30 hari**."
     fail: "<emoji id=6298671811345254603>❌</emoji> **Error Pembuatan Bot:** `{e}`"
     main_bot_inactive: "Bot utama sedang tidak aktif, tidak dapat mengirim notifikasi."
