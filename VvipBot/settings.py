@@ -1,3 +1,6 @@
+from . import *
+
+
 @command(lambda ctx: filters.regex("^settings$"), handler_type="callback")
 async def settings(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
@@ -42,6 +45,86 @@ async def settings(client, callback_query):
         await callback_query.edit_message_caption(txt_content, reply_markup=btn)
     else:
         await callback_query.edit_message_text(txt_content, reply_markup=btn)
+
+
+@command(lambda ctx: filters.regex("^vip_revenue_menu$"), handler_type="callback")
+async def vip_revenue_menu_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+
+    lang = callback_query.lang
+    text = lang.get("revenue.panel_title")
+
+    layout = [
+        [
+            {"text": lang.get("revenue.btn_daily"), "callback_data": "show_revenue_daily"},
+            {"text": lang.get("revenue.btn_weekly"), "callback_data": "show_revenue_weekly"},
+        ],
+        [
+            {"text": lang.get("revenue.btn_monthly"), "callback_data": "show_revenue_monthly"},
+        ],
+        [
+            {"text": lang.get("general.back_to_settings"), "callback_data": "settings"},
+        ]
+    ]
+    btn = client.ns.telegram.button.build_button_grid(layout)
+
+    if callback_query.message.photo:
+        await callback_query.edit_message_caption(text, reply_markup=btn)
+    else:
+        await callback_query.edit_message_text(text, reply_markup=btn)
+
+
+@command(lambda ctx: filters.regex(r"^show_revenue_(daily|weekly|monthly)$"), handler_type="callback")
+async def show_vip_revenue_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+
+    lang = callback_query.lang
+    period = callback_query.matches[0].group(1)
+    
+    revenue_history = await ctx.db.getListVars(client.me.id, "vip_revenue_history") or []
+    
+    now = datetime.now(ZoneInfo("Asia/Jakarta"))
+    total_amount = 0
+    transaction_count = 0
+    
+    for record in revenue_history:
+        try:
+            record_date = datetime.fromisoformat(record["date"]).astimezone(ZoneInfo("Asia/Jakarta"))
+            
+            include_record = False
+            if period == "daily":
+                if record_date.date() == now.date():
+                    include_record = True
+            elif period == "weekly":
+                if now - timedelta(days=7) <= record_date <= now:
+                    include_record = True
+            elif period == "monthly":
+                if record_date.year == now.year and record_date.month == now.month:
+                    include_record = True
+            
+            if include_record:
+                total_amount += int(record["amount"])
+                transaction_count += 1
+        except Exception:
+            continue
+
+    period_text = lang.get(f"revenue.period_{period}")
+    text = lang.get(
+        "revenue.result_panel",
+        period=period_text,
+        total=f"{total_amount:,}",
+        count=transaction_count
+    )
+
+    layout = [[{"text": lang.get("general.back"), "callback_data": "vip_revenue_menu"}]]
+    btn = client.ns.telegram.button.build_button_grid(layout)
+
+    if callback_query.message.photo:
+        await callback_query.edit_message_caption(text, reply_markup=btn)
+    else:
+        await callback_query.edit_message_text(text, reply_markup=btn)
 
 
 @command(lambda ctx: filters.regex("^set_start_photo$"), handler_type="callback")
