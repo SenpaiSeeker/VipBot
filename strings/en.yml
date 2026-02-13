@@ -78,7 +78,7 @@ admin:
     processing: "<emoji id=5264727218734524899>🔄</emoji> `Processing code...`"
     no_code: "<emoji id=6298671811345254603>❌</emoji> **Command Failed:** Please provide code to evaluate."
     success: "<emoji id=6296367896398399651>✅</emoji> **Execution Successful**"
-    output: "**<emoji id=6219796119933683821>🖥️</emoji> OUTPUT:**\n<pre>{output}</pre>\n\n**⏳ Execution Time:** `{time:.4f}` seconds"
+    output: "**<emoji id=6219796119933683821>🖥️</emoji> OUTPUT:**\n<pre>{output}</pre>\n\n**<emoji id=5451732530048802485>⏳</emoji> Execution Time:** `{time:.4f}` seconds"
     too_long_caption: "<emoji id=6219796119933683821>📄</emoji> Evaluation result is too long. Sent as a file."
   restore:
     usage: "<emoji id=6271786398404055377>⚠️</emoji> **Incorrect Usage:**\nReply to the `.zip` backup file sent by the bot with this command."
