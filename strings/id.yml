@@ -78,7 +78,7 @@ admin:
     processing: "<emoji id=5264727218734524899>🔄</emoji> `Memproses kode...`"
     no_code: "<emoji id=6298671811345254603>❌</emoji> **Perintah Gagal:** Harap berikan kode untuk dievaluasi."
     success: "<emoji id=6296367896398399651>✅</emoji> **Eksekusi Berhasil**"
-    output: "**<emoji id=6219796119933683821>🖥️</emoji> OUTPUT:**\n<pre>{output}</pre>\n\n**⏳ Waktu Eksekusi:** `{time:.4f}` detik"
+    output: "**<emoji id=6219796119933683821>🖥️</emoji> OUTPUT:**\n<pre>{output}</pre>\n\n**<emoji id=5451732530048802485>⏳</emoji> Waktu Eksekusi:** `{time:.4f}` detik"
     too_long_caption: "<emoji id=6219796119933683821>📄</emoji> Hasil evaluasi terlalu panjang. Dikirim sebagai file."
   restore:
     usage: "<emoji id=6271786398404055377>⚠️</emoji> **Cara Penggunaan Salah:**\nBalas (reply) ke file backup `.zip` yang dikirim oleh bot dengan perintah ini."
