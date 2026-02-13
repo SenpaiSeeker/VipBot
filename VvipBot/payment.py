@@ -103,6 +103,7 @@ async def manual_check_payment_callback(client, callback_query):
     ref_parts = ref_data_str.split("|")
     item_index = int(ref_parts[0])
     tipe = ref_parts[1]
+    amount_raw = int(ref_parts[2])
     coupon_code = ref_parts[3] if len(ref_parts) > 3 else None
 
     try:
@@ -162,6 +163,16 @@ async def manual_check_payment_callback(client, callback_query):
 
             await ctx.db.setListVars(client.me.id, "vvip_members", member_data)
 
+            revenue_data = {
+                "user_id": user.id,
+                "username": user.username or user.first_name,
+                "amount": amount_raw,
+                "date": datetime.now(timezone.utc).isoformat(),
+                "item_name": name,
+                "type": tipe
+            }
+            await ctx.db.setListVars(client.me.id, "vip_revenue_history", revenue_data)
+
             link_msg = await client.send_message(
                 user.id,
                 lang.get("payment.check.success_customer_full", name=name, link=link),
@@ -182,7 +193,7 @@ async def manual_check_payment_callback(client, callback_query):
                     type=tipe.title(),
                 ),
             )
-            ctx.log.print(f"{ctx.log.CYAN}Ueer {user.id} telah mengkonfirmasi pembayaran {name} dari bot {client.me.username}.")
+            ctx.log.print(f"{ctx.log.CYAN}User {user.id} telah mengkonfirmasi pembayaran {name} dari bot {client.me.username}.")
         else:
             await callback_query.answer(lang.get("payment.check.not_paid"), show_alert=True)
 
