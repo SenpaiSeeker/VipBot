@@ -313,6 +313,7 @@ payment:
       ╰─ プロモが終了する前に、今すぐあなたの席を確保してください！
 
 settings:
+  vip_revenue: "💰 VIP収益"
   panel: "**<emoji id=6257780484281997093>🛠️</emoji> オーナー設定パネル**\n\nボットのコントロールセンターへようこそ！下のメニューを選択して、ボットの様々な側面を管理してください。"
   set_start_photo: "🖼️ 開始写真の設定"
   set_start_text: "✍️ 開始テキストの設定"
@@ -379,6 +380,16 @@ settings:
   api_del_confirm_yes_button: "✅ はい、すべて削除します"
   api_del_confirm_no_button: "❌ いいえ、キャンセルします"
   api_del_success: "<emoji id=6296367896398399651>✅</emoji> このボットのすべてのAPIキーが正常に削除されました。"
+
+revenue:
+  panel_title: "**<emoji id=5375296873982604963>💰</emoji> VIP収益の確認**\n\n期間を選択して、VIPパッケージ販売の総収益を表示します。"
+  btn_daily: "📅 日次 (今日)"
+  btn_weekly: "🗓️ 週次 (過去7日間)"
+  btn_monthly: "📆 月次 (今月)"
+  period_daily: "日次"
+  period_weekly: "週次"
+  period_monthly: "月次"
+  result_panel: "**<emoji id=5431577498364158238>📊</emoji> VIP収益レポート**\n\n**期間:** {period}\n\n<emoji id=5375296873982604963>💰</emoji> **総収益:** `Rp {total}`\n<emoji id=5264727218734524899>🔄</emoji> **取引数:** `{count}`"
 
 stats:
   panel: "**<emoji id=5431577498364158238>📊</emoji> スター収入統計**\n\n<emoji id=5375296873982604963>💰</emoji> **現在の残高:** `{balance}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5373001317042101552>📈</emoji> **総収入:** `{income}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5361748661640372834>📉</emoji> **総返金:** `{refunds}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5264727218734524899>🔄</emoji> **総取引数（表示分）:** `{count}`\n\n**<emoji id=5296348778012361146>📜</emoji> 最近の取引 ({page}/{total_pages})**\n{transactions}"
