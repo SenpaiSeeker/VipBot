@@ -313,6 +313,7 @@ payment:
       ╰─ Secure your spot now before the promo ends!
 
 settings:
+  vip_revenue: "💰 VIP Revenue"
   panel: "**<emoji id=6257780484281997093>🛠️</emoji> Owner Settings Panel**\n\nWelcome to your bot's control center! Please select a menu below to manage various aspects of the bot."
   set_start_photo: "🖼️ Set Start Photo"
   set_start_text: "✍️ Set Start Text"
@@ -379,6 +380,16 @@ settings:
   api_del_confirm_yes_button: "✅ Yes, Delete All"
   api_del_confirm_no_button: "❌ No, Cancel"
   api_del_success: "<emoji id=6296367896398399651>✅</emoji> All API keys for this bot have been successfully deleted."
+
+revenue:
+  panel_title: "**<emoji id=5375296873982604963>💰</emoji> Check VIP Revenue**\n\nSelect a time period to view total revenue from VIP package sales."
+  btn_daily: "📅 Daily (Today)"
+  btn_weekly: "🗓️ Weekly (7 Days)"
+  btn_monthly: "📆 Monthly (This Month)"
+  period_daily: "Daily"
+  period_weekly: "Weekly"
+  period_monthly: "Monthly"
+  result_panel: "**<emoji id=5431577498364158238>📊</emoji> VIP Revenue Report**\n\n**Period:** {period}\n\n<emoji id=5375296873982604963>💰</emoji> **Total Revenue:** `IDR {total}`\n<emoji id=5264727218734524899>🔄</emoji> **Transaction Count:** `{count}`"
 
 stats:
   panel: "**<emoji id=5431577498364158238>📊</emoji> Stars Revenue Statistics**\n\n<emoji id=5375296873982604963>💰</emoji> **Current Balance:** `{balance}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5373001317042101552>📈</emoji> **Total Income:** `{income}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5361748661640372834>📉</emoji> **Total Refunds:** `{refunds}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5264727218734524899>🔄</emoji> **Total Transactions (Shown):** `{count}`\n\n**<emoji id=5296348778012361146>📜</emoji> Recent Transactions ({page}/{total_pages})**\n{transactions}"
