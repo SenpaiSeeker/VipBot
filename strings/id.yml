@@ -392,7 +392,7 @@ revenue:
   result_panel: "**<emoji id=5431577498364158238>📊</emoji> Laporan Pendapatan VIP**\n\n**Periode:** {period}\n\n<emoji id=5375296873982604963>💰</emoji> **Total Pendapatan:** `Rp {total}`\n<emoji id=5264727218734524899>🔄</emoji> **Jumlah Transaksi:** `{count}`"
 
 stats:
-  panel: "**<emoji id=5431577498364158238>📊</emoji> Statistik Pendapatan Stars**\n\n<emoji id=5375296873982604963>💰</emoji> **Saldo Saat Ini:** `{balance}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5373001317042101552>📈</emoji> **Total Pemasukan:** `{income}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5361748661640372834>📉</emoji> **Total Pengembalian:** `{refunds}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5264727218734524899>🔄</emoji> **Total Transaksi (Tampil):** `{count}`\n\n**<emoji id=5296348778012361146>📜</emoji> Transaksi Terakhir ({page}/{total_pages})**\n{transactions}"
+  panel: "**<emoji id=5431577498364158238>📊</emoji> Statistik Pendapatan Stars**\n\n<emoji id=5375296873982604963>💰</emoji> **Saldo Saat Ini:** `{balance}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5373001317042101552>📈</emoji> **Total Pemasukan:** `{income}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5361748661640372834>📉</emoji> **Total Pengembalian:** `{refunds}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5264727218734524899>🔄</emoji> **Total Transaksi (Tampil):** `{count}`\n\n**<emoji id=5282843764451195532>📜</emoji> Transaksi Terakhir ({page}/{total_pages})**\n{transactions}"
   transaction_entry: "• `{date}`: **{amount_str}<emoji id=6298332994260175589>⭐</emoji>** dari {peer}"
   transaction_entry_unknown: "sumber tidak dikenal"
   no_transactions: "Belum ada transaksi Stars yang tercatat."

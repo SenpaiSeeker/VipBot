@@ -392,7 +392,7 @@ revenue:
   result_panel: "**<emoji id=5431577498364158238>📊</emoji> VIP Revenue Report**\n\n**Period:** {period}\n\n<emoji id=5375296873982604963>💰</emoji> **Total Revenue:** `IDR {total}`\n<emoji id=5264727218734524899>🔄</emoji> **Transaction Count:** `{count}`"
 
 stats:
-  panel: "**<emoji id=5431577498364158238>📊</emoji> Stars Revenue Statistics**\n\n<emoji id=5375296873982604963>💰</emoji> **Current Balance:** `{balance}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5373001317042101552>📈</emoji> **Total Income:** `{income}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5361748661640372834>📉</emoji> **Total Refunds:** `{refunds}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5264727218734524899>🔄</emoji> **Total Transactions (Shown):** `{count}`\n\n**<emoji id=5296348778012361146>📜</emoji> Recent Transactions ({page}/{total_pages})**\n{transactions}"
+  panel: "**<emoji id=5431577498364158238>📊</emoji> Stars Revenue Statistics**\n\n<emoji id=5375296873982604963>💰</emoji> **Current Balance:** `{balance}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5373001317042101552>📈</emoji> **Total Income:** `{income}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5361748661640372834>📉</emoji> **Total Refunds:** `{refunds}` <emoji id=6298332994260175589>⭐</emoji>\n<emoji id=5264727218734524899>🔄</emoji> **Total Transactions (Shown):** `{count}`\n\n**<emoji id=5282843764451195532>📜</emoji> Recent Transactions ({page}/{total_pages})**\n{transactions}"
   transaction_entry: "• `{date}`: **{amount_str}<emoji id=6298332994260175589>⭐</emoji>** from {peer}"
   transaction_entry_unknown: "an unknown source"
   no_transactions: "No Stars transactions have been recorded yet."
