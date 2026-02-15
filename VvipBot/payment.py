@@ -1,56 +1,174 @@
 from . import *
 
 def generate_safe_saweria_message(user_name):
-    greetings = [
-        "Halo", "Hi", "Pagi", "Siang", "Sore", "Malam", "Uy", 
-        "Woi", "Ping", "Tes", "Cek", "Hello", "Hey", "Yo", "Misi"
-    ]
-    
-    intents = [
-        "Support", "Dukungan", "Traktir", "Buat", "Kasih", "Titip", 
-        "Share", "Gift", "Kirim", "Ngasih", "Bantu", "Sumbang",
-        "Tanda mata", "Apresiasi", "Sawer tipis", "Uang"
-    ]
-    
-    objects = [
-        "kopi", "cendol", "gorengan", "jajan", "rokok", "teh", 
-        "susu", "energi", "bensin", "kuota", "cemilan", "nasgor",
-        "bakso", "mie ayam", "es teh", "dana", "saldo", "kue"
-    ]
-    
-    closers = [
-        "makasih", "thanks", "thx", "tq", "suwun", "mantap", 
-        "sukses", "sehat selalu", "lanjutkan", "keren", "semangat",
-        "berkah", "good luck", "nice", "jos", "gass", "lanjut"
-    ]
-    
-    emojis = [
-        "☕", "🍵", "🍪", "🍕", "🍔", "🍟", "🌭", "🍿", "🍩",
-        "🙏", "👍", "👌", "💪", "🔥", "✨", "❤️", "😎", "🤩",
-        "🥳", "🤗", "🙌", "👏", "🤝", "🌟", "💫", "🍀"
+    sapaan_pembuka = [
+        "Halo", "Hi", "Hello", "Hoi", "Woi", "Uy", "P", "Ping", "Tes", "Cek",
+        "Spada", "Punten", "Permisi", "Kulonuwun", "Sampurasun", "Horas",
+        "Assalamualaikum", "Salam", "Greetings", "Hola", "Aloha", "Bonjour",
+        "Pagi", "Siang", "Sore", "Malam", "Met pagi", "Met siang", "Met malam",
+        "Oy", "Euy", "Misi", "Paket", "Shalom", "Om swastiastu", "Wilujeng",
+        "Sugeng", "Tabik", "Hehe", "Wkwk", "Yoo", "Hellow", "Alow", "Lapor",
+        "Izin", "Numpang", "Excuse me", "Konbanwa", "Ohayo", "Moshi moshi"
     ]
 
-    structure = random.randint(1, 5)
+    panggilan_akrab = [
+        "Bang", "Mas", "Kak", "Min", "Om", "Pak", "Bu", "Sis", "Gan", "Agan",
+        "Bro", "Bray", "Cuy", "Sob", "Sobat", "Kawan", "Teman", "Lur", "Dulur",
+        "Ndang", "Ngab", "Pack", "Mank", "Bestie", "Suhu", "Sepuh", "Mastah",
+        "Idola", "Panutan", "Legend", "Boss", "Bosque", "Juragan", "Sultan",
+        "Nder", "Bre", "Bli", "Uda", "Cici", "Koko", "Abang", "Akang", "Aa",
+        "Teteh", "Mbak", "Neng", "Uni", "Mamank", "Admin", "Mimin", "Momod",
+        "Lord", "King", "Queen", "Paman", "Bibi", "Datuk", "Sensei", "Senpai",
+        "Coach", "Kapten", "Komandan", "Chief", "Head", "Leader", "Master"
+    ]
+
+    kata_kerja_memberi = [
+        "Traktir", "Ngasih", "Kirim", "Bagi", "Support", "Dukung", "Nyawer",
+        "Titip", "Sumbang", "Share", "Gift", "Tanda mata", "Apresiasi",
+        "Buat", "Untuk", "Kasih", "Sedekah", "Jajanin", "Nambahin", "Bantu",
+        "Donasi", "Cemplungin", "Lempar", "Sisihin", "Nyalurin", "Topup",
+        "Isi", "Suntik", "Ngedukung", "Nyumbang", "Nraktir", "Sawer",
+        "Cendolin", "Ngegift", "Drop", "Transfer energi", "Nitip", "Nambah",
+        "Nyisihin", "Sedekahin", "Infaq", "Sodaqoh", "Berbagi", "Menyapa",
+        "Mampir", "Lewat", "Setor", "Deposit", "Simpan", "Tabung", "Invest"
+    ]
+
+    objek_gabungan = [
+        "kopi", "kopi hitam", "kopi susu", "teh manis", "es teh", "boba",
+        "gorengan", "bakwan", "tahu isi", "seblak", "nasgor", "mie ayam",
+        "bakso", "sate", "martabak", "terang bulan", "cemilan", "kerupuk",
+        "cilok", "cimol", "batagor", "siomay", "roti bakar", "pisang goreng",
+        "indomie", "soto", "rawon", "jus", "susu", "air putih", "mineral",
+        "cireng", "lumpia", "risol", "kue", "donat", "pizza", "burger",
+        "ayam geprek", "pecel lele", "nasi padang", "ketoprak", "gado gado",
+        "uang rokok", "bensin", "kuota", "pulsa", "listrik", "token",
+        "jajan", "dana", "saldo", "modal", "amunisi", "energi", "gizi",
+        "vitamin", "suplemen", "uang kaget", "receh", "kembalian", "sangu",
+        "thr", "angpao", "uang jajan", "kas", "tabungan", "celengan",
+        "uang kopi", "uang bensin", "uang makan", "uang saku", "nafkah",
+        "uang parkir", "uang kas", "uang keamanan", "uang lelah", "tip",
+        "kopi kenangan", "janji jiwa", "starbucks", "mixue", "chatime",
+        "es krim", "coklat", "permen", "kuaci", "kacang", "rokok sebatang",
+        "surya", "sampoerna", "magnum", "garam", "gula", "beras", "sembako",
+        "takjil", "bukaan", "sahur", "makan siang", "makan malam", "sarapan",
+        "mie instan", "telur", "minyak", "sabun", "odol", "shampoo", "paket",
+        "bingkisan", "kado", "hadiah", "oleh oleh", "buah tangan", "souvenir"
+    ]
+
+    kata_sifat_doa = [
+        "semangat", "sukses", "sehat", "lancar", "berkah", "mantap", "keren",
+        "gacor", "menyala", "lanjutkan", "konsisten", "bahagia", "jos", "top",
+        "gokil", "cool", "nice", "good luck", "best", "terbaik", "juara",
+        "legend", "panutan", "idola", "produktif", "kreatif", "maju", "jaya",
+        "abadi", "gandoss", "markotop", "savage", "gg", "ggwp", "op", "hoki",
+        "cuan", "profit", "stonks", "sejahtera", "sentosa", "damai", "awet",
+        "langgeng", "barokah", "manjur", "paten", "yahud", "asik", "seru",
+        "rame", "laris", "manis", "berlimpah", "kaya", "makmur", "santuy",
+        "kalem", "rileks", "fokus", "rajin", "tekun", "giat", "hebat", "kuat",
+        "tangguh", "sabar", "ikhlas", "tawakal", "istiqomah", "bersyukur"
+    ]
+
+    ucapan_terima_kasih = [
+        "makasih", "terima kasih", "thanks", "thx", "tq", "suwun", "hatur nuhun",
+        "sakalangkong", "maacih", "tengkyu", "arigato", "thank you", "big thanks",
+        "cheers", "peace", "salim", "sungkem", "thank u", "ty", "kamsia",
+        "xie xie", "gracias", "danke", "matur nuwun", "tararengkyu", "sankyu",
+        "syukron", "jazakallah", "thankies", "tysm", "nuwun", "aman", "siap",
+        "oke", "sip", "yoi", "mantul", "ashiap", "woke", "ok", "kamsahamnida"
+    ]
+
+    partikel_pelengkap = [
+        "ya", "nih", "tuh", "dong", "banget", "terus", "selalu", "dikit",
+        "lumayan", "buat", "biar", "agar", "supaya", "saja", "aja", "doang",
+        "cuma", "hanya", "sekadar", "ala kadarnya", "seikhlasnya", "kecil kecilan",
+        "tipis tipis", "iseng", "gabut", "daripada luang", "sambil lewat",
+        "mah", "teh", "rek", "cok", "gan", "lur", "bos", "lah", "kah", "deh",
+        "kok", "kan", "yuk", "kuy", "skuy", "gas", "gaskeun", "sikat", "atuh",
+        "euy", "sih", "pun", "juga", "lagi", "mulu", "kali", "tah", "leh"
+    ]
+
+    emojis_list = [
+        "☕", "🍵", "🥤", "🧋", "🍱", "🍜", "🍝", "🍟", "🍕", "🌭", "🥪", "🌮", "🌯",
+        "🍩", "🍪", "🎂", "🍰", "🧁", "🍫", "🍬", "🍭", "🍮", "🍯", "🍼", "🥛",
+        "🚀", "🔥", "✨", "⭐", "🌟", "💫", "💥", "💯", "💢", "💤", "💨", "💦",
+        "🙏", "👍", "👌", "✌️", "🤞", "🤟", "🤘", "🤙", "👋", "👏", "🙌", "👐",
+        "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❣️", "💕",
+        "😎", "🤩", "🥳", "🤗", "🤔", "🫡", "🫠", "🥹", "😊", "😇", "🙂", "🙃",
+        "💸", "💵", "💴", "💶", "💷", "💰", "💳", "💎", "⚖️", "🧱", "🔧", "🔨",
+        "🎉", "🎊", "🎈", "🎁", "🎀", "🧧", "🏮", "🍀", "🍄", "💐", "🌸", "🌹",
+        "🌚", "🌝", "🌞", "🧊", "🧂", "🍿", "🥓", "🥩", "🍗", "🍖", "🧀", "🥞",
+        "🍇", "🍈", "🍉", "🍊", "🍋", "🍌", "🍍", "🥭", "🍎", "🍏", "🍐", "🍑"
+    ]
+
+    pola_kalimat = random.randint(1, 10)
     parts = []
-    
-    if structure == 1:
-        parts = [random.choice(intents), random.choice(objects), "bang"]
-    elif structure == 2:
-        parts = [random.choice(greetings), random.choice(intents), "ya"]
-    elif structure == 3:
-        parts = [random.choice(intents), random.choice(objects), random.choice(closers)]
-    elif structure == 4:
-        parts = [random.choice(intents), "terus", user_name]
+
+    if pola_kalimat == 1:
+        parts.append(random.choice(kata_kerja_memberi))
+        parts.append(random.choice(objek_gabungan))
+        parts.append(random.choice(panggilan_akrab))
+    elif pola_kalimat == 2:
+        parts.append(random.choice(sapaan_pembuka))
+        parts.append(random.choice(kata_kerja_memberi))
+        parts.append(random.choice(objek_gabungan))
+        parts.append(random.choice(partikel_pelengkap))
+    elif pola_kalimat == 3:
+        parts.append(random.choice(kata_sifat_doa))
+        parts.append(random.choice(partikel_pelengkap))
+        parts.append(random.choice(panggilan_akrab))
+        parts.append(user_name)
+    elif pola_kalimat == 4:
+        parts.append(random.choice(kata_kerja_memberi))
+        parts.append(random.choice(objek_gabungan))
+        parts.append(random.choice(ucapan_terima_kasih))
+    elif pola_kalimat == 5:
+        parts.append(random.choice(sapaan_pembuka))
+        parts.append(random.choice(objek_gabungan))
+        parts.append(random.choice(kata_kerja_memberi))
+        parts.append(user_name)
+    elif pola_kalimat == 6:
+        parts.append(random.choice(kata_kerja_memberi))
+        parts.append(random.choice(kata_sifat_doa))
+        parts.append(random.choice(emojis_list))
+    elif pola_kalimat == 7:
+        parts.append(random.choice(partikel_pelengkap))
+        parts.append(random.choice(ucapan_terima_kasih))
+        parts.append(random.choice(panggilan_akrab))
+    elif pola_kalimat == 8:
+        parts.append(random.choice(panggilan_akrab))
+        parts.append(random.choice(ucapan_terima_kasih))
+        parts.append(random.choice(kata_sifat_doa))
+    elif pola_kalimat == 9:
+        parts.append(random.choice(objek_gabungan))
+        parts.append(random.choice(objek_gabungan))
+        parts.append(random.choice(panggilan_akrab))
     else:
-        parts = ["Iseng", "aja", random.choice(closers)]
+        parts.append(random.choice(kata_kerja_memberi))
+        parts.append(random.choice(objek_gabungan))
+        parts.append(random.choice(emojis_list))
 
     if random.random() > 0.3:
-        parts.append(random.choice(emojis))
+        parts.append(random.choice(emojis_list))
+    
+    if random.random() > 0.6:
+        parts.insert(0, random.choice(emojis_list))
 
-    unique_code = ''.join(random.choices(string.ascii_lowercase + string.digits, k=4))
-    parts.append(f"({unique_code})")
+    final_message = " ".join(parts)
 
-    return " ".join(parts)
+    casing_style = random.randint(1, 5)
+    if casing_style == 1:
+        final_message = final_message.lower()
+    elif casing_style == 2:
+        final_message = final_message.capitalize()
+    elif casing_style == 3:
+        final_message = final_message.title()
+    elif casing_style == 4:
+        final_message = final_message.upper()
+
+    unique_code = ''.join(random.choices(string.ascii_lowercase + string.digits, k=random.randint(4, 6)))
+    
+    return f"{final_message} ({unique_code})"
+
 
 async def verify_user_join(client, user, chat_id, link_msg):
     lang = await ctx.L.create(ctx.db, user.id)
