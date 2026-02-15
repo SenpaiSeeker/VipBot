@@ -116,7 +116,7 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
         qr_string, transaction_id, qr_image_stream, amount_raw = await client.services.saweria.create_payment(
             user_id=saweria_user_id,
             amount=int(amount),
-            name=f"User-{user.id}",
+            name=user.first_name or "User",
             email=fakeinfo.email,
             message=random_message,
             creator_name=client.me.username,
