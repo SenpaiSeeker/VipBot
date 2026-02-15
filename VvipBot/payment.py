@@ -1,5 +1,58 @@
+import random
+import string
 from . import *
 
+def generate_safe_saweria_message(user_name):
+    greetings = [
+        "Halo", "Hi", "Pagi", "Siang", "Sore", "Malam", "Uy", 
+        "Woi", "Ping", "Tes", "Cek", "Hello", "Hey", "Yo", "Misi"
+    ]
+    
+    intents = [
+        "Support", "Dukungan", "Traktir", "Buat", "Kasih", "Titip", 
+        "Share", "Gift", "Kirim", "Ngasih", "Bantu", "Sumbang",
+        "Tanda mata", "Apresiasi", "Sawer tipis", "Uang"
+    ]
+    
+    objects = [
+        "kopi", "cendol", "gorengan", "jajan", "rokok", "teh", 
+        "susu", "energi", "bensin", "kuota", "cemilan", "nasgor",
+        "bakso", "mie ayam", "es teh", "dana", "saldo", "kue"
+    ]
+    
+    closers = [
+        "makasih", "thanks", "thx", "tq", "suwun", "mantap", 
+        "sukses", "sehat selalu", "lanjutkan", "keren", "semangat",
+        "berkah", "good luck", "nice", "jos", "gass", "lanjut"
+    ]
+    
+    emojis = [
+        "☕", "🍵", "🍪", "🍕", "🍔", "🍟", "🌭", "🍿", "🍩",
+        "🙏", "👍", "👌", "💪", "🔥", "✨", "❤️", "😎", "🤩",
+        "🥳", "🤗", "🙌", "👏", "🤝", "🌟", "💫", "🍀"
+    ]
+
+    structure = random.randint(1, 5)
+    parts = []
+    
+    if structure == 1:
+        parts = [random.choice(intents), random.choice(objects), "bang"]
+    elif structure == 2:
+        parts = [random.choice(greetings), random.choice(intents), "ya"]
+    elif structure == 3:
+        parts = [random.choice(intents), random.choice(objects), random.choice(closers)]
+    elif structure == 4:
+        parts = [random.choice(intents), "terus", user_name]
+    else:
+        parts = ["Iseng", "aja", random.choice(closers)]
+
+    if random.random() > 0.3:
+        parts.append(random.choice(emojis))
+
+    unique_code = ''.join(random.choices(string.ascii_lowercase + string.digits, k=4))
+    parts.append(f"({unique_code})")
+
+    return " ".join(parts)
 
 async def verify_user_join(client, user, chat_id, link_msg):
     lang = await ctx.L.create(ctx.db, user.id)
@@ -56,12 +109,16 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
     try:
         fakeinfo = client.ns.utils.faker.generate()
 
+        random_message = generate_safe_saweria_message(
+            user_name=user.first_name or "User"
+        )
+
         qr_string, transaction_id, qr_image_stream, amount_raw = await client.services.saweria.create_payment(
             user_id=saweria_user_id,
             amount=int(amount),
             name=f"User-{user.id}",
             email=fakeinfo.email,
-            message=f"Pembelian {names} ({tipe}) via @{client.me.username}",
+            message=random_message,
             creator_name=client.me.username,
         )
 
@@ -200,7 +257,6 @@ async def manual_check_payment_callback(client, callback_query):
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED}Error manual-check {user.id} ({client.me.username}) {transaction_id}: {e}")
         await callback_query.answer(lang.get("general.error", e=e), show_alert=True)
-
 
 @command(lambda ctx: filters.regex(r"^notes_(\d+)"), handler_type="callback")
 async def notes_data(client, callback_query):
