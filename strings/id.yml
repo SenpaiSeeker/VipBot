@@ -100,6 +100,19 @@ admin:
     give_duration_panel: "Pilih durasi akses yang ingin diberikan:"
     give_success_panel_manual: "<emoji id=6296367896398399651>✅</emoji> **Akses Diberikan!**\n\nPengguna {mention} sekarang memiliki akses untuk membuat bot selama **{months} bulan**.\n\nMasa aktif akses hingga: `{new_date}`"
     revoke_success_panel: "<emoji id=6298671811345254603>❌</emoji> **Akses Dicabut!**\n\nPengguna {mention} tidak lagi memiliki hak untuk membuat bot."
+  seller:
+    not_found: "<emoji id=6298671811345254603>❌</emoji> Pengguna tidak ditemukan. Pastikan ID/Username benar atau balas pesan pengguna."
+    already_exists: "<emoji id=6298671811345254603>❌</emoji> User `{user_id}` sudah terdaftar sebagai seller."
+    add_success: "<emoji id=6296367896398399651>✅</emoji> Berhasil menambahkan `{user_mention}` sebagai seller."
+    list_title: "**<emoji id=6176966310920983412>👤</emoji> Daftar Seller Aktif**\n\n"
+    empty: "Belum ada seller yang terdaftar."
+    delete_button: "Hapus Seller 🗑️"
+    deleted: "Seller `{user_id}` berhasil dihapus."
+  access_list:
+    list_title: "**<emoji id=6176966310920983412>🔑</emoji> Daftar Pengguna Berakses**\n\n"
+    empty: "Tidak ada pengguna yang memiliki akses aktif saat ini."
+    delete_button: "Cabut Akses 🚫"
+    deleted: "Akses untuk `{user_id}` telah dicabut."
   extend:
     usage_error: "**Format salah.**\nGunakan: `/extend <bot_id> <jumlah_hari>`\nContoh: `/extend 12345678 30`"
     success: "<emoji id=6296367896398399651>✅</emoji> **Sukses!** Durasi bot `{bot_id}` berhasil diubah. Masa aktif baru: `{new_date}`."
