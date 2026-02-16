@@ -232,21 +232,24 @@ async def revoke_access_callback(client, callback_query):
 @command(lambda ctx: filters.command("addseller") & filters.user(ctx.owner_id))
 async def add_seller_handler(client, message):
     lang = message.lang
-    args = message.command
-    if len(args) < 2:
-        return await message.reply_text(lang.get("admin.seller.add_usage"))
+    user_id_target, _ = await client.ns.telegram.arg.getReasonAndId(message)
+
+    if not user_id_target:
+        return await message.reply_text(lang.get("admin.seller.not_found"))
 
     try:
-        target_id = int(args[1])
+        target_user = await client.get_users(user_id_target)
         seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
         
-        if target_id in seller_list:
-            return await message.reply_text(lang.get("admin.seller.already_exists", user_id=target_id))
+        if target_user.id in seller_list:
+            return await message.reply_text(lang.get("admin.seller.already_exists", user_id=target_user.id))
         
-        await ctx.db.setListVars(ctx.owner_id, "seller_id_list", target_id)
-        await message.reply_text(lang.get("admin.seller.add_success", user_id=target_id))
-    except ValueError:
-        await message.reply_text(lang.get("admin.seller.add_usage"))
+        await ctx.db.setListVars(ctx.owner_id, "seller_id_list", target_user.id)
+        
+        mention = client.ns.telegram.arg.getMention(target_user)
+        await message.reply_text(lang.get("admin.seller.add_success", user_mention=mention))
+    except Exception as e:
+        await message.reply_text(lang.get("general.error", e=e))
 
 
 @command(lambda ctx: filters.command("listseller") & filters.user(ctx.owner_id))
@@ -278,24 +281,22 @@ async def delete_seller_callback(client, callback_query):
     lang = callback_query.lang
     target_id = int(callback_query.matches[0].group(1))
     
+    await ctx.db.removeListVars(ctx.owner_id, "seller_id_list", target_id)
+    await callback_query.answer(lang.get("admin.seller.deleted", user_id=target_id), show_alert=True)
+    
     seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
-    if target_id in seller_list:
-        await ctx.db.removeListVars(ctx.owner_id, "seller_id_list", target_id)
-        await callback_query.answer(lang.get("admin.seller.deleted", user_id=target_id), show_alert=True)
-        
-        new_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
-        if not new_list:
-            return await callback_query.edit_message_text(lang.get("admin.seller.empty"))
-        
-        text = lang.get("admin.seller.list_title")
-        keyboard = []
-        for index, user_id in enumerate(new_list, 1):
-            text += f"{index}. ID: `{user_id}`\n"
-            keyboard.append([
-                {"text": f"{lang.get('admin.seller.delete_button')} ({user_id})", "callback_data": f"del_sell_{user_id}"}
-            ])
-        btn = client.ns.telegram.button.build_button_grid(keyboard)
-        await callback_query.edit_message_text(text, reply_markup=btn)
+    if not seller_list:
+        return await callback_query.edit_message_text(lang.get("admin.seller.empty"))
+    
+    text = lang.get("admin.seller.list_title")
+    keyboard = []
+    for index, user_id in enumerate(seller_list, 1):
+        text += f"{index}. ID: `{user_id}`\n"
+        keyboard.append([
+            {"text": f"{lang.get('admin.seller.delete_button')} ({user_id})", "callback_data": f"del_sell_{user_id}"}
+        ])
+    btn = client.ns.telegram.button.build_button_grid(keyboard)
+    await callback_query.edit_message_text(text, reply_markup=btn)
 
 
 @command(lambda ctx: filters.command("listakses") & filters.user(ctx.owner_id))
