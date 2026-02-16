@@ -100,6 +100,19 @@ admin:
     give_duration_panel: "付与するアクセス期間を選択してください："
     give_success_panel_manual: "<emoji id=6296367896398399651>✅</emoji> **アクセスを許可しました！**\n\nユーザー {mention} は **{months}ヶ月間**ボットを作成するアクセス権を持ちます。\n\nアクセス有効期限: `{new_date}`"
     revoke_success_panel: "<emoji id=6298671811345254603>❌</emoji> **アクセスを取り消しました！**\n\nユーザー {mention} はボットを作成する権限を失いました。"
+  seller:
+    not_found: "<emoji id=6298671811345254603>❌</emoji> ユーザーが見つかりません。ID/ユーザー名が正しいか確認するか、ユーザーのメッセージに返信してください。"
+    already_exists: "<emoji id=6298671811345254603>❌</emoji> ユーザー `{user_id}` は既にセラーとして登録されています。"
+    add_success: "<emoji id=6296367896398399651>✅</emoji> `{user_mention}` をセラーとして正常に追加しました。"
+    list_title: "**<emoji id=6176966310920983412>👤</emoji> アクティブセラーリスト**\n\n"
+    empty: "登録されているセラーはまだありません。"
+    delete_button: "セラーを削除 🗑️"
+    deleted: "セラー `{user_id}` が正常に削除されました。"
+  access_list:
+    list_title: "**<emoji id=6176966310920983412>🔑</emoji> 許可されたユーザーリスト**\n\n"
+    empty: "現在アクティブなアクセス権を持つユーザーはいません。"
+    delete_button: "アクセスを取り消す 🚫"
+    deleted: "ユーザー `{user_id}` のアクセス権が取り消されました。"
   extend:
     usage_error: "**形式が正しくありません。** 使用法: `/extend <ボットID> <日数>`\n例: `/extend 12345678 30`"
     success: "<emoji id=6296367896398399651>✅</emoji> **成功！** ボット `{bot_id}` の有効期間が変更されました。新しい有効期限: `{new_date}`。"
