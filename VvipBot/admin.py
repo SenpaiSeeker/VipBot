@@ -264,7 +264,13 @@ async def list_seller_handler(client, message):
     keyboard = []
 
     for index, user_id in enumerate(seller_list, 1):
-        text += f"{index}. ID: `{user_id}`\n"
+        try:
+            user_obj = await client.get_users(user_id)
+            mention = client.ns.telegram.arg.getMention(user_obj)
+        except Exception:
+            mention = f"ID: `{user_id}`"
+            
+        text += f"{index}. {mention}\n"
         keyboard.append([
             {"text": f"{lang.get('admin.seller.delete_button')} ({user_id})", "callback_data": f"del_sell_{user_id}"}
         ])
@@ -291,7 +297,13 @@ async def delete_seller_callback(client, callback_query):
     text = lang.get("admin.seller.list_title")
     keyboard = []
     for index, user_id in enumerate(seller_list, 1):
-        text += f"{index}. ID: `{user_id}`\n"
+        try:
+            user_obj = await client.get_users(user_id)
+            mention = client.ns.telegram.arg.getMention(user_obj)
+        except Exception:
+            mention = f"ID: `{user_id}`"
+
+        text += f"{index}. {mention}\n"
         keyboard.append([
             {"text": f"{lang.get('admin.seller.delete_button')} ({user_id})", "callback_data": f"del_sell_{user_id}"}
         ])
@@ -308,9 +320,7 @@ async def list_akses_handler(client, message):
     for uid in user_ids:
         expiry = await ctx.db.getVars(uid, "user_expiry_date")
         if expiry:
-            from datetime import datetime, timezone
-            if datetime.fromisoformat(expiry) > datetime.now(timezone.utc):
-                access_users.append(uid)
+            access_users.append(uid)
 
     if not access_users:
         return await message.reply_text(lang.get("admin.access_list.empty"))
@@ -318,7 +328,13 @@ async def list_akses_handler(client, message):
     text = lang.get("admin.access_list.list_title")
     keyboard = []
     for index, uid in enumerate(access_users, 1):
-        text += f"{index}. ID: `{uid}`\n"
+        try:
+            user_obj = await client.get_users(uid)
+            mention = client.ns.telegram.arg.getMention(user_obj)
+        except Exception:
+            mention = f"ID: `{uid}`"
+
+        text += f"{index}. {mention}\n"
         keyboard.append([
             {"text": f"{lang.get('admin.access_list.delete_button')} ({uid})", "callback_data": f"del_acc_{uid}"}
         ])
@@ -343,9 +359,7 @@ async def delete_access_callback(client, callback_query):
     for uid in user_ids:
         expiry = await ctx.db.getVars(uid, "user_expiry_date")
         if expiry:
-            from datetime import datetime, timezone
-            if datetime.fromisoformat(expiry) > datetime.now(timezone.utc):
-                access_users.append(uid)
+            access_users.append(uid)
 
     if not access_users:
         return await callback_query.edit_message_text(lang.get("admin.access_list.empty"))
@@ -353,7 +367,13 @@ async def delete_access_callback(client, callback_query):
     text = lang.get("admin.access_list.list_title")
     keyboard = []
     for index, uid in enumerate(access_users, 1):
-        text += f"{index}. ID: `{uid}`\n"
+        try:
+            user_obj = await client.get_users(uid)
+            mention = client.ns.telegram.arg.getMention(user_obj)
+        except Exception:
+            mention = f"ID: `{uid}`"
+
+        text += f"{index}. {mention}\n"
         keyboard.append([
             {"text": f"{lang.get('admin.access_list.delete_button')} ({uid})", "callback_data": f"del_acc_{uid}"}
         ])
