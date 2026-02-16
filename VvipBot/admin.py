@@ -229,6 +229,137 @@ async def revoke_access_callback(client, callback_query):
         await callback_query.answer(lang.get("admin.access.process_fail", e=e), show_alert=True)
 
 
+@command(lambda ctx: filters.command("addseller") & filters.user(ctx.owner_id))
+async def add_seller_handler(client, message):
+    lang = message.lang
+    args = message.command
+    if len(args) < 2:
+        return await message.reply_text(lang.get("admin.seller.add_usage"))
+
+    try:
+        target_id = int(args[1])
+        seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
+        
+        if target_id in seller_list:
+            return await message.reply_text(lang.get("admin.seller.already_exists", user_id=target_id))
+        
+        await ctx.db.setListVars(ctx.owner_id, "seller_id_list", target_id)
+        await message.reply_text(lang.get("admin.seller.add_success", user_id=target_id))
+    except ValueError:
+        await message.reply_text(lang.get("admin.seller.add_usage"))
+
+
+@command(lambda ctx: filters.command("listseller") & filters.user(ctx.owner_id))
+async def list_seller_handler(client, message):
+    lang = message.lang
+    seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
+
+    if not seller_list:
+        return await message.reply_text(lang.get("admin.seller.empty"))
+
+    text = lang.get("admin.seller.list_title")
+    keyboard = []
+
+    for index, user_id in enumerate(seller_list, 1):
+        text += f"{index}. ID: `{user_id}`\n"
+        keyboard.append([
+            {"text": f"{lang.get('admin.seller.delete_button')} ({user_id})", "callback_data": f"del_sell_{user_id}"}
+        ])
+
+    btn = client.ns.telegram.button.build_button_grid(keyboard)
+    await message.reply_text(text, reply_markup=btn)
+
+
+@command(lambda ctx: filters.regex(r"^del_sell_(\d+)"), handler_type="callback")
+async def delete_seller_callback(client, callback_query):
+    if callback_query.from_user.id != ctx.owner_id:
+        return
+
+    lang = callback_query.lang
+    target_id = int(callback_query.matches[0].group(1))
+    
+    seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
+    if target_id in seller_list:
+        await ctx.db.removeListVars(ctx.owner_id, "seller_id_list", target_id)
+        await callback_query.answer(lang.get("admin.seller.deleted", user_id=target_id), show_alert=True)
+        
+        new_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
+        if not new_list:
+            return await callback_query.edit_message_text(lang.get("admin.seller.empty"))
+        
+        text = lang.get("admin.seller.list_title")
+        keyboard = []
+        for index, user_id in enumerate(new_list, 1):
+            text += f"{index}. ID: `{user_id}`\n"
+            keyboard.append([
+                {"text": f"{lang.get('admin.seller.delete_button')} ({user_id})", "callback_data": f"del_sell_{user_id}"}
+            ])
+        btn = client.ns.telegram.button.build_button_grid(keyboard)
+        await callback_query.edit_message_text(text, reply_markup=btn)
+
+
+@command(lambda ctx: filters.command("listakses") & filters.user(ctx.owner_id))
+async def list_akses_handler(client, message):
+    lang = message.lang
+    user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
+    
+    access_users = []
+    for uid in user_ids:
+        expiry = await ctx.db.getVars(uid, "user_expiry_date")
+        if expiry:
+            from datetime import datetime, timezone
+            if datetime.fromisoformat(expiry) > datetime.now(timezone.utc):
+                access_users.append(uid)
+
+    if not access_users:
+        return await message.reply_text(lang.get("admin.access_list.empty"))
+
+    text = lang.get("admin.access_list.list_title")
+    keyboard = []
+    for index, uid in enumerate(access_users, 1):
+        text += f"{index}. ID: `{uid}`\n"
+        keyboard.append([
+            {"text": f"{lang.get('admin.access_list.delete_button')} ({uid})", "callback_data": f"del_acc_{uid}"}
+        ])
+
+    btn = client.ns.telegram.button.build_button_grid(keyboard)
+    await message.reply_text(text, reply_markup=btn)
+
+
+@command(lambda ctx: filters.regex(r"^del_acc_(\d+)"), handler_type="callback")
+async def delete_access_callback(client, callback_query):
+    if callback_query.from_user.id != ctx.owner_id:
+        return
+
+    lang = callback_query.lang
+    target_id = int(callback_query.matches[0].group(1))
+
+    await ctx.db.removeVars(target_id, "user_expiry_date")
+    await callback_query.answer(lang.get("admin.access_list.deleted", user_id=target_id), show_alert=True)
+    
+    user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
+    access_users = []
+    for uid in user_ids:
+        expiry = await ctx.db.getVars(uid, "user_expiry_date")
+        if expiry:
+            from datetime import datetime, timezone
+            if datetime.fromisoformat(expiry) > datetime.now(timezone.utc):
+                access_users.append(uid)
+
+    if not access_users:
+        return await callback_query.edit_message_text(lang.get("admin.access_list.empty"))
+
+    text = lang.get("admin.access_list.list_title")
+    keyboard = []
+    for index, uid in enumerate(access_users, 1):
+        text += f"{index}. ID: `{uid}`\n"
+        keyboard.append([
+            {"text": f"{lang.get('admin.access_list.delete_button')} ({uid})", "callback_data": f"del_acc_{uid}"}
+        ])
+    btn = client.ns.telegram.button.build_button_grid(keyboard)
+    await callback_query.edit_message_text(text, reply_markup=btn)
+
+
 @command(lambda ctx: filters.command("extend") & filters.user(ctx.owner_id))
 async def extend_command_handler(client, message):
     lang = message.lang
