@@ -100,6 +100,19 @@ admin:
     give_duration_panel: "Select the access duration to grant:"
     give_success_panel_manual: "<emoji id=6296367896398399651>✅</emoji> **Access Granted!**\n\nUser {mention} now has access to create a bot for **{months} month(s)**.\n\nAccess is valid until: `{new_date}`"
     revoke_success_panel: "<emoji id=6298671811345254603>❌</emoji> **Access Revoked!**\n\nUser {mention} no longer has the right to create a bot."
+  seller:
+    not_found: "<emoji id=6298671811345254603>❌</emoji> User not found. Make sure the ID/Username is correct or reply to the user's message."
+    already_exists: "<emoji id=6298671811345254603>❌</emoji> User `{user_id}` is already registered as a seller."
+    add_success: "<emoji id=6296367896398399651>✅</emoji> Successfully added `{user_mention}` as a seller."
+    list_title: "**<emoji id=6176966310920983412>👤</emoji> Active Seller List**\n\n"
+    empty: "No sellers registered yet."
+    delete_button: "Remove Seller 🗑️"
+    deleted: "Seller `{user_id}` has been successfully removed."
+  access_list:
+    list_title: "**<emoji id=6176966310920983412>🔑</emoji> Authorized Users List**\n\n"
+    empty: "No users currently have active access."
+    delete_button: "Revoke Access 🚫"
+    deleted: "Access for `{user_id}` has been revoked."
   extend:
     usage_error: "**Invalid format.** Use: `/extend <bot_id> <number_of_days>`\nExample: `/extend 12345678 30`"
     success: "<emoji id=6296367896398399651>✅</emoji> **Success!** Bot `{bot_id}` duration has been changed. New expiration date: `{new_date}`."
