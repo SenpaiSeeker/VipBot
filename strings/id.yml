@@ -51,6 +51,7 @@ vvip_list:
   panel: "<emoji id=5334882760735598374>📚</emoji> **Daftar VVIP Bot: {mention}**\n\nBerikut adalah daftar paket eksklusif yang kami tawarkan. Klik pada salah satu paket untuk melihat detail lengkap dan penawaran spesial."
   button_package: "📂 {name}"
   button_promo: "🎉 Promo {name}"
+  button_take_all_vip: "🛒 Ambil Semua VIP"
 
 donation:
   panel: "<emoji id=6271607783599117330>❤️</emoji> **Dukung Kami dengan Telegram Stars!**\n\nDonasi Anda sangat berarti untuk membantu kami terus mengembangkan dan memelihara bot ini.\n\nSetiap Star yang Anda berikan memberikan kami semangat untuk terus berinovasi. Pilih jumlah donasi di bawah ini untuk memulai.\n\nTerima kasih atas dukungan Anda!"
@@ -273,6 +274,7 @@ payment:
     not_found: "<emoji id=6298671811345254603>❌</emoji> Paket VVIP ini tidak ditemukan lagi."
     invalid_price: "<emoji id=6298671811345254603>❌</emoji> Harga untuk paket ini tidak valid (0 atau kurang)."
     qr_fail: "Gagal mengunduh gambar QRIS."
+    all_vvip_product_name: "Semua VIP ({total} paket)"
     invoice_full: |
       **<emoji id=6296367896398399651>✅</emoji> Pembayaran Siap Dilakukan!**
 
@@ -291,7 +293,26 @@ payment:
     not_paid: "❌ Pembayaran belum terdeteksi. Silakan coba lagi setelah beberapa saat."
     expired_or_completed: "<emoji id=6271786398404055377>⚠️</emoji> Invoice ini sudah tidak valid atau telah selesai."
     category_missing: "Kategori VVIP '{name}' tidak lagi ditemukan di database. Pembayaran berhasil, namun link grup gagal diberikan. Mohon hubungi admin."
-    success_customer_full: "<emoji id=5436040291507247633>🎉</emoji> **Pembayaran Dikonfirmasi!**\n\nTerima kasih, berikut adalah link akses Anda untuk paket **{name}**:\n\n{link}\n\n<emoji id=6271786398404055377>⚠️</emoji> Link ini hanya berlaku untuk 1 kali klik dan akan kedaluwarsa dalam 60 menit jika tidak digunakan."
+    success_customer_full: "<emoji id=5436040291507247633>🎉</emoji> **Pembayaran Dikonfirmasi!**
+
+Terima kasih, berikut adalah link akses Anda untuk paket **{name}**:
+
+{link}
+
+<emoji id=6271786398404055377>⚠️</emoji> Link ini hanya berlaku untuk 1 kali klik dan akan kedaluwarsa dalam 60 menit jika tidak digunakan."
+    success_customer_bundle: "<emoji id=5436040291507247633>🎉</emoji> **Pembayaran Paket Semua VIP Berhasil!**
+
+Berikut semua link akses VIP Anda:
+
+{links}
+
+<emoji id=6271786398404055377>⚠️</emoji> Setiap link hanya berlaku 1 kali klik dan kedaluwarsa dalam 60 menit."
+    pending_join_multi: "<emoji id=6271786398404055377>⚠️</emoji> Anda belum join ke semua grup VIP dalam waktu 60 menit.
+
+Silakan join grup berikut:
+{pending_links}"
+    bundle_empty_or_invalid: "<emoji id=6298671811345254603>❌</emoji> Tidak ada paket VIP valid untuk pembelian semua VIP."
+    all_vvip_label: "Semua VIP"
     success_owner_notif: "<emoji id=5375296873982604963>💰</emoji> **Pemasukan Baru!**\n\n**Pengguna:** {mention}\n**Bot:** {bot_mention}\n**Kategori:** `{name}` ({type})"
     expired_msg: "<emoji id=5451732530048802485>⏳</emoji> **Invoice Kedaluwarsa.**\nOrder ID `{id}` telah dibatalkan karena melewati batas waktu pembayaran."
     link_expired: "<emoji id=6271786398404055377>⚠️</emoji> Link undangan Anda telah kedaluwarsa karena Anda tidak bergabung dalam 60 menit. Silakan hubungi admin jika terjadi masalah."

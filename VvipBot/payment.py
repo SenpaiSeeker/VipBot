@@ -199,6 +199,67 @@ async def verify_user_join(client, user, chat_id, link_msg):
         await client.send_message(user.id, lang.get("payment.check.link_expired"))
 
 
+async def verify_user_join_multiple(client, user, invite_payloads, link_msg):
+    lang = await ctx.L.create(ctx.db, user.id)
+    verification_timeout = 3600
+    start_time = time()
+
+    while time() - start_time < verification_timeout:
+        pending_payloads = []
+        for payload in invite_payloads:
+            chat_id = payload.get("chat_id")
+            try:
+                member = await client.get_chat_member(chat_id, user.id)
+                if member.status in [pyrogram.enums.ChatMemberStatus.LEFT, pyrogram.enums.ChatMemberStatus.BANNED]:
+                    pending_payloads.append(payload)
+            except pyrogram.errors.UserNotParticipant:
+                pending_payloads.append(payload)
+            except Exception as e:
+                ctx.log.print(f"{ctx.log.RED}Error saat verifikasi multi join {user.id} ke {chat_id}: {e}")
+                pending_payloads.append(payload)
+
+        if not pending_payloads:
+            try:
+                await link_msg.delete()
+            except Exception:
+                pass
+            ctx.log.print(f"{ctx.log.GREEN}User {user.id} berhasil bergabung ke semua paket VVIP dari bot {client.me.username}.")
+            return
+
+        await asyncio.sleep(15)
+
+    pending_lines = []
+    for item in pending_payloads:
+        pending_lines.append(f"• {item.get('name')}: {item.get('link')}")
+
+    try:
+        await client.send_message(
+            user.id,
+            lang.get("payment.check.pending_join_multi", pending_links="\n".join(pending_lines)),
+            protect_content=True,
+        )
+    except Exception as e:
+        ctx.log.print(f"{ctx.log.RED}Gagal mengirim notifikasi pending join multi {user.id}: {e}")
+
+
+def _get_all_vvip_items(vvip_list):
+    selected_items = []
+    for index, item in enumerate(vvip_list):
+        price = int(item.get("price", 0) or 0)
+        chat_id_normal = item.get("chat_id_normal")
+        if price > 0 and chat_id_normal:
+            selected_items.append(
+                {
+                    "index": index,
+                    "name": item.get("name", f"Paket {index + 1}"),
+                    "price": price,
+                    "chat_id": chat_id_normal,
+                    "duration": item.get("duration", 0),
+                }
+            )
+    return selected_items
+
+
 async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon_code=None):
     lang = await ctx.L.create(ctx.db, user.id)
 
@@ -263,6 +324,59 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
         await msg.edit(lang.get("general.error", e=e))
 
 
+async def _create_all_vvip_payment_invoice(client, user, selected_items, total_amount):
+    lang = await ctx.L.create(ctx.db, user.id)
+    saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
+    if not saweria_user_id:
+        if await is_bot_owner(client, user.id):
+            text = lang.get("payment.pay.service_inactive_panel")
+            layout = [[{"text": lang.get("payment.pay.setup_api_button"), "callback_data": "api_settings"}]]
+            btn = client.ns.telegram.button.build_button_grid(layout)
+            await client.send_message(user.id, text, reply_markup=btn)
+        else:
+            await client.send_message(user.id, lang.get("payment.pay.service_inactive_alert"))
+        return
+
+    msg = await client.send_message(user.id, lang.get("general.processing"))
+
+    try:
+        fakeinfo = client.ns.utils.faker.generate()
+        random_message = generate_safe_saweria_message(user_name=user.first_name or "User")
+        qr_string, transaction_id, qr_image_stream, amount_raw = await client.services.saweria.create_payment(
+            user_id=saweria_user_id,
+            amount=int(total_amount),
+            name=user.first_name or "User",
+            email=fakeinfo.email,
+            message=random_message,
+            creator_name=client.me.username,
+        )
+
+        package_indexes = ",".join(str(item.get("index")) for item in selected_items)
+        order_data = f"ALL|normal|{int(amount_raw)}|{package_indexes}"
+        await ctx.db.setVars(client.me.id, transaction_id, order_data)
+
+        package_names = ", ".join(item.get("name") for item in selected_items)
+        caption = lang.get(
+            "payment.pay.invoice_full",
+            name=lang.get("payment.pay.all_vvip_product_name", total=len(selected_items), names=package_names),
+            type="Bundle",
+            amount=f"{int(amount_raw):,}",
+            id=f"[{transaction_id}](https://saweria.co/qris/{transaction_id})",
+        )
+        layout = [
+            [{"text": lang.get("payment.check.confirm_button"), "callback_data": f"confirm_payment {transaction_id}"}]
+        ]
+        btn = client.ns.telegram.button.build_button_grid(layout)
+
+        await client.send_photo(user.id, photo=qr_image_stream, caption=caption, reply_markup=btn)
+        await msg.delete()
+        ctx.log.print(
+            f"{ctx.log.CYAN}User {user.id} membuat pembayaran bundling semua VVIP ({len(selected_items)} paket) dari bot {client.me.username}."
+        )
+    except Exception as e:
+        await msg.edit(lang.get("general.error", e=e))
+
+
 @command(lambda ctx: filters.regex(r"^confirm_payment\s(.+)"), handler_type="callback")
 async def manual_check_payment_callback(client, callback_query):
     transaction_id = callback_query.data.split(" ", 1)[1]
@@ -274,10 +388,17 @@ async def manual_check_payment_callback(client, callback_query):
         return await callback_query.edit_message_caption(lang.get("payment.check.expired_or_completed"))
 
     ref_parts = ref_data_str.split("|")
-    item_index = int(ref_parts[0])
+    is_bundle_order = ref_parts[0] == "ALL"
     tipe = ref_parts[1]
     amount_raw = int(ref_parts[2])
-    coupon_code = ref_parts[3] if len(ref_parts) > 3 else None
+
+    coupon_code = None
+    bundle_indexes = []
+    if is_bundle_order:
+        bundle_indexes = [int(i) for i in ref_parts[3].split(",") if i.strip().isdigit()] if len(ref_parts) > 3 else []
+    else:
+        item_index = int(ref_parts[0])
+        coupon_code = ref_parts[3] if len(ref_parts) > 3 else None
 
     try:
         is_paid = await client.services.saweria.check_paid_status(transaction_id)
@@ -287,6 +408,86 @@ async def manual_check_payment_callback(client, callback_query):
             await ctx.db.removeVars(client.me.id, transaction_id)
 
             vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+
+            if is_bundle_order:
+                invite_payloads = []
+                purchased_names = []
+                for idx in bundle_indexes:
+                    try:
+                        item_found = vvip_list[idx]
+                    except IndexError:
+                        continue
+
+                    name = item_found.get("name")
+                    target_chat_id = item_found.get("chat_id_normal")
+                    if not target_chat_id:
+                        continue
+
+                    try:
+                        expire_date_link = datetime.now() + timedelta(minutes=60)
+                        invite_link_obj = await client.create_chat_invite_link(
+                            chat_id=target_chat_id, member_limit=1, expire_date=expire_date_link
+                        )
+                        link = invite_link_obj.invite_link
+                    except Exception as e:
+                        ctx.log.print(f"{ctx.log.RED}Gagal membuat invite link bundle untuk {target_chat_id}: {e}")
+                        continue
+
+                    member_data = {
+                        "user_id": user.id,
+                        "vvip_name": name,
+                        "join_date": datetime.now(timezone.utc).isoformat(),
+                        "payment_type": "normal",
+                        "chat_id_kick": target_chat_id,
+                    }
+                    duration = item_found.get("duration", 0)
+                    if duration > 0:
+                        expiry_date = datetime.now(timezone.utc) + timedelta(days=duration)
+                        member_data["expiry_date"] = expiry_date.isoformat()
+                    await ctx.db.setListVars(client.me.id, "vvip_members", member_data)
+
+                    purchased_names.append(name)
+                    invite_payloads.append({"name": name, "chat_id": target_chat_id, "link": link})
+
+                if not invite_payloads:
+                    raise ValueError(lang.get("payment.check.bundle_empty_or_invalid"))
+
+                revenue_data = {
+                    "user_id": user.id,
+                    "username": user.username or user.first_name,
+                    "amount": amount_raw,
+                    "date": datetime.now(timezone.utc).isoformat(),
+                    "item_name": " + ".join(purchased_names),
+                    "type": "bundle",
+                }
+                await ctx.db.setListVars(client.me.id, "vip_revenue_history", revenue_data)
+
+                link_text = "\n".join([f"• {item.get('name')}: {item.get('link')}" for item in invite_payloads])
+                link_msg = await client.send_message(
+                    user.id,
+                    lang.get("payment.check.success_customer_bundle", links=link_text),
+                    protect_content=True,
+                )
+                await callback_query.message.delete()
+                asyncio.create_task(verify_user_join_multiple(client, user, invite_payloads, link_msg))
+
+                owner_bot_id = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
+                owner_lang = await ctx.L.create(ctx.db, owner_bot_id)
+                await client.send_message(
+                    owner_bot_id,
+                    owner_lang.get(
+                        "payment.check.success_owner_notif",
+                        mention=client.ns.telegram.arg.getMention(user),
+                        bot_mention=client.me.mention,
+                        name=lang.get("payment.check.all_vvip_label"),
+                        type="Bundle",
+                    ),
+                )
+                ctx.log.print(
+                    f"{ctx.log.CYAN}User {user.id} telah mengkonfirmasi pembayaran bundle semua VVIP dari bot {client.me.username}."
+                )
+                return
+
             try:
                 item_found = vvip_list[item_index]
                 name = item_found.get("name")
@@ -373,6 +574,25 @@ async def manual_check_payment_callback(client, callback_query):
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED}Error manual-check {user.id} ({client.me.username}) {transaction_id}: {e}")
         await callback_query.answer(lang.get("general.error", e=e), show_alert=True)
+
+
+@command(lambda ctx: filters.regex(r"^pay_all_vvip$"), handler_type="callback")
+async def pay_all_vvip_callback(client, callback_query):
+    lang = callback_query.lang
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    selected_items = _get_all_vvip_items(vvip_list)
+
+    if not selected_items:
+        return await callback_query.answer(lang.get("payment.check.bundle_empty_or_invalid"), show_alert=True)
+
+    total_amount = sum(item.get("price", 0) for item in selected_items)
+
+    if callback_query.message.photo:
+        await callback_query.message.delete()
+    else:
+        await callback_query.edit_message_text(lang.get("general.processing"))
+
+    await _create_all_vvip_payment_invoice(client, callback_query.from_user, selected_items, total_amount)
 
 @command(lambda ctx: filters.regex(r"^notes_(\d+)"), handler_type="callback")
 async def notes_data(client, callback_query):

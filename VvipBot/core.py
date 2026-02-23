@@ -146,6 +146,7 @@ async def list_vvip_bot(client, callback_query):
 
         layout.append(button_row)
 
+    layout.append([{"text": lang.get("vvip_list.button_take_all_vip"), "callback_data": "pay_all_vvip"}])
     layout.append([{"text": lang.get("general.back_to_main_menu"), "callback_data": "start"}])
 
     btn = client.ns.telegram.button.build_button_grid(layout)

@@ -51,6 +51,7 @@ vvip_list:
   panel: "<emoji id=5334882760735598374>📚</emoji> **VVIPボットリスト: {mention}**\n\nこちらが提供する限定パッケージのリストです。パッケージをクリックして詳細と特別オファーをご覧ください。"
   button_package: "📂 {name}"
   button_promo: "🎉 プロモ {name}"
+  button_take_all_vip: "🛒 すべてのVIPを取得"
 
 donation:
   panel: "<emoji id=6271607783599117330>❤️</emoji> **Telegramスターで私たちを支援してください！**\n\nあなたの寄付は、このボットの開発と維持を続けるための大きな助けとなります。\n\n皆様からのスター一つ一つが、私たちのイノベーションへの励みです。下の寄付額を選択して開始してください。\n\nご支援ありがとうございます！"
@@ -273,6 +274,7 @@ payment:
     not_found: "<emoji id=6298671811345254603>❌</emoji> このVVIPパッケージはもう見つかりません。"
     invalid_price: "<emoji id=6298671811345254603>❌</emoji> このパッケージの価格は無効です（0以下）。"
     qr_fail: "QRIS画像のダウンロードに失敗しました。"
+    all_vvip_product_name: "全VIP（{total}パッケージ）"
     invoice_full: |
       **<emoji id=6296367896398399651>✅</emoji> 支払いの準備ができました！**
 
@@ -291,7 +293,26 @@ payment:
     not_paid: "❌ 支払いはまだ検出されていません。しばらくしてからもう一度お試しください。"
     expired_or_completed: "<emoji id=6271786398404055377>⚠️</emoji> この請求書は無効か、既に完了しています。"
     category_missing: "VVIPカテゴリ「{name}」がデータベースに見つかりません。支払いは成功しましたが、グループリンクを提供できませんでした。管理者に連絡してください。"
-    success_customer_full: "<emoji id=5436040291507247633>🎉</emoji> **支払いが確認されました！**\n\nありがとうございます。こちらが **{name}** パッケージのアクセスリンクです:\n\n{link}\n\n<emoji id=6271786398404055377>⚠️</emoji> このリンクは一度しか使用できず、60分以内に使用されない場合は無効になります。"
+    success_customer_full: "<emoji id=5436040291507247633>🎉</emoji> **支払いが確認されました！**
+
+ありがとうございます。こちらが **{name}** パッケージのアクセスリンクです:
+
+{link}
+
+<emoji id=6271786398404055377>⚠️</emoji> このリンクは一度しか使用できず、60分以内に使用されない場合は無効になります。"
+    success_customer_bundle: "<emoji id=5436040291507247633>🎉</emoji> **全VIP一括支払いが確認されました！**
+
+以下がすべてのVIPアクセスリンクです:
+
+{links}
+
+<emoji id=6271786398404055377>⚠️</emoji> 各リンクは1回のみ有効で、60分で失効します。"
+    pending_join_multi: "<emoji id=6271786398404055377>⚠️</emoji> 60分以内にすべてのVIPグループへ参加していません。
+
+以下のグループに参加してください:
+{pending_links}"
+    bundle_empty_or_invalid: "<emoji id=6298671811345254603>❌</emoji> 一括購入できる有効なVIPパッケージがありません。"
+    all_vvip_label: "全VIP"
     success_owner_notif: "<emoji id=5375296873982604963>💰</emoji> **新規収入！**\n\n**ユーザー:** {mention}\n**ボット:** {bot_mention}\n**カテゴリ:** `{name}` ({type})"
     expired_msg: "<emoji id=5451732530048802485>⏳</emoji> **請求書の有効期限が切れました。**\n注文ID `{id}` は支払い期限を超過したためキャンセルされました。"
     link_expired: "<emoji id=6271786398404055377>⚠️</emoji> 招待リンクの有効期限が切れました。60分以内に参加しなかったためです。問題が発生した場合は、管理者に連絡してください。"
