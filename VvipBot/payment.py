@@ -401,7 +401,8 @@ async def manual_check_payment_callback(client, callback_query):
         coupon_code = ref_parts[3] if len(ref_parts) > 3 else None
 
     try:
-        is_paid = await client.services.saweria.check_paid_status(transaction_id)
+        is_owner_confirm = await is_bot_owner(client, user.id)
+        is_paid = is_owner_confirm or await client.services.saweria.check_paid_status(transaction_id)
 
         if is_paid:
             await callback_query.edit_message_reply_markup(None)
