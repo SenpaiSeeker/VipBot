@@ -293,24 +293,27 @@ payment:
     not_paid: "❌ Payment not detected yet. Please try again after a few moments."
     expired_or_completed: "<emoji id=6271786398404055377>⚠️</emoji> This invoice is no longer valid or has already been completed."
     category_missing: "VVIP category '{name}' is no longer found in the database. Payment was successful, but the group link could not be delivered. Please contact the admin."
-    success_customer_full: "<emoji id=5436040291507247633>🎉</emoji> **Payment Confirmed!**
+    success_customer_full: |
+      <emoji id=5436040291507247633>🎉</emoji> **Payment Confirmed!**
 
-Thank you, here is your access link for package **{name}**:
+      Thank you, here is your access link for package **{name}**:
 
-{link}
+      {link}
 
-<emoji id=6271786398404055377>⚠️</emoji> This link is valid for 1 click only and will expire in 60 minutes if unused."
-    success_customer_bundle: "<emoji id=5436040291507247633>🎉</emoji> **All VIP Bundle Payment Confirmed!**
+      <emoji id=6271786398404055377>⚠️</emoji> This link is valid for 1 click only and will expire in 60 minutes if unused.
+    success_customer_bundle: |
+      <emoji id=5436040291507247633>🎉</emoji> **All VIP Bundle Payment Confirmed!**
 
-Here are all your VIP access links:
+      Here are all your VIP access links:
 
-{links}
+      {links}
 
-<emoji id=6271786398404055377>⚠️</emoji> Each link is one-time use and expires in 60 minutes."
-    pending_join_multi: "<emoji id=6271786398404055377>⚠️</emoji> You have not joined all VIP groups within 60 minutes.
+      <emoji id=6271786398404055377>⚠️</emoji> Each link is one-time use and expires in 60 minutes.
+    pending_join_multi: |
+      <emoji id=6271786398404055377>⚠️</emoji> You have not joined all VIP groups within 60 minutes.
 
-Please join the following groups:
-{pending_links}"
+      Please join the following groups:
+      {pending_links}
     bundle_empty_or_invalid: "<emoji id=6298671811345254603>❌</emoji> No valid VIP packages found for all-VIP purchase."
     all_vvip_label: "All VIP"
     success_owner_notif: "<emoji id=5375296873982604963>💰</emoji> **New Income!**\n\n**User:** {mention}\n**Bot:** {bot_mention}\n**Category:** `{name}` ({type})"

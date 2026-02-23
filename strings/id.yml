@@ -293,24 +293,27 @@ payment:
     not_paid: "❌ Pembayaran belum terdeteksi. Silakan coba lagi setelah beberapa saat."
     expired_or_completed: "<emoji id=6271786398404055377>⚠️</emoji> Invoice ini sudah tidak valid atau telah selesai."
     category_missing: "Kategori VVIP '{name}' tidak lagi ditemukan di database. Pembayaran berhasil, namun link grup gagal diberikan. Mohon hubungi admin."
-    success_customer_full: "<emoji id=5436040291507247633>🎉</emoji> **Pembayaran Dikonfirmasi!**
+    success_customer_full: |
+      <emoji id=5436040291507247633>🎉</emoji> **Pembayaran Dikonfirmasi!**
 
-Terima kasih, berikut adalah link akses Anda untuk paket **{name}**:
+      Terima kasih, berikut adalah link akses Anda untuk paket **{name}**:
 
-{link}
+      {link}
 
-<emoji id=6271786398404055377>⚠️</emoji> Link ini hanya berlaku untuk 1 kali klik dan akan kedaluwarsa dalam 60 menit jika tidak digunakan."
-    success_customer_bundle: "<emoji id=5436040291507247633>🎉</emoji> **Pembayaran Paket Semua VIP Berhasil!**
+      <emoji id=6271786398404055377>⚠️</emoji> Link ini hanya berlaku untuk 1 kali klik dan akan kedaluwarsa dalam 60 menit jika tidak digunakan.
+    success_customer_bundle: |
+      <emoji id=5436040291507247633>🎉</emoji> **Pembayaran Paket Semua VIP Berhasil!**
 
-Berikut semua link akses VIP Anda:
+      Berikut semua link akses VIP Anda:
 
-{links}
+      {links}
 
-<emoji id=6271786398404055377>⚠️</emoji> Setiap link hanya berlaku 1 kali klik dan kedaluwarsa dalam 60 menit."
-    pending_join_multi: "<emoji id=6271786398404055377>⚠️</emoji> Anda belum join ke semua grup VIP dalam waktu 60 menit.
+      <emoji id=6271786398404055377>⚠️</emoji> Setiap link hanya berlaku 1 kali klik dan kedaluwarsa dalam 60 menit.
+    pending_join_multi: |
+      <emoji id=6271786398404055377>⚠️</emoji> Anda belum join ke semua grup VIP dalam waktu 60 menit.
 
-Silakan join grup berikut:
-{pending_links}"
+      Silakan join grup berikut:
+      {pending_links}
     bundle_empty_or_invalid: "<emoji id=6298671811345254603>❌</emoji> Tidak ada paket VIP valid untuk pembelian semua VIP."
     all_vvip_label: "Semua VIP"
     success_owner_notif: "<emoji id=5375296873982604963>💰</emoji> **Pemasukan Baru!**\n\n**Pengguna:** {mention}\n**Bot:** {bot_mention}\n**Kategori:** `{name}` ({type})"
