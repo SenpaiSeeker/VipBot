@@ -286,14 +286,12 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
     try:
         fakeinfo = client.ns.utils.faker.generate()
 
-        random_message = generate_safe_saweria_message(
-            user_name=user.first_name or "User"
-        )
+        random_message = generate_safe_saweria_message(fakeinfo.name)
 
         qr_string, transaction_id, qr_image_stream, amount_raw = await client.services.saweria.create_payment(
             user_id=saweria_user_id,
             amount=int(amount),
-            name=user.first_name or "User",
+            name=fakeinfo.name,
             email=fakeinfo.email,
             message=random_message,
             creator_name=client.me.username,
@@ -341,11 +339,11 @@ async def _create_all_vvip_payment_invoice(client, user, selected_items, total_a
 
     try:
         fakeinfo = client.ns.utils.faker.generate()
-        random_message = generate_safe_saweria_message(user_name=user.first_name or "User")
+        random_message = generate_safe_saweria_message(fakeinfo.name)
         qr_string, transaction_id, qr_image_stream, amount_raw = await client.services.saweria.create_payment(
             user_id=saweria_user_id,
             amount=int(total_amount),
-            name=user.first_name or "User",
+            name=fakeinfo.name,
             email=fakeinfo.email,
             message=random_message,
             creator_name=client.me.username,
