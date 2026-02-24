@@ -1,106 +1,230 @@
 from . import *
 
+
 def generate_safe_saweria_message(user_name):
     sapaan_pembuka = [
-        "Halo", "Hi", "Hello", "Hoi", "Woi", "Uy", "P", "Ping", "Tes", "Cek",
-        "Spada", "Punten", "Permisi", "Kulonuwun", "Sampurasun", "Horas",
-        "Assalamualaikum", "Salam", "Greetings", "Hola", "Aloha", "Bonjour",
-        "Pagi", "Siang", "Sore", "Malam", "Met pagi", "Met siang", "Met malam",
-        "Oy", "Euy", "Misi", "Paket", "Shalom", "Om swastiastu", "Wilujeng",
-        "Sugeng", "Tabik", "Hehe", "Wkwk", "Yoo", "Hellow", "Alow", "Lapor",
-        "Izin", "Numpang", "Excuse me", "Konbanwa", "Ohayo", "Moshi moshi"
+        "Halo", "Hi", "Hello", "Hoi", "Woi", "Uy", "P", "Ping", "Tes", "Cek", 
+        "Spada", "Punten", "Permisi", "Misi", "Lapor", "Izin", "Numpang", 
+        "Salam", "Greetings", "Hola", "Aloha", "Bonjour", "Shalom", 
+        "Om swastiastu", "Namo Buddhaya", "Salam sejahtera",
+        "Kulonuwun", "Sampurasun", "Horas", "Nengah", "Kompe", "Ampure",
+        "Assalamualaikum", "Pagi", "Siang", "Sore", "Malam", 
+        "Met pagi", "Met siang", "Met sore", "Met malam", "Met malem",
+        "Oy", "Euy", "Cuy", "Bre", "Woy", "Woy", "Yuhu", "Yahallo", 
+        "Hehe", "Wkwk", "Wkwkwk", "Haha", "Hihi", "Yoo", "Hellow", "Alow",
+        "Lur", "Gan", "Agan", "Min", "Admin", "Momod", "Mimin",
+        "P", "Pg", "Sg", "Sore", "Mlm", "Mlem", "Mpls", "Sup", "Sup boss",
+        "Excuse me", "Konbanwa", "Ohayo", "Ohayou", "Moshi moshi", 
+        "Hai hai", "Hihi", "Hiy", "Hy", "Hlo", "Hadeh", "Haduh",
+        "Mantap", "Markotop", "Josss", "Gas", "Gaskeun", "Skuy", "Yuk",
     ]
 
     panggilan_akrab = [
-        "Bang", "Mas", "Kak", "Min", "Om", "Pak", "Bu", "Sis", "Gan", "Agan",
-        "Bro", "Bray", "Cuy", "Sob", "Sobat", "Kawan", "Teman", "Lur", "Dulur",
-        "Ndang", "Ngab", "Pack", "Mank", "Bestie", "Suhu", "Sepuh", "Mastah",
-        "Idola", "Panutan", "Legend", "Boss", "Bosque", "Juragan", "Sultan",
-        "Nder", "Bre", "Bli", "Uda", "Cici", "Koko", "Abang", "Akang", "Aa",
-        "Teteh", "Mbak", "Neng", "Uni", "Mamank", "Admin", "Mimin", "Momod",
-        "Lord", "King", "Queen", "Paman", "Bibi", "Datuk", "Sensei", "Senpai",
-        "Coach", "Kapten", "Komandan", "Chief", "Head", "Leader", "Master"
+        "Bang", "Mas", "Kak", "Min", "Om", "Pak", "Bu", "Sis", "Mam", "Pap",
+        "Gan", "Agan", "Bro", "Brow", "Bray", "Cuy", "Sob", "Sobat", "Kawan", 
+        "Teman", "Lur", "Dulur", "Ndang", "Ngab", "Bre", "Warga", "Jamaah",
+        "Pack", "Pak", "Mank", "Bestie", "Besti", "Best", "Bebs", "Beb", 
+        "Sayang", "Say", "Cantik", "Ganteng", "Ganteng",
+        "Suhu", "Sepuh", "Mastah", "Master", "Idola", "Panutan", "Legend", 
+        "Legends", "Boss", "Bos", "Bosque", "Juragan", "Jurgan", "Sultan", 
+        "Raja", "Ratu", "Ratu", "Dewa", "Dewi",
+        "Nder", "Bli", "Uda", "Cici", "Koko", "Abang", "Akang", "Aa", 
+        "Teteh", "Mbak", "Neng", "Uni", "Mamank", "Mpok", "Bude", "Pakde", 
+        "Bude", "Tante", "Paman", "Bibi",
+        "Admin", "Mimin", "Momod", "Lord", "King", "Queen", "Datuk", 
+        "Sensei", "Senpai", "Kohai", "Coach", "Kapten", "Komandan", 
+        "Chief", "Head", "Leader", "Presiden", "Menteri", "Jenderal",
+        "Cantik", "Ganteng", "Pinter", "Pintar", "Pandai", "Soleh", "Solehah",
+        "Struggler", "Pejuang", "Pencari rezeki", "Rezeki",
     ]
 
     kata_kerja_memberi = [
-        "Traktir", "Ngasih", "Kirim", "Bagi", "Support", "Dukung", "Nyawer",
-        "Titip", "Sumbang", "Share", "Gift", "Tanda mata", "Apresiasi",
-        "Buat", "Untuk", "Kasih", "Sedekah", "Jajanin", "Nambahin", "Bantu",
-        "Donasi", "Cemplungin", "Lempar", "Sisihin", "Nyalurin", "Topup",
-        "Isi", "Suntik", "Ngedukung", "Nyumbang", "Nraktir", "Sawer",
-        "Cendolin", "Ngegift", "Drop", "Transfer energi", "Nitip", "Nambah",
-        "Nyisihin", "Sedekahin", "Infaq", "Sodaqoh", "Berbagi", "Menyapa",
-        "Mampir", "Lewat", "Setor", "Deposit", "Simpan", "Tabung", "Invest"
+        "Traktir", "Ngasih", "Kirim", "Bagi", "Share", "Bagi-bagi",
+        "Support", "Dukung", "Dukung terus", "Support terus", "Semangatin",
+        "Nyawer", "Sawer", "Donasi", "Donate", "Sedekah", "Infaq", "Sodaqoh", 
+        "Wakaf", "Amal", "Bersedekah", "Berkah",
+        "Titip", "Nitip", "Sumbang", "Gift", "Ngegift", "Kasih", "Jajanin", 
+        "Nambahin", "Bantu", "Bantuin", "Cemplungin", "Lempar", "Sisihin", 
+        "Nyalurin", "Topup", "Isi", "Suntik", "Inject",
+        "Ngedukung", "Nyumbang", "Nraktir", "Cendolin", "Drop", "Setor", 
+        "Deposit", "Simpan", "Tabung", "Invest", "Transfer", "TF", "Kirim", 
+        "Kirimim", "Kasih", "Kasihim", "Buat", "Bikin", "Sediain",
+        "Transfer energi", "Berbagi", "Menyapa", "Mampir", "Lewat", "Betah",
+        "Ayam", "Lempar", "Serok", "Gembok", "Panci", "Wajib",
     ]
 
     objek_gabungan = [
-        "kopi", "kopi hitam", "kopi susu", "teh manis", "es teh", "boba",
-        "gorengan", "bakwan", "tahu isi", "seblak", "nasgor", "mie ayam",
-        "bakso", "sate", "martabak", "terang bulan", "cemilan", "kerupuk",
-        "cilok", "cimol", "batagor", "siomay", "roti bakar", "pisang goreng",
-        "indomie", "soto", "rawon", "jus", "susu", "air putih", "mineral",
-        "cireng", "lumpia", "risol", "kue", "donat", "pizza", "burger",
-        "ayam geprek", "pecel lele", "nasi padang", "ketoprak", "gado gado",
-        "uang rokok", "bensin", "kuota", "pulsa", "listrik", "token",
-        "jajan", "dana", "saldo", "modal", "amunisi", "energi", "gizi",
-        "vitamin", "suplemen", "uang kaget", "receh", "kembalian", "sangu",
+        "kopi", "kopi hitam", "kopi susu", "kopi kenangan", "janji jiwa",
+        "teh manis", "es teh", "es teh manis", "boba", "bubble tea", "matcha",
+        "gorengan", "bakwan", "tahu isi", "tahu bulat", "cireng", "bala-bala",
+        "seblak", "seblak ceker", "bakso", "bakso urat", "bakso malang", 
+        "mie ayam", "mie ayam bakso", "mie goreng", "indomie", "indomie goreng", 
+        "indomie rebus", "soto", "soto ayam", "soto betawi", "rawon", 
+        "nasi goreng", "nasgor", "nasi uduk", "nasi rames", "nasi padang",
+        "sate", "sate ayam", "sate kambing", "sate padang", "tongseng",
+        "martabak", "martabak manis", "martabak telur", "terang bulan",
+        "bakso", "siomay", "batagor", "pempek", "pempek kapal selam",
+        "ketoprak", "gado-gado", "pecel", "pecel lele", "ayam geprek", 
+        "ayam goreng", "ayam bakar", "ikan bakar", "ikan goreng",
+        "jus", "jus jeruk", "jus alpukat", "jus mangga", "susu", "susu coklat",
+        "air putih", "mineral", "air galon", "es krim", "mixue", "chatime", 
+        "starbucks", "kfc", "mcd", "pizza", "burger", "kentang goreng",
+        "cemilan", "kerupuk", "keripik", "cilok", "cimol", "colenak",
+        "roti bakar", "pisang goreng", "pisang coklat", "kue", "donat", "brownies",
+        "uang rokok", "rokok", "surya", "sampoerna", "magnum", "gudang garam",
+        "bensin", "pertalite", "pertamax", "solar", "gas 3kg", "gas melon",
+        "kuota", "pulsa", "listrik", "token listrik", "token", "pdam",
+        "diamond", "dm", "diamond ml", "diamond ff", "uc", "pubgm", "mobile legends",
+        "free fire", "valorant", "genshin", "prime", "steam wallet", "gplay",
+        "google play", "voucher", "top up", "skin", "bundle", "starlight",
+        "jajan", "dana", "saldo", "gopay", "ovo", "shopeepay", "dana", "linkaja",
+        "modal", "amunisi", "energi", "gizi", "vitamin", "suplemen",
+        "uang kaget", "receh", "kembalian", "sangu", "sangu bulanan",
         "thr", "angpao", "uang jajan", "kas", "tabungan", "celengan",
         "uang kopi", "uang bensin", "uang makan", "uang saku", "nafkah",
         "uang parkir", "uang kas", "uang keamanan", "uang lelah", "tip",
-        "kopi kenangan", "janji jiwa", "starbucks", "mixue", "chatime",
-        "es krim", "coklat", "permen", "kuaci", "kacang", "rokok sebatang",
-        "surya", "sampoerna", "magnum", "garam", "gula", "beras", "sembako",
-        "takjil", "bukaan", "sahur", "makan siang", "makan malam", "sarapan",
-        "mie instan", "telur", "minyak", "sabun", "odol", "shampoo", "paket",
-        "bingkisan", "kado", "hadiah", "oleh oleh", "buah tangan", "souvenir"
+        "gaji", "bonus", "tunjangan", "fee", "upah", "hasil sawer",
+        "buket", "bunga", "kadokado", "kado", "hadiah", "oleh-oleh", 
+        "buah tangan", "souvenir", "bungkus", "nasi bungkus", "warung",
+        "ngemil", "cemilan", "ngopi", "nongki", "nongkrong",
+        "segaran", "segarseger", "fresh", "healing", "liburan", "piknik"
     ]
 
     kata_sifat_doa = [
-        "semangat", "sukses", "sehat", "lancar", "berkah", "mantap", "keren",
-        "gacor", "menyala", "lanjutkan", "konsisten", "bahagia", "jos", "top",
-        "gokil", "cool", "nice", "good luck", "best", "terbaik", "juara",
-        "legend", "panutan", "idola", "produktif", "kreatif", "maju", "jaya",
-        "abadi", "gandoss", "markotop", "savage", "gg", "ggwp", "op", "hoki",
-        "cuan", "profit", "stonks", "sejahtera", "sentosa", "damai", "awet",
-        "langgeng", "barokah", "manjur", "paten", "yahud", "asik", "seru",
-        "rame", "laris", "manis", "berlimpah", "kaya", "makmur", "santuy",
-        "kalem", "rileks", "fokus", "rajin", "tekun", "giat", "hebat", "kuat",
-        "tangguh", "sabar", "ikhlas", "tawakal", "istiqomah", "bersyukur"
+        "semangat", "semangat terus", "jangan menyerah", "fighting", "gas terus",
+        "sukses", "sukses selalu", "sukses berkah", "maju terus", "jaya",
+        "sehat", "sehat selalu", "sehat wal afiat", "panjang umur", "kuat",
+        "lancar", "lancar jodoh", "lancar rezeki", "murah rezeki", "berkah",
+        "bahagia", "happy", "senang", "gembira", "santuy", "kalem", "rileks",
+        "mantap", "mantul", "mantap jiwa", "keren", "ganteng", "cantik",
+        "gacor", "menyala", "joss", "josss", "top", "markotop", "markesot",
+        "gokil", "gila", "wuenak", "sop trik", "cool", "nice", "nice inpoh",
+        "good luck", "best", "the best", "terbaik", "juara", "legend",
+        "panutan", "idola", "inspiratif", "produktif", "kreatif", "muda",
+        "hoki", "cuan", "profit", "stonks", "laris", "manis", "kaya", "makmur",
+        "berlimpah", "barokah", "mabrur", "amanah", "ikhlas", "tawakal", 
+        "istiqomah", "bersyukur", "syukur", "sakinah", "mawaddah", "warahmah",
+        "gandoss", "savage", "gg", "ggwp", "wp", "op", "imba", "anjay", "anjim",
+        "kece", "kece badai", "sipp", "sip", "oki", "oki sip", "sip lah",
+        "yoi", "yoi bos", "siapp", "siap", "oke", "oke gas", "oke sipp",
+        "solved", "fix", "no drama", "valid", "no debat",
     ]
 
     ucapan_terima_kasih = [
-        "makasih", "terima kasih", "thanks", "thx", "tq", "suwun", "hatur nuhun",
-        "sakalangkong", "maacih", "tengkyu", "arigato", "thank you", "big thanks",
-        "cheers", "peace", "salim", "sungkem", "thank u", "ty", "kamsia",
-        "xie xie", "gracias", "danke", "matur nuwun", "tararengkyu", "sankyu",
-        "syukron", "jazakallah", "thankies", "tysm", "nuwun", "aman", "siap",
-        "oke", "sip", "yoi", "mantul", "ashiap", "woke", "ok", "kamsahamnida"
+        "makasih", "terima kasih", "thanks", "thank you", "thank u", "ty", "tysm",
+        "thx", "tq", "tx", "makasih", "mksh", "mksih", "makasih banyak",
+        "suwun", "hatur nuhun", "matur nuwun", "nuwun", "suwun", 
+        "sakalangkong", "tengkyu", "tararengkyu", "nuhun",
+        "arigato", "arigatou", "kamsia", "xie xie", "gracias", "danke", 
+        "kamsahamnida", "merci", "salamat", "terima kasih",
+        "tenkyu", "tengkyu berat", "thanks berat", "appreciate it", 
+        "big thanks", "thanks a lot", "many thanks", "cheers", "cheers mate",
+        "peace", "salim", "sungkem", "pasrah", "langgeng", "joss",
+        "aman", "siap", "sip", "oki", "yoi", "mantul", "ashiap", "woke", "ok",
     ]
 
     partikel_pelengkap = [
-        "ya", "nih", "tuh", "dong", "banget", "terus", "selalu", "dikit",
-        "lumayan", "buat", "biar", "agar", "supaya", "saja", "aja", "doang",
-        "cuma", "hanya", "sekadar", "ala kadarnya", "seikhlasnya", "kecil kecilan",
-        "tipis tipis", "iseng", "gabut", "daripada luang", "sambil lewat",
-        "mah", "teh", "rek", "cok", "gan", "lur", "bos", "lah", "kah", "deh",
-        "kok", "kan", "yuk", "kuy", "skuy", "gas", "gaskeun", "sikat", "atuh",
-        "euy", "sih", "pun", "juga", "lagi", "mulu", "kali", "tah", "leh"
+        "ya", "yah", "iya", "nah", "nih", "tuh", "dong", "donk", "dunk",
+        "banget", "bgt", "parah", "sih", "tuh", "deh", "lah", "kah", "kok",
+        "anjay", "woi", "woy", "cuy", "bre", "bro", "sist", "bestie",
+        "terus", "selalu", "mulu", "lagi", "juga", "pun", "doang", "cuma",
+        "dikit", "lumayan", "buat", "untuk", "biar", "agar", "supaya", 
+        "saja", "aja", "sok atuh", "atuh", "mah", "teh", "rek", "cok", 
+        "lur", "bos", "bosku", "juragan",
+        "sekarang", "nanti", "besok", "kemarin", "tadi", "barusan",
+        "ala kadarnya", "seikhlasnya", "hati-hati", "santai", "gas",
+        "kecil kecilan", "tipis tipis", "seadanya", "apa adanya",
+        "iseng", "gabut", "daripada luang", "sambil lewat", "sadboy",
+        "yuk", "kuy", "skuy", "gas", "gaskeun", "sikat", "crot", "edm",
+        "wkwk", "hehe", "lol", "haha", "hihi", "sad", "cry",
     ]
 
     emojis_list = [
-        "☕", "🍵", "🥤", "🧋", "🍱", "🍜", "🍝", "🍟", "🍕", "🌭", "🥪", "🌮", "🌯",
-        "🍩", "🍪", "🎂", "🍰", "🧁", "🍫", "🍬", "🍭", "🍮", "🍯", "🍼", "🥛",
-        "🚀", "🔥", "✨", "⭐", "🌟", "💫", "💥", "💯", "💢", "💤", "💨", "💦",
-        "🙏", "👍", "👌", "✌️", "🤞", "🤟", "🤘", "🤙", "👋", "👏", "🙌", "👐",
-        "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❣️", "💕",
-        "😎", "🤩", "🥳", "🤗", "🤔", "🫡", "🫠", "🥹", "😊", "😇", "🙂", "🙃",
-        "💸", "💵", "💴", "💶", "💷", "💰", "💳", "💎", "⚖️", "🧱", "🔧", "🔨",
-        "🎉", "🎊", "🎈", "🎁", "🎀", "🧧", "🏮", "🍀", "🍄", "💐", "🌸", "🌹",
-        "🌚", "🌝", "🌞", "🧊", "🧂", "🍿", "🥓", "🥩", "🍗", "🍖", "🧀", "🥞",
-        "🍇", "🍈", "🍉", "🍊", "🍋", "🍌", "🍍", "🥭", "🍎", "🍏", "🍐", "🍑"
+        "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗",
+        "😙", "😚", "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓",
+        "😎", "🤩", "🥳", "😏", "😒", "😞", "😔", "😟", "😕", "🙁",
+        "☹️", "😣", "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠",
+        "😡", "🤬", "🤯", "😳", "🥵", "🥶", "😱", "😨", "😰", "😥",
+        "🤗", "🤔", "🤭", "🤫", "🤥", "😶", "😐", "😑", "😬", "🙄",
+        "😯", "😦", "😧", "😮", "😲", "🥱", "😴", "🤤", "😪", "😵",
+        "🤐", "🥴", "🤢", "🤮", "🤧", "😷", "🤒", "🤕", "🤑", "🤠",
+        "👋", "🤚", "🖐️", "✋", "🖖", "👌", "🤌", "🤏", "✌️", "🤞",
+        "🤟", "🤘", "🤙", "👈", "👉", "👆", "🖕", "👇", "☝️", "👍",
+        "👎", "✊", "👊", "🤛", "🤜", "👏", "🙌", "👐", "🤲", "🤝",
+        "🙏", "✍️", "💅", "🤳", "💪", "🦾", "🦿", "🦵", "🦶", "👂",
+        "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔",
+        "❣️", "💕", "💞", "💓", "💗", "💖", "💘", "💝", "💟", "♥️",
+        "💌", "💤", "💢", "💣", "💥", "💨", "💦", "💫", "💬", "💭",
+        "🗯️", "♠️", "♣️", "♥️", "♦️", "🃏", "🎴", "🀄", "🕐", "🕑",
+        "☕", "🍵", "🥤", "🧋", "🍶", "🍾", "🍷", "🍸", "🍹", "🍺",
+        "🍻", "🥂", "🥃", "🥡", "🥢", "🍽️", "🍴", "🥄", "🔪", "🏺",
+        "🌽", "🍠", "🍯", "🍼", "🥛", "☕", "🧉", "🫖", "🧃", "🥤",
+        "🍱", "🍘", "🍙", "🍚", "🍛", "🍜", "🍝", "🍠", "🍢", "🍣",
+        "🍤", "🍥", "🥮", "🍡", "🥟", "🥠", "🥡", "🍦", "🍧", "🍨",
+        "🍩", "🍪", "🎂", "🍰", "🧁", "🥧", "🍫", "🍬", "🍭", "🍮",
+        "🍯", "🍼", "🥛", "☕", "🫖", "🧃", "🥤", "🧋", "🍶", "🍺",
+        "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯",
+        "🦁", "🐮", "🐷", "🐽", "🐸", "🐵", "🙈", "🙉", "🙊", "🐒",
+        "🐔", "🐧", "🐦", "🐤", "🐣", "🐥", "🦆", "🦅", "🦉", "🦇",
+        "🐺", "🐗", "🐴", "🦄", "🐝", "🐛", "🦋", "🐌", "🐞", "🐜",
+        "🦟", "🦗", "🕷️", "🕸️", "🦂", "🐢", "🐍", "🦎", "🦖", "🦕",
+        "🐙", "🦑", "🦐", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳",
+        "🐋", "🦈", "🐊", "🐅", "🐆", "🦓", "🦍", "🦧", "🦣", "🐘",
+        "🦛", "🦏", "🐪", "🐫", "🦒", "🦘", "🦬", "🐃", "🐂", "🐄",
+        "🐎", "🐖", "🐏", "🐑", "🦙", "🐐", "🦌", "🐕", "🐩", "🦮",
+        "🐈", "🐓", "🦃", "🦤", "🦚", "🦜", "🦢", "🦩", "🕊️", "🐇",
+        "🦝", "🦨", "🦡", "🦦", "🦥", "🐁", "🐀", "🐿️", "🦔", "🐾",
+        "🌸", "💮", "🏵️", "🌹", "🥀", "🌺", "🌻", "🌼", "🌷", "🌱",
+        "🪴", "🌲", "🌳", "🌴", "🌵", "🌾", "🌿", "☘️", "🍀", "🍁",
+        "🍂", "🍃", "🍄", "🐚", "🌾", "💐", "🌷", "🌹", "🥀", "🌺",
+        "⚽", "🏀", "🏈", "⚾", "🥎", "🎾", "🏐", "🏉", "🥏", "🎱",
+        "🪀", "🏓", "🏸", "🏒", "🏑", "🥍", "🏏", "🪃", "🥅", "⛳",
+        "🪁", "🏹", "🎣", "🤿", "🥊", "🥋", "🎽", "🛹", "🛼", "🛷",
+        "⛸️", "🥌", "🎿", "⛷️", "🏂", "🪂", "🏋️", "🤼", "🤸", "🤺",
+        "⛹️", "🤾", "🏌️", "🏇", "🧘", "🏄", "🏊", "🤽", "🚣", "🧗",
+        "💎", "💰", "💴", "💵", "💶", "💷", "💸", "💳", "🧾", "💹",
+        "✉️", "📩", "📨", "📧", "💌", "📥", "📤", "📦", "🏷️", "📪",
+        "📫", "📬", "📭", "📮", "📯", "📜", "📃", "📄", "📑", "🧾",
+        "📊", "📈", "📉", "🗒️", "🗓️", "📆", "📅", "🗑️", "📇", "🗃️",
+        "🗳️", "🗄️", "📋", "📁", "📂", "🗂️", "🗞️", "📰", "📓", "📔",
+        "📒", "📕", "📗", "📘", "📙", "📚", "📖", "🔖", "🧷", "🔗",
+        "📎", "🖇️", "📐", "📏", "🧮", "📌", "📍", "✂️", "🖊️", "🖋️",
+        "✒️", "🖌️", "🖍️", "📝", "✏️", "🔍", "🔎", "🔏", "🔐", "🔒",
+        "🔓", "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎",
+        "🚀", "🛸", "🚁", "🛶", "⛵", "🚤", "🛥️", "🛳️", "⛴️", "🚢",
+        "✈️", "🛩️", "🛫", "🛬", "🪂", "💺", "🚁", "🚟", "🚠", "🚡",
+        "🚇", "🚝", "🚋", "🚃", "🚄", "🚅", "🚈", "🚂", "🚆", "🚇",
+        "🚇", "🚈", "🚉", "🚊", "🚝", "🚞", "🚋", "🚌", "🚍", "🚎",
+        "🚐", "🚑", "🚒", "🚓", "🚔", "🚕", "🚖", "🚗", "🚘", "🚙",
+        "🛻", "🚚", "🚛", "🚜", "🏎️", "🏍️", "🛵", "🦽", "🦼", "🛺",
+        "🚲", "🛴", "🛹", "🛼", "🚏", "🛣️", "🛤️", "🛢️", "⛽", "🚨",
+        "🚥", "🚦", "🛑", "🚧", "⚓", "⛵", "🚣", "🛶", "🚤", "🛳️",
+        "⌛", "⏳", "⌚", "⏰", "⏱️", "⏲️", "🕰️", "⏰", "⌚", "📱",
+        "📲", "💻", "⌨️", "🖥️", "🖨️", "🖱️", "🖲️", "💽", "💾", "💿",
+        "📀", "📼", "📷", "📸", "📹", "🎥", "📽️", "🎞️", "📞", "☎️",
+        "📟", "📠", "📺", "📻", "🎙️", "🎚️", "🎛️", "🧭", "⏱️", "⏲️",
+        "⌚", "⏰", "🕰️", "⌛", "⏳", "📡", "🔋", "🔌", "💡", "🔦",
+        "🕯️", "🪔", "🧯", "🛢️", "💸", "💵", "💴", "💶", "💷", "💵",
+        "💰", "💳", "💎", "⚖️", "🧰", "🔧", "🔨", "⚒️", "🛠️", "⛏️",
+        "🔩", "⚙️", "🧱", "⛓️", "🧲", "🔫", "💣", "🧨", "🪓", "🔪",
+        "🗡️", "⚔️", "🛡️", "🚬", "⚰️", "⚱️", "🏺", "🔮", "📿", "🧿",
+        "💈", "⚗️", "🔭", "🔬", "🕳️", "🩹", "🩺", "💊", "💉", "🩸",
+        "🧬", "🦠", "🧫", "🧪", "🌡️", "🧹", "🧺", "🧻", "🚽", "🚰",
+        "🚿", "🛁", "🛀", "🧼", "🪥", "🪒", "🧽", "🪣", "🧴", "🛎️",
+        "🔑", "🗝️", "🚪", "🪑", "🛋️", "🛏️", "🛌", "🧸", "🪆", "🖼️",
+        "🛍️", "🛒", "🎁", "🎈", "🎏", "🎀", "🎊", "🎉", "🎎", "🏮",
+        "🎐", "🧧", "✉️", "📩", "📨", "📧", "💌", "📥", "📤", "📦",
+        "🏷️", "📪", "📫", "📬", "📭", "📮", "📯", "📜", "📃", "📄",
+        "📑", "🧾", "📊", "📈", "📉", "🗒️", "🗓️", "📆", "📅", "🗑️",
+        "📇", "🗃️", "🗳️", "🗄️", "📋", "📁", "📂", "🗂️", "🗞️", "📰",
+        "📓", "📔", "📒", "📕", "📗", "📘", "📙", "📚", "📖", "🔖",
+        "🧷", "🔗", "📎", "🖇️", "📐", "📏", "🧮", "📌", "📍", "✂️",
+        "🖊️", "🖋️", "✒️", "🖌️", "🖍️", "📝", "✏️", "🔍", "🔎", "🔏",
+        "🔐", "🔒", "🔓", "🔔", "🔕", "🔖", "💡", "🔦", "🏮", "📔",
+        "📓", "📒", "📕", "📗", "📘", "📙", "📚", "📖", "🔖", "🧷",
     ]
 
-    pola_kalimat = random.randint(1, 10)
+    pola_kalimat = random.randint(1, 12)
     parts = []
 
     if pola_kalimat == 1:
@@ -142,6 +266,16 @@ def generate_safe_saweria_message(user_name):
         parts.append(random.choice(objek_gabungan))
         parts.append(random.choice(objek_gabungan))
         parts.append(random.choice(panggilan_akrab))
+    elif pola_kalimat == 10:
+        parts.append(random.choice(sapaan_pembuka))
+        parts.append(random.choice(panggilan_akrab))
+        parts.append(random.choice(kata_kerja_memberi))
+        parts.append(random.choice(objek_gabungan))
+        parts.append(random.choice(partikel_pelengkap))
+    elif pola_kalimat == 11:
+        parts.append(random.choice(kata_sifat_doa))
+        parts.append(random.choice(kata_sifat_doa))
+        parts.append(random.choice(partikel_pelengkap))
     else:
         parts.append(random.choice(kata_kerja_memberi))
         parts.append(random.choice(objek_gabungan))
@@ -149,13 +283,13 @@ def generate_safe_saweria_message(user_name):
 
     if random.random() > 0.3:
         parts.append(random.choice(emojis_list))
-    
+
     if random.random() > 0.6:
         parts.insert(0, random.choice(emojis_list))
 
     final_message = " ".join(parts)
 
-    casing_style = random.randint(1, 5)
+    casing_style = random.randint(1, 6)
     if casing_style == 1:
         final_message = final_message.lower()
     elif casing_style == 2:
@@ -164,9 +298,11 @@ def generate_safe_saweria_message(user_name):
         final_message = final_message.title()
     elif casing_style == 4:
         final_message = final_message.upper()
-
-    unique_code = ''.join(random.choices(string.ascii_lowercase + string.digits, k=random.randint(4, 6)))
+    elif casing_style == 5:
+        final_message = "".join(c.upper() if i % 2 == 0 else c.lower() for i, c in enumerate(final_message))
     
+    unique_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=random.randint(5, 7)))
+
     return f"{final_message} ({unique_code})"
 
 
