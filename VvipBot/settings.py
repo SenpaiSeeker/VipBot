@@ -23,6 +23,9 @@ async def settings(client, callback_query):
         ],
         [
             {"text": lang.get("settings.check_active_members"), "callback_data": "check_active_menu_init"},
+            {"text": lang.get("vvip_status.button"), "callback_data": "check_vvip_status"},
+        ],
+        [
             {"text": lang.get("settings.broadcast"), "callback_data": "broadcast"},
         ],
         [
@@ -45,6 +48,55 @@ async def settings(client, callback_query):
         await callback_query.edit_message_caption(txt_content, reply_markup=btn)
     else:
         await callback_query.edit_message_text(txt_content, reply_markup=btn)
+
+@command(lambda ctx: filters.regex("^check_vvip_status$"), handler_type="callback")
+async def check_vvip_status_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return await callback_query.answer(callback_query.lang.get("general.no_access"), show_alert=True)
+
+    lang = callback_query.lang
+    chat_id = callback_query.message.chat.id
+    
+    await callback_query.message.delete()
+    status_msg = await client.send_message(chat_id, lang.get("vvip_status.processing"))
+
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    
+    if not vvip_list:
+        return await status_msg.edit(lang.get("vvip_status.empty"))
+
+    report_text = lang.get("vvip_status.header")
+    
+    for item in vvip_list:
+        chat_id_target = item.get("chat_id_normal")
+        name = item.get("name")
+        
+        try:
+            chat = await client.get_chat(chat_id_target)
+            
+            if hasattr(chat, "restrictions") and chat.restrictions:
+                restriction = chat.restrictions[0]
+                reason_text = f"{restriction.reason}: {restriction.text}"
+                report_text += lang.get("vvip_status.entry_banned", name=name, title=chat.title, reason=reason_text)
+            else:
+                link = chat.invite_link or "N/A"
+                report_text += lang.get("vvip_status.entry_normal", name=name, title=chat.title, link=link)
+                
+        except Exception:
+            report_text += lang.get("vvip_status.entry_error", name=name, chat_id=chat_id_target)
+
+        if len(report_text) > 3500:
+            await client.send_message(chat_id, report_text)
+            report_text = ""
+
+    if report_text:
+        await client.send_message(chat_id, report_text)
+    
+    layout = [[{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]]
+    btn = client.ns.telegram.button.build_button_grid(layout)
+    
+    await status_msg.delete()
+    await client.send_message(chat_id, lang.get("vvip_status.done"), reply_markup=btn)
 
 
 @command(lambda ctx: filters.regex("^vip_revenue_menu$"), handler_type="callback")
