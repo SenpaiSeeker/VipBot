@@ -478,3 +478,13 @@ gift:
   finding_user: "<emoji id=5264727218734524899>🔄</emoji> Searching for user `{input}`..."
   user_not_found: "<emoji id=6298671811345254603>❌</emoji> User not found. Check username/ID."
   timeout: "<emoji id=5413704112220949842>⏰</emoji> Timeout. Please repeat process."
+
+vvip_status:
+  button: "🔍 Check VVIP Group Status"
+  processing: "<emoji id=5451732530048802485>⏳</emoji> Checking Group Status...\nPlease wait, this process might take a while."
+  header: "<emoji id=6271786398404055377>🕵️</emoji> VVIP Group Status Report\n\n"
+  empty: "<emoji id=6298671811345254603>❌</emoji> No VVIP data available."
+  entry_normal: "<emoji id=6283073379184415506>📦</emoji> Name: {name}\n<emoji id=6129870117619634982>💡</emoji> Group: {title}\n<emoji id=5373052667671093676>🔗</emoji> Link: {link}\n<emoji id=6296367896398399651>✅</emoji> Status: Active\n\n"
+  entry_banned: "<emoji id=6283073379184415506>📦</emoji> Name: {name}\n<emoji id=6129870117619634982>💡</emoji> Group: {title}\n<emoji id=6298671811345254603>⛔</emoji> STATUS: BANNED/RESTRICTED\n<emoji id=5334882760735598374>📝</emoji> Reason: {reason}\n\n"
+  entry_error: "<emoji id=6283073379184415506>📦</emoji> Name: {name}\n<emoji id=6298671811345254603>❌</emoji> Error: Cannot access group (ID: {chat_id}). Ensure bot is admin.\n\n"
+  done: "<emoji id=6296367896398399651>✅</emoji> Check Completed."
