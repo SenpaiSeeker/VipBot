@@ -51,7 +51,6 @@ class BotManager:
             log.print(f"{log.RED}Gagal memulai bot {bot_id}: {e}")
             if any(err in error_str for err in common_errors):
                 await self.db.removeBot(bot_id)
-                await self.db.removeBot(bot_id)
                 log.debug(f"Data bot {bot_id} dihapus karena token tidak valid/terblokir.")
 
     async def start_all_bots(self):
@@ -114,6 +113,7 @@ async def expiration_checker_method():
                     log.print(f"{log.RED}Gagal mengirim notifikasi kedaluwarsa ke owner {owner_id}: {e}")
 
                 await manager.stop_bot(bot_id)
+                await manager.db.removeBot(bot_id)
                 log.warning(f"Bot {bot_id} telah dihapus karena kedaluwarsa.")
                 continue
 
