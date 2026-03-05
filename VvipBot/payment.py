@@ -729,10 +729,19 @@ async def pay_all_vvip_callback(client, callback_query):
 
     await _create_all_vvip_payment_invoice(client, callback_query.from_user, selected_items, total_amount)
 
-@command(lambda ctx: filters.regex(r"^notes_(\d+)"), handler_type="callback")
+
+@command(lambda ctx: filters.regex(r"^notes_(.+)"), handler_type="callback")
 async def notes_data(client, callback_query):
     lang = callback_query.lang
-    item_index = int(callback_query.matches[0].group(1))
+    item_id = callback_query.matches[0].group(1)
+
+    if item_id.isdigit():
+        item_index = int(item_id)
+    else:
+        if not hasattr(ctx, "vip_list") or item_id not in ctx.vip_list:
+            return await callback_query.answer("Sesi kedaluwarsa, silakan muat ulang menu.", show_alert=True)
+        item_index = ctx.vip_list[item_id]
+
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
     layout = [[{"text": lang.get("general.back_to_vvip_list"), "callback_data": "list_vvip"}]]
@@ -753,14 +762,12 @@ async def notes_data(client, callback_query):
             else lang.get("payment.defaults.notes_text", name=name, price=f"{price_val:,}")
         )
 
-        layout = [
-            [
+        layout = [[
                 {
                     "text": lang.get("payment.notes.pay_button"),
                     "callback_data": f"paynow_{item_index}_normal_{price_val}",
                 }
-            ],
-            [
+            ],[
                 {
                     "text": lang.get("coupons.use_button"),
                     "callback_data": f"apply_coupon_{item_index}_normal_{price_val}",
@@ -783,10 +790,18 @@ async def notes_data(client, callback_query):
         await callback_query.edit_message_text(text, reply_markup=btn)
 
 
-@command(lambda ctx: filters.regex(r"^promo_detail_(\d+)"), handler_type="callback")
+@command(lambda ctx: filters.regex(r"^promo_detail_(.+)"), handler_type="callback")
 async def promo_detail(client, callback_query):
     lang = callback_query.lang
-    item_index = int(callback_query.matches[0].group(1))
+    item_id = callback_query.matches[0].group(1)
+
+    if item_id.isdigit():
+        item_index = int(item_id)
+    else:
+        if not hasattr(ctx, "vip_list") or item_id not in ctx.vip_list:
+            return await callback_query.answer("Sesi kedaluwarsa, silakan muat ulang menu.", show_alert=True)
+        item_index = ctx.vip_list[item_id]
+
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
     layout = [[{"text": lang.get("general.back_to_vvip_list"), "callback_data": "list_vvip"}]]
@@ -807,14 +822,12 @@ async def promo_detail(client, callback_query):
             else lang.get("payment.defaults.promo_text", name=name, promo_price=f"{promo_price_val:,}")
         )
 
-        layout = [
-            [
+        layout = [[
                 {
                     "text": lang.get("payment.promo.pay_button"),
                     "callback_data": f"paynow_{item_index}_promo_{promo_price_val}",
                 }
-            ],
-            [
+            ],[
                 {
                     "text": lang.get("coupons.use_button"),
                     "callback_data": f"apply_coupon_{item_index}_promo_{promo_price_val}",
