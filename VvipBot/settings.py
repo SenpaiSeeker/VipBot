@@ -439,7 +439,7 @@ async def delete_listvvip(client, callback_query):
     lang = callback_query.lang
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
-    back_row = [{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]
+    back_row =[{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]
 
     if not vvip_list:
         text = lang.get("settings.delete_vvip_empty")
@@ -448,16 +448,23 @@ async def delete_listvvip(client, callback_query):
             return await callback_query.edit_message_caption(text, reply_markup=btn)
         return await callback_query.edit_message_text(text, reply_markup=btn)
 
+    if not hasattr(ctx, "vip_list"):
+        ctx.vip_list = {}
+
     layout = []
-    button_row = []
+    button_row =[]
     for item in vvip_list:
         name = item.get("name", "Tanpa Nama")
+        item_id = uuid.uuid4().hex[:8]
+        ctx.vip_list[item_id] = name
+        
         button_row.append(
-            {"text": lang.get("settings.delete_vvip_button", name=name), "callback_data": f"delete_vvip {name}"}
+            {"text": lang.get("settings.delete_vvip_button", name=name), "callback_data": f"delete_vvip {item_id}"}
         )
         if len(button_row) == 2:
             layout.append(button_row)
-            button_row = []
+            button_row =[]
+    
     if button_row:
         layout.append(button_row)
 
@@ -476,17 +483,23 @@ async def confirm_delete_vvip(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
     lang = callback_query.lang
-    _, name = callback_query.data.split(" ", 1)
+    _, item_id = callback_query.data.split(" ", 1)
 
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    if not hasattr(ctx, "vip_list") or item_id not in ctx.vip_list:
+        return await callback_query.answer("Sesi tidak ditemukan atau kedaluwarsa. Silakan muat ulang menu.", show_alert=True)
+    
+    name = ctx.vip_list[item_id]
+
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or[]
     item_to_remove = next((item for item in vvip_list if item.get("name") == name), None)
 
-    back_row = [{"text": lang.get("general.back_to_settings"), "callback_data": "delete_listvvip"}]
+    back_row =[{"text": lang.get("general.back_to_settings"), "callback_data": "delete_listvvip"}]
 
     if item_to_remove:
         await ctx.db.removeListVars(client.me.id, "list_vvip", item_to_remove)
         ctx.log.print(f"{ctx.log.ORANGE}Owner bot {client.me.id} menghapus VVIP: {name}")
         message = lang.get("settings.delete_vvip_success", name=name)
+        del ctx.vip_list[item_id]
     else:
         message = lang.get("settings.delete_vvip_fail", name=name)
 
