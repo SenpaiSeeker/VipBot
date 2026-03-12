@@ -332,7 +332,8 @@ async def broadcast_callback(client, callback_query):
             if user_id != ctx.owner_id:
                 await send_to_user(user_id)
 
-        await progress_msg.edit(lang.get("settings.broadcast_done", success=success_count, fail=fail_count))
+        await client.send_message(chat_id, lang.get("settings.broadcast_done", success=success_count, fail=fail_count))
+        await progress_msg.delete()
 
     except listen.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"))
