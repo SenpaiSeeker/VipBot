@@ -9,7 +9,12 @@ from PIL import Image, ImageDraw
 from pyzbar import pyzbar
 from qrcode.image.styledpil import StyledPilImage
 from qrcode.image.styles.moduledrawers import CircleModuleDrawer
-from .font_manager import FontManager
+
+from PIL import ImageFont
+
+class FontManager:
+    def _get_font_from_package(self, font_filename, size):
+        return ImageFont.load_default()
 
 class QrCodeGenerator(FontManager):
     def __init__(self):
