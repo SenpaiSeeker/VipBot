@@ -1,1 +1,2 @@
 git+https://github.com/SenpaiSeeker/norsodikin#egg=norsodikin[pyrogram]
+tornado
