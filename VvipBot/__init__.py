@@ -16,7 +16,7 @@ from time import time
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
-import nsdev
+from helpers.listen import listen
 import pyrogram
 from nsdev import listen
 from pyrogram import filters
