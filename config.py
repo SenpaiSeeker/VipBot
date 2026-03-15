@@ -2,7 +2,7 @@ import os
 import sys
 
 import dotenv
-from nsdev import KeyManager
+from helpers.storekey import KeyManager
 
 key_manager = KeyManager()
 DB_KEY, env_file = key_manager.handle_arguments()
