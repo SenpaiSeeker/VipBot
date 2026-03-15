@@ -1,10 +1,10 @@
-import nsdev
+from helpers.scheduler import Scheduler
+from helpers.database import DataBase
 
 from config import BOT_TOKEN, DB_KEY, DB_NAME, OWNER_ID
+schedule = Scheduler()
 
-schedule = nsdev.Scheduler()
-
-db = nsdev.DataBase(
+db = DataBase(
     storage_type="local",
     file_name=DB_NAME,
     keys_encrypt=DB_KEY,
