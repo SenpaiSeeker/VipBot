@@ -12,7 +12,7 @@ from .gemini import ChatbotGemini
 
 class MockUtils:
     def __init__(self):
-        self.log = LoggerHandler()
+        self.log = LoggerHandler
         self.faker = FakeInfoGenerator()
         self.grad = Gradient()
 
