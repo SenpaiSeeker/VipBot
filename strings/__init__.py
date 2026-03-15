@@ -1,6 +1,6 @@
 import os
 
-from nsdev import YamlHandler
+from helpers.yaml_handler import YamlHandler
 
 yaml = YamlHandler()
 LANGS = {}
