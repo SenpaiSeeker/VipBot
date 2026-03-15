@@ -49,6 +49,7 @@ async def settings(client, callback_query):
     else:
         await callback_query.edit_message_text(txt_content, reply_markup=btn)
 
+
 @command(lambda ctx: filters.regex("^check_vvip_status$"), handler_type="callback")
 async def check_vvip_status_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
@@ -56,24 +57,24 @@ async def check_vvip_status_callback(client, callback_query):
 
     lang = callback_query.lang
     chat_id = callback_query.message.chat.id
-    
+
     await callback_query.message.delete()
     status_msg = await client.send_message(chat_id, lang.get("vvip_status.processing"))
 
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-    
+
     if not vvip_list:
         return await status_msg.edit(lang.get("vvip_status.empty"))
 
     report_text = lang.get("vvip_status.header")
-    
+
     for item in vvip_list:
         chat_id_target = item.get("chat_id_normal")
         name = item.get("name")
-        
+
         try:
             chat = await client.get_chat(chat_id_target)
-            
+
             if hasattr(chat, "restrictions") and chat.restrictions:
                 restriction = chat.restrictions[0]
                 reason_text = f"{restriction.reason}: {restriction.text}"
@@ -81,7 +82,7 @@ async def check_vvip_status_callback(client, callback_query):
             else:
                 link = chat.invite_link or "N/A"
                 report_text += lang.get("vvip_status.entry_normal", name=name, title=chat.title, link=link)
-                
+
         except Exception:
             report_text += lang.get("vvip_status.entry_error", name=name, chat_id=chat_id_target)
 
@@ -91,10 +92,10 @@ async def check_vvip_status_callback(client, callback_query):
 
     if report_text:
         await client.send_message(chat_id, report_text)
-    
+
     layout = [[{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]]
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     await status_msg.delete()
     await client.send_message(chat_id, lang.get("vvip_status.done"), reply_markup=btn)
 
@@ -117,7 +118,7 @@ async def vip_revenue_menu_callback(client, callback_query):
         ],
         [
             {"text": lang.get("general.back_to_settings"), "callback_data": "settings"},
-        ]
+        ],
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
 
@@ -134,17 +135,17 @@ async def show_vip_revenue_callback(client, callback_query):
 
     lang = callback_query.lang
     period = callback_query.matches[0].group(1)
-    
+
     revenue_history = await ctx.db.getListVars(client.me.id, "vip_revenue_history") or []
-    
+
     now = datetime.now(ZoneInfo("Asia/Jakarta"))
     total_amount = 0
     transaction_count = 0
-    
+
     for record in revenue_history:
         try:
             record_date = datetime.fromisoformat(record["date"]).astimezone(ZoneInfo("Asia/Jakarta"))
-            
+
             include_record = False
             if period == "daily":
                 if record_date.date() == now.date():
@@ -155,7 +156,7 @@ async def show_vip_revenue_callback(client, callback_query):
             elif period == "monthly":
                 if record_date.year == now.year and record_date.month == now.month:
                     include_record = True
-            
+
             if include_record:
                 total_amount += int(record["amount"])
                 transaction_count += 1
@@ -163,12 +164,7 @@ async def show_vip_revenue_callback(client, callback_query):
             continue
 
     period_text = lang.get(f"revenue.period_{period}")
-    text = lang.get(
-        "revenue.result_panel",
-        period=period_text,
-        total=f"{total_amount:,}",
-        count=transaction_count
-    )
+    text = lang.get("revenue.result_panel", period=period_text, total=f"{total_amount:,}", count=transaction_count)
 
     layout = [[{"text": lang.get("general.back"), "callback_data": "vip_revenue_menu"}]]
     btn = client.ns.telegram.button.build_button_grid(layout)
@@ -271,7 +267,7 @@ async def _send_broadcast_message(client, target_user_id, source_message):
     elif source_message.text:
         await client.send_message(
             chat_id=target_user_id,
-            text=cleaned_text, 
+            text=cleaned_text,
             reply_markup=(
                 reply_markup
                 if reply_markup.inline_keyboard
@@ -288,7 +284,6 @@ async def _send_broadcast_message(client, target_user_id, source_message):
                 else source_message.reply_markup if source_message.reply_markup else None
             ),
         )
-
 
 
 @command(lambda ctx: filters.regex("^broadcast$"), handler_type="callback")
@@ -440,7 +435,7 @@ async def delete_listvvip(client, callback_query):
     lang = callback_query.lang
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
-    back_row =[{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]
+    back_row = [{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]
 
     if not vvip_list:
         text = lang.get("settings.delete_vvip_empty")
@@ -453,19 +448,19 @@ async def delete_listvvip(client, callback_query):
         ctx.vip_list = {}
 
     layout = []
-    button_row =[]
+    button_row = []
     for item in vvip_list:
         name = item.get("name", "Tanpa Nama")
         item_id = uuid.uuid4().hex[:8]
         ctx.vip_list[item_id] = name
-        
+
         button_row.append(
             {"text": lang.get("settings.delete_vvip_button", name=name), "callback_data": f"delete_vvip {item_id}"}
         )
         if len(button_row) == 2:
             layout.append(button_row)
-            button_row =[]
-    
+            button_row = []
+
     if button_row:
         layout.append(button_row)
 
@@ -487,14 +482,16 @@ async def confirm_delete_vvip(client, callback_query):
     _, item_id = callback_query.data.split(" ", 1)
 
     if not hasattr(ctx, "vip_list") or item_id not in ctx.vip_list:
-        return await callback_query.answer("Sesi tidak ditemukan atau kedaluwarsa. Silakan muat ulang menu.", show_alert=True)
-    
+        return await callback_query.answer(
+            "Sesi tidak ditemukan atau kedaluwarsa. Silakan muat ulang menu.", show_alert=True
+        )
+
     name = ctx.vip_list[item_id]
 
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or[]
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     item_to_remove = next((item for item in vvip_list if item.get("name") == name), None)
 
-    back_row =[{"text": lang.get("general.back_to_settings"), "callback_data": "delete_listvvip"}]
+    back_row = [{"text": lang.get("general.back_to_settings"), "callback_data": "delete_listvvip"}]
 
     if item_to_remove:
         await ctx.db.removeListVars(client.me.id, "list_vvip", item_to_remove)

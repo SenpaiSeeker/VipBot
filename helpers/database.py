@@ -8,9 +8,12 @@ import zipfile
 from datetime import datetime
 from functools import partial
 from zoneinfo import ZoneInfo
-import aiohttp
+
 import aiofiles
+import aiohttp
+
 from .encrypt import CipherHandler
+
 
 class DataBase:
     def __init__(self, **options):
@@ -19,7 +22,7 @@ class DataBase:
         self.keys_encrypt = options.get("keys_encrypt", "default_db_key_12345")
         self.method_encrypt = options.get("method_encrypt", "bytes")
         self.cipher = CipherHandler(key=self.keys_encrypt, method=self.method_encrypt)
-        self._lock = asyncio.Lock() 
+        self._lock = asyncio.Lock()
 
         self.auto_backup = options.get("auto_backup", False)
         self.backup_bot_token = options.get("backup_bot_token")
@@ -29,6 +32,7 @@ class DataBase:
 
         if self.storage_type == "mongo":
             import pymongo
+
             self.mongo_url = options.get("mongo_url")
             if not self.mongo_url:
                 raise ValueError("mongo_url is required for MongoDB storage")
@@ -44,7 +48,7 @@ class DataBase:
             self.data_file = f"{self.file_name}.json"
             if not os.path.exists(self.data_file):
                 with open(self.data_file, "w") as f:
-                    json.dump({"vars": {}, "bots":[]}, f, indent=4)
+                    json.dump({"vars": {}, "bots": []}, f, indent=4)
 
         self._register_backup_task()
 
@@ -65,13 +69,13 @@ class DataBase:
         async with self._lock:
             db_path = self.data_file if self.storage_type == "local" else self.db_file
             if not await self._run_sync(os.path.exists, db_path):
-                 self.cipher.log.warning("Database file not found for backup.")
-                 return
+                self.cipher.log.warning("Database file not found for backup.")
+                return
 
             temp_backup_dir = "temp_db_backup"
             if not os.path.exists(temp_backup_dir):
                 os.makedirs(temp_backup_dir)
-            
+
             try:
                 temp_db_path = os.path.join(temp_backup_dir, os.path.basename(db_path))
                 await self._run_sync(shutil.copy2, db_path, temp_db_path)
@@ -80,7 +84,7 @@ class DataBase:
                 if env_files:
                     source_paths.extend(env_files)
                 zip_path = await self._run_sync(self._create_zip_archive, source_paths, temp_backup_dir)
-                
+
                 if zip_path:
                     timestamp = datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%Y-%m-%d %H:%M:%S %Z")
                     caption = (
@@ -94,9 +98,9 @@ class DataBase:
             finally:
                 await self._run_sync(shutil.rmtree, temp_backup_dir, ignore_errors=True)
                 if zip_path and os.path.exists(zip_path):
-                     try:
+                    try:
                         os.remove(zip_path)
-                     except:
+                    except:
                         pass
 
     def _create_zip_archive(self, source_paths: list, temp_dir: str):
@@ -137,10 +141,10 @@ class DataBase:
                 async with aiofiles.open(self.data_file, "r") as f:
                     content = await f.read()
                     if not content.strip():
-                         return {"vars": {}, "bots":[]}
+                        return {"vars": {}, "bots": []}
                     return json.loads(content)
             except (FileNotFoundError, json.JSONDecodeError):
-                return {"vars": {}, "bots":[]}
+                return {"vars": {}, "bots": []}
 
     async def _save_data(self, data):
         async with self._lock:
@@ -229,7 +233,7 @@ class DataBase:
         val_str = json.dumps(value) if isinstance(value, (dict, list)) else str(value)
         encrypted_value = self.cipher.encrypt(val_str)
         user_data = await self._get_user_vars(user_id)
-        user_data.setdefault(var_key, {}).setdefault(query_name,[])
+        user_data.setdefault(var_key, {}).setdefault(query_name, [])
         if encrypted_value not in user_data[var_key][query_name]:
             user_data[var_key][query_name].append(encrypted_value)
             await self._set_user_vars(user_id, user_data)
@@ -237,7 +241,7 @@ class DataBase:
     async def getListVars(self, user_id, query_name, var_key="variabel"):
         user_data = await self._get_user_vars(user_id)
         encrypted_list = user_data.get(var_key, {}).get(query_name, [])
-        decoded_list =[]
+        decoded_list = []
         for v in encrypted_list:
             decrypted = self.cipher.decrypt(v)
             try:
@@ -279,7 +283,7 @@ class DataBase:
         decrypted = {}
         for key, value in encrypted_data.items():
             if isinstance(value, list):
-                temp_list =[]
+                temp_list = []
                 for v in value:
                     try:
                         decrypted_v = self.cipher.decrypt(v)
@@ -328,7 +332,7 @@ class DataBase:
             )
         else:
             full_data = await self._load_data()
-            bots_list = full_data.get("bots",[])
+            bots_list = full_data.get("bots", [])
             existing_index = next((index for (index, d) in enumerate(bots_list) if d.get("user_id") == user_id_str), -1)
             if existing_index != -1:
                 bots_list[existing_index].update(bot_data)
@@ -339,7 +343,7 @@ class DataBase:
             await self._save_data(full_data)
 
     async def getBots(self, is_token=False):
-        raw_bots =[]
+        raw_bots = []
         if self.storage_type == "mongo":
             raw_bots = await self._run_sync(lambda: list(self.data.bot.find()))
         elif self.storage_type == "sqlite":
@@ -362,16 +366,16 @@ class DataBase:
             data = await self._load_data()
             raw_bots = data.get("bots", [])
 
-        decrypted_bots =[]
+        decrypted_bots = []
         for bot_data in raw_bots:
             try:
                 decrypted = {"name": bot_data.get("user_id") or bot_data.get("_id")}
-                for key in["api_id", "api_hash", "bot_token", "session_string"]:
+                for key in ["api_id", "api_hash", "bot_token", "session_string"]:
                     val = bot_data.get(key)
                     if val:
                         dec_val = self.cipher.decrypt(val)
                         decrypted[key] = int(dec_val) if key == "api_id" else dec_val
-                
+
                 if (is_token and "bot_token" in decrypted) or (not is_token and "session_string" in decrypted):
                     decrypted_bots.append(decrypted)
             except:

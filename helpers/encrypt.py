@@ -1,8 +1,9 @@
 import base64
 import binascii
 import json
-from .colorize import AnsiColors
+
 from .logger import LoggerHandler
+
 
 class CipherHandler:
     def __init__(self, **options):

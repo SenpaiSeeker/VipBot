@@ -1,4 +1,3 @@
-import math
 import re
 from typing import Dict, List
 
@@ -24,15 +23,15 @@ class Button:
                 for part in parts:
                     if ";" in part:
                         label, *params = part.split(";")
-                        buttons.append((label.strip().strip("]"),[p.strip() for p in params]))
+                        buttons.append((label.strip().strip("]"), [p.strip() for p in params]))
                     else:
-                        buttons.append((part.strip().strip("]"),[]))
+                        buttons.append((part.strip().strip("]"), []))
             return buttons, extracted_text
         else:
             raise ValueError("Invalid parse mode. Use 'inline' or 'reply'.")
 
     def create_inline_keyboard(self, text, inline_cmd=None, is_id=None, cb_prefix=None):
-        layout =[]
+        layout = []
         buttons, remaining_text = self.parse_buttons_and_text(text, mode="inline")
         for label, payload in buttons:
             cb_data, *extra_params = payload.split(";")
@@ -86,7 +85,7 @@ class Button:
                 layout[-1].append(button)
             else:
                 layout.append([button])
-                
+
         return pyrogram.types.InlineKeyboardMarkup(layout), remaining_text
 
     def create_button_keyboard(self, text):

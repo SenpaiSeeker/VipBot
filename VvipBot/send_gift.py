@@ -1,36 +1,25 @@
 import asyncio
 import os
-import pyrogram
+
 from pyrogram import filters
 from pyrogram.raw import functions, types
-from nsdev import listen
 
 from . import command, ctx
+
 
 async def send_star_gift_raw(client, user_id: int, gift_id: int):
     peer = await client.resolve_peer(user_id)
 
-    invoice = types.InputInvoiceStarGift(
-        peer=peer,
-        gift_id=int(gift_id)
-    )
+    invoice = types.InputInvoiceStarGift(peer=peer, gift_id=int(gift_id))
 
-    payment_form = await client.invoke(
-        functions.payments.GetPaymentForm(
-            invoice=invoice
-        )
-    )
+    payment_form = await client.invoke(functions.payments.GetPaymentForm(invoice=invoice))
 
     form_id = payment_form.form_id
 
-    result = await client.invoke(
-        functions.payments.SendStarsForm(
-            form_id=form_id,
-            invoice=invoice
-        )
-    )
+    result = await client.invoke(functions.payments.SendStarsForm(form_id=form_id, invoice=invoice))
 
     return result
+
 
 @command(lambda ctx: filters.command("gift") & filters.user(ctx.owner_id))
 async def send_gift_handler(client, message):
@@ -50,7 +39,7 @@ async def send_gift_handler(client, message):
                 gift_id_arg = message.command[2]
             except Exception:
                 pass
-        
+
         if not user_id_target:
             return await message.reply_text(lang.get("gift.usage_error"))
 
@@ -58,7 +47,7 @@ async def send_gift_handler(client, message):
             return await message.reply_text(lang.get("gift.invalid_id"))
 
         gift_id = int(gift_id_arg)
-        
+
         status_msg = await message.reply_text(lang.get("gift.processing"))
 
         available_gifts = await client.get_available_gifts()
@@ -79,6 +68,7 @@ async def send_gift_handler(client, message):
     except Exception as e:
         await message.reply_text(lang.get("gift.fail", e=e))
 
+
 @command(lambda ctx: filters.command("listgift") & filters.user(ctx.owner_id))
 async def list_gift_handler(client, message):
     lang = message.lang
@@ -86,7 +76,7 @@ async def list_gift_handler(client, message):
 
     try:
         gifts = await client.get_available_gifts()
-        
+
         if not gifts:
             return await status_msg.edit(lang.get("gift.list_empty"))
 
@@ -98,10 +88,10 @@ async def list_gift_handler(client, message):
                     emoji = f"{gift.sticker.emoji} "
 
                 caption = lang.get("gift.info_caption", id=gift.id, price=price, emoji=emoji)
-            
+
                 buttons = [
                     [{"text": lang.get("gift.btn_send"), "callback_data": f"gift_send_ask_{gift.id}"}],
-                    [{"text": lang.get("gift.btn_claim"), "callback_data": f"gift_claim_self_{gift.id}"}]
+                    [{"text": lang.get("gift.btn_claim"), "callback_data": f"gift_claim_self_{gift.id}"}],
                 ]
                 markup = client.ns.telegram.button.build_button_grid(buttons)
 
@@ -110,34 +100,22 @@ async def list_gift_handler(client, message):
                     file_path = None
                     try:
                         file_path = await client.download_media(thumb.file_id)
-                        await client.send_photo(
-                            message.chat.id,
-                            photo=file_path,
-                            caption=caption,
-                            reply_markup=markup
-                        )
+                        await client.send_photo(message.chat.id, photo=file_path, caption=caption, reply_markup=markup)
                     except Exception:
-                        await client.send_message(
-                            message.chat.id,
-                            text=caption,
-                            reply_markup=markup
-                        )
+                        await client.send_message(message.chat.id, text=caption, reply_markup=markup)
                     finally:
                         if file_path and os.path.exists(file_path):
                             os.remove(file_path)
                 else:
-                    await client.send_message(
-                        message.chat.id,
-                        text=caption,
-                        reply_markup=markup
-                    )
-            
+                    await client.send_message(message.chat.id, text=caption, reply_markup=markup)
+
                 await asyncio.sleep(1.5)
 
             await status_msg.delete()
 
     except Exception as e:
         await status_msg.edit(lang.get("gift.fail", e=e))
+
 
 @command(lambda ctx: filters.regex(r"^gift_claim_self_(\d+)"), handler_type="callback")
 async def claim_self_gift_callback(client, callback_query):
@@ -155,6 +133,7 @@ async def claim_self_gift_callback(client, callback_query):
     except Exception as e:
         await callback_query.answer(lang.get("gift.claim_fail", e=e), show_alert=True)
 
+
 @command(lambda ctx: filters.regex(r"^gift_send_ask_(\d+)"), handler_type="callback")
 async def ask_send_gift_callback(client, callback_query):
     lang = callback_query.lang
@@ -166,7 +145,7 @@ async def ask_send_gift_callback(client, callback_query):
 
     try:
         await callback_query.edit_message_reply_markup(None)
-        
+
         prompt = f"{lang.get('gift.ask_target')}{lang.get('prompts.cancel_footer')}"
         ask_msg = await client.ask(chat_id, prompt, timeout=60)
 
@@ -182,9 +161,9 @@ async def ask_send_gift_callback(client, callback_query):
             return await processing_msg.edit(lang.get("gift.user_not_found"))
 
         await processing_msg.edit(lang.get("gift.sending", id=gift_id, mention=target_user.first_name))
-        
+
         await send_star_gift_raw(client, target_user.id, gift_id)
-        
+
         await processing_msg.edit(lang.get("gift.success", mention=target_user.first_name))
 
     except asyncio.TimeoutError:

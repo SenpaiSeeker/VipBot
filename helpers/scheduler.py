@@ -1,11 +1,13 @@
 import asyncio
 from functools import wraps
 from typing import Callable, List, Tuple
+
 import aiocron
+
 
 class Scheduler:
     def __init__(self):
-        self.jobs: List[Tuple[str, Callable]] =[]
+        self.jobs: List[Tuple[str, Callable]] = []
         self._is_started = False
 
     def add_job(self, spec: str, func: Callable):

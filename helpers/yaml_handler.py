@@ -1,6 +1,9 @@
 from types import SimpleNamespace
+
 import yaml
+
 from .colorize import AnsiColors
+
 
 class YamlHandler(AnsiColors):
     def __init__(self):
@@ -22,6 +25,6 @@ class YamlHandler(AnsiColors):
             string_keyed_dict = {str(k): self._convertToNamespace(v) for k, v in data.items()}
             return SimpleNamespace(**string_keyed_dict)
         elif isinstance(data, list):
-            return[self._convertToNamespace(item) for item in data]
+            return [self._convertToNamespace(item) for item in data]
         else:
             return data

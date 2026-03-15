@@ -1,5 +1,7 @@
 from types import SimpleNamespace
+
 from faker import Faker
+
 
 class FakeInfoGenerator:
     def __init__(self, locale: str = "id_ID"):

@@ -3,7 +3,9 @@ import logging
 import os
 import sys
 import zoneinfo
+
 from .colorize import AnsiColors
+
 
 class LoggerHandler(AnsiColors):
     def __init__(self, **options):
@@ -76,6 +78,7 @@ class LoggerHandler(AnsiColors):
 
     def critical(self, message):
         self.log("CRITICAL", message)
+
 
 class CustomLogHandler(logging.Handler):
     def __init__(self):

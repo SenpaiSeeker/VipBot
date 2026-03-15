@@ -1,7 +1,7 @@
-from helpers.scheduler import Scheduler
-from helpers.database import DataBase
-
 from config import BOT_TOKEN, DB_KEY, DB_NAME, OWNER_ID
+from helpers.database import DataBase
+from helpers.scheduler import Scheduler
+
 schedule = Scheduler()
 
 db = DataBase(

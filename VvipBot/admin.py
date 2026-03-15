@@ -240,12 +240,12 @@ async def add_seller_handler(client, message):
     try:
         target_user = await client.get_users(user_id_target)
         seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
-        
+
         if target_user.id in seller_list:
             return await message.reply_text(lang.get("admin.seller.already_exists", user_id=target_user.id))
-        
+
         await ctx.db.setListVars(ctx.owner_id, "seller_id_list", target_user.id)
-        
+
         mention = client.ns.telegram.arg.getMention(target_user)
         await message.reply_text(lang.get("admin.seller.add_success", user_mention=mention))
     except Exception as e:
@@ -269,11 +269,11 @@ async def list_seller_handler(client, message):
             mention = client.ns.telegram.arg.getMention(user_obj)
         except Exception:
             mention = f"ID: `{user_id}`"
-            
+
         text += f"{index}. {mention}\n"
-        keyboard.append([
-            {"text": f"{lang.get('admin.seller.delete_button')} ({user_id})", "callback_data": f"del_sell_{user_id}"}
-        ])
+        keyboard.append(
+            [{"text": f"{lang.get('admin.seller.delete_button')} ({user_id})", "callback_data": f"del_sell_{user_id}"}]
+        )
 
     btn = client.ns.telegram.button.build_button_grid(keyboard)
     await message.reply_text(text, reply_markup=btn)
@@ -286,14 +286,14 @@ async def delete_seller_callback(client, callback_query):
 
     lang = callback_query.lang
     target_id = int(callback_query.matches[0].group(1))
-    
+
     await ctx.db.removeListVars(ctx.owner_id, "seller_id_list", target_id)
     await callback_query.answer(lang.get("admin.seller.deleted", user_id=target_id), show_alert=True)
-    
+
     seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
     if not seller_list:
         return await callback_query.edit_message_text(lang.get("admin.seller.empty"))
-    
+
     text = lang.get("admin.seller.list_title")
     keyboard = []
     for index, user_id in enumerate(seller_list, 1):
@@ -304,9 +304,9 @@ async def delete_seller_callback(client, callback_query):
             mention = f"ID: `{user_id}`"
 
         text += f"{index}. {mention}\n"
-        keyboard.append([
-            {"text": f"{lang.get('admin.seller.delete_button')} ({user_id})", "callback_data": f"del_sell_{user_id}"}
-        ])
+        keyboard.append(
+            [{"text": f"{lang.get('admin.seller.delete_button')} ({user_id})", "callback_data": f"del_sell_{user_id}"}]
+        )
     btn = client.ns.telegram.button.build_button_grid(keyboard)
     await callback_query.edit_message_text(text, reply_markup=btn)
 
@@ -315,7 +315,7 @@ async def delete_seller_callback(client, callback_query):
 async def list_akses_handler(client, message):
     lang = message.lang
     user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
-    
+
     access_users = []
     for uid in user_ids:
         expiry = await ctx.db.getVars(uid, "user_expiry_date")
@@ -335,9 +335,9 @@ async def list_akses_handler(client, message):
             mention = f"ID: `{uid}`"
 
         text += f"{index}. {mention}\n"
-        keyboard.append([
-            {"text": f"{lang.get('admin.access_list.delete_button')} ({uid})", "callback_data": f"del_acc_{uid}"}
-        ])
+        keyboard.append(
+            [{"text": f"{lang.get('admin.access_list.delete_button')} ({uid})", "callback_data": f"del_acc_{uid}"}]
+        )
 
     btn = client.ns.telegram.button.build_button_grid(keyboard)
     await message.reply_text(text, reply_markup=btn)
@@ -353,7 +353,7 @@ async def delete_access_callback(client, callback_query):
 
     await ctx.db.removeVars(target_id, "user_expiry_date")
     await callback_query.answer(lang.get("admin.access_list.deleted", user_id=target_id), show_alert=True)
-    
+
     user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
     access_users = []
     for uid in user_ids:
@@ -374,9 +374,9 @@ async def delete_access_callback(client, callback_query):
             mention = f"ID: `{uid}`"
 
         text += f"{index}. {mention}\n"
-        keyboard.append([
-            {"text": f"{lang.get('admin.access_list.delete_button')} ({uid})", "callback_data": f"del_acc_{uid}"}
-        ])
+        keyboard.append(
+            [{"text": f"{lang.get('admin.access_list.delete_button')} ({uid})", "callback_data": f"del_acc_{uid}"}]
+        )
     btn = client.ns.telegram.button.build_button_grid(keyboard)
     await callback_query.edit_message_text(text, reply_markup=btn)
 
@@ -925,8 +925,8 @@ async def dashboard_command_handler(client, message):
         server_stats_text = lang.get(
             "admin.dashboard.server_stats",
             cpu=f"[{stats.cpu['bar']}] {stats.cpu['percent']}%",
-            ram=f"[{stats.ram['bar']}] {stats.ram['percent']}%", 
-            disk=f"[{stats.disk['bar']}] {stats.disk['percent']}%"
+            ram=f"[{stats.ram['bar']}] {stats.ram['percent']}%",
+            disk=f"[{stats.disk['bar']}] {stats.disk['percent']}%",
         )
     except Exception as e:
         server_stats_text = lang.get("admin.dashboard.server_stats_fail", e=e)

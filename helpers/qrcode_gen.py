@@ -3,12 +3,13 @@ import colorsys
 import io
 import math
 import random
-from typing import Optional, Union
+from typing import Optional
+
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
-from pyzbar import pyzbar
 from qrcode.image.styledpil import StyledPilImage
 from qrcode.image.styles.moduledrawers import CircleModuleDrawer
+
 
 class QrCodeGenerator:
     def _sync_create_glow_background(self, size: int, color: tuple) -> Image.Image:

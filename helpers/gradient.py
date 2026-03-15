@@ -1,6 +1,7 @@
-import asyncio
 import random
+
 import pyfiglet
+
 
 class Gradient:
     def __init__(self):
@@ -40,7 +41,7 @@ class Gradient:
 
     def render_text(self, text):
         rendered_text = self.figlet.renderText(text)
-        output =[]
+        output = []
         for i, char in enumerate(rendered_text):
             factor = i / max(len(rendered_text) - 1, 1)
             r, g, b = self.interpolate_color(factor)

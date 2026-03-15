@@ -1,6 +1,8 @@
 import asyncio
 import functools
+
 import pyrogram
+
 
 def patch(obj):
     def is_patchable(item):
@@ -15,14 +17,18 @@ def patch(obj):
 
     return wrapper
 
+
 def patchable(func):
     func.patchable = True
     return func
 
+
 class UserCancelled(Exception):
     pass
 
+
 pyrogram.errors.UserCancelled = UserCancelled
+
 
 @patch(pyrogram.client.Client)
 class Client:
@@ -81,6 +87,7 @@ class Client:
             future.set_exception(UserCancelled())
             self._clear(chat_id, future)
 
+
 @patch(pyrogram.types.Chat)
 class Chat:
     @patchable
@@ -97,6 +104,7 @@ class Chat:
         response = await self.listen(timeout=timeout)
         response.request = request
         return response
+
 
 @patch(pyrogram.types.User)
 class User:

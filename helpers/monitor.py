@@ -2,7 +2,9 @@ import platform
 import time
 from datetime import timedelta
 from types import SimpleNamespace
+
 import psutil
+
 
 class ServerMonitor:
     def __init__(self):

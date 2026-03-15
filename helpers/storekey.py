@@ -1,7 +1,10 @@
 import argparse
 import sys
+
 import setproctitle
+
 from .logger import LoggerHandler
+
 
 class KeyManager:
     def __init__(self):

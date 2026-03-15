@@ -1,6 +1,7 @@
 from google import genai
 from google.genai import types
 
+
 class ChatbotGemini:
     def __init__(self, api_key: str):
         self.api_key = api_key
@@ -47,7 +48,7 @@ class ChatbotGemini:
 
     async def _send_request(self, model_override: str = None, **payload) -> str:
         model_to_use = model_override or self.model_name
-        contents = payload.get("contents",[])
+        contents = payload.get("contents", [])
         system_instruction = payload.get("systemInstruction")
 
         config = types.GenerateContentConfig(
@@ -65,7 +66,7 @@ class ChatbotGemini:
 
     async def send_chat_message(self, message: str, user_id: str, bot_name: str) -> str:
         history = self.chat_history.setdefault(user_id, [])
-        history.append({"role": "user", "parts":[{"text": message}]})
+        history.append({"role": "user", "parts": [{"text": message}]})
 
         instruction = self._build_instruction("chatbot", bot_name)
         payload = {
@@ -75,12 +76,12 @@ class ChatbotGemini:
 
         reply = await self._send_request(**payload)
 
-        history.append({"role": "model", "parts":[{"text": reply}]})
+        history.append({"role": "model", "parts": [{"text": reply}]})
         self.chat_history[user_id] = history
         return reply
 
     async def send_khodam_message(self, name: str, user_id: str) -> str:
-        history = self.khodam_history.setdefault(user_id,[])
+        history = self.khodam_history.setdefault(user_id, [])
         history.append({"role": "user", "parts": [{"text": name}]})
 
         instruction = self._build_instruction("khodam")
