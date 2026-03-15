@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 
 import pyrogram
-from nsdev import LoggerHandler
+from helpers.logger import LoggerHandler
 
 import VvipBot as handlers
 from database import schedule
