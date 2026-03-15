@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from nsdev import LoggerHandler
+from helpers.logger import LoggerHandler
 
 log = LoggerHandler()
 
