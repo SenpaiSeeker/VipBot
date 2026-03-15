@@ -1,16 +1,14 @@
 from types import SimpleNamespace
 
 from pyrogram import Client
-
 from .argument import Argument
 from .button import Button
-from .faker_gen import FakeInfoGenerator
-from .gemini import ChatbotGemini
-from .gradient import Gradient
 from .logger import LoggerHandler
+from .faker_gen import FakeInfoGenerator
+from .gradient import Gradient
 from .monitor import ServerMonitor
 from .saweria_scraper import SaweriaScraper
-
+from .gemini import ChatbotGemini
 
 class MockUtils:
     def __init__(self):
@@ -18,27 +16,22 @@ class MockUtils:
         self.faker = FakeInfoGenerator()
         self.grad = Gradient()
 
-
 class MockTelegram:
     def __init__(self, client):
         self.arg = Argument(client)
         self.button = Button()
 
-
 class MockServer:
     def __init__(self):
         self.monitor = ServerMonitor()
-
 
 class MockPayment:
     def __init__(self):
         self.SaweriaScraper = SaweriaScraper
 
-
 class MockAI:
     def __init__(self):
         self.gemini = ChatbotGemini
-
 
 class MockNS:
     def __init__(self, client):
@@ -48,5 +41,9 @@ class MockNS:
         self.payment = MockPayment()
         self.ai = MockAI()
 
+def get_ns(self):
+    if not hasattr(self, "_mock_ns_instance"):
+        self._mock_ns_instance = MockNS(self)
+    return self._mock_ns_instance
 
-Client.ns = property(lambda self: MockNS(self))
+Client.ns = property(get_ns)
