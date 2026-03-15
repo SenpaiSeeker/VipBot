@@ -17,7 +17,6 @@ from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
 import pyrogram
-from nsdev import listen
 from pyrogram import filters
 from pyrogram.enums import ParseMode
 
