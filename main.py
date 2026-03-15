@@ -5,7 +5,8 @@ import signal
 import traceback
 
 import pyrogram
-from nsdev import CustomLogHandler, LoggerHandler
+import helpers
+from helpers.logger import CustomLogHandler, LoggerHandler
 from tornado.ioloop import IOLoop
 
 import VvipBot as handlers
