@@ -1,0 +1,368 @@
+from . import *
+
+
+@command(lambda ctx: filters.regex(r"^list_members_(\-?\d+)$"), handler_type="callback")
+async def list_members_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+    lang = callback_query.lang
+    members_list = await ctx.db.getListVars(client.me.id, "vvip_members") or []
+
+    back_row = [{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]
+
+    if not members_list:
+        text = lang.get("member.list.empty")
+        btn = client.ns.telegram.button.build_button_grid([back_row])
+        if callback_query.message.photo:
+            return await callback_query.edit_message_caption(text, reply_markup=btn)
+        return await callback_query.edit_message_text(text, reply_markup=btn)
+
+    total_pages = len(members_list)
+    try:
+        page = int(callback_query.data.split("_")[-1])
+        page = (page + total_pages) % total_pages
+    except (ValueError, IndexError):
+        page = 0
+
+    member_data = members_list[page]
+    try:
+        user_id, vvip_name = member_data["user_id"], member_data["vvip_name"]
+        join_date_iso, pay_type = member_data["join_date"], member_data["payment_type"]
+        user = await client.get_users(user_id)
+    except (KeyError, pyrogram.errors.UserNotParticipant) as e:
+        text_error = lang.get("member.list.data_error", e=e)
+        btn_back = client.ns.telegram.button.build_button_grid([back_row])
+        await callback_query.edit_message_caption(text_error, reply_markup=btn_back)
+        await ctx.db.removeListVars(client.me.id, "vvip_members", member_data)
+        return
+
+    join_dt_utc = datetime.fromisoformat(join_date_iso)
+
+    expiry_date_str = lang.get("member.list.permanent_access")
+    expiry_date_obj_str = member_data.get("expiry_date")
+    if expiry_date_obj_str:
+        expiry_date_obj = datetime.fromisoformat(expiry_date_obj_str)
+        expiry_date_str = expiry_date_obj.strftime("%d %b %Y, %H:%M %Z")
+
+    text = lang.get(
+        "member.list.panel",
+        page=page + 1,
+        total=total_pages,
+        mention=client.ns.telegram.arg.getMention(user),
+        id=user.id,
+        category=vvip_name,
+        type=pay_type.title(),
+        date=join_dt_utc.strftime("%d %b %Y, %H:%M %Z"),
+        expiry=expiry_date_str,
+    )
+
+    button_name = (user.first_name or str(user.id))[:15]
+
+    layout = []
+    pagination_row = []
+    if total_pages > 1:
+        prev_page, next_page = ((page - 1 + total_pages) % total_pages, (page + 1) % total_pages)
+        pagination_row.extend(
+            [
+                {"text": lang.get("admin.allbots.prev_button"), "callback_data": f"list_members_{prev_page}"},
+                {"text": lang.get("admin.allbots.next_button"), "callback_data": f"list_members_{next_page}"},
+            ]
+        )
+    if pagination_row:
+        layout.append(pagination_row)
+
+    layout.append(
+        [
+            {
+                "text": lang.get("member.list.kick_button", name=button_name),
+                "callback_data": f"kick_{user.id}_{vvip_name}",
+            }
+        ]
+    )
+    layout.append(back_row)
+
+    btn = client.ns.telegram.button.build_button_grid(layout)
+
+    if callback_query.message.photo:
+        await callback_query.edit_message_caption(text, reply_markup=btn)
+    else:
+        await callback_query.edit_message_text(text, reply_markup=btn)
+
+
+@command(lambda ctx: filters.regex(r"^kick_(\d+)_(.+)"), handler_type="callback")
+async def confirm_kick_member_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+    lang = callback_query.lang
+    match = callback_query.matches[0]
+    user_id_str = match.group(1)
+    vvip_name = match.group(2)
+
+    user = await client.get_users(int(user_id_str))
+
+    text = lang.get(
+        "member.kick.confirm_panel",
+        mention=client.ns.telegram.arg.getMention(user),
+        name=vvip_name,
+    )
+
+    layout = [
+        [
+            {"text": lang.get("member.kick.confirm_yes_button"), "callback_data": f"do_kick_{user_id_str}_{vvip_name}"},
+            {"text": lang.get("member.kick.confirm_no_button"), "callback_data": "list_members_0"},
+        ]
+    ]
+
+    btn = client.ns.telegram.button.build_button_grid(layout)
+    if callback_query.message.photo:
+        await callback_query.edit_message_caption(text, reply_markup=btn)
+    else:
+        await callback_query.edit_message_text(text, reply_markup=btn)
+
+
+@command(lambda ctx: filters.regex(r"^do_kick_(\d+)_(.+)"), handler_type="callback")
+async def do_kick_member_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+    lang = callback_query.lang
+    match = callback_query.matches[0]
+    user_id = int(match.group(1))
+    vvip_name = match.group(2)
+
+    members_list = await ctx.db.getListVars(client.me.id, "vvip_members") or []
+    record_to_remove = next(
+        (r for r in members_list if r.get("user_id") == user_id and r.get("vvip_name") == vvip_name),
+        None,
+    )
+
+    if not record_to_remove:
+        return await callback_query.edit_message_caption(lang.get("member.kick.record_not_found"))
+
+    chat_id_kick = record_to_remove.get("chat_id_kick")
+    if not chat_id_kick:
+        return await callback_query.edit_message_caption(lang.get("member.kick.invalid_chat_id"))
+
+    await callback_query.edit_message_caption(lang.get("member.kick.processing"))
+    try:
+        await client.ban_chat_member(chat_id_kick, user_id)
+        await asyncio.sleep(1)
+        await client.unban_chat_member(chat_id_kick, user_id)
+        await ctx.db.removeListVars(client.me.id, "vvip_members", record_to_remove)
+        user_to_kick = await client.get_users(user_id)
+
+        layout = [[{"text": lang.get("general.back"), "callback_data": "list_members_0"}]]
+        btn_back = client.ns.telegram.button.build_button_grid(layout)
+        await callback_query.edit_message_caption(
+            lang.get(
+                "member.kick.success",
+                mention=client.ns.telegram.arg.getMention(user_to_kick),
+                name=vvip_name,
+            ),
+            reply_markup=btn_back,
+        )
+    except Exception as e:
+        await callback_query.edit_message_caption(lang.get("member.kick.fail", e=e))
+
+
+@command(lambda ctx: filters.regex("^check_active_menu"), handler_type="callback")
+async def check_active_menu_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+    lang = callback_query.lang
+    if "init" in callback_query.data:
+        ctx.ACTIVE_MEMBERS_CACHE = {}
+
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    layout = []
+    button_row = []
+
+    for item in vvip_list:
+        name, chat_id_norm, chat_id_promo = (
+            item.get("name"),
+            item.get("chat_id_normal"),
+            item.get("chat_id_promo"),
+        )
+        if name and chat_id_norm:
+            button_row.append(
+                {
+                    "text": lang.get("member.active_list.button_normal", name=name),
+                    "callback_data": f"list_active_{chat_id_norm}_0",
+                }
+            )
+        if name and chat_id_promo:
+            button_row.append(
+                {
+                    "text": lang.get("member.active_list.button_promo", name=name),
+                    "callback_data": f"list_active_{chat_id_promo}_0",
+                }
+            )
+
+        if len(button_row) == 2:
+            layout.append(button_row)
+            button_row = []
+
+    if button_row:
+        layout.append(button_row)
+
+    back_row = [{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]
+
+    if not layout:
+        text = lang.get("member.active_list.no_valid_chat_id")
+        btn = client.ns.telegram.button.build_button_grid([back_row])
+        if callback_query.message.photo:
+            return await callback_query.edit_message_caption(text, reply_markup=btn)
+        return await callback_query.edit_message_text(text, reply_markup=btn)
+
+    layout.append(back_row)
+    text = lang.get("member.active_list.panel")
+    btn = client.ns.telegram.button.build_button_grid(layout)
+
+    if callback_query.message.photo:
+        await callback_query.edit_message_caption(text, reply_markup=btn)
+    else:
+        await callback_query.edit_message_text(text, reply_markup=btn)
+
+
+@command(
+    lambda ctx: filters.regex(r"^list_active_(\-?\d+)_(\-?\d+)"),
+    handler_type="callback",
+)
+async def list_active_members_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+    lang = callback_query.lang
+    try:
+        _, _, chat_id_str, page_str = callback_query.data.split("_", 3)
+        chat_id, page = int(chat_id_str), int(page_str)
+    except Exception:
+        return await callback_query.answer(lang.get("general.invalid_callback"))
+
+    if chat_id not in ctx.ACTIVE_MEMBERS_CACHE:
+        try:
+            await callback_query.answer(lang.get("member.active_list.fetching"), show_alert=False)
+            members = [m async for m in client.get_chat_members(chat_id) if not m.user.is_bot]
+            random.shuffle(members)
+            ctx.ACTIVE_MEMBERS_CACHE[chat_id] = members
+        except Exception as e:
+            return await callback_query.edit_message_caption(lang.get("member.active_list.fetch_fail", e=e))
+
+    all_members = ctx.ACTIVE_MEMBERS_CACHE.get(chat_id, [])
+    if not all_members:
+        return await callback_query.edit_message_caption(lang.get("member.active_list.empty"))
+
+    total_members = len(all_members)
+    page = (page + total_members) % total_members
+    member, user = all_members[page], all_members[page].user
+
+    text = lang.get(
+        "member.active_list.member_panel",
+        page=page + 1,
+        total=total_members,
+        mention=client.ns.telegram.arg.getMention(user),
+        id=user.id,
+        status=member.status.name.title(),
+    )
+
+    button_name = (user.first_name or str(user.id))[:15]
+    layout = []
+
+    pagination_row = []
+    if total_members > 1:
+        prev_p, next_p = ((page - 1 + total_members) % total_members, (page + 1) % total_members)
+        pagination_row.extend(
+            [
+                {"text": "«", "callback_data": f"list_active_{chat_id}_{prev_p}"},
+                {"text": "»", "callback_data": f"list_active_{chat_id}_{next_p}"},
+            ]
+        )
+    if pagination_row:
+        layout.append(pagination_row)
+
+    layout.extend(
+        [
+            [
+                {
+                    "text": lang.get("member.list.kick_button", name=button_name),
+                    "callback_data": f"kick_active_{chat_id}_{user.id}_{page}",
+                }
+            ],
+            [{"text": lang.get("general.back_to_group_selection"), "callback_data": "check_active_menu_init"}],
+        ]
+    )
+
+    btn = client.ns.telegram.button.build_button_grid(layout)
+    if callback_query.message.photo:
+        await callback_query.edit_message_caption(text, reply_markup=btn)
+    else:
+        await callback_query.edit_message_text(text, reply_markup=btn)
+
+
+@command(
+    lambda ctx: filters.regex(r"^kick_active_(\-?\d+)_(\d+)_(\-?\d+)"),
+    handler_type="callback",
+)
+async def confirm_kick_active_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+    lang = callback_query.lang
+    _, _, chat_id_str, user_id_str, page_str = callback_query.data.split("_", 4)
+    user = await client.get_users(int(user_id_str))
+
+    text = lang.get("member.active_list.kick_confirm_panel", mention=client.ns.telegram.arg.getMention(user))
+    layout = [
+        [
+            {
+                "text": lang.get("member.active_list.kick_confirm_yes_button"),
+                "callback_data": f"do_kick_active_{chat_id_str}_{user_id_str}",
+            },
+            {
+                "text": lang.get("member.active_list.kick_confirm_no_button"),
+                "callback_data": f"list_active_{chat_id_str}_{page_str}",
+            },
+        ]
+    ]
+    btn = client.ns.telegram.button.build_button_grid(layout)
+    if callback_query.message.photo:
+        await callback_query.edit_message_caption(text, reply_markup=btn)
+    else:
+        await callback_query.edit_message_text(text, reply_markup=btn)
+
+
+@command(
+    lambda ctx: filters.regex(r"^do_kick_active_(\-?\d+)_(\d+)"),
+    handler_type="callback",
+)
+async def do_kick_active_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+    lang = callback_query.lang
+    _, _, _, chat_id_str, user_id_str = callback_query.data.split("_", 4)
+    chat_id, user_id = int(chat_id_str), int(user_id_str)
+
+    try:
+        await callback_query.edit_message_caption(lang.get("member.active_list.kick_processing"))
+        await client.ban_chat_member(chat_id, user_id)
+        await client.unban_chat_member(chat_id, user_id)
+
+        members_list = await ctx.db.getListVars(client.me.id, "vvip_members") or []
+        record_to_remove = next(
+            (r for r in members_list if r.get("user_id") == user_id and r.get("chat_id_kick") == chat_id),
+            None,
+        )
+        if record_to_remove:
+            await ctx.db.removeListVars(client.me.id, "vvip_members", record_to_remove)
+
+        if chat_id in ctx.ACTIVE_MEMBERS_CACHE:
+            ctx.ACTIVE_MEMBERS_CACHE[chat_id] = [m for m in ctx.ACTIVE_MEMBERS_CACHE[chat_id] if m.user.id != user_id]
+
+        user = await client.get_users(user_id)
+        text = lang.get("member.active_list.kick_success", mention=client.ns.telegram.arg.getMention(user))
+        layout = [[{"text": lang.get("general.back_to_group_selection"), "callback_data": "check_active_menu_init"}]]
+        btn = client.ns.telegram.button.build_button_grid(layout)
+        if callback_query.message.photo:
+            await callback_query.edit_message_caption(text, reply_markup=btn)
+        else:
+            await callback_query.edit_message_text(text, reply_markup=btn)
+
+    except Exception as e:
+        await callback_query.edit_message_caption(lang.get("member.kick.fail", e=e))
