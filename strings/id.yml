@@ -150,21 +150,8 @@ admin:
     success_text: "\n\n<emoji id=6296367896398399651>✅</emoji> Donasi berhasil dikembalikan."
     success_notif: "ℹ️ **Informasi Donasi**\n\nDonasi Stars Anda telah dikembalikan oleh admin. Terima kasih atas pengertiannya."
     fail_text: "\n\n<emoji id=6298671811345254603>❌</emoji> **Gagal mengembalikan donasi:**\n`{e}`"
-  list_users:
-    panel_title: "**<emoji id=5372926953978341366>👥</emoji> Daftar Semua Pengguna (Halaman {page}/{total_pages})**\n\n"
-    no_users: "<b>Tidak ada pengguna yang tercatat.</b>"
-    refreshing_data: "<emoji id=5264727218734524899>🔄</emoji> Menyegarkan data pengguna, ini mungkin butuh waktu..."
-    page_info: "Halaman {page}/{total}"
-    send_message_button: "💬 Kirim Pesan ke {name}"
-    refresh_button: "🔄 Refresh"
-    data_updated_answer: "Data sudah yang terbaru."
-    update_error_answer: "Terjadi kesalahan saat memperbarui tampilan."
-  message_user:
-    prompt: "Silakan kirim pesan yang ingin diteruskan."
-    success: "<emoji id=6296367896398399651>✅</emoji> Pesan berhasil dikirim."
-    cancelled: "Dibatalkan."
-    timeout: "Waktu habis."
-    fail: "<emoji id=6298671811345254603>❌</emoji> Gagal mengirim pesan: {e}"
+  total_users:
+    result: "**<emoji id=5372926953978341366>👥</emoji> Total Pengguna Bot**\n\nJumlah keseluruhan pengguna yang pernah memulai bot ini adalah: **{total} pengguna**."
   dashboard:
     panel: "**<emoji id=5431577498364158238>📊</emoji> Dashboard Platform**\n\n**Statistik Platform:**\n- Total Bot Aktif: `{total_bots}`\n- Total Pengguna Unik: `{total_users}`\n- Bot Terpopuler: `{top_bot}`\n\n**Kesehatan Server:**\n{server_stats}"
     server_stats: "- CPU: `{cpu}%`\n- RAM: `{ram}%`\n- Disk: `{disk}%`"
@@ -361,7 +348,7 @@ settings:
   api_keys: "🔑 Kelola Kunci API"
   broadcast: "📢 Buat Broadcast"
   stats_button: "⭐ Statistik Stars"
-  list_all_users: "👥 Daftar Semua Pengguna"
+  total_users: "👥 Total Pengguna"
   coupons: "🎟️ Kelola Kupon"
 
   set_photo_prompt: "<emoji id=5375074927252621134>🖼️</emoji> **Atur Foto Start**\n\nSilakan kirim foto baru yang ingin Anda gunakan sebagai gambar di pesan /start.\n\nKetik `/empty` untuk menghapus foto saat ini dan kembali ke default."
