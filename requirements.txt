@@ -1,4 +1,6 @@
-pyrotgfork[fast]
+pyrogram-navy
+TgCrypto2
+uvloop
 pyyaml
 python-dotenv
 requests
