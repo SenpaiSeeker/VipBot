@@ -72,7 +72,7 @@ async def restore_database_handler(client, message):
                 zf.extractall(path=temp_dir)
 
             project_root = os.getcwd()
-            restored_files = []
+            restored_files =[]
 
             current_db_path = getattr(ctx.db, "data_file", getattr(ctx.db, "db_file", None))
 
@@ -119,7 +119,7 @@ async def access_command_handler(client, message):
 
     try:
         target_user = await client.get_users(user_id_target)
-        await ctx.db.getListVars(client.me.id, "create_bot_access") or []
+        await ctx.db.getListVars(client.me.id, "create_bot_access") or[]
 
         has_access = False
         user_expiry_str = await ctx.db.getVars(target_user.id, "user_expiry_date")
@@ -137,8 +137,7 @@ async def access_command_handler(client, message):
             status=status_text,
         )
 
-        layout = [
-            [
+        layout =[[
                 {"text": lang.get("admin.access.give_button"), "callback_data": f"give_access_{target_user.id}"},
                 {"text": lang.get("admin.access.revoke_button"), "callback_data": f"revoke_access_{target_user.id}"},
             ]
@@ -161,7 +160,7 @@ async def give_access_callback(client, callback_query):
 
     layout = []
     row = []
-    for months in [1, 3, 6, 12]:
+    for months in[1, 3, 6, 12]:
         row.append({"text": f"{months} Bulan", "callback_data": f"do_give_{target_id}_{months}"})
     layout.append(row)
     layout.append([{"text": lang.get("general.back"), "callback_data": "close_panel"}])
@@ -239,7 +238,7 @@ async def add_seller_handler(client, message):
 
     try:
         target_user = await client.get_users(user_id_target)
-        seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
+        seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or[]
 
         if target_user.id in seller_list:
             return await message.reply_text(lang.get("admin.seller.already_exists", user_id=target_user.id))
@@ -255,13 +254,13 @@ async def add_seller_handler(client, message):
 @command(lambda ctx: filters.command("listseller") & filters.user(ctx.owner_id))
 async def list_seller_handler(client, message):
     lang = message.lang
-    seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
+    seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or[]
 
     if not seller_list:
         return await message.reply_text(lang.get("admin.seller.empty"))
 
     text = lang.get("admin.seller.list_title")
-    keyboard = []
+    keyboard =[]
 
     for index, user_id in enumerate(seller_list, 1):
         try:
@@ -271,8 +270,7 @@ async def list_seller_handler(client, message):
             mention = f"ID: `{user_id}`"
 
         text += f"{index}. {mention}\n"
-        keyboard.append(
-            [{"text": f"{lang.get('admin.seller.delete_button')} ({user_id})", "callback_data": f"del_sell_{user_id}"}]
+        keyboard.append([{"text": f"{lang.get('admin.seller.delete_button')} ({user_id})", "callback_data": f"del_sell_{user_id}"}]
         )
 
     btn = client.ns.telegram.button.build_button_grid(keyboard)
@@ -290,12 +288,12 @@ async def delete_seller_callback(client, callback_query):
     await ctx.db.removeListVars(ctx.owner_id, "seller_id_list", target_id)
     await callback_query.answer(lang.get("admin.seller.deleted", user_id=target_id), show_alert=True)
 
-    seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
+    seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or[]
     if not seller_list:
         return await callback_query.edit_message_text(lang.get("admin.seller.empty"))
 
     text = lang.get("admin.seller.list_title")
-    keyboard = []
+    keyboard =[]
     for index, user_id in enumerate(seller_list, 1):
         try:
             user_obj = await client.get_users(user_id)
@@ -304,8 +302,7 @@ async def delete_seller_callback(client, callback_query):
             mention = f"ID: `{user_id}`"
 
         text += f"{index}. {mention}\n"
-        keyboard.append(
-            [{"text": f"{lang.get('admin.seller.delete_button')} ({user_id})", "callback_data": f"del_sell_{user_id}"}]
+        keyboard.append([{"text": f"{lang.get('admin.seller.delete_button')} ({user_id})", "callback_data": f"del_sell_{user_id}"}]
         )
     btn = client.ns.telegram.button.build_button_grid(keyboard)
     await callback_query.edit_message_text(text, reply_markup=btn)
@@ -314,9 +311,9 @@ async def delete_seller_callback(client, callback_query):
 @command(lambda ctx: filters.command("listakses") & filters.user(ctx.owner_id))
 async def list_akses_handler(client, message):
     lang = message.lang
-    user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
+    user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or[]
 
-    access_users = []
+    access_users =[]
     for uid in user_ids:
         expiry = await ctx.db.getVars(uid, "user_expiry_date")
         if expiry:
@@ -326,7 +323,7 @@ async def list_akses_handler(client, message):
         return await message.reply_text(lang.get("admin.access_list.empty"))
 
     text = lang.get("admin.access_list.list_title")
-    keyboard = []
+    keyboard =[]
     for index, uid in enumerate(access_users, 1):
         try:
             user_obj = await client.get_users(uid)
@@ -335,8 +332,7 @@ async def list_akses_handler(client, message):
             mention = f"ID: `{uid}`"
 
         text += f"{index}. {mention}\n"
-        keyboard.append(
-            [{"text": f"{lang.get('admin.access_list.delete_button')} ({uid})", "callback_data": f"del_acc_{uid}"}]
+        keyboard.append([{"text": f"{lang.get('admin.access_list.delete_button')} ({uid})", "callback_data": f"del_acc_{uid}"}]
         )
 
     btn = client.ns.telegram.button.build_button_grid(keyboard)
@@ -355,7 +351,7 @@ async def delete_access_callback(client, callback_query):
     await callback_query.answer(lang.get("admin.access_list.deleted", user_id=target_id), show_alert=True)
 
     user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
-    access_users = []
+    access_users =[]
     for uid in user_ids:
         expiry = await ctx.db.getVars(uid, "user_expiry_date")
         if expiry:
@@ -365,7 +361,7 @@ async def delete_access_callback(client, callback_query):
         return await callback_query.edit_message_text(lang.get("admin.access_list.empty"))
 
     text = lang.get("admin.access_list.list_title")
-    keyboard = []
+    keyboard =[]
     for index, uid in enumerate(access_users, 1):
         try:
             user_obj = await client.get_users(uid)
@@ -374,8 +370,7 @@ async def delete_access_callback(client, callback_query):
             mention = f"ID: `{uid}`"
 
         text += f"{index}. {mention}\n"
-        keyboard.append(
-            [{"text": f"{lang.get('admin.access_list.delete_button')} ({uid})", "callback_data": f"del_acc_{uid}"}]
+        keyboard.append([{"text": f"{lang.get('admin.access_list.delete_button')} ({uid})", "callback_data": f"del_acc_{uid}"}]
         )
     btn = client.ns.telegram.button.build_button_grid(keyboard)
     await callback_query.edit_message_text(text, reply_markup=btn)
@@ -462,12 +457,11 @@ async def _send_allbots_list(client, message_or_query, page):
     )
 
     layout = []
-    pagination_row = []
+    pagination_row =[]
     if total_pages > 1:
         prev_page = (page - 1 + total_pages) % total_pages
         next_page = (page + 1) % total_pages
-        pagination_row.extend(
-            [
+        pagination_row.extend([
                 {"text": lang.get("admin.allbots.prev_button"), "callback_data": f"allbots_{prev_page}"},
                 {"text": lang.get("admin.allbots.next_button"), "callback_data": f"allbots_{next_page}"},
             ]
@@ -476,15 +470,12 @@ async def _send_allbots_list(client, message_or_query, page):
         layout.append(pagination_row)
 
     layout.extend(
-        [
-            [{"text": lang.get("admin.allbots.delete_button"), "callback_data": f"confirm_delete_bot_{bot_id}"}],
-            [
+        [[{"text": lang.get("admin.allbots.delete_button"), "callback_data": f"confirm_delete_bot_{bot_id}"}],[
                 {
                     "text": lang.get("admin.allbots.manage_duration_button"),
                     "callback_data": f"manage_duration_bot_{bot_id}_{page}",
                 }
-            ],
-            [{"text": lang.get("general.close_panel"), "callback_data": "close_panel"}],
+            ],[{"text": lang.get("general.close_panel"), "callback_data": "close_panel"}],
         ]
     )
 
@@ -517,8 +508,7 @@ async def confirm_delete_bot_callback(client, callback_query):
     bot_id = int(callback_query.matches[0].group(1))
     text = lang.get("admin.allbots.delete_confirm", bot_id=bot_id)
 
-    layout = [
-        [
+    layout = [[
             {"text": lang.get("admin.allbots.delete_confirm_yes"), "callback_data": f"do_delete_bot_{bot_id}"},
             {"text": lang.get("admin.allbots.delete_confirm_no"), "callback_data": "allbots_0"},
         ]
@@ -554,10 +544,7 @@ async def manage_duration_callback(client, callback_query):
     bot_id, page = map(int, callback_query.data.split("_")[3:])
     text = lang.get("admin.allbots.manage_duration_panel", bot_id=bot_id)
 
-    layout = [
-        [{"text": lang.get("admin.allbots.add_duration_button"), "callback_data": f"extend_bot_{bot_id}_{page}"}],
-        [{"text": lang.get("admin.allbots.reduce_duration_button"), "callback_data": f"reduce_bot_{bot_id}_{page}"}],
-        [{"text": lang.get("general.back"), "callback_data": f"allbots_{page}"}],
+    layout = [[{"text": lang.get("admin.allbots.add_duration_button"), "callback_data": f"extend_bot_{bot_id}_{page}"}],[{"text": lang.get("admin.allbots.reduce_duration_button"), "callback_data": f"reduce_bot_{bot_id}_{page}"}],[{"text": lang.get("general.back"), "callback_data": f"allbots_{page}"}],
     ]
     markup = client.ns.telegram.button.build_button_grid(layout)
     await callback_query.edit_message_text(text, reply_markup=markup)
@@ -570,11 +557,11 @@ async def extend_bot_callback(client, callback_query):
     lang = callback_query.lang
     bot_id, page = map(int, callback_query.data.split("_")[2:])
     text = lang.get("admin.allbots.add_duration_select", bot_id=bot_id)
-    buttons = [
+    buttons =[
         {"text": f"+{days} {lang.get('admin.allbots.days')}", "callback_data": f"do_extend_{bot_id}_{days}_{page}"}
-        for days in [7, 30, 90]
+        for days in[7, 30, 90]
     ]
-    layout = [buttons, [{"text": lang.get("general.back"), "callback_data": f"manage_duration_bot_{bot_id}_{page}"}]]
+    layout = [buttons,[{"text": lang.get("general.back"), "callback_data": f"manage_duration_bot_{bot_id}_{page}"}]]
     markup = client.ns.telegram.button.build_button_grid(layout)
     await callback_query.edit_message_text(text, reply_markup=markup)
 
@@ -606,11 +593,11 @@ async def reduce_bot_callback(client, callback_query):
     lang = callback_query.lang
     bot_id, page = map(int, callback_query.data.split("_")[2:])
     text = lang.get("admin.allbots.reduce_duration_select", bot_id=bot_id)
-    buttons = [
+    buttons =[
         {"text": f"-{days} {lang.get('admin.allbots.days')}", "callback_data": f"do_reduce_{bot_id}_{days}_{page}"}
-        for days in [7, 30, 90]
+        for days in[7, 30, 90]
     ]
-    layout = [buttons, [{"text": lang.get("general.back"), "callback_data": f"manage_duration_bot_{bot_id}_{page}"}]]
+    layout = [buttons,[{"text": lang.get("general.back"), "callback_data": f"manage_duration_bot_{bot_id}_{page}"}]]
     markup = client.ns.telegram.button.build_button_grid(layout)
     await callback_query.edit_message_text(text, reply_markup=markup)
 
@@ -633,146 +620,6 @@ async def do_reduce_bot_callback(client, callback_query):
     await _send_allbots_list(client, callback_query, page)
 
 
-@command(lambda ctx: filters.regex(r"^refund_stars_"), handler_type="callback")
-async def refund_stars_callback(client, callback_query):
-    lang = callback_query.lang
-    if not await is_bot_owner(client, callback_query.from_user.id):
-        return await callback_query.answer(lang.get("admin.refund.no_permission"), show_alert=True)
-
-    db_key = ""
-    try:
-        refund_key = callback_query.data.split("_")[2]
-        db_key = f"refund_{refund_key}"
-        refund_data = await ctx.db.getVars(client.me.id, db_key)
-
-        if not refund_data:
-            return await callback_query.edit_message_text(
-                callback_query.message.text + lang.get("admin.refund.fail_not_found")
-            )
-
-        user_id_to_refund = refund_data["user_id"]
-        charge_id = refund_data["charge_id"]
-
-        await client.refund_star_payment(user_id=user_id_to_refund, telegram_payment_charge_id=charge_id)
-
-        await callback_query.edit_message_text(
-            text=callback_query.message.text + lang.get("admin.refund.success_text"),
-            entities=callback_query.message.entities,
-        )
-
-        await client.send_message(user_id_to_refund, lang.get("admin.refund.success_notif"))
-
-    except Exception as e:
-        ctx.log.print(f"{ctx.log.RED}Gagal merefund donasi: {e}")
-        await callback_query.edit_message_text(callback_query.message.text + lang.get("admin.refund.fail_text", e=e))
-    finally:
-        if db_key:
-            await ctx.db.removeVars(client.me.id, db_key)
-
-
-@command(lambda ctx: filters.regex(r"^stats_(\d+)"), handler_type="callback")
-async def show_stars_stats(client, callback_query):
-    if not await is_bot_owner(client, callback_query.from_user.id):
-        return
-
-    lang = callback_query.lang
-    page = int(callback_query.data.split("_")[1])
-    items_per_page = 5
-
-    try:
-        await callback_query.answer(lang.get("general.processing"))
-
-        peer = await client.resolve_peer(client.me.id)
-
-        raw_result = await client.invoke(
-            pyrogram.raw.functions.payments.GetStarsTransactions(peer=peer, offset="", limit=200)
-        )
-
-        transactions_history = raw_result.history if hasattr(raw_result, "history") else []
-
-        if not transactions_history:
-            text = lang.get("stats.no_transactions")
-            layout = [[{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]]
-            btn = client.ns.telegram.button.build_button_grid(layout)
-            if callback_query.message.photo:
-                return await callback_query.edit_message_caption(text, reply_markup=btn)
-            return await callback_query.edit_message_text(text, reply_markup=btn)
-
-        total_balance = raw_result.balance.amount
-        total_income = sum(t.amount.amount for t in transactions_history if t.amount.amount > 0)
-        total_refunds = sum(abs(t.amount.amount) for t in transactions_history if t.amount.amount < 0)
-        total_transactions_count = len(transactions_history)
-
-        peer_map = {p.id: p for p in raw_result.users + raw_result.chats}
-        total_pages = math.ceil(total_transactions_count / items_per_page)
-        start_index = page * items_per_page
-        end_index = start_index + items_per_page
-        paginated_transactions = transactions_history[start_index:end_index]
-
-        transactions_text_list = []
-        jakarta_timezone = ZoneInfo("Asia/Jakarta")
-
-        for t in paginated_transactions:
-            peer_id = t.peer.peer.user_id if hasattr(t.peer.peer, "user_id") else t.peer.peer.channel_id
-            peer_obj = peer_map.get(peer_id)
-
-            peer_mention = lang.get("stats.transaction_entry_unknown")
-            if peer_obj:
-                peer_mention = f"{peer_obj.first_name}" if hasattr(peer_obj, "first_name") else f"{peer_obj.title}"
-
-            amount = t.amount.amount
-            amount_str = f"+{amount}" if amount > 0 else str(amount)
-            transaction_date = datetime.fromtimestamp(t.date, tz=timezone.utc).astimezone(jakarta_timezone)
-
-            transactions_text_list.append(
-                lang.get(
-                    "stats.transaction_entry",
-                    date=transaction_date.strftime("%d %b, %H:%M %Z"),
-                    amount_str=amount_str,
-                    peer=peer_mention,
-                )
-            )
-
-        transactions_text = "\n".join(transactions_text_list)
-
-        text = lang.get(
-            "stats.panel",
-            balance=total_balance,
-            income=total_income,
-            refunds=total_refunds,
-            count=total_transactions_count,
-            page=page + 1,
-            total_pages=total_pages,
-            transactions=transactions_text,
-        )
-
-        layout = []
-        pagination_row = []
-        if total_pages > 1:
-            prev_page = page - 1 if page > 0 else total_pages - 1
-            next_page = page + 1 if page < total_pages - 1 else 0
-            pagination_row.extend(
-                [
-                    {"text": lang.get("stats.prev_button"), "callback_data": f"stats_{prev_page}"},
-                    {"text": lang.get("stats.next_button"), "callback_data": f"stats_{next_page}"},
-                ]
-            )
-        if pagination_row:
-            layout.append(pagination_row)
-
-        layout.append([{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}])
-        btn = client.ns.telegram.button.build_button_grid(layout)
-
-        if callback_query.message.photo:
-            await callback_query.edit_message_caption(text, reply_markup=btn)
-        else:
-            await callback_query.edit_message_text(text, reply_markup=btn)
-
-    except Exception as e:
-        ctx.log.print(f"{ctx.log.RED} Error fetching stars stats: {e}\n{traceback.format_exc()}")
-        await callback_query.answer(f"Error: {e}", show_alert=True)
-
-
 @command(lambda ctx: filters.regex(r"^list_all_users_(\d+)(_refresh)?"), handler_type="callback")
 async def list_all_users_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
@@ -790,7 +637,7 @@ async def list_all_users_callback(client, callback_query):
     if is_refresh or bot_id not in ctx.all_users_cache:
         await callback_query.answer(lang.get("admin.list_users.refreshing_data"), show_alert=False)
         user_ids = await ctx.db.getListVars(bot_id, "user_ids") or []
-        user_data_cache = []
+        user_data_cache =[]
         if user_ids:
             for i in range(0, len(user_ids), 200):
                 chunk_ids = user_ids[i : i + 200]
@@ -809,8 +656,8 @@ async def list_all_users_callback(client, callback_query):
     users_data = ctx.all_users_cache.get(bot_id, [])
 
     layout = []
-    back_row = [{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]
-    refresh_row = [{"text": lang.get("admin.list_users.refresh_button"), "callback_data": f"list_all_users_0_refresh"}]
+    back_row =[{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]
+    refresh_row =[{"text": lang.get("admin.list_users.refresh_button"), "callback_data": f"list_all_users_0_refresh"}]
 
     if not users_data:
         text = lang.get("admin.list_users.no_users")
@@ -831,7 +678,7 @@ async def list_all_users_callback(client, callback_query):
     for user in page_user_data:
         text += f"• {client.ns.telegram.arg.getMention(user)} (`{user.id}`)\n  - @{user.username or 'N/A'}\n"
 
-    pagination_row = []
+    pagination_row =[]
     if total_pages > 1:
         if page > 0:
             pagination_row.append({"text": "«", "callback_data": f"list_all_users_{page-1}"})
@@ -843,7 +690,7 @@ async def list_all_users_callback(client, callback_query):
     if pagination_row:
         layout.append(pagination_row)
 
-    action_buttons = []
+    action_buttons =[]
     for user in page_user_data:
         btn_text = lang.get(
             "admin.list_users.send_message_button", name=user.first_name[:10] if user.first_name else user.id
