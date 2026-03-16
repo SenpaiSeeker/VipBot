@@ -123,7 +123,6 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
     HANDLER_MAP = {
         "message": pyrogram.handlers.MessageHandler,
         "callback": pyrogram.handlers.CallbackQueryHandler,
-        "pre_checkout": pyrogram.handlers.PreCheckoutQueryHandler,
     }
 
     for func, filter_lambda, handler_type in ALL_HANDLERS:
@@ -160,7 +159,4 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
 
         wrapped_func = partial(handler_wrapper, func)
 
-        if handler_type == "pre_checkout":
-            client.add_handler(HandlerClass(wrapped_func))
-        else:
-            client.add_handler(HandlerClass(wrapped_func, filters=actual_filter))
+        client.add_handler(HandlerClass(wrapped_func, filters=actual_filter))
