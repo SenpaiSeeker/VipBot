@@ -2,7 +2,7 @@ from . import *
 
 
 def generate_safe_saweria_message(user_name):
-    sapaan_pembuka = [
+    sapaan_pembuka =[
         "Halo",
         "Hi",
         "Hello",
@@ -98,7 +98,7 @@ def generate_safe_saweria_message(user_name):
         "Yuk",
     ]
 
-    panggilan_akrab = [
+    panggilan_akrab =[
         "Bang",
         "Mas",
         "Kak",
@@ -210,7 +210,7 @@ def generate_safe_saweria_message(user_name):
         "Rezeki",
     ]
 
-    kata_kerja_memberi = [
+    kata_kerja_memberi =[
         "Traktir",
         "Ngasih",
         "Kirim",
@@ -284,7 +284,7 @@ def generate_safe_saweria_message(user_name):
         "Wajib",
     ]
 
-    objek_gabungan = [
+    objek_gabungan =[
         "kopi",
         "kopi hitam",
         "kopi susu",
@@ -477,7 +477,7 @@ def generate_safe_saweria_message(user_name):
         "piknik",
     ]
 
-    kata_sifat_doa = [
+    kata_sifat_doa =[
         "semangat",
         "semangat terus",
         "jangan menyerah",
@@ -587,7 +587,7 @@ def generate_safe_saweria_message(user_name):
         "no debat",
     ]
 
-    ucapan_terima_kasih = [
+    ucapan_terima_kasih =[
         "makasih",
         "terima kasih",
         "thanks",
@@ -647,7 +647,7 @@ def generate_safe_saweria_message(user_name):
         "ok",
     ]
 
-    partikel_pelengkap = [
+    partikel_pelengkap =[
         "ya",
         "yah",
         "iya",
@@ -738,7 +738,7 @@ def generate_safe_saweria_message(user_name):
         "cry",
     ]
 
-    emojis_list = [
+    emojis_list =[
         "😊",
         "😇",
         "🙂",
@@ -1562,7 +1562,7 @@ def generate_safe_saweria_message(user_name):
     ]
 
     pola_kalimat = random.randint(1, 12)
-    parts = []
+    parts =[]
 
     if pola_kalimat == 1:
         parts.append(random.choice(kata_kerja_memberi))
@@ -1652,7 +1652,7 @@ async def verify_user_join(client, user, chat_id, link_msg):
     while time() - start_time < verification_timeout:
         try:
             member = await client.get_chat_member(chat_id, user.id)
-            if member.status not in [pyrogram.enums.ChatMemberStatus.LEFT, pyrogram.enums.ChatMemberStatus.BANNED]:
+            if member.status not in[pyrogram.enums.ChatMemberStatus.LEFT, pyrogram.enums.ChatMemberStatus.BANNED]:
                 is_joined = True
                 ctx.log.print(
                     f"{ctx.log.GREEN}User {user.id} berhasil diverifikasi bergabung ke {chat_id} dari bot {client.me.username}."
@@ -1680,12 +1680,12 @@ async def verify_user_join_multiple(client, user, invite_payloads, link_msg):
     start_time = time()
 
     while time() - start_time < verification_timeout:
-        pending_payloads = []
+        pending_payloads =[]
         for payload in invite_payloads:
             chat_id = payload.get("chat_id")
             try:
                 member = await client.get_chat_member(chat_id, user.id)
-                if member.status in [pyrogram.enums.ChatMemberStatus.LEFT, pyrogram.enums.ChatMemberStatus.BANNED]:
+                if member.status in[pyrogram.enums.ChatMemberStatus.LEFT, pyrogram.enums.ChatMemberStatus.BANNED]:
                     pending_payloads.append(payload)
             except pyrogram.errors.UserNotParticipant:
                 pending_payloads.append(payload)
@@ -1705,7 +1705,7 @@ async def verify_user_join_multiple(client, user, invite_payloads, link_msg):
 
         await asyncio.sleep(15)
 
-    pending_lines = []
+    pending_lines =[]
     for item in pending_payloads:
         pending_lines.append(f"• {item.get('name')}: {item.get('link')}")
 
@@ -1720,7 +1720,7 @@ async def verify_user_join_multiple(client, user, invite_payloads, link_msg):
 
 
 def _get_all_vvip_items(vvip_list):
-    selected_items = []
+    selected_items =[]
     for index, item in enumerate(vvip_list):
         price = int(item.get("price", 0) or 0)
         chat_id_normal = item.get("chat_id_normal")
@@ -1740,7 +1740,7 @@ def _get_all_vvip_items(vvip_list):
 async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon_code=None):
     lang = await ctx.L.create(ctx.db, user.id)
 
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or[]
     try:
         item = vvip_list[item_index]
         names = item.get("name")
@@ -1787,8 +1787,7 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
             amount=f"{int(amount_raw):,}",
             id=f"[{transaction_id}](https://saweria.co/qris/{transaction_id})",
         )
-        layout = [
-            [{"text": lang.get("payment.check.confirm_button"), "callback_data": f"confirm_payment {transaction_id}"}]
+        layout = [[{"text": lang.get("payment.check.confirm_button"), "callback_data": f"confirm_payment {transaction_id}"}]
         ]
         btn = client.ns.telegram.button.build_button_grid(layout)
 
@@ -1838,8 +1837,7 @@ async def _create_all_vvip_payment_invoice(client, user, selected_items, total_a
             amount=f"{int(amount_raw):,}",
             id=f"[{transaction_id}](https://saweria.co/qris/{transaction_id})",
         )
-        layout = [
-            [{"text": lang.get("payment.check.confirm_button"), "callback_data": f"confirm_payment {transaction_id}"}]
+        layout = [[{"text": lang.get("payment.check.confirm_button"), "callback_data": f"confirm_payment {transaction_id}"}]
         ]
         btn = client.ns.telegram.button.build_button_grid(layout)
 
@@ -1868,9 +1866,9 @@ async def manual_check_payment_callback(client, callback_query):
     amount_raw = int(ref_parts[2])
 
     coupon_code = None
-    bundle_indexes = []
+    bundle_indexes =[]
     if is_bundle_order:
-        bundle_indexes = [int(i) for i in ref_parts[3].split(",") if i.strip().isdigit()] if len(ref_parts) > 3 else []
+        bundle_indexes = [int(i) for i in ref_parts[3].split(",") if i.strip().isdigit()] if len(ref_parts) > 3 else[]
     else:
         item_index = int(ref_parts[0])
         coupon_code = ref_parts[3] if len(ref_parts) > 3 else None
@@ -1883,11 +1881,11 @@ async def manual_check_payment_callback(client, callback_query):
             await callback_query.edit_message_reply_markup(None)
             await ctx.db.removeVars(client.me.id, transaction_id)
 
-            vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+            vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or[]
 
             if is_bundle_order:
                 invite_payloads = []
-                purchased_names = []
+                purchased_names =[]
                 for idx in bundle_indexes:
                     try:
                         item_found = vvip_list[idx]
@@ -2002,7 +2000,7 @@ async def manual_check_payment_callback(client, callback_query):
                 member_data["expiry_date"] = expiry_date.isoformat()
 
             if coupon_code:
-                coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
+                coupons = await ctx.db.getListVars(client.me.id, "coupons") or[]
                 for c in coupons:
                     if c.get("code") == coupon_code:
                         c["uses_left"] = c.get("uses_left", 1) - 1
@@ -2057,7 +2055,7 @@ async def manual_check_payment_callback(client, callback_query):
 @command(lambda ctx: filters.regex(r"^pay_all_vvip$"), handler_type="callback")
 async def pay_all_vvip_callback(client, callback_query):
     lang = callback_query.lang
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or[]
     selected_items = _get_all_vvip_items(vvip_list)
 
     if not selected_items:
@@ -2105,14 +2103,12 @@ async def notes_data(client, callback_query):
             else lang.get("payment.defaults.notes_text", name=name, price=f"{price_val:,}")
         )
 
-        layout = [
-            [
+        layout = [[
                 {
                     "text": lang.get("payment.notes.pay_button"),
                     "callback_data": f"paynow_{item_index}_normal_{price_val}",
                 }
-            ],
-            [
+            ],[
                 {
                     "text": lang.get("coupons.use_button"),
                     "callback_data": f"apply_coupon_{item_index}_normal_{price_val}",
@@ -2167,14 +2163,12 @@ async def promo_detail(client, callback_query):
             else lang.get("payment.defaults.promo_text", name=name, promo_price=f"{promo_price_val:,}")
         )
 
-        layout = [
-            [
+        layout = [[
                 {
                     "text": lang.get("payment.promo.pay_button"),
                     "callback_data": f"paynow_{item_index}_promo_{promo_price_val}",
                 }
-            ],
-            [
+            ],[
                 {
                     "text": lang.get("coupons.use_button"),
                     "callback_data": f"apply_coupon_{item_index}_promo_{promo_price_val}",
@@ -2214,7 +2208,7 @@ async def apply_coupon_callback(client, callback_query):
             raise listen.UserCancelled
 
         coupon_code = ask_msg.text.upper()
-        coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
+        coupons = await ctx.db.getListVars(client.me.id, "coupons") or[]
         coupon = next((c for c in coupons if c.get("code") == coupon_code), None)
 
         if not coupon:
@@ -2276,68 +2270,6 @@ async def pre_checkout_handler(client, pre_checkout_query):
     await pre_checkout_query.answer(ok=True)
 
 
-@command(lambda ctx: filters.successful_payment)
-async def successful_donation_handler(client, message):
-    if not message.successful_payment.invoice_payload.startswith("donation_"):
-        return
-
-    user = message.from_user
-    lang = message.lang
-    stars_donated = message.successful_payment.total_amount
-    charge_id = message.successful_payment.telegram_payment_charge_id
-    current_bot_id = client.me.id
-    super_admin_id = ctx.owner_id
-
-    await client.send_message(
-        chat_id=user.id,
-        text=lang.get("payment.donation.success_msg", name=user.first_name, stars=stars_donated),
-    )
-
-    owner_of_this_bot = await ctx.db.getVars(current_bot_id, "owner_id") or super_admin_id
-    owner_lang = await ctx.L.create(ctx.db, owner_of_this_bot)
-
-    main_bot_client = ctx.manager.main_bot_client
-
-    try:
-        notification_text = owner_lang.get(
-            "payment.donation.owner_notif",
-            stars=stars_donated,
-            mention=client.ns.telegram.arg.getMention(user),
-            id=user.id,
-            bot_mention=client.me.mention,
-        )
-
-        refund_key = uuid.uuid4().hex[:16]
-        refund_data = {"user_id": user.id, "charge_id": charge_id}
-        await ctx.db.setVars(current_bot_id, f"refund_{refund_key}", refund_data)
-
-        refund_callback_data = f"refund_stars_{refund_key}"
-        layout = [[{"text": owner_lang.get("payment.donation.refund_button"), "callback_data": refund_callback_data}]]
-        refund_btn = client.ns.telegram.button.build_button_grid(layout)
-
-        await client.send_message(chat_id=owner_of_this_bot, text=notification_text, reply_markup=refund_btn)
-
-    except pyrogram.errors.UserIsBlocked:
-        ctx.log.warning(f"Gagal kirim notif donasi, Owner {owner_of_this_bot} memblokir bot {current_bot_id}")
-        if main_bot_client and owner_of_this_bot != super_admin_id:
-            super_admin_lang = await ctx.L.create(ctx.db, super_admin_id)
-            await main_bot_client.send_message(
-                super_admin_id,
-                super_admin_lang.get(
-                    "payment.donation.owner_blocked_notif",
-                    stars=stars_donated,
-                    mention=client.ns.telegram.arg.getMention(user),
-                    bot_name=client.me.first_name,
-                ),
-            )
-    except Exception as e:
-        ctx.log.print(f"{ctx.log.RED}Gagal mengirim notifikasi donasi: {e}")
-
-    ctx.log.print(
-        f"{ctx.log.GREEN}Donasi {stars_donated} XTR diterima dari {user.id} ({user.first_name}) melalui bot {current_bot_id}"
-    )
-
-
 @command(lambda ctx: filters.regex(r"^renew_sub_(\d+)"), handler_type="callback")
 async def renew_subscription_callback(client, callback_query):
     lang = callback_query.lang
@@ -2355,5 +2287,5 @@ async def renew_subscription_callback(client, callback_query):
         await promo_detail(client, callback_query)
     else:
         callback_query.data = f"notes_{item_index}"
-        callback_query.matches = [re.match(r"notes_(\d+)", callback_query.data)]
+        callback_query.matches =[re.match(r"notes_(\d+)", callback_query.data)]
         await notes_data(client, callback_query)
