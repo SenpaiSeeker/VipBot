@@ -150,21 +150,8 @@ admin:
     success_text: "\n\n<emoji id=6296367896398399651>✅</emoji> Donation has been successfully refunded."
     success_notif: "ℹ️ **Donation Information**\n\nYour Stars donation has been refunded by the admin. Thank you for your understanding."
     fail_text: "\n\n<emoji id=6298671811345254603>❌</emoji> **Failed to refund donation:**\n`{e}`"
-  list_users:
-    panel_title: "**<emoji id=5372926953978341366>👥</emoji> All Users List (Page {page}/{total_pages})**\n\n"
-    no_users: "<b>No users recorded.</b>"
-    refreshing_data: "<emoji id=5264727218734524899>🔄</emoji> Refreshing user data, this may take a moment..."
-    page_info: "Page {page}/{total}"
-    send_message_button: "💬 Message {name}"
-    refresh_button: "🔄 Refresh"
-    data_updated_answer: "Data is already up to date."
-    update_error_answer: "An error occurred while updating the view."
-  message_user:
-    prompt: "Please send the message you want to forward."
-    success: "<emoji id=6296367896398399651>✅</emoji> Message sent successfully."
-    cancelled: "Cancelled."
-    timeout: "Timeout."
-    fail: "<emoji id=6298671811345254603>❌</emoji> Failed to send message: {e}"
+  total_users:
+    result: "**<emoji id=5372926953978341366>👥</emoji> Total Bot Users**\n\nThe total number of users who have started this bot is: **{total} users**."
   dashboard:
     panel: "**<emoji id=5431577498364158238>📊</emoji> Platform Dashboard**\n\n**Platform Stats:**\n- Total Active Bots: {total_bots}\n- Total Unique Users: {total_users}\n- Most Popular Bot: {top_bot}\n\n**Server Health:**\n{server_stats}"
     server_stats: "- CPU: `{cpu}%`\n- RAM: `{ram}%`\n- Disk: `{disk}%`"
@@ -361,7 +348,7 @@ settings:
   api_keys: "🔑 Manage API Keys"
   broadcast: "📢 Create Broadcast"
   stats_button: "⭐ Stars Statistics"
-  list_all_users: "👥 List All Users"
+  total_users: "👥 Total Users"
   coupons: "🎟️ Manage Coupons"
 
   set_photo_prompt: "<emoji id=5375074927252621134>🖼️</emoji> **Set Start Photo**\n\nPlease send the new photo you want to use as the image in the /start message.\n\nType `/empty` to remove the current photo and revert to default."
@@ -459,7 +446,7 @@ coupons:
   success_applied: "<emoji id=6296367896398399651>✅</emoji> Coupon `{code}` applied successfully! Original price `IDR {original}` is now `IDR {final}`."
 
 gift:
-  usage_error: "<emoji id=6298671811345254603>❌</emoji> **Target not found.**\nReply to user message or use format:\n`/gift [username] [gift_id]`"
+  usage_error: "<emoji id=6298671811345254603>❌</emoji> **Target not found.**\nReply to user message or use format:\n`/gift[username] [gift_id]`"
   invalid_id: "<emoji id=6298671811345254603>❌</emoji> **Invalid Gift ID.**\nUse `/listgift` to see IDs."
   processing: "<emoji id=5264727218734524899>🔄</emoji> Processing gift sending..."
   not_found: "<emoji id=6298671811345254603>❌</emoji> Gift ID `{id}` not found or unavailable."
