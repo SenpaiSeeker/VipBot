@@ -2265,11 +2265,6 @@ async def paynow(client, callback_query):
     await _create_payment_invoice(client, callback_query.from_user, item_index, tipe, amount)
 
 
-@command(lambda ctx: filters.PreCheckoutQuery, handler_type="pre_checkout")
-async def pre_checkout_handler(client, pre_checkout_query):
-    await pre_checkout_query.answer(ok=True)
-
-
 @command(lambda ctx: filters.regex(r"^renew_sub_(\d+)"), handler_type="callback")
 async def renew_subscription_callback(client, callback_query):
     lang = callback_query.lang
