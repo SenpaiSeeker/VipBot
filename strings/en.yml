@@ -403,7 +403,13 @@ settings:
   api_del_confirm_panel: "**⚠️ Confirmation**\n\nAre you sure you want to delete **ALL** API keys (Saweria & Gemini) for this bot?"
   api_del_confirm_yes_button: "✅ Yes, Delete All"
   api_del_confirm_no_button: "❌ No, Cancel"
-  api_del_success: "<emoji id=6296367896398399651>✅</emoji> All API keys for this bot have been successfully deleted."
+  api_del_success: "<emoji id=6296367896398399651>✅</emoji> All API keys for this bot have been successfully deleted.
+
+  set_broadcast_price: "🌟 Paid Broadcast Price"
+  set_broadcast_price_prompt: "<emoji id=5458799228719472718>🌟</emoji> **Set Paid Broadcast Price**\n\nEnter the number of Stars users must pay to view the broadcast media.\n\nType `0` or `/empty` to disable this feature (Broadcasts will return to normal and free)."
+  set_broadcast_price_success: "<emoji id=6296367896398399651>✅</emoji> **Success!** Broadcast price has been set to `{stars}` Stars."
+  set_broadcast_price_disabled: "<emoji id=6296367896398399651>✅</emoji> **Success!** Paid Broadcast feature disabled. Broadcasts will run normally."
+  broadcast_paid_no_media: "<emoji id=6298671811345254603>❌</emoji> **Failed:** Paid Broadcast is currently active for {stars} Stars. Your broadcast message MUST be a Photo or Video to be locked!"
 
 revenue:
   panel_title: "**<emoji id=5375296873982604963>💰</emoji> Check VIP Revenue**\n\nSelect a time period to view total revenue from VIP package sales."
