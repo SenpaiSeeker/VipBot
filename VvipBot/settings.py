@@ -22,6 +22,7 @@ async def settings(client, callback_query):
             {"text": lang.get("vvip_status.button"), "callback_data": "check_vvip_status"},
         ],[
             {"text": lang.get("settings.broadcast"), "callback_data": "broadcast"},
+            {"text": lang.get("settings.set_broadcast_price"), "callback_data": "set_broadcast_price"},
         ],[
             {"text": lang.get("settings.api_keys"), "callback_data": "api_settings"},
             {"text": lang.get("settings.coupons"), "callback_data": "manage_coupons"},
@@ -31,7 +32,7 @@ async def settings(client, callback_query):
         ],[
             {"text": lang.get("general.back_to_main_menu"), "callback_data": "start"},
         ],
-    ]
+             ]
 
     txt_content = lang.get("settings.panel")
     btn = client.ns.telegram.button.build_button_grid(layout)
@@ -237,43 +238,84 @@ async def set_start_text_callback(client, callback_query):
         await client.send_message(chat_id, lang.get("general.error", e=e), reply_markup=back_btn)
 
 
-async def _send_broadcast_message(client, target_user_id, source_message):
+@command(lambda ctx: filters.regex("^set_broadcast_price$"), handler_type="callback")
+async def set_broadcast_price_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+    chat_id = callback_query.from_user.id
+    lang = callback_query.lang
+    await callback_query.message.delete()
+
+    layout = [[{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]]
+    back_btn = client.ns.telegram.button.build_button_grid(layout)
+
+    try:
+        prompt = f"{lang.get('settings.set_broadcast_price_prompt')}{lang.get('prompts.cancel_footer')}"
+        ask_msg = await client.ask(chat_id, prompt, timeout=300)
+
+        if ask_msg.text:
+            if ask_msg.text.lower() == "/batal":
+                raise listen.UserCancelled
+            if ask_msg.text.lower() in ["/empty", "0"]:
+                await ctx.db.removeVars(client.me.id, "broadcast_price")
+                return await client.send_message(chat_id, lang.get("settings.set_broadcast_price_disabled"), reply_markup=back_btn)
+
+        if not ask_msg.text.isdigit():
+            raise ValueError(lang.get("general.invalid_format"))
+
+        stars_amount = int(ask_msg.text)
+        await ctx.db.setVars(client.me.id, "broadcast_price", stars_amount)
+        await client.send_message(chat_id, lang.get("settings.set_broadcast_price_success", stars=stars_amount), reply_markup=back_btn)
+
+    except listen.UserCancelled:
+        await client.send_message(chat_id, lang.get("general.cancelled"), reply_markup=back_btn)
+    except asyncio.TimeoutError:
+        await client.send_message(chat_id, lang.get("general.timeout"), reply_markup=back_btn)
+    except Exception as e:
+        await client.send_message(chat_id, lang.get("general.error", e=e), reply_markup=back_btn)
+
+
+async def _send_broadcast_message(client, target_user_id, source_message, broadcast_price=0):
     caption_or_text = source_message.caption or source_message.text
     text_to_parse = caption_or_text.html if caption_or_text else ""
     reply_markup, cleaned_text = client.ns.telegram.button.create_inline_keyboard(text_to_parse)
+    final_markup = reply_markup if reply_markup.inline_keyboard else (source_message.reply_markup if source_message.reply_markup else None)
+
+    if broadcast_price > 0 and (source_message.photo or source_message.video):
+        media_list = []
+        if source_message.photo:
+            media_list.append(pyrogram.types.InputPaidMediaPhoto(source_message.photo.sizes[-1].file_id))
+        elif source_message.video:
+            media_list.append(pyrogram.types.InputPaidMediaVideo(source_message.video.file_id))
+        
+        await client.send_paid_media(
+            chat_id=target_user_id,
+            star_count=broadcast_price,
+            media=media_list,
+            caption=cleaned_text,
+            reply_markup=final_markup
+        )
+        return
 
     if source_message.photo:
         await client.send_photo(
             chat_id=target_user_id,
             photo=source_message.photo.sizes[-1].file_id,
             caption=cleaned_text,
-            reply_markup=(
-                reply_markup
-                if reply_markup.inline_keyboard
-                else source_message.reply_markup if source_message.reply_markup else None
-            ),
+            reply_markup=final_markup,
         )
     elif source_message.text:
         await client.send_message(
             chat_id=target_user_id,
             text=cleaned_text,
-            reply_markup=(
-                reply_markup
-                if reply_markup.inline_keyboard
-                else source_message.reply_markup if source_message.reply_markup else None
-            ),
+            reply_markup=final_markup,
         )
     else:
         await source_message.copy(
             chat_id=target_user_id,
             caption=cleaned_text,
-            reply_markup=(
-                reply_markup
-                if reply_markup.inline_keyboard
-                else source_message.reply_markup if source_message.reply_markup else None
-            ),
+            reply_markup=final_markup,
         )
-
 
 @command(lambda ctx: filters.regex("^broadcast$"), handler_type="callback")
 async def broadcast_callback(client, callback_query):
@@ -282,6 +324,7 @@ async def broadcast_callback(client, callback_query):
 
     chat_id = callback_query.message.chat.id
     lang = callback_query.lang
+    bot_id = client.me.id
 
     try:
         await callback_query.message.delete()
@@ -290,6 +333,12 @@ async def broadcast_callback(client, callback_query):
 
         if ask_message.text and ask_message.text.lower() == "/batal":
             raise listen.UserCancelled
+
+        broadcast_price = await ctx.db.getVars(bot_id, "broadcast_price") or 0
+        broadcast_price = int(broadcast_price)
+
+        if broadcast_price > 0 and not (ask_message.photo or ask_message.video):
+            raise ValueError(lang.get("settings.broadcast_paid_no_media", stars=broadcast_price))
 
         user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or[]
         if not user_ids:
