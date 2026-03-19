@@ -405,6 +405,12 @@ settings:
   api_del_confirm_no_button: "❌ Tidak, Batalkan"
   api_del_success: "<emoji id=6296367896398399651>✅</emoji> Semua kunci API untuk bot ini telah berhasil dihapus."
 
+  set_broadcast_price: "🌟 Harga Broadcast Paid"
+  set_broadcast_price_prompt: "<emoji id=5458799228719472718>🌟</emoji> **Atur Harga Broadcast Paid**\n\nMasukkan jumlah Bintang (Stars) yang harus dibayar pengguna untuk melihat media broadcast.\n\nKetik `0` atau `/empty` untuk menonaktifkan fitur ini (Broadcast akan kembali normal dan gratis)."
+  set_broadcast_price_success: "<emoji id=6296367896398399651>✅</emoji> **Sukses!** Harga broadcast telah diatur menjadi `{stars}` Stars."
+  set_broadcast_price_disabled: "<emoji id=6296367896398399651>✅</emoji> **Sukses!** Fitur Paid Broadcast dinonaktifkan. Broadcast akan berjalan normal seperti biasa."
+  broadcast_paid_no_media: "<emoji id=6298671811345254603>❌</emoji> **Gagal:** Fitur Paid Broadcast sedang aktif seharga {stars} Stars. Pesan broadcast Anda HARUS berupa Foto atau Video agar bisa dikunci!"
+
 revenue:
   panel_title: "**<emoji id=5375296873982604963>💰</emoji> Cek Pendapatan VIP**\n\nPilih periode waktu untuk melihat total pendapatan dari penjualan paket VIP."
   btn_daily: "📅 Harian (Hari Ini)"
