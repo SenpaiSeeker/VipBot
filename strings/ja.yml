@@ -405,6 +405,12 @@ settings:
   api_del_confirm_no_button: "❌ いいえ、キャンセルします"
   api_del_success: "<emoji id=6296367896398399651>✅</emoji> このボットのすべてのAPIキーが正常に削除されました。"
 
+  set_broadcast_price: "🌟 有料ブロードキャスト価格"
+  set_broadcast_price_prompt: "<emoji id=5458799228719472718>🌟</emoji> **有料ブロードキャスト価格の設定**\n\nユーザーがブロードキャストメディアを見るために支払う必要があるスターの数を入力してください。\n\n無効にするには `0` または `/empty` と入力してください（通常の無料ブロードキャストに戻ります）。"
+  set_broadcast_price_success: "<emoji id=6296367896398399651>✅</emoji> **成功！** ブロードキャスト価格が `{stars}` スターに設定されました。"
+  set_broadcast_price_disabled: "<emoji id=6296367896398399651>✅</emoji> **成功！** 有料ブロードキャスト機能が無効になりました。ブロードキャストは通常通りになります。"
+  broadcast_paid_no_media: "<emoji id=6298671811345254603>❌</emoji> **失敗:** 有料ブロードキャストが {stars} スターでアクティブです。ロックするには、メッセージが写真またはビデオである必要があります！"
+
 revenue:
   panel_title: "**<emoji id=5375296873982604963>💰</emoji> VIP収益の確認**\n\n期間を選択して、VIPパッケージ販売の総収益を表示します。"
   btn_daily: "📅 日次 (今日)"
