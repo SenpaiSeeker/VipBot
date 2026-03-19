@@ -1643,82 +1643,6 @@ def generate_safe_saweria_message(user_name):
     return f"{final_message} ({unique_code})"
 
 
-async def verify_user_join(client, user, chat_id, link_msg):
-    lang = await ctx.L.create(ctx.db, user.id)
-    verification_timeout = 3600
-    start_time = time()
-    is_joined = False
-
-    while time() - start_time < verification_timeout:
-        try:
-            member = await client.get_chat_member(chat_id, user.id)
-            if member.status not in [pyrogram.enums.ChatMemberStatus.LEFT, pyrogram.enums.ChatMemberStatus.BANNED]:
-                is_joined = True
-                ctx.log.print(
-                    f"{ctx.log.GREEN}User {user.id} berhasil diverifikasi bergabung ke {chat_id} dari bot {client.me.username}."
-                )
-                break
-        except pyrogram.errors.UserNotParticipant:
-            await asyncio.sleep(15)
-        except Exception as e:
-            ctx.log.print(f"{ctx.log.RED}Error saat verifikasi join {user.id} ke {chat_id}: {e}")
-            break
-
-    try:
-        await link_msg.delete()
-    except Exception:
-        pass
-
-    if not is_joined:
-        ctx.log.print(f"{ctx.log.YELLOW}User {user.id} tidak bergabung ke {chat_id} dalam waktu yang ditentukan.")
-        await client.send_message(user.id, lang.get("payment.check.link_expired"))
-
-
-async def verify_user_join_multiple(client, user, invite_payloads, link_msg):
-    lang = await ctx.L.create(ctx.db, user.id)
-    verification_timeout = 3600
-    start_time = time()
-
-    while time() - start_time < verification_timeout:
-        pending_payloads = []
-        for payload in invite_payloads:
-            chat_id = payload.get("chat_id")
-            try:
-                member = await client.get_chat_member(chat_id, user.id)
-                if member.status in [pyrogram.enums.ChatMemberStatus.LEFT, pyrogram.enums.ChatMemberStatus.BANNED]:
-                    pending_payloads.append(payload)
-            except pyrogram.errors.UserNotParticipant:
-                pending_payloads.append(payload)
-            except Exception as e:
-                ctx.log.print(f"{ctx.log.RED}Error saat verifikasi multi join {user.id} ke {chat_id}: {e}")
-                pending_payloads.append(payload)
-
-        if not pending_payloads:
-            try:
-                await link_msg.delete()
-            except Exception:
-                pass
-            ctx.log.print(
-                f"{ctx.log.GREEN}User {user.id} berhasil bergabung ke semua paket VVIP dari bot {client.me.username}."
-            )
-            return
-
-        await asyncio.sleep(15)
-
-    pending_lines = []
-    for item in pending_payloads:
-        pending_lines.append(f"• {item.get('name')}: {item.get('link')}")
-
-    try:
-        await client.send_message(
-            user.id,
-            lang.get("payment.check.pending_join_multi", pending_links="\n".join(pending_lines)),
-            protect_content=True,
-        )
-    except Exception as e:
-        ctx.log.print(f"{ctx.log.RED}Gagal mengirim notifikasi pending join multi {user.id}: {e}")
-
-
 def _get_all_vvip_items(vvip_list):
     selected_items = []
     for index, item in enumerate(vvip_list):
@@ -1868,9 +1792,9 @@ async def manual_check_payment_callback(client, callback_query):
     amount_raw = int(ref_parts[2])
 
     coupon_code = None
-    bundle_indexes = []
+    bundle_indexes =[]
     if is_bundle_order:
-        bundle_indexes = [int(i) for i in ref_parts[3].split(",") if i.strip().isdigit()] if len(ref_parts) > 3 else []
+        bundle_indexes =[int(i) for i in ref_parts[3].split(",") if i.strip().isdigit()] if len(ref_parts) > 3 else []
     else:
         item_index = int(ref_parts[0])
         coupon_code = ref_parts[3] if len(ref_parts) > 3 else None
@@ -1886,8 +1810,8 @@ async def manual_check_payment_callback(client, callback_query):
             vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
             if is_bundle_order:
-                invite_payloads = []
-                purchased_names = []
+                invite_payloads =[]
+                purchased_names =[]
                 for idx in bundle_indexes:
                     try:
                         item_found = vvip_list[idx]
@@ -1902,11 +1826,11 @@ async def manual_check_payment_callback(client, callback_query):
                     try:
                         expire_date_link = datetime.now() + timedelta(minutes=60)
                         invite_link_obj = await client.create_chat_invite_link(
-                            chat_id=target_chat_id, member_limit=1, expire_date=expire_date_link
+                            chat_id=target_chat_id, creates_join_request=True, expire_date=expire_date_link
                         )
                         link = invite_link_obj.invite_link
                     except Exception as e:
-                        ctx.log.print(f"{ctx.log.RED}Gagal membuat invite link bundle untuk {target_chat_id}: {e}")
+                        ctx.log.print(f"Gagal membuat invite link bundle untuk {target_chat_id}: {e}")
                         continue
 
                     member_data = {
@@ -1939,13 +1863,12 @@ async def manual_check_payment_callback(client, callback_query):
                 await ctx.db.setListVars(client.me.id, "vip_revenue_history", revenue_data)
 
                 link_text = "\n".join([f"• {item.get('name')}: {item.get('link')}" for item in invite_payloads])
-                link_msg = await client.send_message(
+                await client.send_message(
                     user.id,
                     lang.get("payment.check.success_customer_bundle", links=link_text),
                     protect_content=True,
                 )
                 await callback_query.message.delete()
-                asyncio.create_task(verify_user_join_multiple(client, user, invite_payloads, link_msg))
 
                 owner_bot_id = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
                 owner_lang = await ctx.L.create(ctx.db, owner_bot_id)
@@ -1959,9 +1882,7 @@ async def manual_check_payment_callback(client, callback_query):
                         type="Bundle",
                     ),
                 )
-                ctx.log.print(
-                    f"{ctx.log.CYAN}User {user.id} telah mengkonfirmasi pembayaran bundle semua VVIP dari bot {client.me.username}."
-                )
+                ctx.log.print(f"User {user.id} telah mengkonfirmasi pembayaran bundle dari bot {client.me.username}.")
                 return
 
             try:
@@ -1979,14 +1900,12 @@ async def manual_check_payment_callback(client, callback_query):
             try:
                 expire_date_link = datetime.now() + timedelta(minutes=60)
                 invite_link_obj = await client.create_chat_invite_link(
-                    chat_id=target_chat_id, member_limit=1, expire_date=expire_date_link
+                    chat_id=target_chat_id, creates_join_request=True, expire_date=expire_date_link
                 )
                 link = invite_link_obj.invite_link
             except Exception as e:
-                ctx.log.print(f"{ctx.log.RED}Gagal membuat invite link untuk {target_chat_id}: {e}")
-                raise Exception(
-                    "Gagal membuat link undangan. Pastikan bot adalah admin di grup tujuan dengan hak 'Invite Users'."
-                )
+                ctx.log.print(f"Gagal membuat invite link untuk {target_chat_id}: {e}")
+                raise Exception("Gagal membuat link undangan.")
 
             member_data = {
                 "user_id": user.id,
@@ -2002,7 +1921,7 @@ async def manual_check_payment_callback(client, callback_query):
                 member_data["expiry_date"] = expiry_date.isoformat()
 
             if coupon_code:
-                coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
+                coupons = await ctx.db.getListVars(client.me.id, "coupons") or[]
                 for c in coupons:
                     if c.get("code") == coupon_code:
                         c["uses_left"] = c.get("uses_left", 1) - 1
@@ -2023,13 +1942,12 @@ async def manual_check_payment_callback(client, callback_query):
             }
             await ctx.db.setListVars(client.me.id, "vip_revenue_history", revenue_data)
 
-            link_msg = await client.send_message(
+            await client.send_message(
                 user.id,
                 lang.get("payment.check.success_customer_full", name=name, link=link),
                 protect_content=True,
             )
             await callback_query.message.delete()
-            asyncio.create_task(verify_user_join(client, user, target_chat_id, link_msg))
 
             owner_bot_id = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
             owner_lang = await ctx.L.create(ctx.db, owner_bot_id)
@@ -2043,14 +1961,12 @@ async def manual_check_payment_callback(client, callback_query):
                     type=tipe.title(),
                 ),
             )
-            ctx.log.print(
-                f"{ctx.log.CYAN}User {user.id} telah mengkonfirmasi pembayaran {name} dari bot {client.me.username}."
-            )
+            ctx.log.print(f"User {user.id} telah mengkonfirmasi pembayaran dari bot {client.me.username}.")
         else:
             await callback_query.answer(lang.get("payment.check.not_paid"), show_alert=True)
 
     except Exception as e:
-        ctx.log.print(f"{ctx.log.RED}Error manual-check {user.id} ({client.me.username}) {transaction_id}: {e}")
+        ctx.log.print(f"Error manual-check {user.id} ({client.me.username}) {transaction_id}: {e}")
         await callback_query.answer(lang.get("general.error", e=e), show_alert=True)
 
 
