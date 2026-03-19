@@ -25,9 +25,9 @@ async def auto_approve_join_request(client, join_request):
     try:
         if is_authorized:
             await client.approve_chat_join_request(chat_id, user_id)
-            ctx.log.print(f"User {user_id} disetujui otomatis masuk ke grup {chat_id}")
+            ctx.log.print(f"User {client.ns.telegram.arg.getMention(join_request)} disetujui otomatis masuk ke grup {chat_id}")
         else:
             await client.decline_chat_join_request(chat_id, user_id)
-            ctx.log.print(f"User {user_id} ditolak masuk ke grup {chat_id}")
+            ctx.log.print(f"User {client.ns.telegram.arg.getMention(join_request)} ditolak masuk ke grup {chat_id}")
     except Exception as e:
         ctx.log.print(f"Gagal memproses auto-approve join request: {e}")
