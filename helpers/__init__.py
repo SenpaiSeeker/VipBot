@@ -9,12 +9,14 @@ from .gradient import Gradient
 from .monitor import ServerMonitor
 from .saweria_scraper import SaweriaScraper
 from .gemini import ChatbotGemini
+from .dashboard_gen import DashboardGenerator
 
 class MockUtils:
     def __init__(self):
         self.log = LoggerHandler
         self.faker = FakeInfoGenerator()
         self.grad = Gradient()
+        self.dashboard = DashboardGenerator()
 
 class MockTelegram:
     def __init__(self, client):
