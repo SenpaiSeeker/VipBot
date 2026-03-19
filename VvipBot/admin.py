@@ -799,7 +799,7 @@ async def dashboard_command_handler(client, message):
     bot_user_counts = {}
     for bot_data in all_bots_data:
         bot_id = int(bot_data["name"])
-        user_ids = await ctx.db.getListVars(bot_id, "user_ids") or[]
+        user_ids = await ctx.db.getListVars(bot_id, "user_ids") or []
         bot_user_counts[bot_id] = len(user_ids)
         for user_id in user_ids:
             unique_users.add(user_id)
@@ -815,6 +815,11 @@ async def dashboard_command_handler(client, message):
 
     try:
         stats = client.ns.server.monitor.get_detailed_stats()
+        stats_data = {
+            "cpu": stats.cpu["percent"],
+            "ram": stats.ram["percent"],
+            "disk": stats.disk["percent"]
+        }
         server_stats_text = lang.get(
             "admin.dashboard.server_stats",
             cpu=f"[{stats.cpu['bar']}] {stats.cpu['percent']}%",
@@ -822,6 +827,7 @@ async def dashboard_command_handler(client, message):
             disk=f"[{stats.disk['bar']}] {stats.disk['percent']}%",
         )
     except Exception as e:
+        stats_data = {"cpu": 0, "ram": 0, "disk": 0}
         server_stats_text = lang.get("admin.dashboard.server_stats_fail", e=e)
 
     dashboard_text = lang.get(
@@ -832,7 +838,12 @@ async def dashboard_command_handler(client, message):
         server_stats=server_stats_text,
     )
 
-    await msg.edit_text(dashboard_text)
+    try:
+        photo_stream = client.ns.utils.dashboard.generate_dashboard(stats_data)
+        await message.reply_photo(photo=photo_stream, caption=dashboard_text)
+        await msg.delete()
+    except Exception as e:
+        await msg.edit_text(dashboard_text + f"\n\nError Visualisasi: {e}")
 
 
 @command(lambda ctx: filters.command("broadcast_owners") & filters.user(ctx.owner_id))
