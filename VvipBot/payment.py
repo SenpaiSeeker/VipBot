@@ -1792,9 +1792,9 @@ async def manual_check_payment_callback(client, callback_query):
     amount_raw = int(ref_parts[2])
 
     coupon_code = None
-    bundle_indexes =[]
+    bundle_indexes = []
     if is_bundle_order:
-        bundle_indexes =[int(i) for i in ref_parts[3].split(",") if i.strip().isdigit()] if len(ref_parts) > 3 else []
+        bundle_indexes = [int(i) for i in ref_parts[3].split(",") if i.strip().isdigit()] if len(ref_parts) > 3 else []
     else:
         item_index = int(ref_parts[0])
         coupon_code = ref_parts[3] if len(ref_parts) > 3 else None
@@ -1810,8 +1810,8 @@ async def manual_check_payment_callback(client, callback_query):
             vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
             if is_bundle_order:
-                invite_payloads =[]
-                purchased_names =[]
+                invite_payloads = []
+                purchased_names = []
                 for idx in bundle_indexes:
                     try:
                         item_found = vvip_list[idx]
@@ -1882,7 +1882,9 @@ async def manual_check_payment_callback(client, callback_query):
                         type="Bundle",
                     ),
                 )
-                ctx.log.print(f"{ctx.log.BLUE}User {user.id} telah mengkonfirmasi pembayaran bundle dari bot {client.me.username}.")
+                ctx.log.print(
+                    f"{ctx.log.BLUE}User {user.id} telah mengkonfirmasi pembayaran bundle dari bot {client.me.username}."
+                )
                 return
 
             try:
@@ -1921,7 +1923,7 @@ async def manual_check_payment_callback(client, callback_query):
                 member_data["expiry_date"] = expiry_date.isoformat()
 
             if coupon_code:
-                coupons = await ctx.db.getListVars(client.me.id, "coupons") or[]
+                coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
                 for c in coupons:
                     if c.get("code") == coupon_code:
                         c["uses_left"] = c.get("uses_left", 1) - 1

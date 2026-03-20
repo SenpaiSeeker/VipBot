@@ -8,31 +8,39 @@ async def settings(client, callback_query):
 
     lang = callback_query.lang
 
-    layout = [[
+    layout = [
+        [
             {"text": lang.get("settings.set_start_photo"), "callback_data": "set_start_photo"},
             {"text": lang.get("settings.set_start_text"), "callback_data": "set_start_text"},
-        ],[
+        ],
+        [
             {"text": lang.get("settings.add_vvip"), "callback_data": "setup_listvvip"},
             {"text": lang.get("settings.del_vvip"), "callback_data": "delete_listvvip"},
-        ],[
+        ],
+        [
             {"text": lang.get("settings.total_users"), "callback_data": "total_users_count"},
             {"text": lang.get("settings.check_members"), "callback_data": "list_members_0"},
-        ],[
+        ],
+        [
             {"text": lang.get("settings.check_active_members"), "callback_data": "check_active_menu_init"},
             {"text": lang.get("vvip_status.button"), "callback_data": "check_vvip_status"},
-        ],[
+        ],
+        [
             {"text": lang.get("settings.broadcast"), "callback_data": "broadcast"},
             {"text": lang.get("settings.set_broadcast_price"), "callback_data": "set_broadcast_price"},
-        ],[
+        ],
+        [
             {"text": lang.get("settings.api_keys"), "callback_data": "api_settings"},
             {"text": lang.get("settings.coupons"), "callback_data": "manage_coupons"},
-        ],[
+        ],
+        [
             {"text": lang.get("settings.vip_revenue"), "callback_data": "vip_revenue_menu"},
             {"text": lang.get("settings.stats_button"), "callback_data": "stats_0"},
-        ],[
+        ],
+        [
             {"text": lang.get("general.back_to_main_menu"), "callback_data": "start"},
         ],
-             ]
+    ]
 
     txt_content = lang.get("settings.panel")
     btn = client.ns.telegram.button.build_button_grid(layout)
@@ -54,7 +62,7 @@ async def check_vvip_status_callback(client, callback_query):
     await callback_query.message.delete()
     status_msg = await client.send_message(chat_id, lang.get("vvip_status.processing"))
 
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or[]
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
     if not vvip_list:
         return await status_msg.edit(lang.get("vvip_status.empty"))
@@ -101,12 +109,15 @@ async def vip_revenue_menu_callback(client, callback_query):
     lang = callback_query.lang
     text = lang.get("revenue.panel_title")
 
-    layout = [[
+    layout = [
+        [
             {"text": lang.get("revenue.btn_daily"), "callback_data": "show_revenue_daily"},
             {"text": lang.get("revenue.btn_weekly"), "callback_data": "show_revenue_weekly"},
-        ],[
+        ],
+        [
             {"text": lang.get("revenue.btn_monthly"), "callback_data": "show_revenue_monthly"},
-        ],[
+        ],
+        [
             {"text": lang.get("general.back_to_settings"), "callback_data": "settings"},
         ],
     ]
@@ -126,7 +137,7 @@ async def show_vip_revenue_callback(client, callback_query):
     lang = callback_query.lang
     period = callback_query.matches[0].group(1)
 
-    revenue_history = await ctx.db.getListVars(client.me.id, "vip_revenue_history") or[]
+    revenue_history = await ctx.db.getListVars(client.me.id, "vip_revenue_history") or []
 
     now = datetime.now(ZoneInfo("Asia/Jakarta"))
     total_amount = 0
@@ -258,14 +269,18 @@ async def set_broadcast_price_callback(client, callback_query):
                 raise listen.UserCancelled
             if ask_msg.text.lower() in ["/empty", "0"]:
                 await ctx.db.removeVars(client.me.id, "broadcast_price")
-                return await client.send_message(chat_id, lang.get("settings.set_broadcast_price_disabled"), reply_markup=back_btn)
+                return await client.send_message(
+                    chat_id, lang.get("settings.set_broadcast_price_disabled"), reply_markup=back_btn
+                )
 
         if not ask_msg.text.isdigit():
             raise ValueError(lang.get("general.invalid_format"))
 
         stars_amount = int(ask_msg.text)
         await ctx.db.setVars(client.me.id, "broadcast_price", stars_amount)
-        await client.send_message(chat_id, lang.get("settings.set_broadcast_price_success", stars=stars_amount), reply_markup=back_btn)
+        await client.send_message(
+            chat_id, lang.get("settings.set_broadcast_price_success", stars=stars_amount), reply_markup=back_btn
+        )
 
     except listen.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"), reply_markup=back_btn)
@@ -279,7 +294,11 @@ async def _send_broadcast_message(client, target_user_id, source_message, broadc
     caption_or_text = source_message.caption or source_message.text
     text_to_parse = caption_or_text.html if caption_or_text else ""
     reply_markup, cleaned_text = client.ns.telegram.button.create_inline_keyboard(text_to_parse)
-    final_markup = reply_markup if reply_markup.inline_keyboard else (source_message.reply_markup if source_message.reply_markup else None)
+    final_markup = (
+        reply_markup
+        if reply_markup.inline_keyboard
+        else (source_message.reply_markup if source_message.reply_markup else None)
+    )
 
     if broadcast_price > 0 and (source_message.photo or source_message.video):
         media_list = []
@@ -287,13 +306,13 @@ async def _send_broadcast_message(client, target_user_id, source_message, broadc
             media_list.append(pyrogram.types.InputPaidMediaPhoto(source_message.photo.sizes[-1].file_id))
         elif source_message.video:
             media_list.append(pyrogram.types.InputPaidMediaVideo(source_message.video.file_id))
-        
+
         await client.send_paid_media(
             chat_id=target_user_id,
             star_count=broadcast_price,
             media=media_list,
             caption=cleaned_text,
-            reply_markup=final_markup
+            reply_markup=final_markup,
         )
         return
 
@@ -316,6 +335,7 @@ async def _send_broadcast_message(client, target_user_id, source_message, broadc
             caption=cleaned_text,
             reply_markup=final_markup,
         )
+
 
 @command(lambda ctx: filters.regex("^broadcast$"), handler_type="callback")
 async def broadcast_callback(client, callback_query):
@@ -340,7 +360,7 @@ async def broadcast_callback(client, callback_query):
         if broadcast_price > 0 and not (ask_message.photo or ask_message.video):
             raise ValueError(lang.get("settings.broadcast_paid_no_media", stars=broadcast_price))
 
-        user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or[]
+        user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
         if not user_ids:
             return await client.send_message(chat_id, lang.get("settings.broadcast_no_users"))
 
@@ -366,7 +386,9 @@ async def broadcast_callback(client, callback_query):
                 await send_to_user(user_id)
 
         await progress_msg.delete()
-        return await client.send_message(chat_id, lang.get("settings.broadcast_done", success=success_count, fail=fail_count))
+        return await client.send_message(
+            chat_id, lang.get("settings.broadcast_done", success=success_count, fail=fail_count)
+        )
 
     except listen.UserCancelled:
         await client.send_message(chat_id, lang.get("general.cancelled"))
@@ -473,7 +495,7 @@ async def delete_listvvip(client, callback_query):
     lang = callback_query.lang
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
-    back_row =[{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]
+    back_row = [{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]
 
     if not vvip_list:
         text = lang.get("settings.delete_vvip_empty")
@@ -485,8 +507,8 @@ async def delete_listvvip(client, callback_query):
     if not hasattr(ctx, "vip_list"):
         ctx.vip_list = {}
 
-    layout =[]
-    button_row =[]
+    layout = []
+    button_row = []
     for item in vvip_list:
         name = item.get("name", "Tanpa Nama")
         item_id = uuid.uuid4().hex[:8]
@@ -497,7 +519,7 @@ async def delete_listvvip(client, callback_query):
         )
         if len(button_row) == 2:
             layout.append(button_row)
-            button_row =[]
+            button_row = []
 
     if button_row:
         layout.append(button_row)
@@ -526,10 +548,10 @@ async def confirm_delete_vvip(client, callback_query):
 
     name = ctx.vip_list[item_id]
 
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or[]
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     item_to_remove = next((item for item in vvip_list if item.get("name") == name), None)
 
-    back_row =[{"text": lang.get("general.back_to_settings"), "callback_data": "delete_listvvip"}]
+    back_row = [{"text": lang.get("general.back_to_settings"), "callback_data": "delete_listvvip"}]
 
     if item_to_remove:
         await ctx.db.removeListVars(client.me.id, "list_vvip", item_to_remove)
@@ -564,10 +586,13 @@ async def api_settings_callback(client, callback_query):
         else lang.get("settings.api_status_inactive")
     )
 
-    layout = [[
+    layout = [
+        [
             {"text": lang.get("settings.api_set_saweria"), "callback_data": "set_api SAWERIA"},
             {"text": lang.get("settings.api_set_gemini"), "callback_data": "set_api GEMINI_API_KEY"},
-        ],[{"text": lang.get("settings.api_del_all"), "callback_data": "del_api_confirm"}],[{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}],
+        ],
+        [{"text": lang.get("settings.api_del_all"), "callback_data": "del_api_confirm"}],
+        [{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}],
     ]
 
     text = lang.get(
@@ -647,7 +672,8 @@ async def confirm_delete_api_keys(client, callback_query):
     lang = callback_query.lang
 
     text = lang.get("settings.api_del_confirm_panel")
-    layout = [[
+    layout = [
+        [
             {"text": lang.get("settings.api_del_confirm_yes_button"), "callback_data": "do_del_api"},
             {"text": lang.get("settings.api_del_confirm_no_button"), "callback_data": "api_settings"},
         ]
@@ -683,7 +709,10 @@ async def manage_coupons_callback(client, callback_query):
 
     lang = callback_query.lang
     text = lang.get("coupons.panel")
-    layout = [[{"text": lang.get("coupons.add_button"), "callback_data": "add_coupon"}],[{"text": lang.get("coupons.list_button"), "callback_data": "list_coupons_0"}],[{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}],
+    layout = [
+        [{"text": lang.get("coupons.add_button"), "callback_data": "add_coupon"}],
+        [{"text": lang.get("coupons.list_button"), "callback_data": "list_coupons_0"}],
+        [{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}],
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
 
@@ -751,7 +780,7 @@ async def list_coupons_callback(client, callback_query):
 
     coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
 
-    back_row =[{"text": lang.get("general.back"), "callback_data": "manage_coupons"}]
+    back_row = [{"text": lang.get("general.back"), "callback_data": "manage_coupons"}]
 
     if not coupons:
         text = lang.get("coupons.list_empty")
@@ -778,17 +807,19 @@ async def list_coupons_callback(client, callback_query):
     )
 
     layout = []
-    pagination_row =[]
+    pagination_row = []
     if total_pages > 1:
         prev_page = (page - 1 + total_pages) % total_pages
         next_page = (page + 1) % total_pages if page + 1 < total_pages else page
-        pagination_row.extend([
+        pagination_row.extend(
+            [
                 {"text": "«", "callback_data": f"list_coupons_{prev_page}"},
                 {"text": "»", "callback_data": f"list_coupons_{next_page}"},
             ]
         )
 
-    layout.append([{"text": lang.get("coupons.delete_button"), "callback_data": f"delete_coupon {coupon['code']} {page}"}]
+    layout.append(
+        [{"text": lang.get("coupons.delete_button"), "callback_data": f"delete_coupon {coupon['code']} {page}"}]
     )
     if pagination_row:
         layout.append(pagination_row)
@@ -805,7 +836,7 @@ async def delete_coupon_callback(client, callback_query):
     lang = callback_query.lang
     _, code, page_str = callback_query.data.split()
 
-    coupons = await ctx.db.getListVars(client.me.id, "coupons") or[]
+    coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
     coupon_to_remove = next((c for c in coupons if c.get("code") == code), None)
 
     if coupon_to_remove:
@@ -813,7 +844,7 @@ async def delete_coupon_callback(client, callback_query):
         await callback_query.answer(lang.get("coupons.delete_success"), show_alert=True)
 
     new_page = int(page_str)
-    remaining_coupons = await ctx.db.getListVars(client.me.id, "coupons") or[]
+    remaining_coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
     if new_page >= len(remaining_coupons) and len(remaining_coupons) > 0:
         new_page = len(remaining_coupons) - 1
 
