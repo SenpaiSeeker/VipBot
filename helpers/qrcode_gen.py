@@ -81,8 +81,8 @@ class QrCodeGenerator:
                 return img_bytes.getvalue()
 
             qr_w, qr_h = img.size
-            font_button = ImageFont.load_default()
-            font_creator = ImageFont.load_default()
+            font_button = ImageFont.load_default(30)
+            font_creator = ImageFont.load_default(40)
 
             button_w, creator_w = 0, 0
             if bottom_text:
