@@ -7,14 +7,14 @@ from . import command, ctx
 
 @command(lambda ctx: filters.all, handler_type="chat_join_request")
 async def auto_approve_join_request(client, join_request):
-    user_id = join_request.from_user.id
-    chat_id = join_request.chat.id
+    user = join_request.from_user
+    chat = join_request.chat
 
     members_list = await ctx.db.getListVars(client.me.id, "vvip_members") or []
     is_authorized = False
 
     for member in members_list:
-        if member.get("user_id") == user_id and member.get("chat_id_kick") == chat_id:
+        if member.get("user_id") == user.id and member.get("chat_id_kick") == chat.id:
             expiry_date_str = member.get("expiry_date")
             if not expiry_date_str:
                 is_authorized = True
@@ -27,10 +27,10 @@ async def auto_approve_join_request(client, join_request):
 
     try:
         if is_authorized:
-            await client.approve_chat_join_request(chat_id, user_id)
-            ctx.log.print(f"{ctx.log.GREEN}User {user_id} disetujui otomatis masuk ke grup {chat_id}")
+            await client.approve_chat_join_request(chat.id, user.id)
+            ctx.log.print(f"{ctx.log.GREEN}User {client.ns.telegram.arg.getMention(user)} disetujui otomatis masuk ke grup {chat.title}")
         else:
-            await client.decline_chat_join_request(chat_id, user_id)
-            ctx.log.print(f"{ctx.log.RED}User {user_id} ditolak masuk ke grup {chat_id}")
+            await client.decline_chat_join_request(chat.id, user.id)
+            ctx.log.print(f"{ctx.log.RED}User {client.ns.telegram.arg.getMention(user)} ditolak masuk ke grup {chat.id}")
     except Exception as e:
         ctx.log.print(f"{ctx.log.YELLOW}Gagal memproses auto-approve join request: {e}")
