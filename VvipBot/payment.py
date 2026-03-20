@@ -1830,7 +1830,7 @@ async def manual_check_payment_callback(client, callback_query):
                         )
                         link = invite_link_obj.invite_link
                     except Exception as e:
-                        ctx.log.print(f"Gagal membuat invite link bundle untuk {target_chat_id}: {e}")
+                        ctx.log.print(f"{ctx.log.RED}Gagal membuat invite link bundle untuk {target_chat_id}: {e}")
                         continue
 
                     member_data = {
@@ -1882,7 +1882,7 @@ async def manual_check_payment_callback(client, callback_query):
                         type="Bundle",
                     ),
                 )
-                ctx.log.print(f"User {user.id} telah mengkonfirmasi pembayaran bundle dari bot {client.me.username}.")
+                ctx.log.print(f"{ctx.log.BLUE}User {user.id} telah mengkonfirmasi pembayaran bundle dari bot {client.me.username}.")
                 return
 
             try:
