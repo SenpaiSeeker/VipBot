@@ -351,7 +351,7 @@ async def broadcast_callback(client, callback_query):
         async def send_to_user(target_user_id):
             nonlocal success_count, fail_count
             try:
-                await _send_broadcast_message(client, target_user_id, ask_message)
+                await _send_broadcast_message(client, target_user_id, ask_message, broadcast_price)
                 success_count += 1
             except pyrogram.errors.FloodWait as e:
                 await asyncio.sleep(e.value + 1)
