@@ -11,10 +11,9 @@ try:
 except ImportError:
     loop = asyncio.new_event_loop()
 else:
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-    loop = asyncio.new_event_loop()
-
-asyncio.set_event_loop(loop)
+    loop = uvloop.new_event_loop()
+finally:
+    asyncio.set_event_loop(loop)
 
 import VvipBot as handlers
 from bot_manager import BotManager
