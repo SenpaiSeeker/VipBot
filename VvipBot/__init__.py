@@ -67,13 +67,17 @@ async def is_bot_owner(client, user_id):
     return user_id == ctx.owner_id or (owner_of_this_bot and user_id == owner_of_this_bot)
 
 
-async def check_new_user(client, message):
-    user_id = message.from_user.id
-    user_list = await ctx.db.getListVars(client.me.id, "user_ids") or []
-    if user_id not in user_list:
-        await ctx.db.setListVars(client.me.id, "user_ids", user_id)
-        ctx.log.print(f"{ctx.log.CYAN}User baru {client.ns.telegram.arg.getMention(message.from_user, logs=True)} memulai bot {client.me.first_name}")
+def check_new_user(func):
+    @wraps(func)
+    async def wrapper(client, update):
+        user_list = await ctx.db.getListVars(client.me.id, "user_ids") or []
+        if user_id not in user_list:
+            await ctx.db.setListVars(client.me.id, "user_ids", update.from_user.id)
+            ctx.log.print(f"{ctx.log.CYAN}User baru {client.ns.telegram.arg.getMention(update.from_user, logs=True)} memulai bot {client.me.first_name}")
+        
+        return await func(client, update)
 
+    return wrapper
 
 def _load_all_handlers():
     current_dir = os.path.dirname(__file__)
