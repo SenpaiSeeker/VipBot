@@ -45,8 +45,8 @@ async def get_start_keyboard_and_content(client, user, lang):
 
 
 @command(lambda ctx: filters.command("start") & filters.private)
+@check_new_user
 async def start_bot(client, message):
-    await check_new_user(client, message)
     btn, txt, photo_id = await get_start_keyboard_and_content(client, message.from_user, message.lang)
     await message.reply_photo(photo=photo_id, caption=txt, reply_markup=btn)
 
