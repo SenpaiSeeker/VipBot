@@ -69,13 +69,26 @@ async def is_bot_owner(client, user_id):
 
 def check_new_user(func):
     @wraps(func)
-    async def wrapper(client, update):
+    async def wrapper(client, update, *args, **kwargs):
         user_list = await ctx.db.getListVars(client.me.id, "user_ids") or []
-        if user_id not in user_list:
-            await ctx.db.setListVars(client.me.id, "user_ids", update.from_user.id)
-            ctx.log.print(f"{ctx.log.CYAN}User baru {client.ns.telegram.arg.getMention(update.from_user, logs=True)} memulai bot {client.me.first_name}")
+        if update.from_user.id not in user_list:
+            await ctx.db.setListVars(bot_id, "user_ids", user_id)
+            owner_of_this_bot = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
+            try:
+                owner_lang = await Language.create(ctx.db, owner_of_this_bot)
+                mention_user = client.ns.telegram.arg.getMention(update.from_user)
+
+                notification_text = owner_lang.get(
+                    "bot_management.create.new_user_notification",
+                    mention=client.me.mention,
+                    user_mention=mention_user,
+                    user_id=user_id,
+                    )
+                await client.send_message(owner_of_this_bot, notification_text)
+            except Exception:
+                pass
         
-        return await func(client, update)
+        return await func(client, update, *args, **kwargs)
 
     return wrapper
 
