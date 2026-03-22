@@ -1,6 +1,24 @@
 from . import *
 
 
+def _get_all_vvip_items(vvip_list):
+    selected_items = []
+    for index, item in enumerate(vvip_list):
+        price = int(item.get("price", 0) or 0)
+        chat_id_normal = item.get("chat_id_normal")
+        if price > 0 and chat_id_normal:
+            selected_items.append(
+                {
+                    "index": index,
+                    "name": item.get("name", f"Paket {index + 1}"),
+                    "price": price,
+                    "chat_id": chat_id_normal,
+                    "duration": item.get("duration", 0),
+                }
+            )
+    return selected_items
+
+
 async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon_code=None):
     lang = await ctx.L.create(ctx.db, user.id)
 
