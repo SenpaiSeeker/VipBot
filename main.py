@@ -53,10 +53,7 @@ async def shutdown(app: pyrogram.Client, manager: BotManager):
         pass
 
     try:
-        stop_tasks = [
-            manager.stop_bot(bot_id)
-            for bot_id in list(manager.running_bots.keys())
-        ]
+        stop_tasks = [manager.stop_bot(bot_id) for bot_id in list(manager.running_bots.keys())]
 
         if stop_tasks:
             await asyncio.gather(*stop_tasks, return_exceptions=True)

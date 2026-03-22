@@ -83,14 +83,15 @@ def check_new_user(func):
                     mention=client.me.mention,
                     user_mention=mention_user,
                     user_id=update.from_user.id,
-                    )
+                )
                 await client.send_message(owner_of_this_bot, notification_text)
             except Exception:
                 pass
-        
+
         return await func(client, update)
 
     return wrapper
+
 
 def _load_all_handlers():
     current_dir = os.path.dirname(__file__)
