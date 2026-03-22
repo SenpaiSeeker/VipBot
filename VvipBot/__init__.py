@@ -88,6 +88,8 @@ def check_new_user(func):
             except Exception:
                 pass
 
+            ctx.log.print(f"{ctx.log.CYAN}User baru {client.ns.telegram.arg.getMention(update.from_user, logs=True)} memulai bot {client.me.first_name}")
+
         return await func(client, update)
 
     return wrapper
