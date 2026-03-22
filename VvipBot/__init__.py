@@ -72,7 +72,7 @@ def check_new_user(func):
     async def wrapper(client, update):
         user_list = await ctx.db.getListVars(client.me.id, "user_ids") or []
         if update.from_user.id not in user_list:
-            await ctx.db.setListVars(bot_id, "user_ids", update.from_user.id)
+            await ctx.db.setListVars(client.me.id, "user_ids", update.from_user.id)
             owner_of_this_bot = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
             try:
                 owner_lang = await Language.create(ctx.db, owner_of_this_bot)
