@@ -21,6 +21,7 @@ from pyrogram import filters
 from pyrogram.enums import ParseMode
 
 from helpers import listen
+from helpers.saweria_message_generator import generate_safe_saweria_message
 from strings import Language
 
 ALL_HANDLERS = []
