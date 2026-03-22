@@ -28,9 +28,9 @@ async def auto_approve_join_request(client, join_request):
     try:
         if is_authorized:
             await client.approve_chat_join_request(chat.id, user.id)
-            ctx.log.print(f"{ctx.log.GREEN}User {user.id} disetujui otomatis masuk ke grup {chat.id}")
+            ctx.log.print(f"{ctx.log.GREEN}User {user.id} disetujui otomatis masuk ke grup {chat.id} dari bot {client.me.username}")
         else:
             await client.decline_chat_join_request(chat.id, user.id)
-            ctx.log.print(f"{ctx.log.RED}User {user.id} ditolak masuk ke grup {chat.id}")
+            ctx.log.print(f"{ctx.log.RED}User {user.id} ditolak masuk ke grup {chat.id} dari bot {client.me.username}")
     except Exception as e:
         ctx.log.print(f"{ctx.log.YELLOW}User {user.id} gagal memproses auto-approve join request: {e}")
