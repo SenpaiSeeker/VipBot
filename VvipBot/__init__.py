@@ -125,7 +125,6 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
         "message": pyrogram.handlers.MessageHandler,
         "callback": pyrogram.handlers.CallbackQueryHandler,
         "pre_checkout": pyrogram.handlers.PreCheckoutQueryHandler,
-        "chat_join_request": pyrogram.handlers.ChatJoinRequestHandler,
     }
 
     for func, filter_lambda, handler_type in ALL_HANDLERS:
