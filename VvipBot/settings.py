@@ -4,9 +4,9 @@ from . import *
 @command(lambda ctx: filters.regex("^settings$"), handler_type="callback")
 async def settings(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
-        return await callback_query.answer(callback_query.lang.get("general.no_access"), show_alert=True)
+        return await callback_query.answer(callback_query.texts.get("general.no_access"), show_alert=True)
 
-    lang = callback_query.lang
+    lang = callback_query.texts
 
     layout = [
         [
@@ -54,9 +54,9 @@ async def settings(client, callback_query):
 @command(lambda ctx: filters.regex("^check_vvip_status$"), handler_type="callback")
 async def check_vvip_status_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
-        return await callback_query.answer(callback_query.lang.get("general.no_access"), show_alert=True)
+        return await callback_query.answer(callback_query.texts.get("general.no_access"), show_alert=True)
 
-    lang = callback_query.lang
+    lang = callback_query.texts
     chat_id = callback_query.message.chat.id
 
     await callback_query.message.delete()
@@ -106,7 +106,7 @@ async def vip_revenue_menu_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
-    lang = callback_query.lang
+    lang = callback_query.texts
     text = lang.get("revenue.panel_title")
 
     layout = [
@@ -134,7 +134,7 @@ async def show_vip_revenue_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
-    lang = callback_query.lang
+    lang = callback_query.texts
     period = callback_query.matches[0].group(1)
 
     revenue_history = await ctx.db.getListVars(client.me.id, "vip_revenue_history") or []
@@ -181,7 +181,7 @@ async def set_start_photo_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
     chat_id = callback_query.from_user.id
-    lang = callback_query.lang
+    lang = callback_query.texts
     await callback_query.message.delete()
 
     layout = [[{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]]
@@ -218,7 +218,7 @@ async def set_start_text_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
     chat_id = callback_query.from_user.id
-    lang = callback_query.lang
+    lang = callback_query.texts
     await callback_query.message.delete()
 
     layout = [[{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]]
@@ -254,7 +254,7 @@ async def set_broadcast_price_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
     chat_id = callback_query.from_user.id
-    lang = callback_query.lang
+    lang = callback_query.texts
     await callback_query.message.delete()
 
     layout = [[{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]]
@@ -340,10 +340,10 @@ async def _send_broadcast_message(client, target_user_id, source_message, broadc
 @command(lambda ctx: filters.regex("^broadcast$"), handler_type="callback")
 async def broadcast_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
-        return await callback_query.answer(callback_query.lang.get("general.no_access"), show_alert=True)
+        return await callback_query.answer(callback_query.texts.get("general.no_access"), show_alert=True)
 
     chat_id = callback_query.message.chat.id
-    lang = callback_query.lang
+    lang = callback_query.texts
     bot_id = client.me.id
 
     try:
@@ -403,7 +403,7 @@ async def setup_listvvip(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
     chat_id = callback_query.from_user.id
-    lang = callback_query.lang
+    lang = callback_query.texts
     await callback_query.message.delete()
 
     try:
@@ -492,7 +492,7 @@ async def setup_listvvip(client, callback_query):
 async def delete_listvvip(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
     back_row = [{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]
@@ -538,7 +538,7 @@ async def delete_listvvip(client, callback_query):
 async def confirm_delete_vvip(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     _, item_id = callback_query.data.split(" ", 1)
 
     if not hasattr(ctx, "vip_list") or item_id not in ctx.vip_list:
@@ -573,7 +573,7 @@ async def confirm_delete_vvip(client, callback_query):
 async def api_settings_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
 
     saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
     saweria_status = (
@@ -606,7 +606,7 @@ async def set_api_key_prompt(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
     chat_id = callback_query.from_user.id
-    lang = callback_query.lang
+    lang = callback_query.texts
     _, key_name = callback_query.data.split(" ", 1)
     await callback_query.message.delete()
 
@@ -658,7 +658,7 @@ async def set_api_key_prompt(client, callback_query):
 async def confirm_delete_api_keys(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
 
     text = lang.get("settings.api_del_confirm_panel")
     layout = [
@@ -679,7 +679,7 @@ async def confirm_delete_api_keys(client, callback_query):
 async def do_delete_api_keys(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     await ctx.db.removeVars(client.me.id, "SAWERIA_USER_ID")
 
     from services import initialize_bot_services
@@ -695,7 +695,7 @@ async def manage_coupons_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
-    lang = callback_query.lang
+    lang = callback_query.texts
     text = lang.get("coupons.panel")
     layout = [
         [{"text": lang.get("coupons.add_button"), "callback_data": "add_coupon"}],
@@ -714,7 +714,7 @@ async def manage_coupons_callback(client, callback_query):
 async def add_coupon_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     chat_id = callback_query.from_user.id
     await callback_query.message.delete()
 
@@ -763,7 +763,7 @@ async def add_coupon_callback(client, callback_query):
 async def list_coupons_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     page = int(callback_query.data.split("_")[2])
 
     coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
@@ -821,7 +821,7 @@ async def list_coupons_callback(client, callback_query):
 async def delete_coupon_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     _, code, page_str = callback_query.data.split()
 
     coupons = await ctx.db.getListVars(client.me.id, "coupons") or []

@@ -51,7 +51,7 @@ async def get_bot_purchase_panel(client, user_id, months=1):
 @command(lambda ctx: filters.regex("^create_bot$"), handler_type="callback")
 async def create_bot_callback(client, callback_query):
     user_id = callback_query.from_user.id
-    lang = callback_query.lang
+    lang = callback_query.texts
 
     user_expiry_str = await ctx.db.getVars(user_id, "user_expiry_date")
     if user_expiry_str:
@@ -88,7 +88,7 @@ async def adjust_bot_month_callback(client, callback_query):
 async def proceed_bot_payment_callback(client, callback_query):
     user_id = callback_query.from_user.id
     months = int(callback_query.data.split("_")[-1])
-    lang = callback_query.lang
+    lang = callback_query.texts
 
     await callback_query.edit_message_caption(lang.get("general.processing"))
 
@@ -139,7 +139,7 @@ async def proceed_bot_payment_callback(client, callback_query):
 async def confirm_bot_payment_callback(client, callback_query):
     transaction_id = callback_query.data.split("_")[-1]
     user = callback_query.from_user
-    lang = callback_query.lang
+    lang = callback_query.texts
 
     order_data_str = await ctx.db.getVars(client.me.id, transaction_id)
     if not order_data_str:
@@ -188,7 +188,7 @@ async def confirm_bot_payment_callback(client, callback_query):
 @command(lambda ctx: filters.regex("^start_creation_process$"), handler_type="callback")
 async def start_creation_process_callback(client, callback_query):
     user_id = callback_query.from_user.id
-    lang = callback_query.lang
+    lang = callback_query.texts
 
     expiry_date_str = await ctx.db.getVars(user_id, "user_expiry_date")
     if not expiry_date_str or datetime.fromisoformat(expiry_date_str) < datetime.now(timezone.utc):
@@ -244,7 +244,7 @@ async def start_creation_process_callback(client, callback_query):
 @command(lambda ctx: filters.regex(r"^list_my_bots(_\d+)?$"), handler_type="callback")
 async def list_my_bots_callback(client, callback_query):
     user_id = callback_query.from_user.id
-    lang = callback_query.lang
+    lang = callback_query.texts
 
     my_bots = []
     all_bots_data = await ctx.db.getBots(is_token=True)
@@ -324,7 +324,7 @@ async def list_my_bots_callback(client, callback_query):
 async def manage_bot_callback(client, callback_query):
     bot_id_to_manage = int(callback_query.data.split(" ", 1)[1])
     user_id = callback_query.from_user.id
-    lang = callback_query.lang
+    lang = callback_query.texts
     owner_of_target_bot = await ctx.db.getVars(bot_id_to_manage, "owner_id") or 0
 
     if user_id != owner_of_target_bot and user_id != ctx.owner_id:
@@ -382,7 +382,7 @@ async def manage_bot_callback(client, callback_query):
 async def request_extend_duration_callback(client, callback_query):
     bot_id_to_request = int(callback_query.data.split(" ", 1)[1])
     requester = callback_query.from_user
-    lang = callback_query.lang
+    lang = callback_query.texts
     bot_name = f"ID {bot_id_to_request}"
     try:
         bot_instance = ctx.manager.running_bots.get(bot_id_to_request)
@@ -430,7 +430,7 @@ async def request_extend_duration_callback(client, callback_query):
     handler_type="callback",
 )
 async def owner_approve_extension_callback(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     if callback_query.from_user.id != ctx.owner_id:
         return await callback_query.answer(lang.get("bot_management.extend.approve_denied"), show_alert=True)
     try:
@@ -472,7 +472,7 @@ async def owner_approve_extension_callback(client, callback_query):
 
 @command(lambda ctx: filters.regex(r"^close_req\s(\d+)\s(\d+)"), handler_type="callback")
 async def owner_close_request_callback(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     if callback_query.from_user.id != ctx.owner_id:
         return await callback_query.answer(lang.get("bot_management.extend.reject_denied"), show_alert=True)
     try:
@@ -484,7 +484,7 @@ async def owner_close_request_callback(client, callback_query):
 @command(lambda ctx: filters.regex(r"^confirm_delete_bot\s(\d+)"), handler_type="callback")
 async def confirm_delete_bot_callback(client, callback_query):
     bot_id_to_manage = int(callback_query.data.split(" ", 1)[1])
-    lang = callback_query.lang
+    lang = callback_query.texts
     bot_name = f"ID {bot_id_to_manage}"
     try:
         bot_instance = ctx.manager.running_bots.get(bot_id_to_manage)
@@ -519,7 +519,7 @@ async def confirm_delete_bot_callback(client, callback_query):
 async def do_delete_bot_callback(client, callback_query):
     bot_id_to_manage = int(callback_query.data.split(" ", 1)[1])
     user_id = callback_query.from_user.id
-    lang = callback_query.lang
+    lang = callback_query.texts
     owner_of_target_bot = await ctx.db.getVars(bot_id_to_manage, "owner_id") or 0
 
     if user_id != owner_of_target_bot and user_id != ctx.owner_id:

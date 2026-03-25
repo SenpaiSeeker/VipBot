@@ -5,7 +5,7 @@ from . import *
 async def list_members_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     members_list = await ctx.db.getListVars(client.me.id, "vvip_members") or []
 
     back_row = [{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}]
@@ -93,7 +93,7 @@ async def list_members_callback(client, callback_query):
 async def confirm_kick_member_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     match = callback_query.matches[0]
     user_id_str = match.group(1)
     vvip_name = match.group(2)
@@ -124,7 +124,7 @@ async def confirm_kick_member_callback(client, callback_query):
 async def do_kick_member_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     match = callback_query.matches[0]
     user_id = int(match.group(1))
     vvip_name = match.group(2)
@@ -168,7 +168,7 @@ async def do_kick_member_callback(client, callback_query):
 async def check_active_menu_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     if "init" in callback_query.data:
         ctx.ACTIVE_MEMBERS_CACHE = {}
 
@@ -230,7 +230,7 @@ async def check_active_menu_callback(client, callback_query):
 async def list_active_members_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     try:
         _, _, chat_id_str, page_str = callback_query.data.split("_", 3)
         chat_id, page = int(chat_id_str), int(page_str)
@@ -304,7 +304,7 @@ async def list_active_members_callback(client, callback_query):
 async def confirm_kick_active_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     _, _, chat_id_str, user_id_str, page_str = callback_query.data.split("_", 4)
     user = await client.get_users(int(user_id_str))
 
@@ -335,7 +335,7 @@ async def confirm_kick_active_callback(client, callback_query):
 async def do_kick_active_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     _, _, _, chat_id_str, user_id_str = callback_query.data.split("_", 4)
     chat_id, user_id = int(chat_id_str), int(user_id_str)
 

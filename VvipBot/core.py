@@ -43,13 +43,13 @@ async def get_start_keyboard_and_content(client, user, lang):
 @command(lambda ctx: filters.command("start") & filters.private)
 @check_new_user
 async def start_bot(client, message):
-    btn, txt, photo_id = await get_start_keyboard_and_content(client, message.from_user, message.lang)
+    btn, txt, photo_id = await get_start_keyboard_and_content(client, message.from_user, message.texts)
     await message.reply_photo(photo=photo_id, caption=txt, reply_markup=btn)
 
 
 @command(lambda ctx: filters.regex("^start$"), handler_type="callback")
 async def start_callback(client, callback_query):
-    btn, txt, photo_id = await get_start_keyboard_and_content(client, callback_query.from_user, callback_query.lang)
+    btn, txt, photo_id = await get_start_keyboard_and_content(client, callback_query.from_user, callback_query.texts)
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
@@ -64,7 +64,7 @@ async def start_callback(client, callback_query):
 
 @command(lambda ctx: filters.regex("^about_bot$"), handler_type="callback")
 async def about_bot_callback(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     text = lang.get("about.panel")
     layout = [[{"text": lang.get("general.back_to_main_menu"), "callback_data": "start"}]]
     btn = client.ns.telegram.button.build_button_grid(layout)
@@ -85,7 +85,7 @@ async def close_panel_callback(client, callback_query):
 
 @command(lambda ctx: filters.regex("^list_vvip$"), handler_type="callback")
 async def list_vvip_bot(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
     layout = []
@@ -125,7 +125,7 @@ async def list_vvip_bot(client, callback_query):
 
 @command(lambda ctx: filters.regex("^donate_stars$"), handler_type="callback")
 async def donate_callback(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     photo_url = "https://files.catbox.moe/1f9j10.jpg"
     text = lang.get("donation.panel")
     layout = [
@@ -148,7 +148,7 @@ async def donate_callback(client, callback_query):
 
 @command(lambda ctx: filters.regex(r"^donate_pay_(\d+)$"), handler_type="callback")
 async def process_donation_callback(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     try:
         star_amount = int(callback_query.data.split("_")[2])
     except (IndexError, ValueError):

@@ -214,7 +214,7 @@ async def _create_all_vvip_payment_invoice(client, user, selected_items, total_a
 async def manual_check_payment_callback(client, callback_query):
     transaction_id = callback_query.data.split(" ", 1)[1]
     user = callback_query.from_user
-    lang = callback_query.lang
+    lang = callback_query.texts
 
     ref_data_str = await ctx.db.getVars(client.me.id, transaction_id)
     if not ref_data_str:
@@ -414,7 +414,7 @@ async def manual_check_payment_callback(client, callback_query):
 
 @command(lambda ctx: filters.regex(r"^pay_all_vvip$"), handler_type="callback")
 async def pay_all_vvip_callback(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     selected_items = _get_all_vvip_items(vvip_list)
 
@@ -433,7 +433,7 @@ async def pay_all_vvip_callback(client, callback_query):
 
 @command(lambda ctx: filters.regex(r"^notes_(.+)"), handler_type="callback")
 async def notes_data(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     item_id = callback_query.matches[0].group(1)
 
     if item_id.isdigit():
@@ -495,7 +495,7 @@ async def notes_data(client, callback_query):
 
 @command(lambda ctx: filters.regex(r"^promo_detail_(.+)"), handler_type="callback")
 async def promo_detail(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     item_id = callback_query.matches[0].group(1)
 
     if item_id.isdigit():
@@ -556,7 +556,7 @@ async def promo_detail(client, callback_query):
 
 @command(lambda ctx: filters.regex(r"^apply_coupon_(\d+)_(normal|promo)_(\d+)"), handler_type="callback")
 async def apply_coupon_callback(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     chat_id = callback_query.from_user.id
 
     match = callback_query.matches[0]
@@ -624,7 +624,7 @@ async def paynow(client, callback_query):
     if callback_query.message.photo:
         await callback_query.message.delete()
     else:
-        await callback_query.edit_message_text(callback_query.lang.get("general.processing"))
+        await callback_query.edit_message_text(callback_query.texts.get("general.processing"))
 
     await _create_payment_invoice(client, callback_query.from_user, item_index, tipe, amount)
 
@@ -640,7 +640,7 @@ async def successful_donation_handler(client, message):
         return
 
     user = message.from_user
-    lang = message.lang
+    lang = message.texts
     stars_donated = message.successful_payment.total_amount
     charge_id = message.successful_payment.telegram_payment_charge_id
     current_bot_id = client.me.id
@@ -698,7 +698,7 @@ async def successful_donation_handler(client, message):
 
 @command(lambda ctx: filters.regex(r"^renew_sub_(\d+)"), handler_type="callback")
 async def renew_subscription_callback(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     item_index = int(callback_query.matches[0].group(1))
 
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []

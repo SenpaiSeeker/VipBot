@@ -52,7 +52,7 @@ def seller_only(func):
         if user_id == ctx.owner_id or user_id in seller_list:
             return await func(client, update, *args, **kwargs)
         else:
-            lang = update.lang
+            lang = update.texts
             error_message = lang.get("general.no_access_decorator")
 
             if isinstance(update, pyrogram.types.CallbackQuery):
@@ -142,7 +142,7 @@ def register_all_handlers(client: pyrogram.Client, db_instance, bot_manager, own
             elif hasattr(u, "sender_chat") and u.sender_chat:
                 user_id = u.sender_chat.id
 
-            u.lang = await Language.create(db_instance, user_id)
+            u.texts = await Language.create(db_instance, user_id)
 
             try:
                 await original_func(c, u)

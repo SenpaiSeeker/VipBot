@@ -6,7 +6,7 @@ from . import *
 
 @command(lambda ctx: filters.command("eval") & filters.user(ctx.owner_id))
 async def eval_bot_handler(client, message):
-    lang = message.lang
+    lang = message.texts
 
     async def aexec(code, client, message):
         exec(
@@ -52,7 +52,7 @@ async def eval_bot_handler(client, message):
 
 @command(lambda ctx: filters.command("restore") & filters.user(ctx.owner_id))
 async def restore_database_handler(client, message):
-    lang = message.lang
+    lang = message.texts
     if not message.reply_to_message or not message.reply_to_message.document:
         return await message.reply_text(lang.get("admin.restore.usage"))
 
@@ -111,7 +111,7 @@ async def restore_database_handler(client, message):
 @command(lambda ctx: filters.command("akses"))
 @seller_only
 async def access_command_handler(client, message):
-    lang = message.lang
+    lang = message.texts
     user_id_target, _ = await client.ns.telegram.arg.getReasonAndId(message)
 
     if not user_id_target:
@@ -154,7 +154,7 @@ async def access_command_handler(client, message):
 @command(lambda ctx: filters.regex(r"^give_access_(\d+)"), handler_type="callback")
 @seller_only
 async def give_access_callback(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     target_id = int(callback_query.data.split("_")[-1])
 
     text = lang.get("admin.access.give_duration_panel")
@@ -173,7 +173,7 @@ async def give_access_callback(client, callback_query):
 @command(lambda ctx: filters.regex(r"^do_give_(\d+)_(\d+)"), handler_type="callback")
 @seller_only
 async def do_give_access_callback(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     _, _, target_id_str, months_str = callback_query.data.split("_")
     target_id = int(target_id_str)
     months_to_add = int(months_str)
@@ -210,7 +210,7 @@ async def do_give_access_callback(client, callback_query):
 @command(lambda ctx: filters.regex(r"^revoke_access_(\d+)"), handler_type="callback")
 @seller_only
 async def revoke_access_callback(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     target_id = int(callback_query.data.split("_")[-1])
 
     try:
@@ -231,7 +231,7 @@ async def revoke_access_callback(client, callback_query):
 
 @command(lambda ctx: filters.command("addseller") & filters.user(ctx.owner_id))
 async def add_seller_handler(client, message):
-    lang = message.lang
+    lang = message.texts
     user_id_target, _ = await client.ns.telegram.arg.getReasonAndId(message)
 
     if not user_id_target:
@@ -254,7 +254,7 @@ async def add_seller_handler(client, message):
 
 @command(lambda ctx: filters.command("listseller") & filters.user(ctx.owner_id))
 async def list_seller_handler(client, message):
-    lang = message.lang
+    lang = message.texts
     seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
 
     if not seller_list:
@@ -284,7 +284,7 @@ async def delete_seller_callback(client, callback_query):
     if callback_query.fromuser.id != ctx.owner_id:
         return
 
-    lang = callback_query.lang
+    lang = callback_query.texts
     target_id = int(callback_query.matches[0].group(1))
 
     await ctx.db.removeListVars(ctx.owner_id, "seller_id_list", target_id)
@@ -313,7 +313,7 @@ async def delete_seller_callback(client, callback_query):
 
 @command(lambda ctx: filters.command("listakses") & filters.user(ctx.owner_id))
 async def list_akses_handler(client, message):
-    lang = message.lang
+    lang = message.texts
     user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
 
     access_users = []
@@ -348,7 +348,7 @@ async def delete_access_callback(client, callback_query):
     if callback_query.from_user.id != ctx.owner_id:
         return
 
-    lang = callback_query.lang
+    lang = callback_query.texts
     target_id = int(callback_query.matches[0].group(1))
 
     await ctx.db.removeVars(target_id, "user_expiry_date")
@@ -383,7 +383,7 @@ async def delete_access_callback(client, callback_query):
 
 @command(lambda ctx: filters.command("extend") & filters.user(ctx.owner_id))
 async def extend_command_handler(client, message):
-    lang = message.lang
+    lang = message.texts
     try:
         _, bot_id_str, days_str = message.text.split()
         bot_id = int(bot_id_str)
@@ -414,7 +414,7 @@ async def extend_command_handler(client, message):
 
 async def _send_allbots_list(client, message_or_query, page):
     all_bots = await ctx.db.getBots(is_token=True)
-    lang = message_or_query.lang
+    lang = message_or_query.texts
 
     if not all_bots:
         text = lang.get("admin.allbots.empty")
@@ -513,7 +513,7 @@ async def allbots_callback_handler(client, callback_query):
 async def confirm_delete_bot_callback(client, callback_query):
     if callback_query.from_user.id != ctx.owner_id:
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     bot_id = int(callback_query.matches[0].group(1))
     text = lang.get("admin.allbots.delete_confirm", bot_id=bot_id)
 
@@ -531,7 +531,7 @@ async def confirm_delete_bot_callback(client, callback_query):
 async def do_delete_bot_callback(client, callback_query):
     if callback_query.from_user.id != ctx.owner_id:
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     bot_id = int(callback_query.matches[0].group(1))
     await callback_query.edit_message_text(lang.get("admin.allbots.deleting"))
     try:
@@ -550,7 +550,7 @@ async def do_delete_bot_callback(client, callback_query):
 async def manage_duration_callback(client, callback_query):
     if callback_query.from_user.id != ctx.owner_id:
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     bot_id, page = map(int, callback_query.data.split("_")[3:])
     text = lang.get("admin.allbots.manage_duration_panel", bot_id=bot_id)
 
@@ -567,7 +567,7 @@ async def manage_duration_callback(client, callback_query):
 async def extend_bot_callback(client, callback_query):
     if callback_query.from_user.id != ctx.owner_id:
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     bot_id, page = map(int, callback_query.data.split("_")[2:])
     text = lang.get("admin.allbots.add_duration_select", bot_id=bot_id)
     buttons = [
@@ -583,7 +583,7 @@ async def extend_bot_callback(client, callback_query):
 async def do_extend_bot_callback(client, callback_query):
     if callback_query.from_user.id != ctx.owner_id:
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     bot_id, days, page = map(int, callback_query.data.split("_")[2:])
     current_expiry_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
     start_date = datetime.now(timezone.utc)
@@ -603,7 +603,7 @@ async def do_extend_bot_callback(client, callback_query):
 async def reduce_bot_callback(client, callback_query):
     if callback_query.from_user.id != ctx.owner_id:
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     bot_id, page = map(int, callback_query.data.split("_")[2:])
     text = lang.get("admin.allbots.reduce_duration_select", bot_id=bot_id)
     buttons = [
@@ -619,7 +619,7 @@ async def reduce_bot_callback(client, callback_query):
 async def do_reduce_bot_callback(client, callback_query):
     if callback_query.from_user.id != ctx.owner_id:
         return
-    lang = callback_query.lang
+    lang = callback_query.texts
     bot_id, days, page = map(int, callback_query.data.split("_")[2:])
     current_expiry_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
     if not current_expiry_str:
@@ -635,7 +635,7 @@ async def do_reduce_bot_callback(client, callback_query):
 
 @command(lambda ctx: filters.regex(r"^refund_stars_"), handler_type="callback")
 async def refund_stars_callback(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     if not await is_bot_owner(client, callback_query.from_user.id):
         return await callback_query.answer(lang.get("admin.refund.no_permission"), show_alert=True)
 
@@ -675,7 +675,7 @@ async def show_stars_stats(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
-    lang = callback_query.lang
+    lang = callback_query.texts
     page = int(callback_query.data.split("_")[1])
     items_per_page = 5
 
@@ -776,9 +776,9 @@ async def show_stars_stats(client, callback_query):
 @command(lambda ctx: filters.regex(r"^total_users_count$"), handler_type="callback")
 async def total_users_count_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
-        return await callback_query.answer(callback_query.lang.get("general.no_access"), show_alert=True)
+        return await callback_query.answer(callback_query.texts.get("general.no_access"), show_alert=True)
 
-    lang = callback_query.lang
+    lang = callback_query.texts
     bot_id = client.me.id
 
     user_ids = await ctx.db.getListVars(bot_id, "user_ids") or []
@@ -803,7 +803,7 @@ async def total_users_count_callback(client, callback_query):
 
 @command(lambda ctx: filters.command("dashboard") & filters.user(ctx.owner_id))
 async def dashboard_command_handler(client, message):
-    lang = message.lang
+    lang = message.texts
     msg = await message.reply_text(lang.get("general.processing"))
 
     all_bots_data = await ctx.db.getBots(is_token=True)
@@ -858,7 +858,7 @@ async def dashboard_command_handler(client, message):
 
 @command(lambda ctx: filters.command("broadcast_owners") & filters.user(ctx.owner_id))
 async def broadcast_owners_handler(client, message):
-    lang = message.lang
+    lang = message.texts
 
     broadcast_msg = client.ns.telegram.arg.getMessage(message)
     if not broadcast_msg:

@@ -23,7 +23,7 @@ async def send_star_gift_raw(client, user_id: int, gift_id: int):
 
 @command(lambda ctx: filters.command("gift") & filters.user(ctx.owner_id))
 async def send_gift_handler(client, message):
-    lang = message.lang
+    lang = message.texts
     try:
         user_id_target = None
         gift_id_arg = None
@@ -71,7 +71,7 @@ async def send_gift_handler(client, message):
 
 @command(lambda ctx: filters.command("listgift") & filters.user(ctx.owner_id))
 async def list_gift_handler(client, message):
-    lang = message.lang
+    lang = message.texts
     status_msg = await message.reply_text(lang.get("gift.list_processing"))
 
     try:
@@ -119,7 +119,7 @@ async def list_gift_handler(client, message):
 
 @command(lambda ctx: filters.regex(r"^gift_claim_self_(\d+)"), handler_type="callback")
 async def claim_self_gift_callback(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     if callback_query.from_user.id != ctx.owner_id:
         return await callback_query.answer(lang.get("general.no_access"), show_alert=True)
 
@@ -136,7 +136,7 @@ async def claim_self_gift_callback(client, callback_query):
 
 @command(lambda ctx: filters.regex(r"^gift_send_ask_(\d+)"), handler_type="callback")
 async def ask_send_gift_callback(client, callback_query):
-    lang = callback_query.lang
+    lang = callback_query.texts
     if callback_query.from_user.id != ctx.owner_id:
         return await callback_query.answer(lang.get("general.no_access"), show_alert=True)
 
