@@ -1,5 +1,5 @@
-import string
 import random
+import string
 
 
 def generate_safe_saweria_message(user_name):
