@@ -32,11 +32,7 @@ async def get_start_keyboard_and_content(client, user, lang):
                 {"text": lang.get("start.list_vvip"), "callback_data": "list_vvip"},
                 {"text": lang.get("start.donate"), "callback_data": "donate_stars"},
             ],
-            [
-                {"text": lang.get("start.about_bot"), "callback_data": "about_bot"},
-                {"text": lang.get("start.ai_feature"), "callback_data": "gemini_ai"},
-            ],
-            [{"text": lang.get("start.language"), "callback_data": "set_lang"}],
+            [{"text": lang.get("start.about_bot"), "callback_data": "about_bot"}],
         ]
     )
 
@@ -77,37 +73,6 @@ async def about_bot_callback(client, callback_query):
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
         await callback_query.edit_message_text(text, reply_markup=btn)
-
-
-@command(lambda ctx: filters.regex("^set_lang$"), handler_type="callback")
-async def set_lang_callback(client, callback_query):
-    lang = callback_query.lang
-    text = lang.get("lang.select")
-
-    layout = [
-        [
-            {"text": lang.get("lang.button_id"), "callback_data": "chg_lang_id"},
-            {"text": lang.get("lang.button_en"), "callback_data": "chg_lang_en"},
-        ],
-        [{"text": lang.get("lang.button_ja"), "callback_data": "chg_lang_ja"}],
-        [{"text": lang.get("general.back_to_main_menu"), "callback_data": "start"}],
-    ]
-    btn = client.ns.telegram.button.build_button_grid(layout)
-
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
-
-
-@command(lambda ctx: filters.regex(r"^chg_lang_(id|en|ja)$"), handler_type="callback")
-async def change_lang_callback(client, callback_query):
-    lang_code = callback_query.data.split("_")[-1]
-    await ctx.db.setVars(callback_query.from_user.id, "language", lang_code, var_key="user_info")
-    lang = ctx.L(ctx.db, callback_query.from_user.id, lang_code)
-    await callback_query.answer(lang.get("lang.selected"), show_alert=True)
-    callback_query.lang = lang
-    await start_callback(client, callback_query)
 
 
 @command(lambda ctx: filters.regex("^close_panel$"), handler_type="callback")
@@ -156,118 +121,6 @@ async def list_vvip_bot(client, callback_query):
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
         await callback_query.edit_message_text(text, reply_markup=btn)
-
-
-@command(lambda ctx: filters.regex("^(gemini_ai|khodam|chatbot)"), handler_type="callback")
-async def gemini_bot_ai(client, callback_query):
-    lang = callback_query.lang
-    gemini_service = getattr(client, "services", None) and client.services.gemini
-
-    if not gemini_service:
-        if await is_bot_owner(client, callback_query.from_user.id):
-            text = lang.get("ai.disabled")
-            layout = [
-                [
-                    {"text": lang.get("ai.setup_button"), "callback_data": "api_settings"},
-                    {"text": lang.get("general.back_to_main_menu"), "callback_data": "start"},
-                ]
-            ]
-            btn = client.ns.telegram.button.build_button_grid(layout)
-            if callback_query.message.photo:
-                return await callback_query.edit_message_caption(text, reply_markup=btn)
-            return await callback_query.edit_message_text(text, reply_markup=btn)
-        return await callback_query.answer(lang.get("ai.unavailable"), show_alert=True)
-
-    data = callback_query.data.split()
-    chat_id = callback_query.from_user.id
-
-    if data[0] == "gemini_ai":
-        text = lang.get("ai.panel")
-        layout = [
-            [
-                {"text": lang.get("ai.khodam_button"), "callback_data": "khodam"},
-                {"text": lang.get("ai.chatbot_button"), "callback_data": "chatbot"},
-            ],
-            [{"text": lang.get("general.back_to_main_menu"), "callback_data": "start"}],
-        ]
-        btn = client.ns.telegram.button.build_button_grid(layout)
-        if callback_query.message.photo:
-            await callback_query.edit_message_caption(text, reply_markup=btn)
-        else:
-            await callback_query.edit_message_text(text, reply_markup=btn)
-
-    elif data[0] in ("khodam", "chatbot"):
-        await callback_query.edit_message_reply_markup(None)
-        mode = data[0]
-        try:
-            if mode == "khodam":
-                prompt = f"{lang.get('ai.khodam_prompt')}{lang.get('prompts.cancel_footer')}"
-                ask_msg = await client.ask(chat_id, prompt, timeout=300)
-                if ask_msg.text.lower() == "/batal":
-                    raise listen.UserCancelled
-
-                msg = await client.send_message(chat_id, lang.get("ai.khodam_analyzing", name=ask_msg.text))
-                response_text = await gemini_service.send_khodam_message(ask_msg.text, chat_id)
-
-                layout = [
-                    [
-                        {"text": lang.get("ai.khodam_try_again_button"), "callback_data": "khodam"},
-                        {"text": lang.get("ai.back_to_ai_menu_button"), "callback_data": "gemini_ai"},
-                    ]
-                ]
-                btn = client.ns.telegram.button.build_button_grid(layout)
-                await msg.edit(
-                    lang.get("ai.khodam_result_title", name=ask_msg.text, result=response_text), reply_markup=btn
-                )
-
-            elif mode == "chatbot":
-                vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-                vvip_info_text = ""
-                if vvip_list:
-                    vvip_info_text = "\n".join(
-                        [f"- {item.get('name', 'N/A')}: IDR {item.get('price', 0):,}" for item in vvip_list]
-                    )
-                else:
-                    vvip_info_text = "No VVIP packages available."
-
-                about_bot_text = lang.get("about.description")
-
-                system_instruction = lang.get(
-                    "ai.chatbot_system_instruction",
-                    bot_name=client.me.first_name,
-                    about_bot=about_bot_text,
-                    vvip_info=vvip_info_text,
-                )
-                gemini_service.set_chatbot_instruction(system_instruction)
-
-                await client.send_message(chat_id, lang.get("ai.chatbot_intro", bot_name=client.me.first_name))
-
-                while True:
-                    user_msg = await client.listen(chat_id, timeout=600)
-                    if not user_msg.text:
-                        continue
-                    if user_msg.text.lower() == "/stop":
-                        raise listen.UserCancelled
-
-                    await client.send_chat_action(chat_id, pyrogram.enums.ChatAction.TYPING)
-                    response_text = await gemini_service.send_chat_message(
-                        user_msg.text, user_id=chat_id, bot_name=client.me.first_name
-                    )
-                    await client.send_message(chat_id, response_text)
-
-        except listen.UserCancelled:
-            layout = [[{"text": lang.get("ai.back_to_ai_menu_button"), "callback_data": "gemini_ai"}]]
-            btn = client.ns.telegram.button.build_button_grid(layout)
-            await client.send_message(chat_id, lang.get("ai.session_stopped"), reply_markup=btn)
-        except asyncio.TimeoutError:
-            layout = [[{"text": lang.get("ai.back_to_ai_menu_button"), "callback_data": "gemini_ai"}]]
-            btn = client.ns.telegram.button.build_button_grid(layout)
-            await client.send_message(chat_id, lang.get("ai.session_expired"), reply_markup=btn)
-        except Exception as e:
-            ctx.log.print(f"{ctx.log.RED}Error on AI Chatbot session: {e}")
-            await client.send_message(chat_id, lang.get("ai.error", e=e))
-        finally:
-            gemini_service.reset_chatbot_instruction()
 
 
 @command(lambda ctx: filters.regex("^donate_stars$"), handler_type="callback")

@@ -580,23 +580,18 @@ async def api_settings_callback(client, callback_query):
         lang.get("settings.api_status_active") if saweria_user_id else lang.get("settings.api_status_inactive")
     )
 
-    gemini_status = (
-        lang.get("settings.api_status_active")
-        if await ctx.db.getVars(client.me.id, "GEMINI_API_KEY")
-        else lang.get("settings.api_status_inactive")
-    )
-
     layout = [
-        [
-            {"text": lang.get("settings.api_set_saweria"), "callback_data": "set_api SAWERIA"},
-            {"text": lang.get("settings.api_set_gemini"), "callback_data": "set_api GEMINI_API_KEY"},
-        ],
+        [{"text": lang.get("settings.api_set_saweria"), "callback_data": "set_api SAWERIA"}],
         [{"text": lang.get("settings.api_del_all"), "callback_data": "del_api_confirm"}],
         [{"text": lang.get("general.back_to_settings"), "callback_data": "settings"}],
     ]
 
-    text = lang.get(
-        "settings.api_panel", mention=client.me.mention, saweria_status=saweria_status, gemini_status=gemini_status
+    text = (
+        f"**<emoji id=6176966310920983412>🔑</emoji> Pengelola Kunci API untuk {client.me.mention}**\n\n"
+        "Atur koneksi pembayaran Saweria untuk bot Anda.\n\n"
+        "**Status Layanan:**\n"
+        f"- `Gateway Pembayaran (Saweria)`: **{saweria_status}**\n\n"
+        "Pilih tindakan:"
     )
     btn = client.ns.telegram.button.build_button_grid(layout)
 
@@ -644,14 +639,8 @@ async def set_api_key_prompt(client, callback_query):
                 await processing_msg.edit_text(lang.get("settings.api_set_fail_saweria", e=e), reply_markup=back_btn)
                 return
         else:
-            prompt = lang.get("settings.api_set_gemini_prompt", key_name=key_name)
-            key_value_msg = await ask(prompt)
-            if key_value_msg.text and key_value_msg.text.lower() == "/batal":
-                raise listen.UserCancelled
-            await ctx.db.setVars(client.me.id, key_name, key_value_msg.text)
-            await client.send_message(
-                chat_id, lang.get("settings.api_set_success", key_name=key_name), reply_markup=back_btn
-            )
+            await client.send_message(chat_id, "Fitur ini sudah dinonaktifkan.", reply_markup=back_btn)
+            return
 
         from services import initialize_bot_services
 
@@ -692,7 +681,6 @@ async def do_delete_api_keys(client, callback_query):
         return
     lang = callback_query.lang
     await ctx.db.removeVars(client.me.id, "SAWERIA_USER_ID")
-    await ctx.db.removeVars(client.me.id, "GEMINI_API_KEY")
 
     from services import initialize_bot_services
 

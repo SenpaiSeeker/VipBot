@@ -9,7 +9,6 @@ lxml
 qrcode[pil]
 matplotlib
 pyzbar
-google-genai
 psutil
 aiofiles
 aiocron

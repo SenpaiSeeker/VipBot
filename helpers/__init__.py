@@ -6,7 +6,6 @@ from .argument import Argument
 from .button import Button
 from .dashboard_gen import DashboardGenerator
 from .faker_gen import FakeInfoGenerator
-from .gemini import ChatbotGemini
 from .gradient import Gradient
 from .logger import LoggerHandler
 from .monitor import ServerMonitor
@@ -37,18 +36,12 @@ class MockPayment:
         self.SaweriaScraper = SaweriaScraper
 
 
-class MockAI:
-    def __init__(self):
-        self.gemini = ChatbotGemini
-
-
 class MockNS:
     def __init__(self, client):
         self.telegram = MockTelegram(client)
         self.utils = MockUtils()
         self.server = MockServer()
         self.payment = MockPayment()
-        self.ai = MockAI()
 
 
 def get_ns(self):
