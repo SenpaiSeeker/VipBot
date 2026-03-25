@@ -9,7 +9,9 @@ def patch(obj):
         return getattr(item[1], "patchable", False)
 
     def wrapper(container):
-        for name, func in filter(is_patchable, container.__dict__.items()):
+        for name, func in filter(
+            is_patchable, container.__dict__.items()
+        ):
             old = getattr(obj, name, None)
             setattr(obj, "old" + name, old)
             setattr(obj, name, func)
@@ -37,15 +39,20 @@ class Client:
         self._conversations = {}
         self.old__init__(*args, **kwargs)
 
-        async def conversation_resolver(_, message: pyrogram.types.Message):
-            future = self._conversations.get(message.chat.id)
+        async def conversation_resolver(
+            _, message: pyrogram.types.Message
+        ):
+            future = self._conversations.get(
+                message.chat.id
+            )
             if future and not future.done():
                 future.set_result(message)
                 raise pyrogram.StopPropagation
 
         self.add_handler(
             pyrogram.handlers.MessageHandler(
-                conversation_resolver, filters=pyrogram.filters.all
+                conversation_resolver,
+                filters=pyrogram.filters.all,
             ),
             group=-666,
         )
@@ -57,12 +64,16 @@ class Client:
                 chat = await self.get_chat(chat_id)
                 chat_id = chat.id
             except Exception as e:
-                raise ValueError(f"Could not get chat_id for {chat_id}: {e}")
+                raise ValueError(
+                    f"Could not get chat_id for {chat_id}: {e}"
+                )
 
         loop = asyncio.get_running_loop()
         future = loop.create_future()
 
-        future.add_done_callback(functools.partial(self._clear, chat_id))
+        future.add_done_callback(
+            functools.partial(self._clear, chat_id)
+        )
         self._conversations[chat_id] = future
 
         try:
@@ -72,15 +83,22 @@ class Client:
             raise
 
     @patchable
-    async def ask(self, chat_id, text, timeout=None, **kwargs):
-        request = await self.send_message(chat_id, text, **kwargs)
+    async def ask(
+        self, chat_id, text, timeout=None, **kwargs
+    ):
+        request = await self.send_message(
+            chat_id, text, **kwargs
+        )
         response = await self.listen(chat_id, timeout)
         response.request = request
         return response
 
     @patchable
     def _clear(self, chat_id, future):
-        if chat_id in self._conversations and self._conversations[chat_id] is future:
+        if (
+            chat_id in self._conversations
+            and self._conversations[chat_id] is future
+        ):
             del self._conversations[chat_id]
 
     @patchable
@@ -89,7 +107,10 @@ class Client:
         if (
             future
             and not future.done()
-            and (not future_to_cancel or future is future_to_cancel)
+            and (
+                not future_to_cancel
+                or future is future_to_cancel
+            )
         ):
             future.set_exception(UserCancelled())
             self._clear(chat_id, future)
@@ -107,7 +128,9 @@ class Chat:
 
     @patchable
     async def ask(self, text, timeout=None, **kwargs):
-        request = await self._client.send_message(self.id, text, **kwargs)
+        request = await self._client.send_message(
+            self.id, text, **kwargs
+        )
         response = await self.listen(timeout=timeout)
         response.request = request
         return response
@@ -125,7 +148,9 @@ class User:
 
     @patchable
     async def ask(self, text, timeout=None, **kwargs):
-        request = await self._client.send_message(self.id, text, **kwargs)
+        request = await self._client.send_message(
+            self.id, text, **kwargs
+        )
         response = await self.listen(timeout=timeout)
         response.request = request
         return response

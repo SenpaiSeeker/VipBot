@@ -23,20 +23,34 @@ class SaweriaScraper(QrCodeGenerator):
         super().__init__()
         self.scraper = cloudscraper.create_scraper()
 
-    async def get_user_id(self, username: str) -> Optional[str]:
+    async def get_user_id(
+        self, username: str
+    ) -> Optional[str]:
         if not username or not isinstance(username, str):
-            raise ValueError("Username harus berupa string dan tidak boleh kosong.")
+            raise ValueError(
+                "Username harus berupa string dan tidak boleh kosong."
+            )
 
         def _sync_get_with_retries(retries=3, delay=5):
             url = f"{self.FRONTEND}/{username}"
             for attempt in range(retries):
                 try:
-                    res = self.scraper.get(url, headers=self.HEADERS, timeout=15)
+                    res = self.scraper.get(
+                        url,
+                        headers=self.HEADERS,
+                        timeout=15,
+                    )
                     if res.status_code == 200:
-                        soup = BeautifulSoup(res.text, "html.parser")
-                        next_data = soup.find(id="__NEXT_DATA__")
+                        soup = BeautifulSoup(
+                            res.text, "html.parser"
+                        )
+                        next_data = soup.find(
+                            id="__NEXT_DATA__"
+                        )
                         if next_data:
-                            data = json.loads(next_data.text)
+                            data = json.loads(
+                                next_data.text
+                            )
                             user_id = (
                                 data.get("props", {})
                                 .get("pageProps", {})
@@ -50,7 +64,9 @@ class SaweriaScraper(QrCodeGenerator):
                 time.sleep(delay)
             return None
 
-        return await asyncio.to_thread(_sync_get_with_retries)
+        return await asyncio.to_thread(
+            _sync_get_with_retries
+        )
 
     async def create_payment(
         self,
@@ -62,7 +78,9 @@ class SaweriaScraper(QrCodeGenerator):
         creator_name: str = "bot_manager",
     ) -> Tuple[str, str, io.BytesIO, int]:
         if amount < 1000:
-            raise ValueError("Jumlah minimum donasi adalah 1000")
+            raise ValueError(
+                "Jumlah minimum donasi adalah 1000"
+            )
 
         payload = {
             "agree": True,
@@ -72,7 +90,11 @@ class SaweriaScraper(QrCodeGenerator):
             "payment_type": "qris",
             "vote": "",
             "currency": "IDR",
-            "customer_info": {"first_name": name, "email": email, "phone": ""},
+            "customer_info": {
+                "first_name": name,
+                "email": email,
+                "phone": "",
+            },
         }
 
         def _sync_post():
@@ -82,7 +104,9 @@ class SaweriaScraper(QrCodeGenerator):
                 headers=self.HEADERS,
             )
             if not res.ok:
-                raise Exception(f"Gagal membuat pembayaran: {res.text}")
+                raise Exception(
+                    f"Gagal membuat pembayaran: {res.text}"
+                )
             return res.json()["data"]
 
         data = await asyncio.to_thread(_sync_post)
@@ -101,12 +125,20 @@ class SaweriaScraper(QrCodeGenerator):
         qr_image_stream = io.BytesIO(qr_image_bytes)
         qr_image_stream.name = f"{transaction_id}.png"
 
-        return qr_string, transaction_id, qr_image_stream, amount_raw
+        return (
+            qr_string,
+            transaction_id,
+            qr_image_stream,
+            amount_raw,
+        )
 
-    async def check_paid_status(self, transaction_id: str) -> bool:
+    async def check_paid_status(
+        self, transaction_id: str
+    ) -> bool:
         def _sync_get():
             res = self.scraper.get(
-                f"{self.BACKEND}/donations/qris/{transaction_id}", headers=self.HEADERS
+                f"{self.BACKEND}/donations/qris/{transaction_id}",
+                headers=self.HEADERS,
             )
             if not res.ok:
                 raise Exception("Transaction ID not found")

@@ -11,7 +11,9 @@ class YamlHandler(AnsiColors):
 
     def loadAndConvert(self, filePath):
         try:
-            with open(filePath, "r", encoding="utf-8") as file:
+            with open(
+                filePath, "r", encoding="utf-8"
+            ) as file:
                 rawData = yaml.safe_load(file)
                 return self._convertToNamespace(rawData)
         except FileNotFoundError:
@@ -27,10 +29,14 @@ class YamlHandler(AnsiColors):
     def _convertToNamespace(self, data):
         if isinstance(data, dict):
             string_keyed_dict = {
-                str(k): self._convertToNamespace(v) for k, v in data.items()
+                str(k): self._convertToNamespace(v)
+                for k, v in data.items()
             }
             return SimpleNamespace(**string_keyed_dict)
         elif isinstance(data, list):
-            return [self._convertToNamespace(item) for item in data]
+            return [
+                self._convertToNamespace(item)
+                for item in data
+            ]
         else:
             return data
