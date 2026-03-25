@@ -6,12 +6,19 @@ import pyrogram
 
 class Button:
     def get_urls(self, text):
-        return re.findall(r"(?:https?://)?(?:www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:[/?]\S+)?|tg://\S+$", text)
+        return re.findall(
+            r"(?:https?://)?(?:www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:[/?]\S+)?|tg://\S+$",
+            text,
+        )
 
     def parse_buttons_and_text(self, text, mode="inline"):
         if mode == "inline":
             button_data = re.findall(r"\| ([^|]+) - ([^|]+) \|", text)
-            extracted_text = re.split(r"\| [^|]+ - [^|]+ \|", text)[0].strip() if "|" in text else text.strip()
+            extracted_text = (
+                re.split(r"\| [^|]+ - [^|]+ \|", text)[0].strip()
+                if "|" in text
+                else text.strip()
+            )
             return button_data, extracted_text
         elif mode == "reply":
             pattern = r"\|\s*([^\|]+?)\s*\|"
@@ -23,7 +30,9 @@ class Button:
                 for part in parts:
                     if ";" in part:
                         label, *params = part.split(";")
-                        buttons.append((label.strip().strip("]"), [p.strip() for p in params]))
+                        buttons.append(
+                            (label.strip().strip("]"), [p.strip() for p in params])
+                        )
                     else:
                         buttons.append((part.strip().strip("]"), []))
             return buttons, extracted_text
@@ -100,7 +109,10 @@ class Button:
                 layout[-1].append(button)
             else:
                 layout.append([button])
-        return pyrogram.types.ReplyKeyboardMarkup(layout, resize_keyboard=True), remaining_text
+        return (
+            pyrogram.types.ReplyKeyboardMarkup(layout, resize_keyboard=True),
+            remaining_text,
+        )
 
     def remove_reply_keyboard(self, selective=False):
         return pyrogram.types.ReplyKeyboardRemove(selective=selective)
@@ -113,7 +125,9 @@ class Button:
                 btn_kwargs = button_info.copy()
 
                 if "web_app" in btn_kwargs and isinstance(btn_kwargs["web_app"], str):
-                    btn_kwargs["web_app"] = pyrogram.types.WebAppInfo(url=btn_kwargs["web_app"])
+                    btn_kwargs["web_app"] = pyrogram.types.WebAppInfo(
+                        url=btn_kwargs["web_app"]
+                    )
 
                 if "style" in btn_kwargs and isinstance(btn_kwargs["style"], str):
                     style_val = btn_kwargs["style"].lower()

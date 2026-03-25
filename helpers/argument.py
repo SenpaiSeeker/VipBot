@@ -57,11 +57,17 @@ class Argument:
 
         replied_text = None
         if replied:
-            replied_text = getattr(replied, "text", None) or getattr(replied, "caption", None)
+            replied_text = getattr(replied, "text", None) or getattr(
+                replied, "caption", None
+            )
 
         quote_text = ""
         if hasattr(message, "quote") and message.quote:
-            quote_text = getattr(message.quote, "text", None) or getattr(message.quote, "caption", None) or ""
+            quote_text = (
+                getattr(message.quote, "text", None)
+                or getattr(message.quote, "caption", None)
+                or ""
+            )
 
         if is_tuple:
             part1 = command_parts[1] if len(command_parts) > 1 else None

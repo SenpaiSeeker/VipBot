@@ -32,7 +32,12 @@ class CipherHandler:
 
     def _get_numeric_key(self) -> str:
         total_ord_sum = sum(ord(c) for c in self.key)
-        return "".join([str((ord(char) + total_ord_sum + i) % 10) for i, char in enumerate(self.key)])
+        return "".join(
+            [
+                str((ord(char) + total_ord_sum + i) % 10)
+                for i, char in enumerate(self.key)
+            ]
+        )
 
     def _offset(self, index: int) -> int:
         try:
@@ -45,7 +50,9 @@ class CipherHandler:
         key_bytes = self.key.encode("utf-8")
         if isinstance(data, str):
             data = data.encode("utf-8")
-        return bytes([data[i] ^ key_bytes[i % len(key_bytes)] for i in range(len(data))])
+        return bytes(
+            [data[i] ^ key_bytes[i % len(key_bytes)] for i in range(len(data))]
+        )
 
     def _base64_encode(self, data: str) -> str:
         encoded_bytes = base64.b64encode(data.encode("utf-8"))
@@ -99,7 +106,10 @@ class CipherHandler:
     def decrypt_shift(self, encoded_text: str) -> str:
         try:
             codes = encoded_text.split(self.delimiter)
-            return "".join(chr(int(code, 16) - ord(self.key[i % len(self.key)])) for i, code in enumerate(codes))
+            return "".join(
+                chr(int(code, 16) - ord(self.key[i % len(self.key)]))
+                for i, code in enumerate(codes)
+            )
         except (ValueError, TypeError) as error:
             raise ValueError(f"Error during shift decryption: {error}")
 
@@ -123,7 +133,9 @@ class CipherHandler:
 
     def encrypt_binary(self, plaintext: str) -> str:
         xor_key = int(self.numeric_key) % 256
-        encrypted_bits = "".join(format(ord(char) ^ xor_key, "08b") for char in plaintext)
+        encrypted_bits = "".join(
+            format(ord(char) ^ xor_key, "08b") for char in plaintext
+        )
         return encrypted_bits
 
     def encrypt_bytes(self, message: str) -> str:
@@ -134,5 +146,8 @@ class CipherHandler:
             raise Exception(f"Encryption failed for 'bytes' method: {e}")
 
     def encrypt_shift(self, text: str) -> str:
-        encoded_hex = [hex(ord(text[i]) + ord(self.key[i % len(self.key)])) for i in range(len(text))]
+        encoded_hex = [
+            hex(ord(text[i]) + ord(self.key[i % len(self.key)]))
+            for i in range(len(text))
+        ]
         return self.delimiter.join(encoded_hex)

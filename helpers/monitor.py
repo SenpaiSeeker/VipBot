@@ -57,8 +57,18 @@ class ServerMonitor:
                 "freq": f"{cpu_freq.current:.0f}Mhz" if cpu_freq else "N/A",
                 "cores": cpu_count,
             },
-            "ram": {"percent": ram_percent, "bar": ram_bar, "used": ram_used, "total": ram_total},
-            "disk": {"percent": disk_percent, "bar": disk_bar, "used": disk_used, "total": disk_total},
+            "ram": {
+                "percent": ram_percent,
+                "bar": ram_bar,
+                "used": ram_used,
+                "total": ram_total,
+            },
+            "disk": {
+                "percent": disk_percent,
+                "bar": disk_bar,
+                "used": disk_used,
+                "total": disk_total,
+            },
             "network": {"sent": sent, "recv": recv},
         }
         return SimpleNamespace(**system_info)

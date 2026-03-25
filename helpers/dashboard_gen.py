@@ -16,11 +16,18 @@ class DashboardGenerator:
         values = [stats_data["cpu"], stats_data["ram"], stats_data["disk"]]
         colors = ["cyan", "lime", "magenta"]
 
-        bars = ax.bar(categories, values, color=colors, edgecolor="white", linewidth=1.5)
+        bars = ax.bar(
+            categories, values, color=colors, edgecolor="white", linewidth=1.5
+        )
         ax.set_ylim(0, 100)
         ax.set_ylabel("Persentase Penggunaan", color="white", fontsize=12)
         ax.tick_params(colors="white", labelsize=12)
-        ax.set_title("Visualisasi Kesehatan Server", color="white", fontsize=16, fontweight="bold")
+        ax.set_title(
+            "Visualisasi Kesehatan Server",
+            color="white",
+            fontsize=16,
+            fontweight="bold",
+        )
 
         for bar in bars:
             yval = bar.get_height()
@@ -36,7 +43,9 @@ class DashboardGenerator:
             )
 
         buf = io.BytesIO()
-        plt.savefig(buf, format="png", facecolor=fig.get_facecolor(), bbox_inches="tight")
+        plt.savefig(
+            buf, format="png", facecolor=fig.get_facecolor(), bbox_inches="tight"
+        )
         buf.seek(0)
         plt.close(fig)
         buf.name = "dashboard_server.png"

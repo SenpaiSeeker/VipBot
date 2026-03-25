@@ -1068,7 +1068,7 @@ STRINGS = yaml.safe_load(RAW_ID_STRINGS)
 
 def get_string(key):
     node = STRINGS
-    for part in key.split('.'):
+    for part in key.split("."):
         if not isinstance(node, dict) or part not in node:
             return f"[{key}]"
         node = node[part]
@@ -1076,14 +1076,14 @@ def get_string(key):
 
 
 class Language:
-    def __init__(self, db, user_id, lang_code='id'):
+    def __init__(self, db, user_id, lang_code="id"):
         self.db = db
         self.user_id = user_id
-        self.lang_code = 'id'
+        self.lang_code = "id"
 
     @classmethod
     async def create(cls, db, user_id):
-        return cls(db, user_id, 'id')
+        return cls(db, user_id, "id")
 
     def get(self, key, *args, **kwargs):
         raw_string = get_string(key)

@@ -57,9 +57,15 @@ class DataBase:
         return await loop.run_in_executor(None, partial(func, *args, **kwargs))
 
     def _register_backup_task(self):
-        if self.auto_backup and self.scheduler and self.storage_type in ["local", "sqlite"]:
+        if (
+            self.auto_backup
+            and self.scheduler
+            and self.storage_type in ["local", "sqlite"]
+        ):
             if not self.backup_bot_token or not self.backup_chat_id:
-                return self.cipher.log.warning("Auto backup is disabled because token/chat_id is missing.")
+                return self.cipher.log.warning(
+                    "Auto backup is disabled because token/chat_id is missing."
+                )
 
             @self.scheduler.cron(self.backup_cron_spec)
             async def scheduled_backup_task():
@@ -83,10 +89,14 @@ class DataBase:
                 env_files = await self._run_sync(glob.glob, "*.env")
                 if env_files:
                     source_paths.extend(env_files)
-                zip_path = await self._run_sync(self._create_zip_archive, source_paths, temp_backup_dir)
+                zip_path = await self._run_sync(
+                    self._create_zip_archive, source_paths, temp_backup_dir
+                )
 
                 if zip_path:
-                    timestamp = datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%Y-%m-%d %H:%M:%S %Z")
+                    timestamp = datetime.now(ZoneInfo("Asia/Jakarta")).strftime(
+                        "%Y-%m-%d %H:%M:%S %Z"
+                    )
                     caption = (
                         f"Backup otomatis untuk `{os.path.basename(zip_path)}`\n"
                         f"Tipe DB: `{self.storage_type}`\n"
@@ -131,7 +141,9 @@ class DataBase:
                     if resp_data.get("ok"):
                         self.cipher.log.info("Successfully sent backup to Telegram.")
                     else:
-                        self.cipher.log.error(f"Failed to send backup: {resp_data.get('description')}")
+                        self.cipher.log.error(
+                            f"Failed to send backup: {resp_data.get('description')}"
+                        )
             except Exception as e:
                 self.cipher.log.error(f"Failed to send file to Telegram: {e}")
 
@@ -165,7 +177,9 @@ class DataBase:
 
     def _initialize_sqlite(self):
         cursor = self.conn.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS vars (user_id TEXT PRIMARY KEY, data TEXT)")
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS vars (user_id TEXT PRIMARY KEY, data TEXT)"
+        )
         cursor.execute(
             "CREATE TABLE IF NOT EXISTS bots (user_id TEXT PRIMARY KEY, api_id TEXT, api_hash TEXT, bot_token TEXT, session_string TEXT)"
         )
@@ -175,11 +189,15 @@ class DataBase:
         user_id_str = str(user_id)
         if self.storage_type == "sqlite":
             row = await self._run_sync(
-                lambda: self.conn.cursor().execute("SELECT data FROM vars WHERE user_id = ?", (user_id_str,)).fetchone()
+                lambda: self.conn.cursor()
+                .execute("SELECT data FROM vars WHERE user_id = ?", (user_id_str,))
+                .fetchone()
             )
             return json.loads(self.cipher.decrypt(row[0])) if row else {}
         elif self.storage_type == "mongo":
-            data = await self._run_sync(lambda: self.data.vars.find_one({"_id": user_id_str}))
+            data = await self._run_sync(
+                lambda: self.data.vars.find_one({"_id": user_id_str})
+            )
             return data if data else {}
         else:
             data = await self._load_data()
@@ -192,14 +210,17 @@ class DataBase:
             await self._run_sync(
                 lambda: (
                     self.conn.execute(
-                        "INSERT OR REPLACE INTO vars (user_id, data) VALUES (?, ?)", (user_id_str, encrypted_data)
+                        "INSERT OR REPLACE INTO vars (user_id, data) VALUES (?, ?)",
+                        (user_id_str, encrypted_data),
                     ),
                     self.conn.commit(),
                 )
             )
         elif self.storage_type == "mongo":
             await self._run_sync(
-                lambda: self.data.vars.update_one({"_id": user_id_str}, {"$set": user_data}, upsert=True)
+                lambda: self.data.vars.update_one(
+                    {"_id": user_id_str}, {"$set": user_data}, upsert=True
+                )
             )
         else:
             full_data = await self._load_data()
@@ -245,7 +266,11 @@ class DataBase:
         for v in encrypted_list:
             decrypted = self.cipher.decrypt(v)
             try:
-                decoded_list.append(json.loads(decrypted) if decrypted.startswith(("[", "{")) else decrypted)
+                decoded_list.append(
+                    json.loads(decrypted)
+                    if decrypted.startswith(("[", "{"))
+                    else decrypted
+                )
             except:
                 decoded_list.append(decrypted)
         return decoded_list
@@ -265,12 +290,16 @@ class DataBase:
         if self.storage_type == "sqlite":
             await self._run_sync(
                 lambda: (
-                    self.conn.execute("DELETE FROM vars WHERE user_id = ?", (user_id_str,)),
+                    self.conn.execute(
+                        "DELETE FROM vars WHERE user_id = ?", (user_id_str,)
+                    ),
                     self.conn.commit(),
                 )
             )
         elif self.storage_type == "mongo":
-            await self._run_sync(lambda: self.data.vars.delete_one({"_id": user_id_str}))
+            await self._run_sync(
+                lambda: self.data.vars.delete_one({"_id": user_id_str})
+            )
         else:
             full_data = await self._load_data()
             if user_id_str in full_data.get("vars", {}):
@@ -287,14 +316,22 @@ class DataBase:
                 for v in value:
                     try:
                         decrypted_v = self.cipher.decrypt(v)
-                        temp_list.append(json.loads(decrypted_v) if decrypted_v.startswith(("[", "{")) else decrypted_v)
+                        temp_list.append(
+                            json.loads(decrypted_v)
+                            if decrypted_v.startswith(("[", "{"))
+                            else decrypted_v
+                        )
                     except:
                         temp_list.append(v)
                 decrypted[key] = temp_list
             else:
                 try:
                     decrypted_v = self.cipher.decrypt(value)
-                    decrypted[key] = json.loads(decrypted_v) if decrypted_v.startswith(("[", "{")) else decrypted_v
+                    decrypted[key] = (
+                        json.loads(decrypted_v)
+                        if decrypted_v.startswith(("[", "{"))
+                        else decrypted_v
+                    )
                 except:
                     decrypted[key] = value
         return decrypted
@@ -302,7 +339,10 @@ class DataBase:
     async def saveBot(self, user_id, api_id, api_hash, value, is_token=False):
         user_id_str = str(user_id)
         field = "bot_token" if is_token else "session_string"
-        bot_data = {"api_id": self.cipher.encrypt(str(api_id)), "api_hash": self.cipher.encrypt(api_hash)}
+        bot_data = {
+            "api_id": self.cipher.encrypt(str(api_id)),
+            "api_hash": self.cipher.encrypt(api_hash),
+        }
         if value:
             bot_data[field] = self.cipher.encrypt(value)
 
@@ -333,7 +373,14 @@ class DataBase:
         else:
             full_data = await self._load_data()
             bots_list = full_data.get("bots", [])
-            existing_index = next((index for (index, d) in enumerate(bots_list) if d.get("user_id") == user_id_str), -1)
+            existing_index = next(
+                (
+                    index
+                    for (index, d) in enumerate(bots_list)
+                    if d.get("user_id") == user_id_str
+                ),
+                -1,
+            )
             if existing_index != -1:
                 bots_list[existing_index].update(bot_data)
             else:
@@ -349,7 +396,9 @@ class DataBase:
         elif self.storage_type == "sqlite":
             rows = await self._run_sync(
                 lambda: self.conn.cursor()
-                .execute("SELECT user_id, api_id, api_hash, bot_token, session_string FROM bots")
+                .execute(
+                    "SELECT user_id, api_id, api_hash, bot_token, session_string FROM bots"
+                )
                 .fetchall()
             )
             raw_bots = [
@@ -376,7 +425,9 @@ class DataBase:
                         dec_val = self.cipher.decrypt(val)
                         decrypted[key] = int(dec_val) if key == "api_id" else dec_val
 
-                if (is_token and "bot_token" in decrypted) or (not is_token and "session_string" in decrypted):
+                if (is_token and "bot_token" in decrypted) or (
+                    not is_token and "session_string" in decrypted
+                ):
                     decrypted_bots.append(decrypted)
             except:
                 continue
@@ -389,11 +440,15 @@ class DataBase:
         elif self.storage_type == "sqlite":
             await self._run_sync(
                 lambda: (
-                    self.conn.execute("DELETE FROM bots WHERE user_id = ?", (user_id_str,)),
+                    self.conn.execute(
+                        "DELETE FROM bots WHERE user_id = ?", (user_id_str,)
+                    ),
                     self.conn.commit(),
                 )
             )
         else:
             full_data = await self._load_data()
-            full_data["bots"] = [b for b in full_data.get("bots", []) if b.get("user_id") != user_id_str]
+            full_data["bots"] = [
+                b for b in full_data.get("bots", []) if b.get("user_id") != user_id_str
+            ]
             await self._save_data(full_data)

@@ -37,7 +37,12 @@ class SaweriaScraper(QrCodeGenerator):
                         next_data = soup.find(id="__NEXT_DATA__")
                         if next_data:
                             data = json.loads(next_data.text)
-                            user_id = data.get("props", {}).get("pageProps", {}).get("data", {}).get("id")
+                            user_id = (
+                                data.get("props", {})
+                                .get("pageProps", {})
+                                .get("data", {})
+                                .get("id")
+                            )
                             if user_id:
                                 return user_id
                 except Exception:
@@ -100,7 +105,9 @@ class SaweriaScraper(QrCodeGenerator):
 
     async def check_paid_status(self, transaction_id: str) -> bool:
         def _sync_get():
-            res = self.scraper.get(f"{self.BACKEND}/donations/qris/{transaction_id}", headers=self.HEADERS)
+            res = self.scraper.get(
+                f"{self.BACKEND}/donations/qris/{transaction_id}", headers=self.HEADERS
+            )
             if not res.ok:
                 raise Exception("Transaction ID not found")
             return res.json()["data"]["qr_string"] == ""

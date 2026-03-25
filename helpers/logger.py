@@ -11,7 +11,9 @@ class LoggerHandler(AnsiColors):
     def __init__(self, **options):
         super().__init__()
         self.tz = zoneinfo.ZoneInfo(options.get("tz", "Asia/Jakarta"))
-        self.fmt = options.get("fmt", "{asctime} {levelname} {module}:{funcName}:{lineno} {message}")
+        self.fmt = options.get(
+            "fmt", "{asctime} {levelname} {module}:{funcName}:{lineno} {message}"
+        )
         self.datefmt = options.get("datefmt", "%Y-%m-%d %H:%M:%S %Z")
         self.colors = {
             "INFO": self.GREEN,
@@ -34,7 +36,9 @@ class LoggerHandler(AnsiColors):
         level_color = self.colors.get(record["levelname"], self.RESET)
         pipe_color = self.colors["PIPE"]
         record["levelname"] = f"{pipe_color}│ {level_color}{record['levelname']:<8}"
-        record["message"] = f"{pipe_color}│ {level_color}{record['message']}{self.RESET}"
+        record["message"] = (
+            f"{pipe_color}│ {level_color}{record['message']}{self.RESET}"
+        )
         return self.fmt.format(
             asctime=f"{self.colors['TIME']}[ {self.formatTime()} ]",
             levelname=record["levelname"],

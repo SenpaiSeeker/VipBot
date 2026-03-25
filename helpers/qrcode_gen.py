@@ -52,7 +52,10 @@ class QrCodeGenerator:
 
             if not glow_background:
                 img = qr.make_image(
-                    image_factory=image_factory, module_drawer=drawer_module, fill_color="black", back_color="white"
+                    image_factory=image_factory,
+                    module_drawer=drawer_module,
+                    fill_color="black",
+                    back_color="white",
                 ).convert("RGB")
             else:
                 qr_img = qr.make_image(
@@ -69,7 +72,9 @@ class QrCodeGenerator:
                 value = 1.0
                 rgb_float = colorsys.hsv_to_rgb(hue, saturation, value)
                 glow_color = tuple(int(c * 255) for c in rgb_float)
-                background = self._sync_create_glow_background(bg_size, glow_color).convert("RGBA")
+                background = self._sync_create_glow_background(
+                    bg_size, glow_color
+                ).convert("RGBA")
                 paste_position = (padding, padding)
                 background.paste(qr_img, paste_position, qr_img)
                 img = background.convert("RGB")
@@ -103,7 +108,10 @@ class QrCodeGenerator:
             if bottom_text:
                 button_h = 60
             if creator_text:
-                creator_h = font_creator.getbbox(creator_text)[3] - font_creator.getbbox(creator_text)[1]
+                creator_h = (
+                    font_creator.getbbox(creator_text)[3]
+                    - font_creator.getbbox(creator_text)[1]
+                )
 
             total_h = (
                 padding_top
@@ -131,13 +139,21 @@ class QrCodeGenerator:
                 )
                 button_center_x = button_x + button_w / 2
                 button_center_y = current_y + button_h / 2
-                draw.text((button_center_x, button_center_y), bottom_text, font=font_button, fill="black", anchor="mm")
+                draw.text(
+                    (button_center_x, button_center_y),
+                    bottom_text,
+                    font=font_button,
+                    fill="black",
+                    anchor="mm",
+                )
                 current_y += button_h
 
             if creator_text:
                 current_y += padding_between_button_creator
                 text_x = (canvas_w - creator_w) / 2
-                draw.text((text_x, current_y), creator_text, font=font_creator, fill="black")
+                draw.text(
+                    (text_x, current_y), creator_text, font=font_creator, fill="black"
+                )
 
             img_bytes = io.BytesIO()
             final_canvas.save(img_bytes, format="PNG")
@@ -156,7 +172,13 @@ class QrCodeGenerator:
     ) -> bytes:
         loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(
-            None, self._sync_generate, data, use_dots, glow_background, bottom_text, creator_text
+            None,
+            self._sync_generate,
+            data,
+            use_dots,
+            glow_background,
+            bottom_text,
+            creator_text,
         )
         if isinstance(result, Exception):
             raise result

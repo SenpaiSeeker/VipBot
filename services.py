@@ -14,4 +14,6 @@ async def initialize_bot_services(client, db_instance):
         try:
             client.services.saweria = client.ns.payment.SaweriaScraper()
         except Exception as e:
-            log.print(f"{log.RED}Gagal inisialisasi SaweriaScraper untuk Bot ID {bot_id}: {e}")
+            log.print(
+                f"{log.RED}Gagal inisialisasi SaweriaScraper untuk Bot ID {bot_id}: {e}"
+            )
