@@ -49,16 +49,16 @@ async def get_start_keyboard_and_content(client, user):
                     "text": "📚 Lihat Daftar VVIP 📚",
                     "callback_data": "list_vvip",
                 },
-                {
-                    "text": "❤️ Donasi",
-                    "callback_data": "donate_stars",
-                },
             ],
             [
                 {
-                    "text": "ℹ️ Tentang Bot ℹ️",
+                    "text": "ℹ️ About",
                     "callback_data": "about_bot",
-                }
+                },
+                {
+                    "text": "Donasi ❤️",
+                    "callback_data": "donate_stars",
+                },
             ],
         ]
     )
