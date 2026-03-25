@@ -7,7 +7,6 @@ import VvipBot as handlers
 from database import schedule
 from helpers.logger import LoggerHandler
 from services import initialize_bot_services
-from strings import Language
 from VvipBot import ctx
 
 log = LoggerHandler()
@@ -296,10 +295,6 @@ async def subscription_checker_method():
                 expiry_date_str
             )
             user_id = member["user_id"]
-            lang = await Language.create(
-                manager.db, user_id
-            )
-
             if now > expiry_date:
                 try:
                     chat_id = member["chat_id_kick"]
@@ -312,9 +307,8 @@ async def subscription_checker_method():
                     )
                     await bot_client.send_message(
                         user_id,
-                        lang.get(
-                            "subscription.expired_kick_notif",
-                            name=member["vvip_name"],
+                        "<emoji id=5451646226975955576>⌛</emoji> **Langganan Berakhir**\n\nLangganan Anda untuk paket **{name}** telah berakhir. Anda telah dikeluarkan dari grup.".format(
+                            name=member["vvip_name"]
                         ),
                     )
                     log.debug(
@@ -357,17 +351,14 @@ async def subscription_checker_method():
                                 break
 
                         if item_index != -1:
-                            text = lang.get(
-                                "subscription.renewal_reminder",
+                            text = "<emoji id=5242628160297641831>🔔</emoji> **Pengingat Langganan**\n\nLangganan Anda untuk paket **{name}** akan berakhir dalam **{days} hari** lagi. Perpanjang sekarang agar tidak kehilangan akses!".format(
                                 name=member["vvip_name"],
                                 days=time_left.days,
                             )
                             layout = [
                                 [
                                     {
-                                        "text": lang.get(
-                                            "subscription.renew_button"
-                                        ),
+                                        "text": "🔄 Perpanjang Sekarang",
                                         "callback_data": f"renew_sub_{item_index}",
                                     }
                                 ]
