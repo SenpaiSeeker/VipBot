@@ -26,8 +26,7 @@ async def get_bot_purchase_panel(client, user_id, months=1):
         discount=f"-Rp {discount:,}",
         final=f"{final_price:,}",
     )
-    layout = [
-        [
+    layout = [[
             {
                 "text": "➖",
                 "callback_data": f"adjust_bot_month_{months - 1}",
@@ -40,8 +39,7 @@ async def get_bot_purchase_panel(client, user_id, months=1):
                 "text": "➕",
                 "callback_data": f"adjust_bot_month_{months + 1}",
             },
-        ],
-        [
+        ],[
             {
                 "text": "Bayar via QRIS (Rp {final})".format(
                     final=f"{final_price:,}"
@@ -62,6 +60,23 @@ async def get_bot_purchase_panel(client, user_id, months=1):
     handler_type="callback",
 )
 async def create_bot_callback(client, callback_query):
+    from config import BACKUP_BOT
+    all_bots_data = await ctx.db.getBots(is_token=True)
+    if len(all_bots_data) >= 30:
+        backup_text = f" melalui @{BACKUP_BOT}" if BACKUP_BOT else ""
+        text_warning = f"<emoji id=6298671811345254603>❌</emoji> **Kapasitas Bot Penuh!**\n\nMaaf, server saat ini sudah mencapai batas maksimal pembuatan bot (30 Bot). Silakan buat bot baru{backup_text}."
+        layout = [[
+                {
+                    "text": "• Kembali •",
+                    "callback_data": "start",
+                }
+            ]
+        ]
+        btn = client.ns.telegram.button.build_button_grid(layout)
+        if callback_query.message.photo:
+            return await callback_query.edit_message_caption(text_warning, reply_markup=btn)
+        return await callback_query.edit_message_text(text_warning, reply_markup=btn)
+
     user_id = callback_query.from_user.id
     user_expiry_str = await ctx.db.getVars(
         user_id, "user_expiry_date"
@@ -72,14 +87,12 @@ async def create_bot_callback(client, callback_query):
         )
         if expiry_date > datetime.now(timezone.utc):
             text = "<emoji id=6296367896398399651>✅</emoji> **Anda Sudah Berlangganan!**\n\nAnda sudah memiliki akses untuk membuat bot. Tekan tombol di bawah untuk memulai proses pembuatan."
-            layout = [
-                [
+            layout = [[
                     {
                         "text": "▶️ Lanjutkan Membuat Bot",
                         "callback_data": "start_creation_process",
                     }
-                ],
-                [
+                ],[
                     {
                         "text": "• Kembali •",
                         "callback_data": "start",
@@ -169,8 +182,7 @@ async def proceed_bot_payment_callback(
             amount=f"{amount_raw:,}",
             id=f"[{transaction_id}](https://saweria.co/qris/{transaction_id})",
         )
-        layout = [
-            [
+        layout = [[
                 {
                     "text": "✅ Konfirmasi Pembayaran",
                     "callback_data": f"confirm_bot_payment_{transaction_id}",
@@ -238,8 +250,7 @@ async def confirm_bot_payment_callback(
             success_text = "<emoji id=6296367896398399651>✅</emoji> **Pembayaran Berhasil!**\n\nTerima kasih! Langganan Anda untuk membuat bot selama **{months} bulan** telah diaktifkan.".format(
                 months=months
             )
-            layout = [
-                [
+            layout = [[
                     {
                         "text": "▶️ Lanjutkan Membuat Bot",
                         "callback_data": "start_creation_process",
@@ -296,6 +307,16 @@ async def start_creation_process_callback(
             "Langganan Anda tidak valid atau telah berakhir.",
             show_alert=True,
         )
+        
+    all_bots_data = await ctx.db.getBots(is_token=True)
+    if len(all_bots_data) >= 30:
+        from config import BACKUP_BOT
+        backup_text = f" melalui @{BACKUP_BOT}" if BACKUP_BOT else ""
+        return await callback_query.answer(
+            f"Kapasitas bot sudah penuh (30 Bot). Silakan buat bot baru{backup_text}.",
+            show_alert=True,
+        )
+
     await callback_query.message.delete()
     try:
 
@@ -396,7 +417,7 @@ Ketik `/batal` untuk membatalkan."""}''',
 )
 async def list_my_bots_callback(client, callback_query):
     user_id = callback_query.from_user.id
-    my_bots = []
+    my_bots =[]
     all_bots_data = await ctx.db.getBots(is_token=True)
     for b in all_bots_data:
         owner = await ctx.db.getVars(
@@ -448,12 +469,11 @@ async def list_my_bots_callback(client, callback_query):
         days_left=days_left,
     )
     layout = []
-    pagination_row = []
+    pagination_row =[]
     if total_pages > 1:
         prev_page = (page - 1 + total_pages) % total_pages
         next_page = (page + 1) % total_pages
-        pagination_row.extend(
-            [
+        pagination_row.extend([
                 {
                     "text": "« Sebelumnya",
                     "callback_data": f"list_my_bots_{prev_page}",
@@ -467,16 +487,14 @@ async def list_my_bots_callback(client, callback_query):
     if pagination_row:
         layout.append(pagination_row)
     layout.extend(
-        [
-            [
+        [[
                 {
                     "text": "⚙️ Kelola {name}".format(
                         name=bot_name
                     ),
                     "callback_data": f"manage_bot {bot_id}",
                 }
-            ],
-            [
+            ],[
                 {
                     "text": "• Kembali •",
                     "callback_data": "start",
@@ -536,20 +554,17 @@ async def manage_bot_callback(client, callback_query):
             - datetime.now(timezone.utc)
         ).days
         days_left_text = f"{days_left} {'hari'}"
-    layout = [
-        [
+    layout = [[
             {
                 "text": "➕ Minta Perpanjangan",
                 "callback_data": f"request_extend_duration {bot_id_to_manage}",
             }
-        ],
-        [
+        ],[
             {
                 "text": "🗑️ Hapus Bot Ini",
                 "callback_data": f"confirm_delete_bot {bot_id_to_manage}",
             }
-        ],
-        [
+        ],[
             {
                 "text": "⬅️ Kembali ke Daftar Bot",
                 "callback_data": "list_my_bots_0",
@@ -613,8 +628,7 @@ async def request_extend_duration_callback(
             bot_name=bot_name,
             bot_id=bot_id_to_request,
         )
-        layout_owner = [
-            [
+        layout_owner = [[
                 {
                     "text": "✅ Setujui (+30 Hari)",
                     "callback_data": f"approve_extension {bot_id_to_request} {requester.id}",
@@ -762,8 +776,7 @@ async def confirm_delete_bot_callback(
     text = "**<emoji id=6271786398404055377>⚠️</emoji> Konfirmasi Penghapusan**\n\nAnda yakin ingin menghapus bot **{name}** (`{id}`) secara permanen?\n\n__Semua data (member, paket, pengaturan) bot ini akan hilang dan tindakan ini tidak dapat diurungkan.__".format(
         name=bot_name, id=bot_id_to_manage
     )
-    layout = [
-        [
+    layout = [[
             {
                 "text": "✅ Ya, Saya Yakin Hapus",
                 "callback_data": f"do_delete_bot {bot_id_to_manage}",
@@ -820,8 +833,7 @@ async def do_delete_bot_callback(client, callback_query):
         ctx.log.print(
             f"{ctx.log.ORANGE}Bot {bot_id_to_manage} telah dihapus oleh owner-nya ({user_id})."
         )
-        layout = [
-            [
+        layout = [[
                 {
                     "text": "⬅️ Kembali ke Daftar Bot",
                     "callback_data": "list_my_bots_0",
@@ -842,4 +854,4 @@ async def do_delete_bot_callback(client, callback_query):
             "<emoji id=6298671811345254603>❌</emoji> Terjadi kesalahan saat menghapus bot: `{e}`".format(
                 e=e
             )
-        )
+            )
