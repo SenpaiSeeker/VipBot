@@ -1,5 +1,5 @@
+import random
 import string
-import random 
 
 
 def generate_safe_saweria_message(user_name):
@@ -1637,8 +1637,16 @@ def generate_safe_saweria_message(user_name):
     elif casing_style == 4:
         final_message = final_message.upper()
     elif casing_style == 5:
-        final_message = "".join(c.upper() if i % 2 == 0 else c.lower() for i, c in enumerate(final_message))
+        final_message = "".join(
+            c.upper() if i % 2 == 0 else c.lower()
+            for i, c in enumerate(final_message)
+        )
 
-    unique_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=random.randint(5, 7)))
+    unique_code = "".join(
+        random.choices(
+            string.ascii_uppercase + string.digits,
+            k=random.randint(5, 7),
+        )
+    )
 
     return f"{final_message} ({unique_code})"

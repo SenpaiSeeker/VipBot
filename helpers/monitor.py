@@ -10,9 +10,13 @@ class ServerMonitor:
     def __init__(self):
         self.boot_time = psutil.boot_time()
 
-    def _create_progress_bar(self, percentage: float, length: int = 10) -> str:
+    def _create_progress_bar(
+        self, percentage: float, length: int = 10
+    ) -> str:
         filled_length = int(length * percentage // 100)
-        bar = "█" * filled_length + "░" * (length - filled_length)
+        bar = "█" * filled_length + "░" * (
+            length - filled_length
+        )
         return bar
 
     def _get_uptime(self) -> str:
@@ -22,7 +26,13 @@ class ServerMonitor:
     def _format_bytes(self, size: float) -> str:
         power = 2**10
         n = 0
-        power_labels = {0: "", 1: "K", 2: "M", 3: "G", 4: "T"}
+        power_labels = {
+            0: "",
+            1: "K",
+            2: "M",
+            3: "G",
+            4: "T",
+        }
         while size > power:
             size /= power
             n += 1
@@ -54,11 +64,25 @@ class ServerMonitor:
             "cpu": {
                 "percent": cpu_percent,
                 "bar": cpu_bar,
-                "freq": f"{cpu_freq.current:.0f}Mhz" if cpu_freq else "N/A",
+                "freq": (
+                    f"{cpu_freq.current:.0f}Mhz"
+                    if cpu_freq
+                    else "N/A"
+                ),
                 "cores": cpu_count,
             },
-            "ram": {"percent": ram_percent, "bar": ram_bar, "used": ram_used, "total": ram_total},
-            "disk": {"percent": disk_percent, "bar": disk_bar, "used": disk_used, "total": disk_total},
+            "ram": {
+                "percent": ram_percent,
+                "bar": ram_bar,
+                "used": ram_used,
+                "total": ram_total,
+            },
+            "disk": {
+                "percent": disk_percent,
+                "bar": disk_bar,
+                "used": disk_used,
+                "total": disk_total,
+            },
             "network": {"sent": sent, "recv": recv},
         }
         return SimpleNamespace(**system_info)

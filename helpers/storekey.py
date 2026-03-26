@@ -15,12 +15,22 @@ class KeyManager:
             description="Pemuat konfigurasi skrip.",
             epilog="Argumen --key dan --env wajib disertakan untuk menjalankan skrip.",
         )
-        parser.add_argument("--key", type=str, help="Kunci rahasia untuk enkripsi data.")
-        parser.add_argument("--env", type=str, help="Nama file environment yang akan dimuat")
+        parser.add_argument(
+            "--key",
+            type=str,
+            help="Kunci rahasia untuk enkripsi data.",
+        )
+        parser.add_argument(
+            "--env",
+            type=str,
+            help="Nama file environment yang akan dimuat",
+        )
         args = parser.parse_args()
 
         if not args.key or not args.env:
-            self.logger.print(f"{self.logger.RED}Argumen --key dan --env harus disertakan untuk menjalankan bot.")
+            self.logger.print(
+                f"{self.logger.RED}Argumen --key dan --env harus disertakan untuk menjalankan bot."
+            )
             sys.exit(1)
 
         self.hide_sensitive_args()
@@ -45,6 +55,10 @@ class KeyManager:
                 cleaned_argv.append(arg)
 
         try:
-            setproctitle.setproctitle(" ".join(cleaned_argv))
+            setproctitle.setproctitle(
+                " ".join(cleaned_argv)
+            )
         except Exception as e:
-            self.logger.print(f"{self.logger.YELLOW}Gagal menyembunyikan argumen proses: {e}")
+            self.logger.print(
+                f"{self.logger.YELLOW}Gagal menyembunyikan argumen proses: {e}"
+            )

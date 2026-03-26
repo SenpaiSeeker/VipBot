@@ -38,14 +38,13 @@ Platform ini adalah solusi *all-in-one* bagi siapa saja yang ingin membangun bis
 - **Fitur Broadcast Fleksibel**:
     - **Pemilik Bot**: Kirim pesan massal ke semua pengguna botnya.
     - **Owner Utama**: Kirim pesan broadcast ke semua *pemilik bot* di platform melalui perintah `/broadcast_owners`.
-- **Manajemen API per-Bot**: Setiap pemilik bot mengatur API Key Violet (pembayaran) & Gemini (AI) mereka sendiri.
+- **Manajemen API per-Bot**: Setiap pemilik bot mengatur API payment (Saweria) mereka sendiri.
 - **Backup & Restore Database**: Backup otomatis berkala dan pemulihan data yang mudah.
 - **Eksekusi Kode (`/eval`)**: Fitur canggih untuk debugging (hanya *Owner Utama*).
 
 ### 🎨 Kustomisasi & Personalisasi
-- **Dukungan Multi-Bahasa**: Bot mendukung Bahasa Indonesia, Inggris, dan Jepang.
+- **Bahasa Indonesia**: Seluruh antarmuka bot menggunakan Bahasa Indonesia.
 - **Kustomisasi Tampilan**: Ubah foto dan teks sambutan (`/start`) dengan mudah.
-- **Asisten AI (Google Gemini)**: Integrasi "Cek Khodam" dan *chatbot* cerdas untuk mengurangi beban support manual.
 
 ## 🚀 Pengaturan dan Instalasi
 
