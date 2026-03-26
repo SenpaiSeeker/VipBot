@@ -232,7 +232,7 @@ async def give_access_callback(client, callback_query):
     text = "Pilih durasi akses yang ingin diberikan:"
     layout =[]
     row = []
-    for months in [1, 3, 6, 12]:
+    for months in[1, 3, 6, 12]:
         row.append(
             {
                 "text": f"{months} Bulan",
@@ -964,7 +964,7 @@ async def reduce_bot_callback(client, callback_query):
         }
         for days in [7, 30, 90]
     ]
-    layout = [
+    layout =[
         buttons,[
             {
                 "text": "• Kembali •",
@@ -1450,14 +1450,14 @@ async def tfdatabase_command_handler(client, message):
     )
     try:
         from helpers.database import DataBase
-        source_db = DataBase(
+        source_db = ctx.db if source_db_name == ctx.db.file_name else DataBase(
             storage_type=ctx.db.storage_type,
             file_name=source_db_name,
             keys_encrypt=ctx.db.keys_encrypt,
             method_encrypt=ctx.db.method_encrypt,
             auto_backup=False
         )
-        target_db = DataBase(
+        target_db = ctx.db if target_db_name == ctx.db.file_name else DataBase(
             storage_type=ctx.db.storage_type,
             file_name=target_db_name,
             keys_encrypt=ctx.db.keys_encrypt,
@@ -1466,14 +1466,18 @@ async def tfdatabase_command_handler(client, message):
         )
         source_data = await source_db._get_user_vars(source_id)
         if not source_data:
-            await source_db.close_async()
-            await target_db.close_async()
+            if source_db != ctx.db:
+                await source_db.close_async()
+            if target_db != ctx.db:
+                await target_db.close_async()
             return await msg.edit_text(
                 "<emoji id=6298671811345254603>❌</emoji> Data sumber tidak ditemukan pada database."
             )
         await target_db._set_user_vars(target_id, source_data)
-        await source_db.close_async()
-        await target_db.close_async()
+        if source_db != ctx.db:
+            await source_db.close_async()
+        if target_db != ctx.db:
+            await target_db.close_async()
         await msg.edit_text(
             "<emoji id=6296367896398399651>✅</emoji> **Transfer Database Berhasil!**\n\n**Sumber:** `{source_id}` (`{source_db}`)\n**Tujuan:** `{target_id}` (`{target_db}`)\n\nSemua data berhasil disalin secara lengkap.".format(
                 source_id=source_id,
@@ -1487,4 +1491,85 @@ async def tfdatabase_command_handler(client, message):
             "<emoji id=6298671811345254603>❌</emoji> Terjadi kesalahan saat mentransfer database:\n<pre>{e}</pre>".format(
                 e=str(e)
             )
+        )
+
+
+@command(
+    lambda ctx: filters.command("tfbot")
+    & filters.user(ctx.owner_id)
 )
+async def tfbot_command_handler(client, message):
+    args = message.command
+    if len(args) != 4:
+        return await message.reply_text(
+            "Format salah. Gunakan: `/tfbot <id_bot> <source_db> <target_db>`\nContoh: `/tfbot 123456789 vvip_database vvip_databaseV2`"
+        )
+    try:
+        bot_id = int(args[1])
+    except ValueError:
+        return await message.reply_text("ID Bot harus berupa angka.")
+    source_db_name = args[2]
+    target_db_name = args[3]
+    msg = await message.reply_text(
+        "<emoji id=5264727218734524899>🔄</emoji> Memproses migrasi bot..."
+    )
+    try:
+        from helpers.database import DataBase
+        source_db = ctx.db if source_db_name == ctx.db.file_name else DataBase(
+            storage_type=ctx.db.storage_type,
+            file_name=source_db_name,
+            keys_encrypt=ctx.db.keys_encrypt,
+            method_encrypt=ctx.db.method_encrypt,
+            auto_backup=False
+        )
+        target_db = ctx.db if target_db_name == ctx.db.file_name else DataBase(
+            storage_type=ctx.db.storage_type,
+            file_name=target_db_name,
+            keys_encrypt=ctx.db.keys_encrypt,
+            method_encrypt=ctx.db.method_encrypt,
+            auto_backup=False
+        )
+        bots_token = await source_db.getBots(is_token=True)
+        bots_session = await source_db.getBots(is_token=False)
+        all_bots = bots_token + bots_session
+        bot_data = next((b for b in all_bots if str(b["name"]) == str(bot_id)), None)
+        if not bot_data:
+            if source_db != ctx.db:
+                await source_db.close_async()
+            if target_db != ctx.db:
+                await target_db.close_async()
+            return await msg.edit_text(
+                "<emoji id=6298671811345254603>❌</emoji> Bot dengan ID `{bot_id}` tidak ditemukan di `{source_db_name}`.".format(
+                    bot_id=bot_id, source_db_name=source_db_name
+                )
+            )
+        source_vars = await source_db._get_user_vars(bot_id)
+        api_id = bot_data.get("api_id")
+        api_hash = bot_data.get("api_hash")
+        bot_token = bot_data.get("bot_token")
+        session_string = bot_data.get("session_string")
+        if bot_token:
+            await target_db.saveBot(bot_id, api_id, api_hash, bot_token, is_token=True)
+        elif session_string:
+            await target_db.saveBot(bot_id, api_id, api_hash, session_string, is_token=False)
+        if source_vars:
+            await target_db._set_user_vars(bot_id, source_vars)
+        await source_db.removeBot(bot_id)
+        await source_db.removeAllVars(bot_id)
+        if bot_id in ctx.manager.running_bots:
+            await ctx.manager.stop_bot(bot_id)
+        if source_db != ctx.db:
+            await source_db.close_async()
+        if target_db != ctx.db:
+            await target_db.close_async()
+        await msg.edit_text(
+            "<emoji id=6296367896398399651>✅</emoji> **Migrasi Bot Berhasil!**\n\n**Bot ID:** `{bot_id}`\n**Dari:** `{source_db_name}`\n**Ke:** `{target_db_name}`\n\nBot beserta seluruh datanya telah dipindahkan dan dihapus dari database lama.\n\nJangan lupa restart bot tujuan agar bot ini segera menyala.".format(
+                bot_id=bot_id, source_db_name=source_db_name, target_db_name=target_db_name
+            )
+        )
+    except Exception as e:
+        await msg.edit_text(
+            "<emoji id=6298671811345254603>❌</emoji> Terjadi kesalahan:\n<pre>{e}</pre>".format(
+                e=str(e)
+            )
+        )
