@@ -10,9 +10,9 @@ NC='\033[0m'
 clear
 
 function banner() {
-    echo -e "${LIGHT_CYAN}╔══════════════════════════════════════╗${NC}"
-    echo -e "${LIGHT_CYAN}║         VVIP Multi-Bot Control Hub        ║${NC}"
-    echo -e "${LIGHT_CYAN}╚══════════════════════════════════════╝${NC}"
+    echo -e "${LIGHT_CYAN}╔═══════════════════════════════════════╗${NC}"
+    echo -e "${LIGHT_CYAN}║          VVIP Multi-Bot Control Hub          ║${NC}"
+    echo -e "${LIGHT_CYAN}╚═══════════════════════════════════════╝${NC}"
     echo
 }
 
