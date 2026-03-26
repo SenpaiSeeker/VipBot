@@ -106,7 +106,7 @@ async def restore_database_handler(client, message):
                     )
                 zf.extractall(path=temp_dir)
             project_root = os.getcwd()
-            restored_files = []
+            restored_files =[]
             current_db_path = getattr(
                 ctx.db,
                 "data_file",
@@ -178,7 +178,7 @@ async def access_command_handler(client, message):
         target_user = await client.get_users(user_id_target)
         await ctx.db.getListVars(
             client.me.id, "create_bot_access"
-        ) or []
+        ) or[]
         has_access = False
         user_expiry_str = await ctx.db.getVars(
             target_user.id, "user_expiry_date"
@@ -201,8 +201,7 @@ async def access_command_handler(client, message):
             id=target_user.id,
             status=status_text,
         )
-        layout = [
-            [
+        layout = [[
                 {
                     "text": "✅ Beri Akses",
                     "callback_data": f"give_access_{target_user.id}",
@@ -231,7 +230,7 @@ async def access_command_handler(client, message):
 async def give_access_callback(client, callback_query):
     target_id = int(callback_query.data.split("_")[-1])
     text = "Pilih durasi akses yang ingin diberikan:"
-    layout = []
+    layout =[]
     row = []
     for months in [1, 3, 6, 12]:
         row.append(
@@ -241,8 +240,7 @@ async def give_access_callback(client, callback_query):
             }
         )
     layout.append(row)
-    layout.append(
-        [
+    layout.append([
             {
                 "text": "• Kembali •",
                 "callback_data": "close_panel",
@@ -361,7 +359,7 @@ async def add_seller_handler(client, message):
             await ctx.db.getListVars(
                 ctx.owner_id, "seller_id_list"
             )
-            or []
+            or[]
         )
         if target_user.id in seller_list:
             return await message.reply_text(
@@ -397,14 +395,14 @@ async def list_seller_handler(client, message):
         await ctx.db.getListVars(
             ctx.owner_id, "seller_id_list"
         )
-        or []
+        or[]
     )
     if not seller_list:
         return await message.reply_text(
             "Belum ada seller yang terdaftar."
         )
     text = "**<emoji id=6176966310920983412>👤</emoji> Daftar Seller Aktif**\n\n"
-    keyboard = []
+    keyboard =[]
     for index, user_id in enumerate(seller_list, 1):
         try:
             user_obj = await client.get_users(user_id)
@@ -414,8 +412,7 @@ async def list_seller_handler(client, message):
         except Exception:
             mention = f"ID: `{user_id}`"
         text += f"{index}. {mention}\n"
-        keyboard.append(
-            [
+        keyboard.append([
                 {
                     "text": f"{'Hapus Seller 🗑️'} ({user_id})",
                     "callback_data": f"del_sell_{user_id}",
@@ -433,7 +430,7 @@ async def list_seller_handler(client, message):
     handler_type="callback",
 )
 async def delete_seller_callback(client, callback_query):
-    if callback_query.fromuser.id != ctx.owner_id:
+    if callback_query.from_user.id != ctx.owner_id:
         return
     target_id = int(callback_query.matches[0].group(1))
     await ctx.db.removeListVars(
@@ -449,14 +446,14 @@ async def delete_seller_callback(client, callback_query):
         await ctx.db.getListVars(
             ctx.owner_id, "seller_id_list"
         )
-        or []
+        or[]
     )
     if not seller_list:
         return await callback_query.edit_message_text(
             "Belum ada seller yang terdaftar."
         )
     text = "**<emoji id=6176966310920983412>👤</emoji> Daftar Seller Aktif**\n\n"
-    keyboard = []
+    keyboard =[]
     for index, user_id in enumerate(seller_list, 1):
         try:
             user_obj = await client.get_users(user_id)
@@ -466,8 +463,7 @@ async def delete_seller_callback(client, callback_query):
         except Exception:
             mention = f"ID: `{user_id}`"
         text += f"{index}. {mention}\n"
-        keyboard.append(
-            [
+        keyboard.append([
                 {
                     "text": f"{'Hapus Seller 🗑️'} ({user_id})",
                     "callback_data": f"del_sell_{user_id}",
@@ -489,9 +485,9 @@ async def delete_seller_callback(client, callback_query):
 async def list_akses_handler(client, message):
     user_ids = (
         await ctx.db.getListVars(client.me.id, "user_ids")
-        or []
+        or[]
     )
-    access_users = []
+    access_users =[]
     for uid in user_ids:
         expiry = await ctx.db.getVars(
             uid, "user_expiry_date"
@@ -503,7 +499,7 @@ async def list_akses_handler(client, message):
             "Tidak ada pengguna yang memiliki akses aktif saat ini."
         )
     text = "**<emoji id=6176966310920983412>🔑</emoji> Daftar Pengguna Berakses**\n\n"
-    keyboard = []
+    keyboard =[]
     for index, uid in enumerate(access_users, 1):
         try:
             user_obj = await client.get_users(uid)
@@ -513,8 +509,7 @@ async def list_akses_handler(client, message):
         except Exception:
             mention = f"ID: `{uid}`"
         text += f"{index}. {mention}\n"
-        keyboard.append(
-            [
+        keyboard.append([
                 {
                     "text": f"{'Cabut Akses 🚫'} ({uid})",
                     "callback_data": f"del_acc_{uid}",
@@ -546,7 +541,7 @@ async def delete_access_callback(client, callback_query):
         await ctx.db.getListVars(client.me.id, "user_ids")
         or []
     )
-    access_users = []
+    access_users =[]
     for uid in user_ids:
         expiry = await ctx.db.getVars(
             uid, "user_expiry_date"
@@ -558,7 +553,7 @@ async def delete_access_callback(client, callback_query):
             "Tidak ada pengguna yang memiliki akses aktif saat ini."
         )
     text = "**<emoji id=6176966310920983412>🔑</emoji> Daftar Pengguna Berakses**\n\n"
-    keyboard = []
+    keyboard =[]
     for index, uid in enumerate(access_users, 1):
         try:
             user_obj = await client.get_users(uid)
@@ -568,8 +563,7 @@ async def delete_access_callback(client, callback_query):
         except Exception:
             mention = f"ID: `{uid}`"
         text += f"{index}. {mention}\n"
-        keyboard.append(
-            [
+        keyboard.append([
                 {
                     "text": f"{'Cabut Akses 🚫'} ({uid})",
                     "callback_data": f"del_acc_{uid}",
@@ -705,13 +699,12 @@ async def _send_allbots_list(
         owner=owner_text,
         days_left=days_left,
     )
-    layout = []
-    pagination_row = []
+    layout =[]
+    pagination_row =[]
     if total_pages > 1:
         prev_page = (page - 1 + total_pages) % total_pages
         next_page = (page + 1) % total_pages
-        pagination_row.extend(
-            [
+        pagination_row.extend([
                 {
                     "text": "« Sebelumnya",
                     "callback_data": f"allbots_{prev_page}",
@@ -725,20 +718,17 @@ async def _send_allbots_list(
     if pagination_row:
         layout.append(pagination_row)
     layout.extend(
-        [
-            [
+        [[
                 {
                     "text": "🗑️ Hapus Bot",
                     "callback_data": f"confirm_delete_bot_{bot_id}",
                 }
-            ],
-            [
+            ],[
                 {
                     "text": "🗓️ Kelola Masa Aktif",
                     "callback_data": f"manage_duration_bot_{bot_id}_{page}",
                 }
-            ],
-            [
+            ],[
                 {
                     "text": "Tutup Panel",
                     "callback_data": "close_panel",
@@ -791,8 +781,7 @@ async def confirm_delete_bot_callback(
     text = "**<emoji id=6271786398404055377>⚠️</emoji> Konfirmasi Penghapusan**\n\nAnda yakin ingin menghapus bot dengan ID `{bot_id}` secara permanen?".format(
         bot_id=bot_id
     )
-    layout = [
-        [
+    layout = [[
             {
                 "text": "✅ Ya, Hapus",
                 "callback_data": f"do_delete_bot_{bot_id}",
@@ -857,20 +846,17 @@ async def manage_duration_callback(client, callback_query):
     text = "**<emoji id=4972341539033318152>🗓️</emoji> Kelola Masa Aktif untuk Bot `{bot_id}`**".format(
         bot_id=bot_id
     )
-    layout = [
-        [
+    layout = [[
             {
                 "text": "➕ Tambah Masa Aktif",
                 "callback_data": f"extend_bot_{bot_id}_{page}",
             }
-        ],
-        [
+        ],[
             {
                 "text": "➖ Kurangi Masa Aktif",
                 "callback_data": f"reduce_bot_{bot_id}_{page}",
             }
-        ],
-        [
+        ],[
             {
                 "text": "• Kembali •",
                 "callback_data": f"allbots_{page}",
@@ -898,7 +884,7 @@ async def extend_bot_callback(client, callback_query):
     text = "Pilih durasi untuk ditambahkan ke Bot `{bot_id}`:".format(
         bot_id=bot_id
     )
-    buttons = [
+    buttons =[
         {
             "text": f"+{days} {'hari'}",
             "callback_data": f"do_extend_{bot_id}_{days}_{page}",
@@ -906,8 +892,7 @@ async def extend_bot_callback(client, callback_query):
         for days in [7, 30, 90]
     ]
     layout = [
-        buttons,
-        [
+        buttons,[
             {
                 "text": "• Kembali •",
                 "callback_data": f"manage_duration_bot_{bot_id}_{page}",
@@ -972,7 +957,7 @@ async def reduce_bot_callback(client, callback_query):
     text = "Pilih durasi untuk dikurangi dari Bot `{bot_id}`:".format(
         bot_id=bot_id
     )
-    buttons = [
+    buttons =[
         {
             "text": f"-{days} {'hari'}",
             "callback_data": f"do_reduce_{bot_id}_{days}_{page}",
@@ -980,8 +965,7 @@ async def reduce_bot_callback(client, callback_query):
         for days in [7, 30, 90]
     ]
     layout = [
-        buttons,
-        [
+        buttons,[
             {
                 "text": "• Kembali •",
                 "callback_data": f"manage_duration_bot_{bot_id}_{page}",
@@ -1112,14 +1096,13 @@ async def show_stars_stats(client, callback_query):
         transactions_history = (
             raw_result.history
             if hasattr(raw_result, "history")
-            else []
+            else[]
         )
         if not transactions_history:
             text = (
                 "Belum ada transaksi Stars yang tercatat."
             )
-            layout = [
-                [
+            layout =[[
                     {
                         "text": "• Kembali ke Pengaturan •",
                         "callback_data": "settings",
@@ -1166,7 +1149,7 @@ async def show_stars_stats(client, callback_query):
         paginated_transactions = transactions_history[
             start_index:end_index
         ]
-        transactions_text_list = []
+        transactions_text_list =[]
         jakarta_timezone = ZoneInfo("Asia/Jakarta")
         for t in paginated_transactions:
             peer_id = (
@@ -1211,7 +1194,7 @@ async def show_stars_stats(client, callback_query):
             transactions=transactions_text,
         )
         layout = []
-        pagination_row = []
+        pagination_row =[]
         if total_pages > 1:
             prev_page = (
                 page - 1 if page > 0 else total_pages - 1
@@ -1219,8 +1202,7 @@ async def show_stars_stats(client, callback_query):
             next_page = (
                 page + 1 if page < total_pages - 1 else 0
             )
-            pagination_row.extend(
-                [
+            pagination_row.extend([
                     {
                         "text": "« Sebelumnya",
                         "callback_data": f"stats_{prev_page}",
@@ -1233,8 +1215,7 @@ async def show_stars_stats(client, callback_query):
             )
         if pagination_row:
             layout.append(pagination_row)
-        layout.append(
-            [
+        layout.append([
                 {
                     "text": "• Kembali ke Pengaturan •",
                     "callback_data": "settings",
@@ -1277,14 +1258,13 @@ async def total_users_count_callback(
         )
     bot_id = client.me.id
     user_ids = (
-        await ctx.db.getListVars(bot_id, "user_ids") or []
+        await ctx.db.getListVars(bot_id, "user_ids") or[]
     )
     total_users = len(user_ids)
     text = "**<emoji id=5372926953978341366>👥</emoji> Total Pengguna Bot**\n\nJumlah keseluruhan pengguna yang pernah memulai bot ini adalah: **{total} pengguna**.".format(
         total=total_users
     )
-    layout = [
-        [
+    layout = [[
             {
                 "text": "• Kembali ke Pengaturan •",
                 "callback_data": "settings",
@@ -1442,3 +1422,69 @@ async def broadcast_owners_handler(client, message):
             success=success_count, fail=fail_count
         )
     )
+
+
+@command(
+    lambda ctx: filters.command("tfdatabase")
+    & filters.user(ctx.owner_id)
+)
+async def tfdatabase_command_handler(client, message):
+    args = message.command
+    if len(args) != 3:
+        return await message.reply_text(
+            "Format salah. Gunakan: `/tfdatabase <source_id>:<source_db> <target_id>:<target_db>`\nContoh: `/tfdatabase 123455:databaseV1 666999:databaseV2`"
+        )
+    source_part = args[1]
+    target_part = args[2]
+    try:
+        (source_id_str, source_db_name) = source_part.split(":")
+        (target_id_str, target_db_name) = target_part.split(":")
+        source_id = int(source_id_str)
+        target_id = int(target_id_str)
+    except Exception:
+        return await message.reply_text(
+            "Format salah. Pastikan menggunakan format `ID:NAMA_DB`. Contoh: `/tfdatabase 123455:databaseV1 666999:databaseV2`"
+        )
+    msg = await message.reply_text(
+        "<emoji id=5264727218734524899>🔄</emoji> Memproses transfer database..."
+    )
+    try:
+        from helpers.database import DataBase
+        source_db = DataBase(
+            storage_type=ctx.db.storage_type,
+            file_name=source_db_name,
+            keys_encrypt=ctx.db.keys_encrypt,
+            method_encrypt=ctx.db.method_encrypt,
+            auto_backup=False
+        )
+        target_db = DataBase(
+            storage_type=ctx.db.storage_type,
+            file_name=target_db_name,
+            keys_encrypt=ctx.db.keys_encrypt,
+            method_encrypt=ctx.db.method_encrypt,
+            auto_backup=False
+        )
+        source_data = await source_db._get_user_vars(source_id)
+        if not source_data:
+            await source_db.close_async()
+            await target_db.close_async()
+            return await msg.edit_text(
+                "<emoji id=6298671811345254603>❌</emoji> Data sumber tidak ditemukan pada database."
+            )
+        await target_db._set_user_vars(target_id, source_data)
+        await source_db.close_async()
+        await target_db.close_async()
+        await msg.edit_text(
+            "<emoji id=6296367896398399651>✅</emoji> **Transfer Database Berhasil!**\n\n**Sumber:** `{source_id}` (`{source_db}`)\n**Tujuan:** `{target_id}` (`{target_db}`)\n\nSemua data berhasil disalin secara lengkap.".format(
+                source_id=source_id,
+                source_db=source_db_name,
+                target_id=target_id,
+                target_db=target_db_name
+            )
+        )
+    except Exception as e:
+        await msg.edit_text(
+            "<emoji id=6298671811345254603>❌</emoji> Terjadi kesalahan saat mentransfer database:\n<pre>{e}</pre>".format(
+                e=str(e)
+            )
+)
