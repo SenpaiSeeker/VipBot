@@ -14,7 +14,9 @@ async def eval_bot_handler(client, message):
         )
         return await locals()["__aexec"](client, message)
 
-    msg = await message.reply_text("<emoji id=5264727218734524899>🔄</emoji> `Memproses kode...`")
+    msg = await message.reply_text(
+        "<emoji id=5264727218734524899>🔄</emoji> `Memproses kode...`"
+    )
     cmd = client.ns.telegram.arg.getMessage(message, is_arg=True)
     if not cmd:
         return await msg.edit(
@@ -42,7 +44,12 @@ async def eval_bot_handler(client, message):
         redirected_output.getvalue(),
         redirected_error.getvalue(),
     )
-    evaluation = exc or stderr or stdout or "<emoji id=6296367896398399651>✅</emoji> **Eksekusi Berhasil**"
+    evaluation = (
+        exc
+        or stderr
+        or stdout
+        or "<emoji id=6296367896398399651>✅</emoji> **Eksekusi Berhasil**"
+    )
     final_output = "**<emoji id=6219796119933683821>🖥️</emoji> OUTPUT:**\n<pre>{output}</pre>\n\n**<emoji id=5451732530048802485>⏳</emoji> Waktu Eksekusi:** `{time:.4f}` detik".format(
         output=evaluation.strip(),
         time=end_time - start_time,
@@ -91,7 +98,9 @@ async def restore_database_handler(client, message):
             for root, _, files in os.walk(temp_dir):
                 for filename in files:
                     source_path = os.path.join(root, filename)
-                    is_db_file = current_db_path and (filename.endswith(".db") or filename.endswith(".json"))
+                    is_db_file = current_db_path and (
+                        filename.endswith(".db") or filename.endswith(".json")
+                    )
                     is_env_file = filename.endswith(".env")
                     destination_path = None
                     if is_db_file:
@@ -102,15 +111,21 @@ async def restore_database_handler(client, message):
                         shutil.move(source_path, destination_path)
                         restored_files.append(os.path.basename(destination_path))
             if not restored_files:
-                raise ValueError("Tidak ada file database atau .env yang valid ditemukan dalam arsip.")
+                raise ValueError(
+                    "Tidak ada file database atau .env yang valid ditemukan dalam arsip."
+                )
             success_message = "<emoji id=6296367896398399651>✅</emoji> **Pemulihan Berhasil!**\nDatabase `{db_path}` telah dipulihkan.\n\n<emoji id=6271786398404055377>⚠️</emoji> **PENTING:** Mohon **restart** bot agar dapat menggunakan database baru.".format(
                 db_path=", ".join(restored_files)
             )
             await status_msg.edit_text(success_message)
-            ctx.log.print(f"{ctx.log.GREEN}File-file berikut dipulihkan: {', '.join(restored_files)} oleh admin.")
+            ctx.log.print(
+                f"{ctx.log.GREEN}File-file berikut dipulihkan: {', '.join(restored_files)} oleh admin."
+            )
     except Exception as e:
         await status_msg.edit_text(
-            "<emoji id=6298671811345254603>❌</emoji> **Pemulihan Gagal!**\n\n**Error:** `{e}`".format(e=str(e))
+            "<emoji id=6298671811345254603>❌</emoji> **Pemulihan Gagal!**\n\n**Error:** `{e}`".format(
+                e=str(e)
+            )
         )
         ctx.log.print(f"{ctx.log.RED}Restore failed: {e}")
     finally:
@@ -287,7 +302,9 @@ async def add_seller_handler(client, message):
         )
     except Exception as e:
         await message.reply_text(
-            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(e=e)
+            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+                e=e
+            )
         )
 
 
@@ -332,7 +349,9 @@ async def delete_seller_callback(client, callback_query):
     )
     seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
     if not seller_list:
-        return await callback_query.edit_message_text("Belum ada seller yang terdaftar.")
+        return await callback_query.edit_message_text(
+            "Belum ada seller yang terdaftar."
+        )
     text = "**<emoji id=6176966310920983412>👤</emoji> Daftar Seller Aktif**\n\n"
     keyboard = []
     for index, user_id in enumerate(seller_list, 1):
@@ -363,7 +382,9 @@ async def list_akses_handler(client, message):
         if expiry:
             access_users.append(uid)
     if not access_users:
-        return await message.reply_text("Tidak ada pengguna yang memiliki akses aktif saat ini.")
+        return await message.reply_text(
+            "Tidak ada pengguna yang memiliki akses aktif saat ini."
+        )
     text = "**<emoji id=6176966310920983412>🔑</emoji> Daftar Pengguna Berakses**\n\n"
     keyboard = []
     for index, uid in enumerate(access_users, 1):
@@ -405,7 +426,9 @@ async def delete_access_callback(client, callback_query):
         if expiry:
             access_users.append(uid)
     if not access_users:
-        return await callback_query.edit_message_text("Tidak ada pengguna yang memiliki akses aktif saat ini.")
+        return await callback_query.edit_message_text(
+            "Tidak ada pengguna yang memiliki akses aktif saat ini."
+        )
     text = "**<emoji id=6176966310920983412>🔑</emoji> Daftar Pengguna Berakses**\n\n"
     keyboard = []
     for index, uid in enumerate(access_users, 1):
@@ -434,7 +457,11 @@ async def extend_command_handler(client, message):
         bot_id = int(bot_id_str)
         days_to_add = int(days_str)
         exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
-        current_exp_date = datetime.fromisoformat(exp_date_str) if exp_date_str else datetime.now(timezone.utc)
+        current_exp_date = (
+            datetime.fromisoformat(exp_date_str)
+            if exp_date_str
+            else datetime.now(timezone.utc)
+        )
         new_exp_date = current_exp_date + timedelta(days=days_to_add)
         await ctx.db.setVars(
             bot_id,
@@ -451,7 +478,9 @@ async def extend_command_handler(client, message):
         if owner_bot_id:
             try:
                 bot_instance = ctx.manager.running_bots.get(bot_id)
-                bot_name = bot_instance.me.first_name if bot_instance else f"ID {bot_id}"
+                bot_name = (
+                    bot_instance.me.first_name if bot_instance else f"ID {bot_id}"
+                )
                 await client.send_message(
                     owner_bot_id,
                     "🎉 **Kabar Baik!**\n\nMasa aktif bot Anda **{bot_name}** telah diperpanjang oleh Owner Utama.".format(
@@ -465,7 +494,11 @@ async def extend_command_handler(client, message):
             "**Format salah.**\nGunakan: `/extend <bot_id> <jumlah_hari>`\nContoh: `/extend 12345678 30`"
         )
     except Exception as e:
-        await message.reply_text("<emoji id=6298671811345254603>❌</emoji> Terjadi kesalahan: `{e}`".format(e=e))
+        await message.reply_text(
+            "<emoji id=6298671811345254603>❌</emoji> Terjadi kesalahan: `{e}`".format(
+                e=e
+            )
+        )
 
 
 async def _send_allbots_list(client, message_or_query, page):
@@ -498,7 +531,11 @@ async def _send_allbots_list(client, message_or_query, page):
         except Exception:
             owner_text = f"ID `{owner_id}`"
     exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
-    days_left = (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days if exp_date_str else "N/A"
+    days_left = (
+        (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days
+        if exp_date_str
+        else "N/A"
+    )
     text = "**<emoji id=6283073379184415506>📦</emoji> Daftar Semua Bot ({page}/{total})**\n\n• **Nama Bot:** {bot_name}\n• **ID Bot:** `{bot_id}`\n• **Username Bot:** @{username}\n• **Pemilik:** {owner}\n• **Sisa Aktif:** `{days_left}` hari".format(
         page=page + 1,
         total=total_pages,
@@ -607,7 +644,9 @@ async def do_delete_bot_callback(client, callback_query):
     if callback_query.from_user.id != ctx.owner_id:
         return
     bot_id = int(callback_query.matches[0].group(1))
-    await callback_query.edit_message_text("<emoji id=5451732530048802485>⏳</emoji> Menghapus bot...")
+    await callback_query.edit_message_text(
+        "<emoji id=5451732530048802485>⏳</emoji> Menghapus bot..."
+    )
     try:
         await ctx.manager.stop_bot(bot_id)
         await asyncio.sleep(1)
@@ -620,7 +659,9 @@ async def do_delete_bot_callback(client, callback_query):
         )
     except Exception as e:
         await callback_query.answer(
-            "<emoji id=6298671811345254603>❌</emoji> Gagal menghapus bot: {e}".format(e=e),
+            "<emoji id=6298671811345254603>❌</emoji> Gagal menghapus bot: {e}".format(
+                e=e
+            ),
             show_alert=True,
         )
         await _send_allbots_list(client, callback_query, 0)
@@ -634,7 +675,9 @@ async def manage_duration_callback(client, callback_query):
     if callback_query.from_user.id != ctx.owner_id:
         return
     bot_id, page = map(int, callback_query.data.split("_")[3:])
-    text = "**<emoji id=4972341539033318152>🗓️</emoji> Kelola Masa Aktif untuk Bot `{bot_id}`**".format(bot_id=bot_id)
+    text = "**<emoji id=4972341539033318152>🗓️</emoji> Kelola Masa Aktif untuk Bot `{bot_id}`**".format(
+        bot_id=bot_id
+    )
     layout = [
         [
             {
@@ -709,7 +752,9 @@ async def do_extend_bot_callback(client, callback_query):
         new_expiry_date.isoformat(),
     )
     await callback_query.answer(
-        "{days} hari berhasil ditambahkan ke bot {bot_id}.".format(days=days, bot_id=bot_id),
+        "{days} hari berhasil ditambahkan ke bot {bot_id}.".format(
+            days=days, bot_id=bot_id
+        ),
         show_alert=True,
     )
     await _send_allbots_list(client, callback_query, page)
@@ -766,7 +811,9 @@ async def do_reduce_bot_callback(client, callback_query):
         new_expiry_date.isoformat(),
     )
     await callback_query.answer(
-        "Masa aktif bot {bot_id} berhasil dikurangi {days} hari.".format(days=days, bot_id=bot_id),
+        "Masa aktif bot {bot_id} berhasil dikurangi {days} hari.".format(
+            days=days, bot_id=bot_id
+        ),
         show_alert=True,
     )
     await _send_allbots_list(client, callback_query, page)
@@ -811,7 +858,9 @@ async def refund_stars_callback(client, callback_query):
         ctx.log.print(f"{ctx.log.RED}Gagal merefund donasi: {e}")
         await callback_query.edit_message_text(
             callback_query.message.text
-            + "\n\n<emoji id=6298671811345254603>❌</emoji> **Gagal mengembalikan donasi:**\n`{e}`".format(e=e)
+            + "\n\n<emoji id=6298671811345254603>❌</emoji> **Gagal mengembalikan donasi:**\n`{e}`".format(
+                e=e
+            )
         )
     finally:
         if db_key:
@@ -833,9 +882,13 @@ async def show_stars_stats(client, callback_query):
         )
         peer = await client.resolve_peer(client.me.id)
         raw_result = await client.invoke(
-            pyrogram.raw.functions.payments.GetStarsTransactions(peer=peer, offset="", limit=200)
+            pyrogram.raw.functions.payments.GetStarsTransactions(
+                peer=peer, offset="", limit=200
+            )
         )
-        transactions_history = raw_result.history if hasattr(raw_result, "history") else []
+        transactions_history = (
+            raw_result.history if hasattr(raw_result, "history") else []
+        )
         if not transactions_history:
             text = "Belum ada transaksi Stars yang tercatat."
             layout = [
@@ -851,8 +904,12 @@ async def show_stars_stats(client, callback_query):
                 return await callback_query.edit_message_caption(text, reply_markup=btn)
             return await callback_query.edit_message_text(text, reply_markup=btn)
         total_balance = raw_result.balance.amount
-        total_income = sum((t.amount.amount for t in transactions_history if t.amount.amount > 0))
-        total_refunds = sum((abs(t.amount.amount) for t in transactions_history if t.amount.amount < 0))
+        total_income = sum(
+            (t.amount.amount for t in transactions_history if t.amount.amount > 0)
+        )
+        total_refunds = sum(
+            (abs(t.amount.amount) for t in transactions_history if t.amount.amount < 0)
+        )
         total_transactions_count = len(transactions_history)
         peer_map = {p.id: p for p in raw_result.users + raw_result.chats}
         total_pages = math.ceil(total_transactions_count / items_per_page)
@@ -862,14 +919,24 @@ async def show_stars_stats(client, callback_query):
         transactions_text_list = []
         jakarta_timezone = ZoneInfo("Asia/Jakarta")
         for t in paginated_transactions:
-            peer_id = t.peer.peer.user_id if hasattr(t.peer.peer, "user_id") else t.peer.peer.channel_id
+            peer_id = (
+                t.peer.peer.user_id
+                if hasattr(t.peer.peer, "user_id")
+                else t.peer.peer.channel_id
+            )
             peer_obj = peer_map.get(peer_id)
             peer_mention = "sumber tidak dikenal"
             if peer_obj:
-                peer_mention = f"{peer_obj.first_name}" if hasattr(peer_obj, "first_name") else f"{peer_obj.title}"
+                peer_mention = (
+                    f"{peer_obj.first_name}"
+                    if hasattr(peer_obj, "first_name")
+                    else f"{peer_obj.title}"
+                )
             amount = t.amount.amount
             amount_str = f"+{amount}" if amount > 0 else str(amount)
-            transaction_date = datetime.fromtimestamp(t.date, tz=timezone.utc).astimezone(jakarta_timezone)
+            transaction_date = datetime.fromtimestamp(
+                t.date, tz=timezone.utc
+            ).astimezone(jakarta_timezone)
             transactions_text_list.append(
                 "• `{date}`: **{amount_str}<emoji id=6298332994260175589>⭐</emoji>** dari {peer}".format(
                     date=transaction_date.strftime("%d %b, %H:%M %Z"),
@@ -920,7 +987,9 @@ async def show_stars_stats(client, callback_query):
         else:
             await callback_query.edit_message_text(text, reply_markup=btn)
     except Exception as e:
-        ctx.log.print(f"{ctx.log.RED} Error fetching stars stats: {e}\n{traceback.format_exc()}")
+        ctx.log.print(
+            f"{ctx.log.RED} Error fetching stars stats: {e}\n{traceback.format_exc()}"
+        )
         await callback_query.answer(f"Error: {e}", show_alert=True)
 
 
@@ -959,7 +1028,9 @@ async def total_users_count_callback(client, callback_query):
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED}Gagal memuat total pengguna: {e}")
         await callback_query.answer(
-            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(e=e),
+            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+                e=e
+            ),
             show_alert=True,
         )
 
@@ -980,11 +1051,15 @@ async def dashboard_command_handler(client, message):
         for user_id in user_ids:
             unique_users.add(user_id)
     total_users = len(unique_users)
-    top_bot_id = max(bot_user_counts, key=bot_user_counts.get) if bot_user_counts else None
+    top_bot_id = (
+        max(bot_user_counts, key=bot_user_counts.get) if bot_user_counts else None
+    )
     top_bot_info = "N/A"
     if top_bot_id:
         top_bot_instance = ctx.manager.running_bots.get(top_bot_id)
-        top_bot_name = top_bot_instance.me.first_name if top_bot_instance else f"ID {top_bot_id}"
+        top_bot_name = (
+            top_bot_instance.me.first_name if top_bot_instance else f"ID {top_bot_id}"
+        )
         top_bot_info = f"{top_bot_name} ({bot_user_counts[top_bot_id]} pengguna)"
     try:
         stats = client.ns.server.monitor.get_detailed_stats()
@@ -993,10 +1068,12 @@ async def dashboard_command_handler(client, message):
             "ram": stats.ram["percent"],
             "disk": stats.disk["percent"],
         }
-        server_stats_text = "- CPU: `{cpu}%`\n- RAM: `{ram}%`\n- Disk: `{disk}%`".format(
-            cpu=f"[{stats.cpu['bar']}] {stats.cpu['percent']}%",
-            ram=f"[{stats.ram['bar']}] {stats.ram['percent']}%",
-            disk=f"[{stats.disk['bar']}] {stats.disk['percent']}%",
+        server_stats_text = (
+            "- CPU: `{cpu}%`\n- RAM: `{ram}%`\n- Disk: `{disk}%`".format(
+                cpu=f"[{stats.cpu['bar']}] {stats.cpu['percent']}%",
+                ram=f"[{stats.ram['bar']}] {stats.ram['percent']}%",
+                disk=f"[{stats.disk['bar']}] {stats.disk['percent']}%",
+            )
         )
     except Exception as e:
         stats_data = {"cpu": 0, "ram": 0, "disk": 0}
@@ -1019,7 +1096,9 @@ async def dashboard_command_handler(client, message):
 async def broadcast_owners_handler(client, message):
     broadcast_msg = client.ns.telegram.arg.getMessage(message)
     if not broadcast_msg:
-        return await message.reply_text("Gunakan: `/broadcast_owners <pesan>` atau balas ke sebuah pesan.")
+        return await message.reply_text(
+            "Gunakan: `/broadcast_owners <pesan>` atau balas ke sebuah pesan."
+        )
     all_bots_data = await ctx.db.getBots(is_token=True)
     owner_ids = set()
     for bot in all_bots_data:
@@ -1029,7 +1108,9 @@ async def broadcast_owners_handler(client, message):
     if not owner_ids:
         return await message.reply_text("Tidak ada pemilik bot yang bisa di-broadcast.")
     progress_msg = await message.reply_text(
-        "<emoji id=6296367896398399651>✅</emoji> Memulai siaran ke `{count}` pengguna...".format(count=len(owner_ids))
+        "<emoji id=6296367896398399651>✅</emoji> Memulai siaran ke `{count}` pengguna...".format(
+            count=len(owner_ids)
+        )
     )
     success_count = 0
     fail_count = 0
@@ -1066,7 +1147,9 @@ async def tfdatabase_command_handler(client, message):
         return await message.reply_text(
             "Format salah. Pastikan menggunakan format `ID:NAMA_DB`. Contoh: `/tfdatabase 123455:databaseV1 666999:databaseV2`"
         )
-    msg = await message.reply_text("<emoji id=5264727218734524899>🔄</emoji> Memproses transfer database...")
+    msg = await message.reply_text(
+        "<emoji id=5264727218734524899>🔄</emoji> Memproses transfer database..."
+    )
     try:
         from helpers.database import DataBase
 
@@ -1108,7 +1191,10 @@ async def tfdatabase_command_handler(client, message):
             await target_db.close_async()
         await msg.edit_text(
             "<emoji id=6296367896398399651>✅</emoji> **Transfer Database Berhasil!**\n\n**Sumber:** `{source_id}` (`{source_db}`)\n**Tujuan:** `{target_id}` (`{target_db}`)\n\nSemua data berhasil disalin secara lengkap.".format(
-                source_id=source_id, source_db=source_db_name, target_id=target_id, target_db=target_db_name
+                source_id=source_id,
+                source_db=source_db_name,
+                target_id=target_id,
+                target_db=target_db_name,
             )
         )
     except Exception as e:
@@ -1132,7 +1218,9 @@ async def tfbot_command_handler(client, message):
         return await message.reply_text("ID Bot harus berupa angka.")
     source_db_name = args[2]
     target_db_name = args[3]
-    msg = await message.reply_text("<emoji id=5264727218734524899>🔄</emoji> Memproses migrasi bot...")
+    msg = await message.reply_text(
+        "<emoji id=5264727218734524899>🔄</emoji> Memproses migrasi bot..."
+    )
     try:
         from helpers.database import DataBase
 
@@ -1180,7 +1268,9 @@ async def tfbot_command_handler(client, message):
         if bot_token:
             await target_db.saveBot(bot_id, api_id, api_hash, bot_token, is_token=True)
         elif session_string:
-            await target_db.saveBot(bot_id, api_id, api_hash, session_string, is_token=False)
+            await target_db.saveBot(
+                bot_id, api_id, api_hash, session_string, is_token=False
+            )
         if source_vars:
             await target_db._set_user_vars(bot_id, source_vars)
         await source_db.removeBot(bot_id)
@@ -1193,10 +1283,14 @@ async def tfbot_command_handler(client, message):
             await target_db.close_async()
         await msg.edit_text(
             "<emoji id=6296367896398399651>✅</emoji> **Migrasi Bot Berhasil!**\n\n**Bot ID:** `{bot_id}`\n**Dari:** `{source_db_name}`\n**Ke:** `{target_db_name}`\n\nBot beserta seluruh datanya telah dipindahkan dan dihapus dari database lama.\n\nJangan lupa restart bot tujuan agar bot ini segera menyala.".format(
-                bot_id=bot_id, source_db_name=source_db_name, target_db_name=target_db_name
+                bot_id=bot_id,
+                source_db_name=source_db_name,
+                target_db_name=target_db_name,
             )
         )
     except Exception as e:
         await msg.edit_text(
-            "<emoji id=6298671811345254603>❌</emoji> Terjadi kesalahan:\n<pre>{e}</pre>".format(e=str(e))
+            "<emoji id=6298671811345254603>❌</emoji> Terjadi kesalahan:\n<pre>{e}</pre>".format(
+                e=str(e)
+            )
         )

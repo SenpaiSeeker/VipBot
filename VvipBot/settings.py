@@ -115,8 +115,12 @@ async def check_vvip_status_callback(client, callback_query):
     )
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     if not vvip_list:
-        return await status_msg.edit("<emoji id=6298671811345254603>❌</emoji> Belum ada data VVIP.")
-    report_text = "<emoji id=6271786398404055377>🕵️</emoji> Laporan Status Grup VVIP\n\n"
+        return await status_msg.edit(
+            "<emoji id=6298671811345254603>❌</emoji> Belum ada data VVIP."
+        )
+    report_text = (
+        "<emoji id=6271786398404055377>🕵️</emoji> Laporan Status Grup VVIP\n\n"
+    )
     for item in vvip_list:
         chat_id_target = item.get("chat_id_normal")
         name = item.get("name")
@@ -208,13 +212,17 @@ async def show_vip_revenue_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
     period = callback_query.matches[0].group(1)
-    revenue_history = await ctx.db.getListVars(client.me.id, "vip_revenue_history") or []
+    revenue_history = (
+        await ctx.db.getListVars(client.me.id, "vip_revenue_history") or []
+    )
     now = datetime.now(ZoneInfo("Asia/Jakarta"))
     total_amount = 0
     transaction_count = 0
     for record in revenue_history:
         try:
-            record_date = datetime.fromisoformat(record["date"]).astimezone(ZoneInfo("Asia/Jakarta"))
+            record_date = datetime.fromisoformat(record["date"]).astimezone(
+                ZoneInfo("Asia/Jakarta")
+            )
             include_record = False
             if period == "daily":
                 if record_date.date() == now.date():
@@ -320,7 +328,9 @@ Ketik `/batal` untuk membatalkan."""}'''
     except Exception as e:
         await client.send_message(
             chat_id,
-            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(e=e),
+            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+                e=e
+            ),
             reply_markup=back_btn,
         )
 
@@ -394,7 +404,9 @@ Ketik `/batal` untuk membatalkan."""}'''
     except Exception as e:
         await client.send_message(
             chat_id,
-            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(e=e),
+            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+                e=e
+            ),
             reply_markup=back_btn,
         )
 
@@ -462,7 +474,9 @@ Ketik `/batal` untuk membatalkan."""}'''
     except Exception as e:
         await client.send_message(
             chat_id,
-            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(e=e),
+            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+                e=e
+            ),
             reply_markup=back_btn,
         )
 
@@ -475,7 +489,9 @@ async def _send_broadcast_message(
 ):
     caption_or_text = source_message.caption or source_message.text
     text_to_parse = caption_or_text.html if caption_or_text else ""
-    reply_markup, cleaned_text = client.ns.telegram.button.create_inline_keyboard(text_to_parse)
+    reply_markup, cleaned_text = client.ns.telegram.button.create_inline_keyboard(
+        text_to_parse
+    )
     final_markup = (
         reply_markup
         if reply_markup.inline_keyboard
@@ -484,9 +500,15 @@ async def _send_broadcast_message(
     if broadcast_price > 0 and (source_message.photo or source_message.video):
         media_list = []
         if source_message.photo:
-            media_list.append(pyrogram.types.InputPaidMediaPhoto(source_message.photo.sizes[-1].file_id))
+            media_list.append(
+                pyrogram.types.InputPaidMediaPhoto(
+                    source_message.photo.sizes[-1].file_id
+                )
+            )
         elif source_message.video:
-            media_list.append(pyrogram.types.InputPaidMediaVideo(source_message.video.file_id))
+            media_list.append(
+                pyrogram.types.InputPaidMediaVideo(source_message.video.file_id)
+            )
         await client.send_paid_media(
             chat_id=target_user_id,
             star_count=broadcast_price,
@@ -601,7 +623,9 @@ Ketik `/batal` untuk membatalkan."""}'''
     except Exception as e:
         await client.send_message(
             chat_id,
-            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(e=e),
+            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+                e=e
+            ),
         )
 
 
@@ -709,7 +733,9 @@ Ketik `/batal` untuk membatalkan."""}'''
             promo_text_msg = await client.ask(chat_id, prompt_promo, timeout=600)
             if promo_text_msg.text and promo_text_msg.text.lower() == "/batal":
                 raise listen.UserCancelled
-            vvip_data["promo_text"] = "" if promo_text_msg.text.lower() == "/skip" else promo_text_msg.text
+            vvip_data["promo_text"] = (
+                "" if promo_text_msg.text.lower() == "/skip" else promo_text_msg.text
+            )
         else:
             (
                 vvip_data["chat_id_promo"],
@@ -723,7 +749,9 @@ Ketik `/batal` untuk membatalkan."""}'''
         normal_text_msg = await client.ask(chat_id, prompt_normal, timeout=600)
         if normal_text_msg.text and normal_text_msg.text.lower() == "/batal":
             raise listen.UserCancelled
-        vvip_data["normal_text"] = "" if normal_text_msg.text.lower() == "/skip" else normal_text_msg.text
+        vvip_data["normal_text"] = (
+            "" if normal_text_msg.text.lower() == "/skip" else normal_text_msg.text
+        )
         await ctx.db.setListVars(client.me.id, "list_vvip", vvip_data)
         await client.send_message(
             chat_id,
@@ -745,7 +773,9 @@ Proses dibatalkan."""}\n`{e}`''',
     except Exception as e:
         await client.send_message(
             chat_id,
-            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(e=e),
+            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+                e=e
+            ),
         )
 
 
@@ -824,7 +854,9 @@ async def confirm_delete_vvip(client, callback_query):
     ]
     if item_to_remove:
         await ctx.db.removeListVars(client.me.id, "list_vvip", item_to_remove)
-        ctx.log.print(f"{ctx.log.ORANGE}Owner bot {client.me.id} menghapus VVIP: {name}")
+        ctx.log.print(
+            f"{ctx.log.ORANGE}Owner bot {client.me.id} menghapus VVIP: {name}"
+        )
         message = "<emoji id=6296367896398399651>✅</emoji> **Berhasil!** Paket **{name}** telah dihapus.".format(
             name=name
         )
@@ -921,9 +953,13 @@ Ketik `/batal` untuk membatalkan."""}''',
             )
             try:
                 saweria_temp = client.ns.payment.SaweriaScraper()
-                user_id_saweria = await saweria_temp.get_user_id(username=username_msg.text)
+                user_id_saweria = await saweria_temp.get_user_id(
+                    username=username_msg.text
+                )
                 if not user_id_saweria:
-                    raise Exception("Username Saweria tidak ditemukan atau gagal melewati Cloudflare.")
+                    raise Exception(
+                        "Username Saweria tidak ditemukan atau gagal melewati Cloudflare."
+                    )
                 await ctx.db.setVars(
                     client.me.id,
                     "SAWERIA_USER_ID",
@@ -968,7 +1004,9 @@ Ketik `/batal` untuk membatalkan."""}''',
     except Exception as e:
         await client.send_message(
             chat_id,
-            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(e=e),
+            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+                e=e
+            ),
             reply_markup=back_btn,
         )
 
@@ -1073,8 +1111,12 @@ Ketik `/batal` untuk membatalkan."""}''',
                 timeout=600,
             )
 
-        code = (await ask("**1/4:** Masukkan kode kupon unik (misal: `DISKONBARU`).")).text.upper()
-        type_msg = await ask("**2/4:** Pilih tipe diskon:\n1. Persentase (%)\n2. Potongan Harga Tetap (misal: 10000)")
+        code = (
+            await ask("**1/4:** Masukkan kode kupon unik (misal: `DISKONBARU`).")
+        ).text.upper()
+        type_msg = await ask(
+            "**2/4:** Pilih tipe diskon:\n1. Persentase (%)\n2. Potongan Harga Tetap (misal: 10000)"
+        )
         discount_type = "percentage" if "1" in type_msg.text else "fixed"
         value_prompt = (
             "**3/4:** Masukkan nilai persentase (misal: `15` untuk 15%)."
@@ -1082,11 +1124,21 @@ Ketik `/batal` untuk membatalkan."""}''',
             else "**3/4:** Masukkan jumlah potongan harga (misal: `10000` untuk Rp 10.000)."
         )
         discount_value = int((await ask(value_prompt)).text)
-        uses_left = int((await ask("**4/4:** Berapa kali kupon ini bisa digunakan? (masukkan angka)")).text)
-        expiry_days_msg = await ask("**5/5:** Berapa hari kupon ini akan berlaku? (masukkan angka)")
+        uses_left = int(
+            (
+                await ask(
+                    "**4/4:** Berapa kali kupon ini bisa digunakan? (masukkan angka)"
+                )
+            ).text
+        )
+        expiry_days_msg = await ask(
+            "**5/5:** Berapa hari kupon ini akan berlaku? (masukkan angka)"
+        )
         expiry_days = int(expiry_days_msg.text)
         expiry_date = (
-            (datetime.now(timezone.utc) + timedelta(days=expiry_days)).isoformat() if expiry_days > 0 else None
+            (datetime.now(timezone.utc) + timedelta(days=expiry_days)).isoformat()
+            if expiry_days > 0
+            else None
         )
         coupon_data = {
             "code": code,
@@ -1098,7 +1150,9 @@ Ketik `/batal` untuk membatalkan."""}''',
         await ctx.db.setListVars(client.me.id, "coupons", coupon_data)
         await client.send_message(
             chat_id,
-            "<emoji id=6296367896398399651>✅</emoji> Kupon `{code}` berhasil dibuat.".format(code=code),
+            "<emoji id=6296367896398399651>✅</emoji> Kupon `{code}` berhasil dibuat.".format(
+                code=code
+            ),
         )
     except (
         listen.UserCancelled,
@@ -1112,7 +1166,9 @@ Ketik `/batal` untuk membatalkan."""}''',
     except Exception as e:
         await client.send_message(
             chat_id,
-            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(e=e),
+            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+                e=e
+            ),
         )
 
 

@@ -37,7 +37,9 @@ class LoggerHandler(AnsiColors):
         level_color = self.colors.get(record["levelname"], self.RESET)
         pipe_color = self.colors["PIPE"]
         record["levelname"] = f"{pipe_color}│ {level_color}{record['levelname']:<8}"
-        record["message"] = f"{pipe_color}│ {level_color}{record['message']}{self.RESET}"
+        record["message"] = (
+            f"{pipe_color}│ {level_color}{record['message']}{self.RESET}"
+        )
         return self.fmt.format(
             asctime=f"{self.colors['TIME']}[ {self.formatTime()} ]",
             levelname=record["levelname"],

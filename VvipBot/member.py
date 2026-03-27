@@ -149,7 +149,11 @@ async def do_kick_member_callback(client, callback_query):
     vvip_name = match.group(2)
     members_list = await ctx.db.getListVars(client.me.id, "vvip_members") or []
     record_to_remove = next(
-        (r for r in members_list if r.get("user_id") == user_id and r.get("vvip_name") == vvip_name),
+        (
+            r
+            for r in members_list
+            if r.get("user_id") == user_id and r.get("vvip_name") == vvip_name
+        ),
         None,
     )
     if not record_to_remove:
@@ -188,7 +192,9 @@ async def do_kick_member_callback(client, callback_query):
         )
     except Exception as e:
         await callback_query.edit_message_caption(
-            "<emoji id=6298671811345254603>❌</emoji> **Gagal Menendang:** `{e}`".format(e=e)
+            "<emoji id=6298671811345254603>❌</emoji> **Gagal Menendang:** `{e}`".format(
+                e=e
+            )
         )
 
 
@@ -268,12 +274,16 @@ async def list_active_members_callback(client, callback_query):
                 "<emoji id=5451732530048802485>⏳</emoji> Mengambil data member dari server Telegram, mohon tunggu...",
                 show_alert=False,
             )
-            members = [m async for m in client.get_chat_members(chat_id) if not m.user.is_bot]
+            members = [
+                m async for m in client.get_chat_members(chat_id) if not m.user.is_bot
+            ]
             random.shuffle(members)
             ctx.ACTIVE_MEMBERS_CACHE[chat_id] = members
         except Exception as e:
             return await callback_query.edit_message_caption(
-                "<emoji id=6298671811345254603>❌</emoji> **Gagal Mengambil Daftar Member:**\n`{e}`".format(e=e)
+                "<emoji id=6298671811345254603>❌</emoji> **Gagal Mengambil Daftar Member:**\n`{e}`".format(
+                    e=e
+                )
             )
     all_members = ctx.ACTIVE_MEMBERS_CACHE.get(chat_id, [])
     if not all_members:
@@ -389,7 +399,11 @@ async def do_kick_active_callback(client, callback_query):
         await client.unban_chat_member(chat_id, user_id)
         members_list = await ctx.db.getListVars(client.me.id, "vvip_members") or []
         record_to_remove = next(
-            (r for r in members_list if r.get("user_id") == user_id and r.get("chat_id_kick") == chat_id),
+            (
+                r
+                for r in members_list
+                if r.get("user_id") == user_id and r.get("chat_id_kick") == chat_id
+            ),
             None,
         )
         if record_to_remove:
@@ -399,7 +413,9 @@ async def do_kick_active_callback(client, callback_query):
                 record_to_remove,
             )
         if chat_id in ctx.ACTIVE_MEMBERS_CACHE:
-            ctx.ACTIVE_MEMBERS_CACHE[chat_id] = [m for m in ctx.ACTIVE_MEMBERS_CACHE[chat_id] if m.user.id != user_id]
+            ctx.ACTIVE_MEMBERS_CACHE[chat_id] = [
+                m for m in ctx.ACTIVE_MEMBERS_CACHE[chat_id] if m.user.id != user_id
+            ]
         user = await client.get_users(user_id)
         text = "<emoji id=6296367896398399651>✅</emoji> **Sukses!**\nPengguna **{mention}** telah ditendang dari grup.".format(
             mention=client.ns.telegram.arg.getMention(user)
@@ -419,5 +435,7 @@ async def do_kick_active_callback(client, callback_query):
             await callback_query.edit_message_text(text, reply_markup=btn)
     except Exception as e:
         await callback_query.edit_message_caption(
-            "<emoji id=6298671811345254603>❌</emoji> **Gagal Menendang:** `{e}`".format(e=e)
+            "<emoji id=6298671811345254603>❌</emoji> **Gagal Menendang:** `{e}`".format(
+                e=e
+            )
         )

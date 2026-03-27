@@ -14,7 +14,11 @@ class Button:
     def parse_buttons_and_text(self, text, mode="inline"):
         if mode == "inline":
             button_data = re.findall(r"\| ([^|]+) - ([^|]+) \|", text)
-            extracted_text = re.split(r"\| [^|]+ - [^|]+ \|", text)[0].strip() if "|" in text else text.strip()
+            extracted_text = (
+                re.split(r"\| [^|]+ - [^|]+ \|", text)[0].strip()
+                if "|" in text
+                else text.strip()
+            )
             return button_data, extracted_text
         elif mode == "reply":
             pattern = r"\|\s*([^\|]+?)\s*\|"
@@ -133,7 +137,9 @@ class Button:
                 btn_kwargs = button_info.copy()
 
                 if "web_app" in btn_kwargs and isinstance(btn_kwargs["web_app"], str):
-                    btn_kwargs["web_app"] = pyrogram.types.WebAppInfo(url=btn_kwargs["web_app"])
+                    btn_kwargs["web_app"] = pyrogram.types.WebAppInfo(
+                        url=btn_kwargs["web_app"]
+                    )
 
                 if "style" in btn_kwargs and isinstance(btn_kwargs["style"], str):
                     style_val = btn_kwargs["style"].lower()

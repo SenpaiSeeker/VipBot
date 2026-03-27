@@ -41,7 +41,12 @@ class SaweriaScraper(QrCodeGenerator):
                         next_data = soup.find(id="__NEXT_DATA__")
                         if next_data:
                             data = json.loads(next_data.text)
-                            user_id = data.get("props", {}).get("pageProps", {}).get("data", {}).get("id")
+                            user_id = (
+                                data.get("props", {})
+                                .get("pageProps", {})
+                                .get("data", {})
+                                .get("id")
+                            )
                             if user_id:
                                 return user_id
                 except Exception:

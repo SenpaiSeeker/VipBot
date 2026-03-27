@@ -64,7 +64,9 @@ def seller_only(func):
 
 async def is_bot_owner(client, user_id):
     owner_of_this_bot = await ctx.db.getVars(client.me.id, "owner_id")
-    return user_id == ctx.owner_id or (owner_of_this_bot and user_id == owner_of_this_bot)
+    return user_id == ctx.owner_id or (
+        owner_of_this_bot and user_id == owner_of_this_bot
+    )
 
 
 def check_new_user(func):
@@ -78,7 +80,9 @@ def check_new_user(func):
                 "user_ids",
                 update.from_user.id,
             )
-            owner_of_this_bot = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
+            owner_of_this_bot = (
+                await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
+            )
             try:
                 mention_user = client.ns.telegram.arg.getMention(update.from_user)
                 notification_text = "**<emoji id=5373012449597335010>👤</emoji> Pengguna Baru Telah Memulai Bot Anda!**\n\n**Bot:** {mention}\n**Pengguna:** {user_mention}\n**ID:** `{user_id}`".format(
@@ -104,7 +108,9 @@ def _load_all_handlers():
         (
             os.path.basename(f)[:-3]
             for f in module_paths
-            if os.path.isfile(f) and f.endswith(".py") and (not f.endswith("__init__.py"))
+            if os.path.isfile(f)
+            and f.endswith(".py")
+            and (not f.endswith("__init__.py"))
         )
     )
     for module_name in all_modules:
@@ -134,7 +140,9 @@ def register_all_handlers(
         actual_filter = filter_lambda(ctx)
         HandlerClass = HANDLER_MAP.get(handler_type)
         if not HandlerClass:
-            ctx.log.print(f"{ctx.log.YELLOW}Handler type '{handler_type}' tidak dikenal. Melewati pendaftaran.")
+            ctx.log.print(
+                f"{ctx.log.YELLOW}Handler type '{handler_type}' tidak dikenal. Melewati pendaftaran."
+            )
             continue
 
         async def handler_wrapper(original_func, c, u):

@@ -74,7 +74,9 @@ class QrCodeGenerator:
                 value = 1.0
                 rgb_float = colorsys.hsv_to_rgb(hue, saturation, value)
                 glow_color = tuple(int(c * 255) for c in rgb_float)
-                background = self._sync_create_glow_background(bg_size, glow_color).convert("RGBA")
+                background = self._sync_create_glow_background(
+                    bg_size, glow_color
+                ).convert("RGBA")
                 paste_position = (padding, padding)
                 background.paste(qr_img, paste_position, qr_img)
                 img = background.convert("RGB")
@@ -108,7 +110,10 @@ class QrCodeGenerator:
             if bottom_text:
                 button_h = 60
             if creator_text:
-                creator_h = font_creator.getbbox(creator_text)[3] - font_creator.getbbox(creator_text)[1]
+                creator_h = (
+                    font_creator.getbbox(creator_text)[3]
+                    - font_creator.getbbox(creator_text)[1]
+                )
 
             total_h = (
                 padding_top

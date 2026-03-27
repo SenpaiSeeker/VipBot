@@ -20,14 +20,18 @@ async def verify_user_join(client, user, chat_id, link_msg):
         except pyrogram.errors.UserNotParticipant:
             await asyncio.sleep(15)
         except Exception as e:
-            ctx.log.print(f"{ctx.log.RED}Error saat verifikasi join {user.id} ke {chat_id}: {e}")
+            ctx.log.print(
+                f"{ctx.log.RED}Error saat verifikasi join {user.id} ke {chat_id}: {e}"
+            )
             break
     try:
         await link_msg.delete()
     except Exception:
         pass
     if not is_joined:
-        ctx.log.print(f"{ctx.log.YELLOW}User {user.id} tidak bergabung ke {chat_id} dalam waktu yang ditentukan.")
+        ctx.log.print(
+            f"{ctx.log.YELLOW}User {user.id} tidak bergabung ke {chat_id} dalam waktu yang ditentukan."
+        )
         await client.send_message(
             user.id,
             "<emoji id=6271786398404055377>⚠️</emoji> Link undangan Anda telah kedaluwarsa karena Anda tidak bergabung dalam 60 menit. Silakan hubungi admin jika terjadi masalah.",
@@ -51,7 +55,9 @@ async def verify_user_join_multiple(client, user, invite_payloads, link_msg):
             except pyrogram.errors.UserNotParticipant:
                 pending_payloads.append(payload)
             except Exception as e:
-                ctx.log.print(f"{ctx.log.RED}Error saat verifikasi multi join {user.id} ke {chat_id}: {e}")
+                ctx.log.print(
+                    f"{ctx.log.RED}Error saat verifikasi multi join {user.id} ke {chat_id}: {e}"
+                )
                 pending_payloads.append(payload)
         if not pending_payloads:
             try:
@@ -75,7 +81,9 @@ async def verify_user_join_multiple(client, user, invite_payloads, link_msg):
             protect_content=True,
         )
     except Exception as e:
-        ctx.log.print(f"{ctx.log.RED}Gagal mengirim notifikasi pending join multi {user.id}: {e}")
+        ctx.log.print(
+            f"{ctx.log.RED}Gagal mengirim notifikasi pending join multi {user.id}: {e}"
+        )
 
 
 def _get_all_vvip_items(vvip_list):
@@ -96,7 +104,9 @@ def _get_all_vvip_items(vvip_list):
     return selected_items
 
 
-async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon_code=None):
+async def _create_payment_invoice(
+    client, user, item_index, tipe, amount, coupon_code=None
+):
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     try:
         item = vvip_list[item_index]
@@ -172,9 +182,15 @@ async def _create_payment_invoice(client, user, item_index, tipe, amount, coupon
             reply_markup=btn,
         )
         await msg.delete()
-        ctx.log.print(f"{ctx.log.CYAN}User {user.id} membuat pembayaran untuk {names} dari bot {client.me.username}.")
+        ctx.log.print(
+            f"{ctx.log.CYAN}User {user.id} membuat pembayaran untuk {names} dari bot {client.me.username}."
+        )
     except Exception as e:
-        await msg.edit("<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(e=e))
+        await msg.edit(
+            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+                e=e
+            )
+        )
 
 
 async def _create_all_vvip_payment_invoice(client, user, selected_items, total_amount):
@@ -251,7 +267,11 @@ async def _create_all_vvip_payment_invoice(client, user, selected_items, total_a
             f"{ctx.log.CYAN}User {user.id} membuat pembayaran bundling semua VVIP ({len(selected_items)} paket) dari bot {client.me.username}."
         )
     except Exception as e:
-        await msg.edit("<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(e=e))
+        await msg.edit(
+            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+                e=e
+            )
+        )
 
 
 @command(
@@ -263,7 +283,9 @@ async def manual_check_payment_callback(client, callback_query):
     user = callback_query.from_user
     ref_data_str = await ctx.db.getVars(client.me.id, transaction_id)
     if not ref_data_str:
-        return await callback_query.answer("⚠️ Invoice ini sudah tidak valid atau telah selesai.", show_alert=True)
+        return await callback_query.answer(
+            "⚠️ Invoice ini sudah tidak valid atau telah selesai.", show_alert=True
+        )
     ref_parts = ref_data_str.split("|")
     is_bundle_order = ref_parts[0] == "ALL"
     tipe = ref_parts[1]
@@ -271,13 +293,19 @@ async def manual_check_payment_callback(client, callback_query):
     coupon_code = None
     bundle_indexes = []
     if is_bundle_order:
-        bundle_indexes = [int(i) for i in ref_parts[3].split(",") if i.strip().isdigit()] if len(ref_parts) > 3 else []
+        bundle_indexes = (
+            [int(i) for i in ref_parts[3].split(",") if i.strip().isdigit()]
+            if len(ref_parts) > 3
+            else []
+        )
     else:
         item_index = int(ref_parts[0])
         coupon_code = ref_parts[3] if len(ref_parts) > 3 else None
     try:
         is_owner_confirm = await is_bot_owner(client, user.id)
-        is_paid = is_owner_confirm or await client.services.saweria.check_paid_status(transaction_id)
+        is_paid = is_owner_confirm or await client.services.saweria.check_paid_status(
+            transaction_id
+        )
         if is_paid:
             await callback_query.edit_message_reply_markup(None)
             await ctx.db.removeVars(client.me.id, transaction_id)
@@ -303,7 +331,9 @@ async def manual_check_payment_callback(client, callback_query):
                         )
                         link = invite_link_obj.invite_link
                     except Exception as e:
-                        ctx.log.print(f"{ctx.log.RED}Gagal membuat invite link bundle untuk {target_chat_id}: {e}")
+                        ctx.log.print(
+                            f"{ctx.log.RED}Gagal membuat invite link bundle untuk {target_chat_id}: {e}"
+                        )
                         continue
                     member_data = {
                         "user_id": user.id,
@@ -314,7 +344,9 @@ async def manual_check_payment_callback(client, callback_query):
                     }
                     duration = item_found.get("duration", 0)
                     if duration > 0:
-                        expiry_date = datetime.now(timezone.utc) + timedelta(days=duration)
+                        expiry_date = datetime.now(timezone.utc) + timedelta(
+                            days=duration
+                        )
                         member_data["expiry_date"] = expiry_date.isoformat()
                     await ctx.db.setListVars(
                         client.me.id,
@@ -346,7 +378,12 @@ async def manual_check_payment_callback(client, callback_query):
                     "vip_revenue_history",
                     revenue_data,
                 )
-                link_text = "\n".join([f"• {item.get('name')}: {item.get('link')}" for item in invite_payloads])
+                link_text = "\n".join(
+                    [
+                        f"• {item.get('name')}: {item.get('link')}"
+                        for item in invite_payloads
+                    ]
+                )
                 link_msg = await client.send_message(
                     user.id,
                     "<emoji id=5436040291507247633>🎉</emoji> **Pembayaran Paket Semua VIP Berhasil!**\n\nBerikut semua link akses VIP Anda:\n\n{links}\n\n<emoji id=6271786398404055377>⚠️</emoji> Setiap link hanya berlaku 1 kali klik dan kedaluwarsa dalam 60 menit.\n".format(
@@ -363,7 +400,9 @@ async def manual_check_payment_callback(client, callback_query):
                         link_msg,
                     )
                 )
-                owner_bot_id = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
+                owner_bot_id = (
+                    await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
+                )
                 await client.send_message(
                     owner_bot_id,
                     "<emoji id=5375296873982604963>💰</emoji> **Pemasukan Baru!**\n\n**Pengguna:** {mention}\n**Bot:** {bot_mention}\n**Kategori:** `{name}` ({type})".format(
@@ -387,9 +426,15 @@ async def manual_check_payment_callback(client, callback_query):
                     )
                 )
             is_promo = tipe == "promo"
-            target_chat_id = item_found.get("chat_id_promo") if is_promo else item_found.get("chat_id_normal")
+            target_chat_id = (
+                item_found.get("chat_id_promo")
+                if is_promo
+                else item_found.get("chat_id_normal")
+            )
             if not target_chat_id:
-                raise ValueError("Chat ID untuk paket VVIP ini belum diatur oleh admin.")
+                raise ValueError(
+                    "Chat ID untuk paket VVIP ini belum diatur oleh admin."
+                )
             try:
                 expire_date_link = datetime.now() + timedelta(minutes=60)
                 invite_link_obj = await client.create_chat_invite_link(
@@ -399,7 +444,9 @@ async def manual_check_payment_callback(client, callback_query):
                 )
                 link = invite_link_obj.invite_link
             except Exception as e:
-                ctx.log.print(f"{ctx.log.RED}Gagal membuat invite link untuk {target_chat_id}: {e}")
+                ctx.log.print(
+                    f"{ctx.log.RED}Gagal membuat invite link untuk {target_chat_id}: {e}"
+                )
                 raise Exception(
                     "Gagal membuat link undangan. Pastikan bot adalah admin di grup tujuan dengan hak 'Invite Users'."
                 )
@@ -445,8 +492,12 @@ async def manual_check_payment_callback(client, callback_query):
                 protect_content=True,
             )
             await callback_query.message.delete()
-            asyncio.create_task(verify_user_join(client, user, target_chat_id, link_msg))
-            owner_bot_id = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
+            asyncio.create_task(
+                verify_user_join(client, user, target_chat_id, link_msg)
+            )
+            owner_bot_id = (
+                await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
+            )
             await client.send_message(
                 owner_bot_id,
                 "<emoji id=5375296873982604963>💰</emoji> **Pemasukan Baru!**\n\n**Pengguna:** {mention}\n**Bot:** {bot_mention}\n**Kategori:** `{name}` ({type})".format(
@@ -465,7 +516,9 @@ async def manual_check_payment_callback(client, callback_query):
                 show_alert=True,
             )
     except Exception as e:
-        ctx.log.print(f"{ctx.log.RED}Error manual-check {user.id} ({client.me.username}) {transaction_id}: {e}")
+        ctx.log.print(
+            f"{ctx.log.RED}Error manual-check {user.id} ({client.me.username}) {transaction_id}: {e}"
+        )
         await callback_query.answer(
             "**Terjadi Kesalahan**\n{e}".format(e=e),
             show_alert=True,
@@ -667,12 +720,20 @@ async def apply_coupon_callback(client, callback_query):
             None,
         )
         if not coupon:
-            raise ValueError("<emoji id=6298671811345254603>❌</emoji> Kode kupon tidak valid.")
+            raise ValueError(
+                "<emoji id=6298671811345254603>❌</emoji> Kode kupon tidak valid."
+            )
         if coupon.get("uses_left", 1) <= 0:
-            raise ValueError("<emoji id=6298671811345254603>❌</emoji> Kupon ini sudah habis digunakan.")
+            raise ValueError(
+                "<emoji id=6298671811345254603>❌</emoji> Kupon ini sudah habis digunakan."
+            )
         expiry_str = coupon.get("expiry_date")
-        if expiry_str and datetime.fromisoformat(expiry_str) < datetime.now(timezone.utc):
-            raise ValueError("<emoji id=6298671811345254603>❌</emoji> Kupon ini sudah kedaluwarsa.")
+        if expiry_str and datetime.fromisoformat(expiry_str) < datetime.now(
+            timezone.utc
+        ):
+            raise ValueError(
+                "<emoji id=6298671811345254603>❌</emoji> Kupon ini sudah kedaluwarsa."
+            )
         discount_type = coupon["discount_type"]
         discount_value = coupon["discount_value"]
         if discount_type == "percentage":
@@ -711,7 +772,9 @@ async def apply_coupon_callback(client, callback_query):
     except Exception as e:
         await client.send_message(
             chat_id,
-            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(e=e),
+            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+                e=e
+            ),
         )
 
 
@@ -762,7 +825,9 @@ async def successful_donation_handler(client, message):
             name=user.first_name, stars=stars_donated
         ),
     )
-    owner_of_this_bot = await ctx.db.getVars(current_bot_id, "owner_id") or super_admin_id
+    owner_of_this_bot = (
+        await ctx.db.getVars(current_bot_id, "owner_id") or super_admin_id
+    )
     main_bot_client = ctx.manager.main_bot_client
     try:
         notification_text = "<emoji id=5472164874886846699>✨</emoji> **Donasi Baru Diterima!**\n\n**Jumlah:** `{stars}` Stars (<emoji id=6298332994260175589>⭐</emoji>)\n**Dari:** {mention} (`{id}`)\n**Melalui Bot:** {bot_mention}".format(
@@ -797,7 +862,9 @@ async def successful_donation_handler(client, message):
             reply_markup=refund_btn,
         )
     except pyrogram.errors.UserIsBlocked:
-        ctx.log.warning(f"Gagal kirim notif donasi, Owner {owner_of_this_bot} memblokir bot {current_bot_id}")
+        ctx.log.warning(
+            f"Gagal kirim notif donasi, Owner {owner_of_this_bot} memblokir bot {current_bot_id}"
+        )
         if main_bot_client and owner_of_this_bot != super_admin_id:
             await main_bot_client.send_message(
                 super_admin_id,

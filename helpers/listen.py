@@ -87,7 +87,11 @@ class Client:
     @patchable
     def cancel(self, chat_id, future_to_cancel=None):
         future = self._conversations.get(chat_id)
-        if future and not future.done() and (not future_to_cancel or future is future_to_cancel):
+        if (
+            future
+            and not future.done()
+            and (not future_to_cancel or future is future_to_cancel)
+        ):
             future.set_exception(UserCancelled())
             self._clear(chat_id, future)
 

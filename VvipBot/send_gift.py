@@ -10,9 +10,13 @@ from . import command, ctx
 async def send_star_gift_raw(client, user_id: int, gift_id: int):
     peer = await client.resolve_peer(user_id)
     invoice = types.InputInvoiceStarGift(peer=peer, gift_id=int(gift_id))
-    payment_form = await client.invoke(functions.payments.GetPaymentForm(invoice=invoice))
+    payment_form = await client.invoke(
+        functions.payments.GetPaymentForm(invoice=invoice)
+    )
     form_id = payment_form.form_id
-    result = await client.invoke(functions.payments.SendStarsForm(form_id=form_id, invoice=invoice))
+    result = await client.invoke(
+        functions.payments.SendStarsForm(form_id=form_id, invoice=invoice)
+    )
     return result
 
 
@@ -41,7 +45,9 @@ async def send_gift_handler(client, message):
                 "<emoji id=6298671811345254603>❌</emoji> **ID Hadiah tidak valid.**\nGunakan `/listgift` untuk melihat ID."
             )
         gift_id = int(gift_id_arg)
-        status_msg = await message.reply_text("<emoji id=5264727218734524899>🔄</emoji> Memproses pengiriman hadiah...")
+        status_msg = await message.reply_text(
+            "<emoji id=5264727218734524899>🔄</emoji> Memproses pengiriman hadiah..."
+        )
         available_gifts = await client.get_available_gifts()
         target_gift = next(
             (g for g in available_gifts if g.id == gift_id),
@@ -67,12 +73,18 @@ async def send_gift_handler(client, message):
             )
         )
     except Exception as e:
-        await message.reply_text("<emoji id=6298671811345254603>❌</emoji> Gagal mengirim hadiah: `{e}`".format(e=e))
+        await message.reply_text(
+            "<emoji id=6298671811345254603>❌</emoji> Gagal mengirim hadiah: `{e}`".format(
+                e=e
+            )
+        )
 
 
 @command(lambda ctx: filters.command("listgift") & filters.user(ctx.owner_id))
 async def list_gift_handler(client, message):
-    status_msg = await message.reply_text("<emoji id=5264727218734524899>🔄</emoji> Mengambil daftar hadiah...")
+    status_msg = await message.reply_text(
+        "<emoji id=5264727218734524899>🔄</emoji> Mengambil daftar hadiah..."
+    )
     try:
         gifts = await client.get_available_gifts()
         if not gifts:
@@ -132,7 +144,11 @@ async def list_gift_handler(client, message):
                 await asyncio.sleep(1.5)
             await status_msg.delete()
     except Exception as e:
-        await status_msg.edit("<emoji id=6298671811345254603>❌</emoji> Gagal mengirim hadiah: `{e}`".format(e=e))
+        await status_msg.edit(
+            "<emoji id=6298671811345254603>❌</emoji> Gagal mengirim hadiah: `{e}`".format(
+                e=e
+            )
+        )
 
 
 @command(
@@ -190,7 +206,9 @@ Ketik `/batal` untuk membatalkan."""}'''
         target_input = ask_msg.text
         processing_msg = await client.send_message(
             chat_id,
-            "<emoji id=5264727218734524899>🔄</emoji> Mencari pengguna `{input}`...".format(input=target_input),
+            "<emoji id=5264727218734524899>🔄</emoji> Mencari pengguna `{input}`...".format(
+                input=target_input
+            ),
         )
         try:
             target_user = await client.get_users(target_input)
@@ -217,5 +235,7 @@ Ketik `/batal` untuk membatalkan."""}'''
     except Exception as e:
         await client.send_message(
             chat_id,
-            "<emoji id=6298671811345254603>❌</emoji> Gagal mengirim hadiah: `{e}`".format(e=e),
+            "<emoji id=6298671811345254603>❌</emoji> Gagal mengirim hadiah: `{e}`".format(
+                e=e
+            ),
         )

@@ -71,6 +71,8 @@ class AnsiColors:
     @property
     def random_color(self):
         return (
-            random.choice([code for name, code in vars(self).items() if name != "RESET"]),
+            random.choice(
+                [code for name, code in vars(self).items() if name != "RESET"]
+            ),
             self.RESET,
         )

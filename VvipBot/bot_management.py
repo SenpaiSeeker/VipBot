@@ -72,7 +72,9 @@ async def create_bot_callback(client, callback_query):
         ]
         btn = client.ns.telegram.button.build_button_grid(layout)
         if callback_query.message.photo:
-            return await callback_query.edit_message_caption(text_warning, reply_markup=btn)
+            return await callback_query.edit_message_caption(
+                text_warning, reply_markup=btn
+            )
         return await callback_query.edit_message_text(text_warning, reply_markup=btn)
 
     user_id = callback_query.from_user.id
@@ -108,7 +110,9 @@ async def create_bot_callback(client, callback_query):
 async def adjust_bot_month_callback(client, callback_query):
     months = int(callback_query.data.split("_")[-1])
     if 1 <= months <= 12:
-        text, btn = await get_bot_purchase_panel(client, callback_query.from_user.id, months)
+        text, btn = await get_bot_purchase_panel(
+            client, callback_query.from_user.id, months
+        )
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
         await callback_query.answer(
@@ -129,7 +133,9 @@ async def proceed_bot_payment_callback(client, callback_query):
     )
     saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
     if not saweria_user_id:
-        return await callback_query.edit_message_caption("Maaf, layanan pembayaran saat ini tidak tersedia.")
+        return await callback_query.edit_message_caption(
+            "Maaf, layanan pembayaran saat ini tidak tersedia."
+        )
     _, _, amount = calculate_bot_price(months)
     fakeinfo = client.ns.utils.faker.generate()
     try:
@@ -173,7 +179,9 @@ async def proceed_bot_payment_callback(client, callback_query):
     except Exception as e:
         await client.send_message(
             user_id,
-            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(e=e),
+            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+                e=e
+            ),
         )
 
 
@@ -230,7 +238,9 @@ async def confirm_bot_payment_callback(client, callback_query):
             )
     except Exception as e:
         await callback_query.answer(
-            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(e=e),
+            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+                e=e
+            ),
             show_alert=True,
         )
 
@@ -242,7 +252,9 @@ async def confirm_bot_payment_callback(client, callback_query):
 async def start_creation_process_callback(client, callback_query):
     user_id = callback_query.from_user.id
     expiry_date_str = await ctx.db.getVars(user_id, "user_expiry_date")
-    if not expiry_date_str or datetime.fromisoformat(expiry_date_str) < datetime.now(timezone.utc):
+    if not expiry_date_str or datetime.fromisoformat(expiry_date_str) < datetime.now(
+        timezone.utc
+    ):
         return await callback_query.answer(
             "Langganan Anda tidak valid atau telah berakhir.",
             show_alert=True,
@@ -340,7 +352,9 @@ Ketik `/batal` untuk membatalkan."""}''',
     except Exception as e:
         await client.send_message(
             user_id,
-            "<emoji id=6298671811345254603>❌</emoji> **Error Pembuatan Bot:** `{e}`".format(e=e),
+            "<emoji id=6298671811345254603>❌</emoji> **Error Pembuatan Bot:** `{e}`".format(
+                e=e
+            ),
         )
 
 
@@ -377,7 +391,11 @@ async def list_my_bots_callback(client, callback_query):
     except Exception:
         bot_name = f"ID {bot_id} ({'(Error)'})"
     exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
-    days_left = (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days if exp_date_str else "N/A"
+    days_left = (
+        (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days
+        if exp_date_str
+        else "N/A"
+    )
     text = "**<emoji id=6283073379184415506>📦</emoji> Daftar Bot Saya ({page}/{total})**\n\n• **Nama Bot:** {bot_name}\n• **ID Bot:** `{bot_id}`\n• **Username Bot:** @{username}\n• **Sisa Aktif:** `{days_left}` hari".format(
         page=page + 1,
         total=total_pages,
@@ -448,7 +466,9 @@ async def manage_bot_callback(client, callback_query):
     exp_date_str = await ctx.db.getVars(bot_id_to_manage, "bot_expiration_date")
     days_left_text = "Tidak diatur"
     if exp_date_str:
-        days_left = (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days
+        days_left = (
+            datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)
+        ).days
         days_left_text = f"{days_left} {'hari'}"
     layout = [
         [
@@ -499,7 +519,9 @@ async def request_extend_duration_callback(client, callback_query):
     try:
         main_bot_client = ctx.manager.main_bot_client
         if not main_bot_client or not main_bot_client.is_connected:
-            raise ConnectionError("Bot utama sedang tidak aktif, tidak dapat mengirim notifikasi.")
+            raise ConnectionError(
+                "Bot utama sedang tidak aktif, tidak dapat mengirim notifikasi."
+            )
         txt_owner = "**<emoji id=5242628160297641831>🔔</emoji> Permintaan Perpanjangan Durasi**\n\n**Pengguna:** {mention} (`{id}`)\n**Bot:** **{bot_name}** (`{bot_id}`)\n\nSetujui untuk menambah masa aktif bot ini sebanyak 30 hari.".format(
             mention=main_bot_client.ns.telegram.arg.getMention(requester),
             id=requester.id,
@@ -519,7 +541,9 @@ async def request_extend_duration_callback(client, callback_query):
             ]
         ]
         btn_owner = main_bot_client.ns.telegram.button.build_button_grid(layout_owner)
-        await main_bot_client.send_message(ctx.owner_id, txt_owner, reply_markup=btn_owner)
+        await main_bot_client.send_message(
+            ctx.owner_id, txt_owner, reply_markup=btn_owner
+        )
         await callback_query.answer(
             "✅ Permintaan perpanjangan telah dikirim ke Owner Utama. Anda akan dihubungi jika disetujui.",
             show_alert=True,
@@ -549,7 +573,11 @@ async def owner_approve_extension_callback(client, callback_query):
             30,
         )
         exp_date_str = await ctx.db.getVars(bot_id_to_extend, "bot_expiration_date")
-        current_exp_date = datetime.fromisoformat(exp_date_str) if exp_date_str else datetime.now(timezone.utc)
+        current_exp_date = (
+            datetime.fromisoformat(exp_date_str)
+            if exp_date_str
+            else datetime.now(timezone.utc)
+        )
         new_exp_date = current_exp_date + timedelta(days=days_to_add)
         await ctx.db.setVars(
             bot_id_to_extend,
@@ -564,7 +592,9 @@ async def owner_approve_extension_callback(client, callback_query):
         try:
             bot_instance = ctx.manager.running_bots.get(bot_id_to_extend)
             bot_name = (
-                bot_instance.me.first_name if bot_instance and bot_instance.is_connected else f"ID {bot_id_to_extend}"
+                bot_instance.me.first_name
+                if bot_instance and bot_instance.is_connected
+                else f"ID {bot_id_to_extend}"
             )
             await client.send_message(
                 requester_id,
@@ -573,10 +603,14 @@ async def owner_approve_extension_callback(client, callback_query):
                 ),
             )
         except Exception as e:
-            ctx.log.print(f"{ctx.log.YELLOW}Gagal kirim notif persetujuan ke {requester_id}: {e}")
+            ctx.log.print(
+                f"{ctx.log.YELLOW}Gagal kirim notif persetujuan ke {requester_id}: {e}"
+            )
     except Exception as e:
         await callback_query.edit_message_text(
-            "<emoji id=6298671811345254603>❌</emoji> Gagal menyetujui permintaan: `{e}`".format(e=e)
+            "<emoji id=6298671811345254603>❌</emoji> Gagal menyetujui permintaan: `{e}`".format(
+                e=e
+            )
         )
 
 
@@ -655,7 +689,9 @@ async def do_delete_bot_callback(client, callback_query):
         await ctx.manager.stop_bot(bot_id_to_manage)
         await ctx.db.removeBot(bot_id_to_manage)
         await ctx.db.removeAllVars(bot_id_to_manage)
-        ctx.log.print(f"{ctx.log.ORANGE}Bot {bot_id_to_manage} telah dihapus oleh owner-nya ({user_id}).")
+        ctx.log.print(
+            f"{ctx.log.ORANGE}Bot {bot_id_to_manage} telah dihapus oleh owner-nya ({user_id})."
+        )
         layout = [
             [
                 {
@@ -673,5 +709,7 @@ async def do_delete_bot_callback(client, callback_query):
         )
     except Exception as e:
         await callback_query.edit_message_caption(
-            "<emoji id=6298671811345254603>❌</emoji> Terjadi kesalahan saat menghapus bot: `{e}`".format(e=e)
+            "<emoji id=6298671811345254603>❌</emoji> Terjadi kesalahan saat menghapus bot: `{e}`".format(
+                e=e
+            )
         )

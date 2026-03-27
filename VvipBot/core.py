@@ -5,13 +5,18 @@ async def get_start_keyboard_and_content(client, user):
     is_owner = await is_bot_owner(client, user.id)
     is_main_bot = client.me.id == ctx.manager.main_bot_id
     main_text_template = await ctx.db.getVars(client.me.id, "start_text_template")
-    photo_id = await ctx.db.getVars(client.me.id, "start_photo_id") or "https://files.catbox.moe/ozzvtz.jpg"
+    photo_id = (
+        await ctx.db.getVars(client.me.id, "start_photo_id")
+        or "https://files.catbox.moe/ozzvtz.jpg"
+    )
     if not main_text_template:
         if is_main_bot:
             main_text_template = "<emoji id=5458904472598095631>👋🏻</emoji> **Selamat Datang, {mention}!**\n\nSaya adalah asisten utama untuk membuat dan mengelola <emoji id=6244241334320762892>💎</emoji> **Bot VVIP** Anda sendiri. Jelajahi semua fitur yang tersedia melalui tombol di bawah ini."
         else:
             main_text_template = "<emoji id=5458904472598095631>👋🏻</emoji> **Selamat Datang, {mention}!**\n\nSaya adalah asisten pribadi Anda untuk mengakses konten eksklusif. Jelajahi semua fitur yang tersedia melalui tombol di bawah ini."
-    welcome_text = main_text_template.format(mention=client.ns.telegram.arg.getMention(user))
+    welcome_text = main_text_template.format(
+        mention=client.ns.telegram.arg.getMention(user)
+    )
     layout = []
     if is_main_bot:
         layout.append(
@@ -71,7 +76,9 @@ async def start_bot(client, message):
     handler_type="callback",
 )
 async def start_callback(client, callback_query):
-    btn, txt, photo_id = await get_start_keyboard_and_content(client, callback_query.from_user)
+    btn, txt, photo_id = await get_start_keyboard_and_content(
+        client, callback_query.from_user
+    )
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
@@ -245,7 +252,9 @@ async def process_donation_callback(client, callback_query):
     try:
         star_amount = int(callback_query.data.split("_")[2])
     except (IndexError, ValueError):
-        return await callback_query.answer("Jumlah donasi tidak valid!", show_alert=True)
+        return await callback_query.answer(
+            "Jumlah donasi tidak valid!", show_alert=True
+        )
     await callback_query.answer("Mempersiapkan invoice donasi...")
     invoice = {
         "title": "Donasi untuk Pengembangan Bot",
@@ -254,7 +263,9 @@ async def process_donation_callback(client, callback_query):
         ),
         "payload": f"donation_{star_amount}_{callback_query.from_user.id}_{int(time())}",
         "currency": "XTR",
-        "prices": [pyrogram.types.LabeledPrice(f"Donasi {star_amount} Stars", star_amount)],
+        "prices": [
+            pyrogram.types.LabeledPrice(f"Donasi {star_amount} Stars", star_amount)
+        ],
     }
     try:
         await client.send_invoice(callback_query.from_user.id, **invoice)
