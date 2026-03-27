@@ -43,9 +43,7 @@ for logger_name, level in log_levels.items():
     logging.getLogger(logger_name).setLevel(level)
 
 
-async def shutdown(
-    app: pyrogram.Client, manager: BotManager
-):
+async def shutdown(app: pyrogram.Client, manager: BotManager):
     log.print(f"{log.ORANGE}Memulai proses shutdown...")
 
     try:
@@ -55,15 +53,10 @@ async def shutdown(
         pass
 
     try:
-        stop_tasks = [
-            manager.stop_bot(bot_id)
-            for bot_id in list(manager.running_bots.keys())
-        ]
+        stop_tasks = [manager.stop_bot(bot_id) for bot_id in list(manager.running_bots.keys())]
 
         if stop_tasks:
-            await asyncio.gather(
-                *stop_tasks, return_exceptions=True
-            )
+            await asyncio.gather(*stop_tasks, return_exceptions=True)
     except Exception:
         pass
 
@@ -73,11 +66,7 @@ async def shutdown(
     except Exception:
         pass
 
-    tasks = [
-        t
-        for t in asyncio.all_tasks()
-        if t is not asyncio.current_task()
-    ]
+    tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
     for task in tasks:
         task.cancel()
 
@@ -101,18 +90,14 @@ async def main():
         in_memory=True,
     )
 
-    handlers.register_all_handlers(
-        app, db, manager, OWNER_ID
-    )
+    handlers.register_all_handlers(app, db, manager, OWNER_ID)
 
     try:
         app.ns.utils.grad.render_text("VVIP Meneger")
         log.print(f"{log.MAGENTA}Developed by NorSodikin")
 
         await app.start()
-        log.info(
-            f"Bot utama '{app.me.first_name}' berhasil dimulai."
-        )
+        log.info(f"Bot utama '{app.me.first_name}' berhasil dimulai.")
 
         await initialize_bot_services(app, db)
 
@@ -125,9 +110,7 @@ async def main():
         if schedule.jobs:
             schedule.start()
 
-        log.print(
-            f"{log.CYAN}Bot sekarang berjalan. Tekan Ctrl+C untuk berhenti."
-        )
+        log.print(f"{log.CYAN}Bot sekarang berjalan. Tekan Ctrl+C untuk berhenti.")
 
         stop_event = asyncio.Event()
 
@@ -138,16 +121,12 @@ async def main():
             try:
                 loop.add_signal_handler(sig, signal_handler)
             except NotImplementedError:
-                signal.signal(
-                    sig, lambda *_: signal_handler()
-                )
+                signal.signal(sig, lambda *_: signal_handler())
 
         await stop_event.wait()
 
     except Exception as e:
-        log.print(
-            f"{log.RED}[FATAL] Terjadi error saat memulai: {e}\n{traceback.format_exc()}"
-        )
+        log.print(f"{log.RED}[FATAL] Terjadi error saat memulai: {e}\n{traceback.format_exc()}")
     finally:
         await shutdown(app, manager)
 

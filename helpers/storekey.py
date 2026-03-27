@@ -28,9 +28,7 @@ class KeyManager:
         args = parser.parse_args()
 
         if not args.key or not args.env:
-            self.logger.print(
-                f"{self.logger.RED}Argumen --key dan --env harus disertakan untuk menjalankan bot."
-            )
+            self.logger.print(f"{self.logger.RED}Argumen --key dan --env harus disertakan untuk menjalankan bot.")
             sys.exit(1)
 
         self.hide_sensitive_args()
@@ -55,10 +53,6 @@ class KeyManager:
                 cleaned_argv.append(arg)
 
         try:
-            setproctitle.setproctitle(
-                " ".join(cleaned_argv)
-            )
+            setproctitle.setproctitle(" ".join(cleaned_argv))
         except Exception as e:
-            self.logger.print(
-                f"{self.logger.YELLOW}Gagal menyembunyikan argumen proses: {e}"
-            )
+            self.logger.print(f"{self.logger.YELLOW}Gagal menyembunyikan argumen proses: {e}")

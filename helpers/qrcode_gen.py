@@ -14,19 +14,14 @@ from qrcode.image.styles.moduledrawers import (
 
 
 class QrCodeGenerator:
-    def _sync_create_glow_background(
-        self, size: int, color: tuple
-    ) -> Image.Image:
+    def _sync_create_glow_background(self, size: int, color: tuple) -> Image.Image:
         background = Image.new("RGB", (size, size))
         draw = ImageDraw.Draw(background)
         center_x, center_y = size / 2, size / 2
         max_dist = math.sqrt(center_x**2 + center_y**2)
         for y in range(size):
             for x in range(size):
-                distance = math.sqrt(
-                    (x - center_x) ** 2
-                    + (y - center_y) ** 2
-                )
+                distance = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
                 ratio = distance / max_dist
                 intensity = max(0, 1 - ratio**2)
                 r = int(color[0] * intensity)
@@ -54,12 +49,8 @@ class QrCodeGenerator:
             qr.add_data(data)
             qr.make(fit=True)
 
-            image_factory = (
-                StyledPilImage if use_dots else None
-            )
-            drawer_module = (
-                CircleModuleDrawer() if use_dots else None
-            )
+            image_factory = StyledPilImage if use_dots else None
+            drawer_module = CircleModuleDrawer() if use_dots else None
 
             if not glow_background:
                 img = qr.make_image(
@@ -81,21 +72,11 @@ class QrCodeGenerator:
                 hue = random.random()
                 saturation = 0.95
                 value = 1.0
-                rgb_float = colorsys.hsv_to_rgb(
-                    hue, saturation, value
-                )
-                glow_color = tuple(
-                    int(c * 255) for c in rgb_float
-                )
-                background = (
-                    self._sync_create_glow_background(
-                        bg_size, glow_color
-                    ).convert("RGBA")
-                )
+                rgb_float = colorsys.hsv_to_rgb(hue, saturation, value)
+                glow_color = tuple(int(c * 255) for c in rgb_float)
+                background = self._sync_create_glow_background(bg_size, glow_color).convert("RGBA")
                 paste_position = (padding, padding)
-                background.paste(
-                    qr_img, paste_position, qr_img
-                )
+                background.paste(qr_img, paste_position, qr_img)
                 img = background.convert("RGB")
 
             if not bottom_text and not creator_text:
@@ -110,19 +91,12 @@ class QrCodeGenerator:
 
             button_w, creator_w = 0, 0
             if bottom_text:
-                button_w = (
-                    font_button.getbbox(bottom_text)[2] + 80
-                )
+                button_w = font_button.getbbox(bottom_text)[2] + 80
             if creator_text:
-                creator_w = font_creator.getbbox(
-                    creator_text
-                )[2]
+                creator_w = font_creator.getbbox(creator_text)[2]
 
             horizontal_padding = 40
-            canvas_w = (
-                max(qr_w, button_w, creator_w)
-                + horizontal_padding * 2
-            )
+            canvas_w = max(qr_w, button_w, creator_w) + horizontal_padding * 2
             if canvas_w % 2 != 0:
                 canvas_w += 1
 
@@ -134,10 +108,7 @@ class QrCodeGenerator:
             if bottom_text:
                 button_h = 60
             if creator_text:
-                creator_h = (
-                    font_creator.getbbox(creator_text)[3]
-                    - font_creator.getbbox(creator_text)[1]
-                )
+                creator_h = font_creator.getbbox(creator_text)[3] - font_creator.getbbox(creator_text)[1]
 
             total_h = (
                 padding_top
@@ -149,9 +120,7 @@ class QrCodeGenerator:
                 + padding_bottom
             )
 
-            final_canvas = Image.new(
-                "RGB", (canvas_w, total_h), "#F0F0F0"
-            )
+            final_canvas = Image.new("RGB", (canvas_w, total_h), "#F0F0F0")
             draw = ImageDraw.Draw(final_canvas)
             final_canvas.paste(
                 img,

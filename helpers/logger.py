@@ -10,16 +10,12 @@ from .colorize import AnsiColors
 class LoggerHandler(AnsiColors):
     def __init__(self, **options):
         super().__init__()
-        self.tz = zoneinfo.ZoneInfo(
-            options.get("tz", "Asia/Jakarta")
-        )
+        self.tz = zoneinfo.ZoneInfo(options.get("tz", "Asia/Jakarta"))
         self.fmt = options.get(
             "fmt",
             "{asctime} {levelname} {module}:{funcName}:{lineno} {message}",
         )
-        self.datefmt = options.get(
-            "datefmt", "%Y-%m-%d %H:%M:%S %Z"
-        )
+        self.datefmt = options.get("datefmt", "%Y-%m-%d %H:%M:%S %Z")
         self.colors = {
             "INFO": self.GREEN,
             "DEBUG": self.BLUE,
@@ -33,23 +29,15 @@ class LoggerHandler(AnsiColors):
         }
 
     def formatTime(self):
-        utc_time = datetime.datetime.now(
-            datetime.timezone.utc
-        )
+        utc_time = datetime.datetime.now(datetime.timezone.utc)
         local_time = utc_time.astimezone(self.tz)
         return local_time.strftime(self.datefmt)
 
     def format(self, record):
-        level_color = self.colors.get(
-            record["levelname"], self.RESET
-        )
+        level_color = self.colors.get(record["levelname"], self.RESET)
         pipe_color = self.colors["PIPE"]
-        record["levelname"] = (
-            f"{pipe_color}│ {level_color}{record['levelname']:<8}"
-        )
-        record["message"] = (
-            f"{pipe_color}│ {level_color}{record['message']}{self.RESET}"
-        )
+        record["levelname"] = f"{pipe_color}│ {level_color}{record['levelname']:<8}"
+        record["message"] = f"{pipe_color}│ {level_color}{record['message']}{self.RESET}"
         return self.fmt.format(
             asctime=f"{self.colors['TIME']}[ {self.formatTime()} ]",
             levelname=record["levelname"],
@@ -68,9 +56,7 @@ class LoggerHandler(AnsiColors):
 
     def log(self, level, message):
         frame = sys._getframe(2)
-        filename = os.path.basename(
-            frame.f_globals.get("__file__", "<unknown>")
-        )
+        filename = os.path.basename(frame.f_globals.get("__file__", "<unknown>"))
         record = {
             "levelname": level,
             "module": filename,

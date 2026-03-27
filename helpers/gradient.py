@@ -38,42 +38,21 @@ class Gradient:
             0,
             min(
                 255,
-                int(
-                    self.start_color[0]
-                    + (
-                        self.end_color[0]
-                        - self.start_color[0]
-                    )
-                    * factor
-                ),
+                int(self.start_color[0] + (self.end_color[0] - self.start_color[0]) * factor),
             ),
         )
         g = max(
             0,
             min(
                 255,
-                int(
-                    self.start_color[1]
-                    + (
-                        self.end_color[1]
-                        - self.start_color[1]
-                    )
-                    * factor
-                ),
+                int(self.start_color[1] + (self.end_color[1] - self.start_color[1]) * factor),
             ),
         )
         b = max(
             0,
             min(
                 255,
-                int(
-                    self.start_color[2]
-                    + (
-                        self.end_color[2]
-                        - self.start_color[2]
-                    )
-                    * factor
-                ),
+                int(self.start_color[2] + (self.end_color[2] - self.start_color[2]) * factor),
             ),
         )
         return r, g, b
@@ -84,7 +63,5 @@ class Gradient:
         for i, char in enumerate(rendered_text):
             factor = i / max(len(rendered_text) - 1, 1)
             r, g, b = self.interpolate_color(factor)
-            output.append(
-                f"{self.rgb_to_ansi(r, g, b)}{char}"
-            )
+            output.append(f"{self.rgb_to_ansi(r, g, b)}{char}")
         print("".join(output) + "\033[0m")

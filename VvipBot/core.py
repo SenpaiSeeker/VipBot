@@ -4,21 +4,14 @@ from . import *
 async def get_start_keyboard_and_content(client, user):
     is_owner = await is_bot_owner(client, user.id)
     is_main_bot = client.me.id == ctx.manager.main_bot_id
-    main_text_template = await ctx.db.getVars(
-        client.me.id, "start_text_template"
-    )
-    photo_id = (
-        await ctx.db.getVars(client.me.id, "start_photo_id")
-        or "https://files.catbox.moe/ozzvtz.jpg"
-    )
+    main_text_template = await ctx.db.getVars(client.me.id, "start_text_template")
+    photo_id = await ctx.db.getVars(client.me.id, "start_photo_id") or "https://files.catbox.moe/ozzvtz.jpg"
     if not main_text_template:
         if is_main_bot:
             main_text_template = "<emoji id=5458904472598095631>👋🏻</emoji> **Selamat Datang, {mention}!**\n\nSaya adalah asisten utama untuk membuat dan mengelola <emoji id=6244241334320762892>💎</emoji> **Bot VVIP** Anda sendiri. Jelajahi semua fitur yang tersedia melalui tombol di bawah ini."
         else:
             main_text_template = "<emoji id=5458904472598095631>👋🏻</emoji> **Selamat Datang, {mention}!**\n\nSaya adalah asisten pribadi Anda untuk mengakses konten eksklusif. Jelajahi semua fitur yang tersedia melalui tombol di bawah ini."
-    welcome_text = main_text_template.format(
-        mention=client.ns.telegram.arg.getMention(user)
-    )
+    welcome_text = main_text_template.format(mention=client.ns.telegram.arg.getMention(user))
     layout = []
     if is_main_bot:
         layout.append(
@@ -62,25 +55,15 @@ async def get_start_keyboard_and_content(client, user):
             ],
         ]
     )
-    btn = client.ns.telegram.button.build_button_grid(
-        layout
-    )
+    btn = client.ns.telegram.button.build_button_grid(layout)
     return (btn, welcome_text, photo_id)
 
 
-@command(
-    lambda ctx: filters.command("start") & filters.private
-)
+@command(lambda ctx: filters.command("start") & filters.private)
 @check_new_user
 async def start_bot(client, message):
-    (btn, txt, photo_id) = (
-        await get_start_keyboard_and_content(
-            client, message.from_user
-        )
-    )
-    await message.reply_photo(
-        photo=photo_id, caption=txt, reply_markup=btn
-    )
+    btn, txt, photo_id = await get_start_keyboard_and_content(client, message.from_user)
+    await message.reply_photo(photo=photo_id, caption=txt, reply_markup=btn)
 
 
 @command(
@@ -88,15 +71,9 @@ async def start_bot(client, message):
     handler_type="callback",
 )
 async def start_callback(client, callback_query):
-    (btn, txt, photo_id) = (
-        await get_start_keyboard_and_content(
-            client, callback_query.from_user
-        )
-    )
+    btn, txt, photo_id = await get_start_keyboard_and_content(client, callback_query.from_user)
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(
-            txt, reply_markup=btn
-        )
+        await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
         await callback_query.message.delete()
         await client.send_photo(
@@ -121,17 +98,11 @@ async def about_bot_callback(client, callback_query):
             }
         ]
     ]
-    btn = client.ns.telegram.button.build_button_grid(
-        layout
-    )
+    btn = client.ns.telegram.button.build_button_grid(layout)
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(
-            text, reply_markup=btn
-        )
+        await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(
-            text, reply_markup=btn
-        )
+        await callback_query.edit_message_text(text, reply_markup=btn)
 
 
 @command(
@@ -150,10 +121,7 @@ async def close_panel_callback(client, callback_query):
     handler_type="callback",
 )
 async def list_vvip_bot(client, callback_query):
-    vvip_list = (
-        await ctx.db.getListVars(client.me.id, "list_vvip")
-        or []
-    )
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     layout = []
     if not vvip_list:
         text = "<emoji id=5431736674147114227>🗂️</emoji> Saat ini belum ada paket VVIP yang tersedia."
@@ -165,18 +133,10 @@ async def list_vvip_bot(client, callback_query):
                 }
             ]
         )
-        btn = client.ns.telegram.button.build_button_grid(
-            layout
-        )
+        btn = client.ns.telegram.button.build_button_grid(layout)
         if callback_query.message.photo:
-            return (
-                await callback_query.edit_message_caption(
-                    text, reply_markup=btn
-                )
-            )
-        return await callback_query.edit_message_text(
-            text, reply_markup=btn
-        )
+            return await callback_query.edit_message_caption(text, reply_markup=btn)
+        return await callback_query.edit_message_text(text, reply_markup=btn)
     for index, item in enumerate(vvip_list):
         name = item.get("name", "N/A")
         promo_price = item.get("promo_price", 0)
@@ -189,9 +149,7 @@ async def list_vvip_bot(client, callback_query):
         if promo_price > 0:
             button_row.append(
                 {
-                    "text": "🎉 Promo {name}".format(
-                        name=name
-                    ),
+                    "text": "🎉 Promo {name}".format(name=name),
                     "callback_data": f"promo_detail_{index}",
                 }
             )
@@ -212,20 +170,14 @@ async def list_vvip_bot(client, callback_query):
             }
         ]
     )
-    btn = client.ns.telegram.button.build_button_grid(
-        layout
-    )
+    btn = client.ns.telegram.button.build_button_grid(layout)
     text = "<emoji id=5334882760735598374>📚</emoji> **Daftar VVIP Bot: {mention}**\n\nBerikut adalah daftar paket eksklusif yang kami tawarkan. Klik pada salah satu paket untuk melihat detail lengkap dan penawaran spesial.".format(
         mention=client.me.mention
     )
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(
-            text, reply_markup=btn
-        )
+        await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(
-            text, reply_markup=btn
-        )
+        await callback_query.edit_message_text(text, reply_markup=btn)
 
 
 @command(
@@ -263,14 +215,10 @@ async def donate_callback(client, callback_query):
             }
         ],
     ]
-    btn = client.ns.telegram.button.build_button_grid(
-        layout
-    )
+    btn = client.ns.telegram.button.build_button_grid(layout)
     try:
         if callback_query.message.photo:
-            await callback_query.edit_message_caption(
-                caption=text, reply_markup=btn
-            )
+            await callback_query.edit_message_caption(caption=text, reply_markup=btn)
         else:
             await callback_query.message.delete()
             await client.send_photo(
@@ -297,12 +245,8 @@ async def process_donation_callback(client, callback_query):
     try:
         star_amount = int(callback_query.data.split("_")[2])
     except (IndexError, ValueError):
-        return await callback_query.answer(
-            "Jumlah donasi tidak valid!", show_alert=True
-        )
-    await callback_query.answer(
-        "Mempersiapkan invoice donasi..."
-    )
+        return await callback_query.answer("Jumlah donasi tidak valid!", show_alert=True)
+    await callback_query.answer("Mempersiapkan invoice donasi...")
     invoice = {
         "title": "Donasi untuk Pengembangan Bot",
         "description": "Dukungan Anda sebesar {stars} Bintang (Stars) sangat kami hargai. Terima kasih!".format(
@@ -310,20 +254,12 @@ async def process_donation_callback(client, callback_query):
         ),
         "payload": f"donation_{star_amount}_{callback_query.from_user.id}_{int(time())}",
         "currency": "XTR",
-        "prices": [
-            pyrogram.types.LabeledPrice(
-                f"Donasi {star_amount} Stars", star_amount
-            )
-        ],
+        "prices": [pyrogram.types.LabeledPrice(f"Donasi {star_amount} Stars", star_amount)],
     }
     try:
-        await client.send_invoice(
-            callback_query.from_user.id, **invoice
-        )
+        await client.send_invoice(callback_query.from_user.id, **invoice)
     except Exception as e:
-        ctx.log.print(
-            f"{ctx.log.RED}Gagal mengirim invoice Stars: {e}"
-        )
+        ctx.log.print(f"{ctx.log.RED}Gagal mengirim invoice Stars: {e}")
         await callback_query.answer(
             "Gagal membuat invoice donasi. Coba lagi nanti.",
             show_alert=True,

@@ -10,13 +10,9 @@ class ServerMonitor:
     def __init__(self):
         self.boot_time = psutil.boot_time()
 
-    def _create_progress_bar(
-        self, percentage: float, length: int = 10
-    ) -> str:
+    def _create_progress_bar(self, percentage: float, length: int = 10) -> str:
         filled_length = int(length * percentage // 100)
-        bar = "█" * filled_length + "░" * (
-            length - filled_length
-        )
+        bar = "█" * filled_length + "░" * (length - filled_length)
         return bar
 
     def _get_uptime(self) -> str:
@@ -64,11 +60,7 @@ class ServerMonitor:
             "cpu": {
                 "percent": cpu_percent,
                 "bar": cpu_bar,
-                "freq": (
-                    f"{cpu_freq.current:.0f}Mhz"
-                    if cpu_freq
-                    else "N/A"
-                ),
+                "freq": (f"{cpu_freq.current:.0f}Mhz" if cpu_freq else "N/A"),
                 "cores": cpu_count,
             },
             "ram": {
