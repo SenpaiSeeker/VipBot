@@ -337,8 +337,8 @@ async def manual_check_payment_callback(
         client.me.id, transaction_id
     )
     if not ref_data_str:
-        return await callback_query.edit_message_caption(
-            "<emoji id=6271786398404055377>⚠️</emoji> Invoice ini sudah tidak valid atau telah selesai."
+        return await callback_query.answer(
+            "⚠️ Invoice ini sudah tidak valid atau telah selesai.", show_alert=True 
         )
     ref_parts = ref_data_str.split("|")
     is_bundle_order = ref_parts[0] == "ALL"
@@ -646,7 +646,7 @@ async def manual_check_payment_callback(
             f"{ctx.log.RED}Error manual-check {user.id} ({client.me.username}) {transaction_id}: {e}"
         )
         await callback_query.answer(
-            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+            "**Terjadi Kesalahan**\n{e}".format(
                 e=e
             ),
             show_alert=True,
