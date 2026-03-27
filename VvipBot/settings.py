@@ -11,8 +11,7 @@ async def settings(client, callback_query):
             "🚫 Anda tidak memiliki akses ke menu ini.",
             show_alert=True,
         )
-    layout = [
-        [
+    layout = [[
             {
                 "text": "🖼️ Atur Foto Start",
                 "callback_data": "set_start_photo",
@@ -21,8 +20,7 @@ async def settings(client, callback_query):
                 "text": "✍️ Atur Teks Start",
                 "callback_data": "set_start_text",
             },
-        ],
-        [
+        ],[
             {
                 "text": "➕ Tambah VVIP",
                 "callback_data": "setup_listvvip",
@@ -31,8 +29,12 @@ async def settings(client, callback_query):
                 "text": "➖ Hapus VVIP",
                 "callback_data": "delete_listvvip",
             },
-        ],
-        [
+        ],[
+            {
+                "text": "✏️ Edit Harga VVIP",
+                "callback_data": "edit_price_listvvip",
+            }
+        ],[
             {
                 "text": "👥 Total Pengguna",
                 "callback_data": "total_users_count",
@@ -41,8 +43,7 @@ async def settings(client, callback_query):
                 "text": "👥 Cek Member VVIP",
                 "callback_data": "list_members_0",
             },
-        ],
-        [
+        ],[
             {
                 "text": "🕵️ Cek Member Aktif",
                 "callback_data": "check_active_menu_init",
@@ -51,8 +52,7 @@ async def settings(client, callback_query):
                 "text": "🔍 Cek Status Grup VVIP",
                 "callback_data": "check_vvip_status",
             },
-        ],
-        [
+        ],[
             {
                 "text": "📢 Buat Broadcast",
                 "callback_data": "broadcast",
@@ -61,8 +61,7 @@ async def settings(client, callback_query):
                 "text": "🌟 Harga Broadcast Paid",
                 "callback_data": "set_broadcast_price",
             },
-        ],
-        [
+        ],[
             {
                 "text": "🔑 Kelola Kunci API",
                 "callback_data": "api_settings",
@@ -71,8 +70,7 @@ async def settings(client, callback_query):
                 "text": "🎟️ Kelola Kupon",
                 "callback_data": "manage_coupons",
             },
-        ],
-        [
+        ],[
             {
                 "text": "💰 Pendapatan VIP",
                 "callback_data": "vip_revenue_menu",
@@ -81,8 +79,7 @@ async def settings(client, callback_query):
                 "text": "⭐ Statistik Stars",
                 "callback_data": "stats_0",
             },
-        ],
-        [
+        ],[
             {
                 "text": "• Kembali ke Menu Utama •",
                 "callback_data": "start",
@@ -870,6 +867,180 @@ async def confirm_delete_vvip(client, callback_query):
         await callback_query.edit_message_caption(message, reply_markup=btn)
     else:
         await callback_query.edit_message_text(message, reply_markup=btn)
+
+
+@command(
+    lambda ctx: filters.regex("^edit_price_listvvip$"),
+    handler_type="callback",
+)
+async def edit_price_listvvip_callback(client, callback_query):
+    if not await is_bot_owner(
+        client, callback_query.from_user.id
+    ):
+        return
+    vvip_list = (
+        await ctx.db.getListVars(client.me.id, "list_vvip")
+        or[]
+    )
+    back_row =[
+        {
+            "text": "• Kembali ke Pengaturan •",
+            "callback_data": "settings",
+        }
+    ]
+    if not vvip_list:
+        text = "<emoji id=6298671811345254603>❌</emoji> Belum ada paket VVIP."
+        btn = client.ns.telegram.button.build_button_grid(
+            [back_row]
+        )
+        if callback_query.message.photo:
+            return (
+                await callback_query.edit_message_caption(
+                    text, reply_markup=btn
+                )
+            )
+        return await callback_query.edit_message_text(
+            text, reply_markup=btn
+        )
+    if not hasattr(ctx, "vip_list_edit"):
+        ctx.vip_list_edit = {}
+    layout = []
+    button_row =[]
+    for item in vvip_list:
+        name = item.get("name", "Tanpa Nama")
+        item_id = uuid.uuid4().hex[:8]
+        ctx.vip_list_edit[item_id] = name
+        button_row.append(
+            {
+                "text": "✏️ Edit {name}".format(name=name),
+                "callback_data": f"edit_vvip_price {item_id}",
+            }
+        )
+        if len(button_row) == 2:
+            layout.append(button_row)
+            button_row =[]
+    if button_row:
+        layout.append(button_row)
+    layout.append(back_row)
+    text = "**<emoji id=5470060791883374114>✍️</emoji> Edit Harga VVIP**\n\nPilih paket VVIP yang ingin Anda ubah harganya."
+    btn = client.ns.telegram.button.build_button_grid(
+        layout
+    )
+    if callback_query.message.photo:
+        await callback_query.edit_message_caption(
+            text, reply_markup=btn
+        )
+    else:
+        await callback_query.edit_message_text(
+            text, reply_markup=btn
+        )
+
+
+@command(
+    lambda ctx: filters.regex("^edit_vvip_price\\s(.+)"),
+    handler_type="callback",
+)
+async def edit_vvip_price_callback(client, callback_query):
+    if not await is_bot_owner(
+        client, callback_query.from_user.id
+    ):
+        return
+    chat_id = callback_query.from_user.id
+    (_, item_id) = callback_query.data.split(" ", 1)
+    if (
+        not hasattr(ctx, "vip_list_edit")
+        or item_id not in ctx.vip_list_edit
+    ):
+        return await callback_query.answer(
+            "Sesi tidak ditemukan atau kedaluwarsa. Silakan muat ulang menu.",
+            show_alert=True,
+        )
+    name = ctx.vip_list_edit[item_id]
+    vvip_list = (
+        await ctx.db.getListVars(client.me.id, "list_vvip")
+        or[]
+    )
+    old_item = next(
+        (
+            item
+            for item in vvip_list
+            if item.get("name") == name
+        ),
+        None,
+    )
+    if not old_item:
+        return await callback_query.answer(
+            "Paket VVIP tidak ditemukan.",
+            show_alert=True,
+        )
+    await callback_query.message.delete()
+    try:
+        def ask(text):
+            return client.ask(
+                chat_id,
+                f'''{text}{"""\n\nKetik `/batal` untuk membatalkan."""}''',
+                timeout=300,
+            )
+        new_price_msg = await ask(
+            "**<emoji id=5375296873982604963>💰</emoji> Masukkan Harga Normal Baru**\nContoh: `50000` (tanpa titik atau koma)\n\nHarga sebelumnya: `{old_price}`".format(
+                old_price=old_item.get("price", 0)
+            )
+        )
+        if new_price_msg.text and new_price_msg.text.lower() == "/batal":
+            raise listen.UserCancelled
+        if not new_price_msg.text.isdigit():
+            raise ValueError("Harga harus berupa angka.")
+        new_normal_price = int(new_price_msg.text)
+
+        new_promo_msg = await ask(
+            "**<emoji id=5436040291507247633>🎉</emoji> Masukkan Harga Promo Baru**\nContoh: `35000` (tanpa titik atau koma)\nKirim `0` jika tidak ada promo.\n\nHarga promo sebelumnya: `{old_promo}`".format(
+                old_promo=old_item.get("promo_price", 0)
+            )
+        )
+        if new_promo_msg.text and new_promo_msg.text.lower() == "/batal":
+            raise listen.UserCancelled
+        if not new_promo_msg.text.isdigit():
+            raise ValueError("Harga harus berupa angka.")
+        new_promo_price = int(new_promo_msg.text)
+
+        new_item = old_item.copy()
+        new_item["price"] = new_normal_price
+        new_item["promo_price"] = new_promo_price
+
+        await ctx.db.removeListVars(
+            client.me.id, "list_vvip", old_item
+        )
+        await ctx.db.setListVars(
+            client.me.id, "list_vvip", new_item
+        )
+        del ctx.vip_list_edit[item_id]
+
+        await client.send_message(
+            chat_id,
+            "<emoji id=6296367896398399651>✅</emoji> **Sukses!**\nHarga paket VVIP **{name}** berhasil diubah.\nNormal: `Rp {normal}`\nPromo: `Rp {promo}`".format(
+                name=name,
+                normal=new_normal_price,
+                promo=new_promo_price
+            ),
+        )
+    except listen.UserCancelled:
+        await client.send_message(
+            chat_id,
+            "<emoji id=6298671811345254603>🚫</emoji> Perubahan dibatalkan oleh pengguna.",
+        )
+    except (asyncio.TimeoutError, ValueError) as e:
+        await client.send_message(
+            chat_id,
+            f'''**Input Tidak Valid / Timeout**\nProses dibatalkan.\n`{e}`''',
+        )
+    except Exception as e:
+        await client.send_message(
+            chat_id,
+            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+                e=e
+            ),
+        )
+
 
 
 @command(
