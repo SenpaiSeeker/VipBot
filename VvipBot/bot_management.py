@@ -56,9 +56,11 @@ async def get_bot_purchase_panel(client, user_id, months=1):
     handler_type="callback",
 )
 async def create_bot_callback(client, callback_query):
+    from config import BACKUP_BOT
+
     all_bots_data = await ctx.db.getBots(is_token=True)
     if len(all_bots_data) >= 30:
-        backup_text = f" melalui @{ctx.BACKUP_BOT}" if ctx.BACKUP_BOT else ""
+        backup_text = f" melalui @{BACKUP_BOT}" if BACKUP_BOT else ""
         text_warning = f"<emoji id=6298671811345254603>❌</emoji> **Kapasitas Bot Penuh!**\n\nMaaf, server saat ini sudah mencapai batas maksimal pembuatan bot (30 Bot). Silakan buat bot baru{backup_text}."
         layout = [
             [
