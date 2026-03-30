@@ -61,7 +61,7 @@ async def create_bot_callback(client, callback_query):
     all_bots_data = await ctx.db.getBots(is_token=True)
     if len(all_bots_data) >= 25:
         backup_text = f" melalui @{BACKUP_BOT}" if BACKUP_BOT else ""
-        text_warning = f"<emoji id=6298671811345254603>❌</emoji> **Kapasitas Bot Penuh!**\n\nMaaf, server saat ini sudah mencapai batas maksimal pembuatan bot (35 Bot). Silakan buat bot baru{backup_text}."
+        text_warning = f"<emoji id=6298671811345254603>❌</emoji> **Kapasitas Bot Penuh!**\n\nMaaf, server saat ini sudah mencapai batas maksimal pembuatan bot (25 Bot). Silakan buat bot baru{backup_text}."
         layout = [
             [
                 {
