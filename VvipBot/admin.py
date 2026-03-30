@@ -1289,8 +1289,4 @@ async def tfbot_command_handler(client, message):
             )
         )
     except Exception as e:
-        await msg.edit_text(
-            "<emoji id=6298671811345254603>❌</emoji> Terjadi kesalahan:\n<pre>{e}</pre>".format(
-                e=str(e)
-            )
-        )
+        ctx.log.print(f"{ctx.log.RED}Error saat tfbot: {e}")
