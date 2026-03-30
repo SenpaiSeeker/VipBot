@@ -978,7 +978,7 @@ async def edit_vvip_price_callback(client, callback_query):
         def ask(text):
             return client.ask(
                 chat_id,
-                f'''{text}{"""\n\nKetik `/batal` untuk membatalkan."""}''',
+                f'{text}\n\nKetik `/batal` untuk membatalkan.',
                 timeout=300,
             )
         new_price_msg = await ask(
