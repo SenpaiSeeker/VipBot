@@ -558,7 +558,7 @@ async def _send_allbots_list(client, message_or_query, page):
         )
 
         text_lines.append(
-            "**{number:2}:** {username} (`{bot_id}`)\n└ <emoji id=4967667085606912536>👤</emoji> Owner: {owner} | <emoji id=5451732530048802485>⏳</emoji> Aktif: `{days_left}` hari\n".format(
+            "**{number:2}:** {username} (`{bot_id}`)\n| <emoji id=4967667085606912536>👤</emoji> Owner: {owner}\n └ <emoji id=5451732530048802485>⏳</emoji> Aktif: `{days_left}` hari\n".format(
                 number=index,
                 username=bot_username,
                 bot_id=bot_id,
