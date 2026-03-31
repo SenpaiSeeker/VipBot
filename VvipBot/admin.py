@@ -558,7 +558,7 @@ async def _send_allbots_list(client, message_or_query, page):
         )
 
         text_lines.append(
-            "**{number:2}:** {username} (`{bot_id}`)\n ├ <emoji id=5373012449597335010>👤</emoji> Owner: {owner}\n ├ <emoji id=5451732530048802485>⏳</emoji> Aktif: `{days_left}` hari lagi".format(
+            "<b>{number:2}:</b> {username} (<code>{bot_id}</code>)\n ├ <emoji id=5373012449597335010>👤</emoji> Owner: {owner}\n ├ <emoji id=5451732530048802485>⏳</emoji> Aktif: <code>{days_left}</code> hari lagi".format(
                 number=index,
                 username=bot_username,
                 bot_id=bot_id,
@@ -611,9 +611,9 @@ async def _send_allbots_list(client, message_or_query, page):
 
     btn = client.ns.telegram.button.build_button_grid(layout)
     if isinstance(message_or_query, pyrogram.types.Message):
-        await message_or_query.reply_text(text, reply_markup=btn)
+        await message_or_query.reply_text(text, reply_markup=btn, parse_mode=ParseMode.HTML)
     else:
-        await message_or_query.edit_message_text(text, reply_markup=btn)
+        await message_or_query.edit_message_text(text, reply_markup=btn, parse_mode=ParseMode.HTML)
 
 
 @command(lambda ctx: filters.command("allbots") & filters.user(ctx.owner_id))
