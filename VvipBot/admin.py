@@ -548,7 +548,7 @@ async def _send_allbots_list(client, message_or_query, page):
                 owner_user = await client.get_users(owner_id)
                 owner_text = client.ns.telegram.arg.getMention(owner_user)
             except Exception:
-                owner_text = "ID `{id}`".format(id=owner_id)
+                owner_text = "ID <code>{id}</code>".format(id=owner_id)
 
         exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
         days_left = (
