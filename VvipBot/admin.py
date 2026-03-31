@@ -520,7 +520,7 @@ async def _send_allbots_list(client, message_or_query, page):
     paginated_bots = all_bots[start_idx:end_idx]
 
     text_lines = [
-        "**<emoji id=6283073379184415506>📦</emoji> Daftar Semua Bot ({page}/{total})**\n".format(
+        "<b><emoji id=6283073379184415506>📦</emoji> Daftar Semua Bot ({page}/{total})</b>\n".format(
             page=page + 1, total=total_pages
         )
     ]
