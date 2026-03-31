@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+import math
 
 from . import *
 
@@ -483,7 +484,7 @@ async def extend_command_handler(client, message):
                 )
                 await client.send_message(
                     owner_bot_id,
-                    "🎉 **Kabar Baik!**\n\nMasa aktif bot Anda **{bot_name}** telah diperpanjang oleh Owner Utama.".format(
+                    "<emoji id=4996755833950831347>🎉</emoji> **Kabar Baik!**\n\nMasa aktif bot Anda **{bot_name}** telah diperpanjang oleh Owner Utama.".format(
                         bot_name=bot_name
                     ),
                 )
@@ -509,43 +510,77 @@ async def _send_allbots_list(client, message_or_query, page):
             return await message_or_query.reply_text(text)
         else:
             return await message_or_query.answer(text, show_alert=True)
-    total_pages = len(all_bots)
+
+    items_per_page = 25
+    total_pages = math.ceil(len(all_bots) / items_per_page)
     page = (page + total_pages) % total_pages
-    bot_data = all_bots[page]
-    bot_id = int(bot_data["name"])
-    bot_name = f"ID {bot_id} {'(Offline)'}"
-    bot_username = "N/A"
-    try:
-        bot_instance = ctx.manager.running_bots.get(bot_id)
-        if bot_instance and bot_instance.is_connected:
-            bot_name = bot_instance.me.first_name
-            bot_username = bot_instance.me.username
-    except Exception:
-        bot_name = f"ID {bot_id} {'(Error)'}"
-    owner_id = await ctx.db.getVars(bot_id, "owner_id")
-    owner_text = "Tidak diketahui"
-    if owner_id:
-        try:
-            owner_user = await client.get_users(owner_id)
-            owner_text = client.ns.telegram.arg.getMention(owner_user)
-        except Exception:
-            owner_text = f"ID `{owner_id}`"
-    exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
-    days_left = (
-        (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days
-        if exp_date_str
-        else "N/A"
-    )
-    text = "**<emoji id=6283073379184415506>📦</emoji> Daftar Semua Bot ({page}/{total})**\n\n• **Nama Bot:** {bot_name}\n• **ID Bot:** `{bot_id}`\n• **Username Bot:** @{username}\n• **Pemilik:** {owner}\n• **Sisa Aktif:** `{days_left}` hari".format(
-        page=page + 1,
-        total=total_pages,
-        bot_name=bot_name,
-        bot_id=bot_id,
-        username=bot_username,
-        owner=owner_text,
-        days_left=days_left,
-    )
+    
+    start_idx = page * items_per_page
+    end_idx = start_idx + items_per_page
+    paginated_bots = all_bots[start_idx:end_idx]
+
+    text_lines = [
+        "**<emoji id=6283073379184415506>📦</emoji> Daftar Semua Bot ({page}/{total})**\n".format(
+            page=page + 1, total=total_pages
+        )
+    ]
+    
     layout = []
+    button_row = []
+
+    for index, bot_data in enumerate(paginated_bots, start=1):
+        bot_id = int(bot_data["name"])
+        bot_username = "Offline"
+        try:
+            bot_instance = ctx.manager.running_bots.get(bot_id)
+            if bot_instance and bot_instance.is_connected:
+                if bot_instance.me.username:
+                    bot_username = "@{username}".format(username=bot_instance.me.username)
+                else:
+                    bot_username = bot_instance.me.first_name
+        except Exception:
+            bot_username = "Error"
+
+        owner_id = await ctx.db.getVars(bot_id, "owner_id")
+        owner_text = "Tidak diketahui"
+        if owner_id:
+            try:
+                owner_user = await client.get_users(owner_id)
+                owner_text = client.ns.telegram.arg.getMention(owner_user)
+            except Exception:
+                owner_text = "ID `{id}`".format(id=owner_id)
+
+        exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
+        days_left = (
+            (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days
+            if exp_date_str
+            else "N/A"
+        )
+
+        text_lines.append(
+            "**{number:2}:** {username} (`{bot_id}`)\n└ 1 <emoji id=4967667085606912536>👤</emoji> Owner: {owner} | <emoji id=5451732530048802485>⏳</emoji> Aktif: `{days_left}` hari\n".format(
+                number=index,
+                username=bot_username,
+                bot_id=bot_id,
+                owner=owner_text,
+                days_left=days_left
+            )
+        )
+
+        button_row.append({
+            "text": str(index),
+            "callback_data": "manage_specific_bot_{bot_id}_{page}".format(bot_id=bot_id, page=page)
+        })
+
+        if len(button_row) == 5:
+            layout.append(button_row)
+            button_row = []
+
+    if button_row:
+        layout.append(button_row)
+
+    text = "\n".join(text_lines)
+
     pagination_row = []
     if total_pages > 1:
         prev_page = (page - 1 + total_pages) % total_pages
@@ -553,39 +588,27 @@ async def _send_allbots_list(client, message_or_query, page):
         pagination_row.extend(
             [
                 {
-                    "text": "« Sebelumnya",
-                    "callback_data": f"allbots_{prev_page}",
+                    "text": "« Prev",
+                    "callback_data": "allbots_{prev}".format(prev=prev_page),
                 },
                 {
-                    "text": "Selanjutnya »",
-                    "callback_data": f"allbots_{next_page}",
+                    "text": "Next »",
+                    "callback_data": "allbots_{next}".format(next=next_page),
                 },
             ]
         )
     if pagination_row:
         layout.append(pagination_row)
-    layout.extend(
+
+    layout.append(
         [
-            [
-                {
-                    "text": "🗑️ Hapus Bot",
-                    "callback_data": f"confirm_delete_bot_{bot_id}",
-                }
-            ],
-            [
-                {
-                    "text": "🗓️ Kelola Masa Aktif",
-                    "callback_data": f"manage_duration_bot_{bot_id}_{page}",
-                }
-            ],
-            [
-                {
-                    "text": "Tutup Panel",
-                    "callback_data": "close_panel",
-                }
-            ],
+            {
+                "text": "Tutup Panel",
+                "callback_data": "close_panel",
+            }
         ]
     )
+
     btn = client.ns.telegram.button.build_button_grid(layout)
     if isinstance(message_or_query, pyrogram.types.Message):
         await message_or_query.reply_text(text, reply_markup=btn)
@@ -607,6 +630,74 @@ async def allbots_callback_handler(client, callback_query):
         return
     page = int(callback_query.data.split("_")[1])
     await _send_allbots_list(client, callback_query, page)
+
+
+@command(
+    lambda ctx: filters.regex("^manage_specific_bot_(\\d+)_(\\d+)"),
+    handler_type="callback",
+)
+async def manage_specific_bot_callback(client, callback_query):
+    if callback_query.from_user.id != ctx.owner_id:
+        return
+    bot_id = int(callback_query.matches[0].group(1))
+    page = int(callback_query.matches[0].group(2))
+
+    bot_username = "Offline"
+    bot_name = "Bot ID {id}".format(id=bot_id)
+    try:
+        bot_instance = ctx.manager.running_bots.get(bot_id)
+        if bot_instance and bot_instance.is_connected:
+            bot_name = bot_instance.me.first_name
+            bot_username = bot_instance.me.username if bot_instance.me.username else "Tidak Ada"
+    except Exception:
+        pass
+
+    owner_id = await ctx.db.getVars(bot_id, "owner_id")
+    owner_text = "Tidak diketahui"
+    if owner_id:
+        try:
+            owner_user = await client.get_users(owner_id)
+            owner_text = client.ns.telegram.arg.getMention(owner_user)
+        except Exception:
+            owner_text = "ID `{id}`".format(id=owner_id)
+
+    exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
+    days_left = (
+        (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days
+        if exp_date_str
+        else "N/A"
+    )
+
+    text = "**<emoji id=6257780484281997093>⚙️</emoji> Kelola Bot Spesifik**\n\n• **Nama Bot:** {name}\n• **ID Bot:** `{id}`\n• **Username Bot:** @{username}\n• **Pemilik:** {owner}\n• **Sisa Aktif:** `{days}` hari".format(
+        name=bot_name,
+        id=bot_id,
+        username=bot_username,
+        owner=owner_text,
+        days=days_left
+    )
+
+    layout = [
+        [
+            {
+                "text": "🗑️ Hapus Bot",
+                "callback_data": "confirm_delete_bot_{id}".format(id=bot_id),
+            }
+        ],
+        [
+            {
+                "text": "🗓️ Kelola Masa Aktif",
+                "callback_data": "manage_duration_bot_{id}_{page}".format(id=bot_id, page=page),
+            }
+        ],
+        [
+            {
+                "text": "🔙 Kembali ke Daftar",
+                "callback_data": "allbots_{page}".format(page=page),
+            }
+        ],
+    ]
+    btn = client.ns.telegram.button.build_button_grid(layout)
+    await callback_query.edit_message_text(text, reply_markup=btn)
 
 
 @command(
