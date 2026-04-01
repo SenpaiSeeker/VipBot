@@ -618,7 +618,9 @@ async def _send_allbots_list(client, message_or_query, page):
 
 @command(lambda ctx: filters.command("allbots") & filters.user(ctx.owner_id))
 async def allbots_command_handler(client, message):
+    msg_process = await message.reply("<emoji id=5264727218734524899>🔄</emoji> Sedang memproses mengumpulkan bot")
     await _send_allbots_list(client, message, 0)
+    await msg_process.delete()
 
 
 @command(
