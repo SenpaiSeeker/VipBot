@@ -1,5 +1,6 @@
 from . import *
 
+
 async def get_start_keyboard_and_content(client, user):
     is_owner = await is_bot_owner(client, user.id)
     is_main_bot = client.me.id == ctx.manager.main_bot_id
@@ -62,11 +63,13 @@ async def get_start_keyboard_and_content(client, user):
     btn = client.ns.telegram.button.build_button_grid(layout)
     return (btn, welcome_text, photo_id)
 
+
 @command(lambda ctx: filters.command("start") & filters.private)
 @check_new_user
 async def start_bot(client, message):
     btn, txt, photo_id = await get_start_keyboard_and_content(client, message.from_user)
     await message.reply_photo(photo=photo_id, caption=txt, reply_markup=btn)
+
 
 @command(
     lambda ctx: filters.regex("^start$"),
@@ -86,6 +89,7 @@ async def start_callback(client, callback_query):
             caption=txt,
             reply_markup=btn,
         )
+
 
 @command(
     lambda ctx: filters.regex("^about_bot$"),
@@ -107,6 +111,7 @@ async def about_bot_callback(client, callback_query):
     else:
         await callback_query.edit_message_text(text, reply_markup=btn)
 
+
 @command(
     lambda ctx: filters.regex("^close_panel$"),
     handler_type="callback",
@@ -116,6 +121,7 @@ async def close_panel_callback(client, callback_query):
         await callback_query.message.delete()
     except Exception:
         await callback_query.answer("Done.")
+
 
 @command(
     lambda ctx: filters.regex("^list_vvip$"),
@@ -138,29 +144,23 @@ async def list_vvip_bot(client, callback_query):
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
         return await callback_query.edit_message_text(text, reply_markup=btn)
-    current_row = []
     for index, item in enumerate(vvip_list):
         name = item.get("name", "N/A")
         promo_price = item.get("promo_price", 0)
-        is_inline = item.get("inline", False)
-        btn_normal = {
-            "text": "📂 {name}".format(name=name),
-            "callback_data": f"notes_{index}",
-        }
-        btn_promo = None
-        if promo_price > 0:
-            btn_promo = {
-                "text": "🎉 Promo {name}".format(name=name),
-                "callback_data": f"promo_detail_{index}",
+        button_row = [
+            {
+                "text": "📂 {name}".format(name=name),
+                "callback_data": f"notes_{index}",
             }
-        if not is_inline and current_row:
-            layout.append(current_row)
-            current_row = []
-        current_row.append(btn_normal)
-        if btn_promo:
-            current_row.append(btn_promo)
-    if current_row:
-        layout.append(current_row)
+        ]
+        if promo_price > 0:
+            button_row.append(
+                {
+                    "text": "🎉 Promo {name}".format(name=name),
+                    "callback_data": f"promo_detail_{index}",
+                }
+            )
+        layout.append(button_row)
     layout.append(
         [
             {
@@ -185,6 +185,7 @@ async def list_vvip_bot(client, callback_query):
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
         await callback_query.edit_message_text(text, reply_markup=btn)
+
 
 @command(
     lambda ctx: filters.regex("^donate_stars$"),
@@ -241,6 +242,7 @@ async def donate_callback(client, callback_query):
             caption=text,
             reply_markup=btn,
         )
+
 
 @command(
     lambda ctx: filters.regex("^donate_pay_(\\d+)$"),
