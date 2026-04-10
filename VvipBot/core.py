@@ -129,6 +129,8 @@ async def close_panel_callback(client, callback_query):
 )
 async def list_vvip_bot(client, callback_query):
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    columns = await ctx.db.getVars(client.me.id, "vvip_layout_columns") or 1
+    columns = int(columns)
     layout = []
     if not vvip_list:
         text = "<emoji id=5431736674147114227>🗂️</emoji> Saat ini belum ada paket VVIP yang tersedia."
@@ -144,23 +146,25 @@ async def list_vvip_bot(client, callback_query):
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
         return await callback_query.edit_message_text(text, reply_markup=btn)
+    all_buttons = []
     for index, item in enumerate(vvip_list):
         name = item.get("name", "N/A")
         promo_price = item.get("promo_price", 0)
-        button_row = [
+        all_buttons.append(
             {
                 "text": "📂 {name}".format(name=name),
                 "callback_data": f"notes_{index}",
             }
-        ]
+        )
         if promo_price > 0:
-            button_row.append(
+            all_buttons.append(
                 {
                     "text": "🎉 Promo {name}".format(name=name),
                     "callback_data": f"promo_detail_{index}",
                 }
             )
-        layout.append(button_row)
+    for i in range(0, len(all_buttons), columns):
+        layout.append(all_buttons[i:i+columns])
     layout.append(
         [
             {
