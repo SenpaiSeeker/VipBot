@@ -33,11 +33,7 @@ async def settings(client, callback_query):
             {
                 "text": "✏️ Edit Harga VVIP",
                 "callback_data": "edit_price_listvvip",
-            },
-            {
-                "text": "🔲 Atur Layout VVIP",
-                "callback_data": "set_vvip_layout",
-            },
+            }
         ],[
             {
                 "text": "👥 Total Pengguna",
@@ -96,64 +92,6 @@ async def settings(client, callback_query):
         await callback_query.edit_message_caption(txt_content, reply_markup=btn)
     else:
         await callback_query.edit_message_text(txt_content, reply_markup=btn)
-
-@command(
-    lambda ctx: filters.regex("^set_vvip_layout$"),
-    handler_type="callback",
-)
-async def set_vvip_layout_callback(client, callback_query):
-    if not await is_bot_owner(client, callback_query.from_user.id):
-        return
-    current_layout = await ctx.db.getVars(client.me.id, "vvip_layout_columns") or 1
-    text = "**🔲 Atur Layout Tombol VVIP**\n\nPilih jumlah kolom untuk daftar VVIP Anda.\n\n**Saat ini:** `{columns} Kolom`".format(
-        columns=current_layout
-    )
-    layout = [
-        [
-            {
-                "text": "1 Kolom (Bawah)",
-                "callback_data": "save_layout_1",
-            },
-            {
-                "text": "2 Kolom (Samping)",
-                "callback_data": "save_layout_2",
-            },
-        ],
-        [
-            {
-                "text": "3 Kolom",
-                "callback_data": "save_layout_3",
-            }
-        ],
-        [
-            {
-                "text": "• Kembali ke Pengaturan •",
-                "callback_data": "settings",
-            }
-        ]
-    ]
-    btn = client.ns.telegram.button.build_button_grid(layout)
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
-
-
-@command(
-    lambda ctx: filters.regex("^save_layout_(\\d+)$"),
-    handler_type="callback",
-)
-async def save_vvip_layout_callback(client, callback_query):
-    if not await is_bot_owner(client, callback_query.from_user.id):
-        return
-    columns = int(callback_query.matches[0].group(1))
-    await ctx.db.setVars(client.me.id, "vvip_layout_columns", columns)
-    await callback_query.answer(
-        "Layout berhasil diubah menjadi {columns} kolom.".format(columns=columns),
-        show_alert=True,
-    )
-    callback_query.data = "set_vvip_layout"
-    await set_vvip_layout_callback(client, callback_query)
 
 
 @command(
@@ -1040,7 +978,7 @@ async def edit_vvip_price_callback(client, callback_query):
         def ask(text):
             return client.ask(
                 chat_id,
-                f'{text}\n\nKetik `/batal` untuk membatalkan.',
+                f'''{text}{"""\n\nKetik `/batal` untuk membatalkan."""}''',
                 timeout=300,
             )
         new_price_msg = await ask(
