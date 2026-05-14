@@ -108,9 +108,9 @@ async def expiration_checker_method():
                 continue
 
             if days_left < 1:
+                bot_instance = manager.running_bots.get(bot_id)
                 log.debug(f"Masa aktif bot {bot_id} telah habis. Menghapus bot...")
                 try:
-                    bot_instance = manager.running_bots.get(bot_id)
                     bot_name = (
                         bot_instance.me.first_name
                         if bot_instance and bot_instance.is_connected
@@ -119,9 +119,7 @@ async def expiration_checker_method():
                     expired_message = f"Masa aktif bot Anda **{bot_name}** sudah habis."
                     await main_client.send_message(owner_id, expired_message)
                 except Exception as e:
-                    log.print(
-                        f"{log.RED}Gagal mengirim notifikasi kedaluwarsa ke owner {owner_id}: {e}"
-                    )
+                    await bot_instance.send_message(owner_id, expired_message)
 
                 await manager.stop_bot(bot_id)
                 await manager.db.removeBot(bot_id)
