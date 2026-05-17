@@ -8,7 +8,7 @@ async def guest_chat_query_handler(client: Client, update, users, chats):
     if isinstance(update, UpdateBotGuestChatQuery):
         msg = update.message
         user_id = None
-        print(update)
+        print(update.peer)
         
         if hasattr(msg, "from_id") and isinstance(msg.from_id, PeerUser):
             user_id = msg.from_id.user_id
