@@ -17,7 +17,7 @@ async def guest_chat_query_handler(client: Client, update, users, chats):
         if user_id == getattr(ctx, "owner_id", None):
             user = await client.get_users(user_id)
             mention = client.ns.telegram.arg.getMention(user)
-            await client.send_message(user_id, f"halo {mention}")
+            await client.send_message(message.chat.id, f"halo {mention}")
 
 def setup_guest_chat_query(client: Client, owner_id: int):
     client.owner_id = owner_id
