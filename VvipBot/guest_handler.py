@@ -14,22 +14,34 @@ import platform
 import shutil
 import importlib
 import inspect
+import uuid
 from datetime import datetime, timedelta
 from typing import Any
 
 import pyrogram
-from pyrogram import Client
+from pyrogram import Client, filters
 from pyrogram.enums import ParseMode
-from pyrogram.handlers import RawUpdateHandler
+from pyrogram.handlers import RawUpdateHandler, CallbackQueryHandler
 from pyrogram.raw.types import (
     UpdateBotGuestChatQuery,
     PeerUser,
     InputBotInlineResult,
-    InputBotInlineMessageText
+    InputBotInlineMessageText,
+    ReplyInlineMarkup,
+    KeyboardButtonRow,
+    KeyboardButtonCallback,
+    InputBotInlineResultDocument,
+    InputBotInlineMessageMediaAuto,
+    InputDocument,
+    InputMediaUploadedDocument,
+    DocumentAttributeFilename
 )
-from pyrogram.raw.functions.messages import SetBotGuestChatResult
+from pyrogram.raw.functions.messages import SetBotGuestChatResult, UploadMedia
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaDocument
 
 from VvipBot import ctx
+
+guest_eval_sessions = {}
 
 def create_exec_scope(client: Client, update) -> dict:
     return {
@@ -93,6 +105,60 @@ async def aexec(code: str, client: Client, update) -> Any:
         return await result
     return result
 
+async def process_eval(client, code, update):
+    stdout_capture = io.StringIO()
+    stderr_capture = io.StringIO()
+    result = None
+    exc_str = None
+    start_time = time.perf_counter()
+
+    try:
+        with contextlib.redirect_stdout(stdout_capture), contextlib.redirect_stderr(stderr_capture):
+            result = await asyncio.wait_for(aexec(code, client, update), timeout=60.0)
+    except asyncio.TimeoutError:
+        exc_str = "TimeoutError: Execution exceeded 60 seconds."
+    except Exception:
+        exc_str = traceback.format_exc()
+
+    end_time = time.perf_counter()
+    execution_time = end_time - start_time
+
+    stdout_val = stdout_capture.getvalue()
+    stderr_val = stderr_capture.getvalue()
+
+    final_output = ""
+    status_header = "Success"
+
+    if exc_str:
+        final_output = exc_str.strip()
+        status_header = "Error"
+    elif stderr_val:
+        final_output = stderr_val.strip()
+        status_header = "Stderr"
+    elif stdout_val:
+        final_output = stdout_val.strip()
+        if result is not None:
+            final_output += f"\n---\nReturn: {str(result)}"
+    elif result is not None:
+        final_output = str(result).strip()
+    else:
+        final_output = "None"
+
+    escaped_code = html.escape(code)
+    escaped_output = html.escape(final_output)
+
+    display_text = f"<b>Input:</b>\n<pre>{escaped_code}</pre>\n\n<b>Output ({status_header}):</b>\n<pre>{escaped_output}</pre>\n\n<b>Time:</b> <code>{execution_time:.4f}s</code>"
+
+    if len(display_text) > 4000:
+        doc = io.BytesIO(final_output.encode("utf-8"))
+        doc.name = "eval_result.txt"
+        caption = f"<b>Input:</b>\n<pre>{escaped_code}</pre>\n\n<b>Output ({status_header}):</b>\n<i>Output dikirim sebagai dokumen.</i>\n\n<b>Time:</b> <code>{execution_time:.4f}s</code>"
+        if len(caption) > 1024:
+            caption = caption[:1000] + "..."
+        return True, caption, doc
+    else:
+        return False, display_text, None
+
 async def guest_chat_query_handler(client: Client, update, users, chats):
     if isinstance(update, UpdateBotGuestChatQuery):
         msg = update.message
@@ -108,75 +174,114 @@ async def guest_chat_query_handler(client: Client, update, users, chats):
             if not code:
                 return
 
-            stdout_capture = io.StringIO()
-            stderr_capture = io.StringIO()
-            result = None
-            exc_str = None
-            start_time = time.perf_counter()
+            session_id = str(uuid.uuid4())[:8]
+            guest_eval_sessions[session_id] = {
+                "code": code,
+                "user_id": user_id
+            }
 
-            try:
-                with contextlib.redirect_stdout(stdout_capture), contextlib.redirect_stderr(stderr_capture):
-                    result = await asyncio.wait_for(aexec(code, client, update), timeout=60.0)
-            except asyncio.TimeoutError:
-                exc_str = "TimeoutError: Execution exceeded 60 seconds."
-            except Exception:
-                exc_str = traceback.format_exc()
-
-            end_time = time.perf_counter()
-            execution_time = end_time - start_time
-
-            stdout_val = stdout_capture.getvalue()
-            stderr_val = stderr_capture.getvalue()
-
-            final_output = ""
-            status_header = "Success"
-
-            if exc_str:
-                final_output = exc_str.strip()
-                status_header = "Error"
-            elif stderr_val:
-                final_output = stderr_val.strip()
-                status_header = "Stderr"
-            elif stdout_val:
-                final_output = stdout_val.strip()
-                if result is not None:
-                    final_output += f"\n---\nReturn: {str(result)}"
-            elif result is not None:
-                final_output = str(result).strip()
-            else:
-                final_output = "None"
-
-            escaped_code = html.escape(code)
-            escaped_output = html.escape(final_output)
-
-            display_text = f"<b>Input:</b>\n<pre>{escaped_code}</pre>\n\n<b>Output ({status_header}):</b>\n<pre>{escaped_output}</pre>\n\n<b>Time:</b> <code>{execution_time:.4f}s</code>"
-
-            if len(display_text) > 4000:
-                doc = io.BytesIO(final_output.encode("utf-8"))
-                doc.name = "eval_result.txt"
-                try:
-                    await client.send_document(user_id, document=doc)
-                    display_text = f"<b>Input:</b>\n<pre>{escaped_code}</pre>\n\n<b>Output ({status_header}):</b>\n<i>Output melebihi batas 4000 karakter, dikirim sebagai dokumen .txt ke PM Anda.</i>\n\n<b>Time:</b> <code>{execution_time:.4f}s</code>"
-                except Exception as e:
-                    display_text = f"<b>Input:</b>\n<pre>{escaped_code}</pre>\n\n<b>Output ({status_header}):</b>\n<i>Output terlalu panjang dan gagal dikirim ke PM: {html.escape(str(e))}</i>\n\n<b>Time:</b> <code>{execution_time:.4f}s</code>"
-
-            parsed = await client.parser.parse(display_text, ParseMode.HTML)
-
-            inline_result = InputBotInlineResult(
-                id="0",
-                type="article",
-                title="Eval Output",
-                send_message=InputBotInlineMessageText(
-                    message=parsed["message"],
-                    entities=parsed["entities"]
-                )
+            is_doc, text_or_caption, doc = await process_eval(client, code, update)
+            parsed = await client.parser.parse(text_or_caption, ParseMode.HTML)
+            
+            reply_markup = ReplyInlineMarkup(
+                rows=[
+                    KeyboardButtonRow(
+                        buttons=[
+                            KeyboardButtonCallback(
+                                text="Run",
+                                data=f"geval_run_{session_id}".encode("utf-8")
+                            )
+                        ]
+                    )
+                ]
             )
-
+            
+            if is_doc:
+                uploaded_file = await client.save_file(doc)
+                media_res = await client.invoke(
+                    UploadMedia(
+                        peer=await client.resolve_peer("me"),
+                        media=InputMediaUploadedDocument(
+                            file=uploaded_file,
+                            mime_type="text/plain",
+                            attributes=[DocumentAttributeFilename(file_name="eval_result.txt")]
+                        )
+                    )
+                )
+                input_doc = InputDocument(
+                    id=media_res.document.id,
+                    access_hash=media_res.document.access_hash,
+                    file_reference=media_res.document.file_reference
+                )
+                
+                inline_result = InputBotInlineResultDocument(
+                    id="0",
+                    type="file",
+                    title="Eval Output",
+                    document=input_doc,
+                    send_message=InputBotInlineMessageMediaAuto(
+                        message=parsed["message"],
+                        entities=parsed["entities"],
+                        reply_markup=reply_markup
+                    )
+                )
+            else:
+                inline_result = InputBotInlineResult(
+                    id="0",
+                    type="article",
+                    title="Eval Output",
+                    send_message=InputBotInlineMessageText(
+                        message=parsed["message"],
+                        entities=parsed["entities"],
+                        reply_markup=reply_markup
+                    )
+                )
+            
             await client.invoke(SetBotGuestChatResult(
                 query_id=update.query_id,
                 result=inline_result
             ))
 
+async def geval_callback_handler(client: Client, query):
+    session_id = query.data.split("_")[-1]
+    session_data = guest_eval_sessions.get(session_id)
+    
+    if not session_data:
+        return await query.answer("Session expired", show_alert=True)
+        
+    user_id = session_data["user_id"]
+    if query.from_user.id != user_id:
+        return await query.answer("Not authorized", show_alert=True)
+        
+    code = session_data["code"]
+    await query.answer("Running...")
+    
+    is_doc, text_or_caption, doc = await process_eval(client, code, query)
+    
+    reply_markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Run", callback_data=f"geval_run_{session_id}")]
+    ])
+    
+    try:
+        if is_doc:
+            await client.edit_inline_media(
+                inline_message_id=query.inline_message_id,
+                media=InputMediaDocument(doc, caption=text_or_caption, parse_mode=ParseMode.HTML),
+                reply_markup=reply_markup
+            )
+        else:
+            await client.edit_inline_text(
+                inline_message_id=query.inline_message_id,
+                text=text_or_caption,
+                parse_mode=ParseMode.HTML,
+                reply_markup=reply_markup
+            )
+    except pyrogram.errors.MessageNotModified:
+        pass
+    except Exception:
+        pass
+
 def setup_guest_chat_query(client: Client, owner_id: int):
     client.owner_id = owner_id
     client.add_handler(RawUpdateHandler(guest_chat_query_handler), group=1)
+    client.add_handler(CallbackQueryHandler(geval_callback_handler, filters.regex(r"^geval_run_")))
