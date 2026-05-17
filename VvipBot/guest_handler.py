@@ -1,5 +1,5 @@
+import io
 from pyrogram import Client
-from pyrogram.enums import ParseMode
 from pyrogram.handlers import RawUpdateHandler
 from pyrogram.raw.types import (
     UpdateBotGuestChatQuery, 
@@ -20,12 +20,22 @@ async def guest_chat_query_handler(client: Client, update, users, chats):
             user_id = msg.peer_id.user_id
             
         if user_id == getattr(client, "owner_id", None):
+            update_str = str(update)
+            
+            if len(update_str) > 4000:
+                file = io.BytesIO(update_str.encode("utf-8"))
+                file.name = "update.txt"
+                await client.send_document(user_id, document=file)
+                text_to_send = "Pesan melebihi batas, dikirim ke PM sebagai dokumen .txt"
+            else:
+                text_to_send = update_str
+
             result = InputBotInlineResult(
                 id="0",
                 type="article",
                 title="Send",
                 send_message=InputBotInlineMessageText(
-                    message=update
+                    message=text_to_send
                 )
             )
             
