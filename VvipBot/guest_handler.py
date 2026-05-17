@@ -21,7 +21,7 @@ async def guest_chat_query_handler(client: Client, update, users, chats):
         if user_id == getattr(client, "owner_id", None):
             user = await client.get_users(user_id)
             mention = client.ns.telegram.arg.getMention(user)
-            parsed_text, parsed_entities = await client.parser.parse(f"halo {mention}", "html")
+            parsed_text, parsed_entities = await client.parser.parse(f"halo {mention}")
             
             result = InputBotInlineResult(
                 id="0",
