@@ -2,7 +2,7 @@ from pyrogram import Client
 from pyrogram.handlers import RawUpdateHandler
 from pyrogram.raw.types import UpdateBotGuestChatQuery, PeerUser
 
-from config import ctx 
+from . import ctx 
 
 async def guest_chat_query_handler(client: Client, update, users, chats):
     if isinstance(update, UpdateBotGuestChatQuery):
