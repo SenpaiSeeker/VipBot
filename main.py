@@ -77,6 +77,9 @@ async def shutdown(app: pyrogram.Client, manager: BotManager):
     log.print(f"{log.RED}Semua proses telah dimatikan.")
 
 
+from VvipBot.guest_handler import setup_guest_chat_query
+
+
 async def main():
     os.system("rm -rf *.session* /tmp/*.session*")
 
@@ -91,6 +94,7 @@ async def main():
         workdir="/tmp",
         in_memory=True,
     )
+    setup_guest_chat_query(app, OWNER_ID)
 
     handlers.register_all_handlers(app, db, manager, OWNER_ID)
 
