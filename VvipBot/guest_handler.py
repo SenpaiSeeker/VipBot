@@ -1,4 +1,5 @@
 from pyrogram import Client
+from pyrogram.enums import ParseMode
 from pyrogram.handlers import RawUpdateHandler
 from pyrogram.raw.types import (
     UpdateBotGuestChatQuery, 
@@ -21,15 +22,15 @@ async def guest_chat_query_handler(client: Client, update, users, chats):
         if user_id == getattr(client, "owner_id", None):
             user = await client.get_users(user_id)
             mention = client.ns.telegram.arg.getMention(user)
-            parsed_text, parsed_entities = await client.parser.parse(f"halo {mention}")
+            parsed = await client.parser.parse(f"halo {mention}", ParseMode.HTML)
             
             result = InputBotInlineResult(
                 id="0",
                 type="article",
                 title="Send",
                 send_message=InputBotInlineMessageText(
-                    message=parsed_text,
-                    entities=parsed_entities
+                    message=parsed["message"],
+                    entities=parsed["entities"]
                 )
             )
             
