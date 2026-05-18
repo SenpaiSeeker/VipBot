@@ -19,6 +19,7 @@ from typing import Any
 
 import pyrogram
 from pyrogram import Client
+from pyrogram.enums import ParseMode
 from pyrogram.handlers import RawUpdateHandler
 from pyrogram.raw.types import (
     UpdateBotGuestChatQuery,
@@ -169,7 +170,8 @@ async def guest_chat_query_handler(client: Client, update, users, chats):
             code = re.sub(r'^@[a-zA-Z0-9_]+\s+', '', code)
 
             is_doc, text_or_caption, doc = await process_eval(client, code, update)
-            
+            parsed = await client.parser.parse(text_or_caption, ParseMode.HTML)
+
             if is_doc:
                 uploaded_file = await client.save_file(doc)
                 media_res = await client.invoke(
@@ -194,7 +196,8 @@ async def guest_chat_query_handler(client: Client, update, users, chats):
                     title="Eval Output",
                     document=input_doc,
                     send_message=InputBotInlineMessageMediaAuto(
-                        message=text_or_caption
+                        message=parsed["message"],
+                        entities=parsed["entities"]
                     )
                 )
             else:
@@ -203,7 +206,8 @@ async def guest_chat_query_handler(client: Client, update, users, chats):
                     type="article",
                     title="Eval Output",
                     send_message=InputBotInlineMessageText(
-                        message=text_or_caption
+                        message=parsed["message"],
+                        entities=parsed["entities"]
                     )
                 )
             
