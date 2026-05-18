@@ -33,6 +33,7 @@ from pyrogram.raw.types import (
     DocumentAttributeFilename
 )
 from pyrogram.raw.functions.messages import SetBotGuestChatResult, UploadMedia
+from pyrogram.utils import get_peer_id
 
 from VvipBot import ctx
 
@@ -60,6 +61,7 @@ def create_exec_scope(client: Client, update) -> dict:
         "inspect": inspect,
         "importlib": importlib,
         "pyrogram": pyrogram,
+        "chat_id": get_peer_id(update.message.peer_id)
     }
 
 async def aexec(code: str, client: Client, update) -> Any:
