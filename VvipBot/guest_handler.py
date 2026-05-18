@@ -18,8 +18,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 import pyrogram
-from pyrogram import Client, filters
-from pyrogram.enums import ParseMode
+from pyrogram import Client
 from pyrogram.handlers import RawUpdateHandler
 from pyrogram.raw.types import (
     UpdateBotGuestChatQuery,
@@ -33,7 +32,6 @@ from pyrogram.raw.types import (
     DocumentAttributeFilename
 )
 from pyrogram.raw.functions.messages import SetBotGuestChatResult, UploadMedia
-from pyrogram.utils import get_peer_id
 
 from VvipBot import ctx
 
@@ -61,7 +59,6 @@ def create_exec_scope(client: Client, update) -> dict:
         "inspect": inspect,
         "importlib": importlib,
         "pyrogram": pyrogram,
-        "chat_id": get_peer_id(update.message.peer_id)
     }
 
 async def aexec(code: str, client: Client, update) -> Any:
@@ -169,8 +166,9 @@ async def guest_chat_query_handler(client: Client, update, users, chats):
             if not code:
                 return
 
+            code = re.sub(r'^@[a-zA-Z0-9_]+\s+', '', code)
+
             is_doc, text_or_caption, doc = await process_eval(client, code, update)
-            parsed = await client.parser.parse(text_or_caption, ParseMode.HTML)
             
             if is_doc:
                 uploaded_file = await client.save_file(doc)
@@ -196,8 +194,7 @@ async def guest_chat_query_handler(client: Client, update, users, chats):
                     title="Eval Output",
                     document=input_doc,
                     send_message=InputBotInlineMessageMediaAuto(
-                        message=parsed["message"],
-                        entities=parsed["entities"]
+                        message=text_or_caption
                     )
                 )
             else:
@@ -206,8 +203,7 @@ async def guest_chat_query_handler(client: Client, update, users, chats):
                     type="article",
                     title="Eval Output",
                     send_message=InputBotInlineMessageText(
-                        message=parsed["message"],
-                        entities=parsed["entities"]
+                        message=text_or_caption
                     )
                 )
             
