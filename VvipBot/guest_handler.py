@@ -14,22 +14,18 @@ import platform
 import shutil
 import importlib
 import inspect
-import uuid
 from datetime import datetime, timedelta
 from typing import Any
 
 import pyrogram
 from pyrogram import Client, filters
 from pyrogram.enums import ParseMode
-from pyrogram.handlers import RawUpdateHandler, CallbackQueryHandler
+from pyrogram.handlers import RawUpdateHandler
 from pyrogram.raw.types import (
     UpdateBotGuestChatQuery,
     PeerUser,
     InputBotInlineResult,
     InputBotInlineMessageText,
-    ReplyInlineMarkup,
-    KeyboardButtonRow,
-    KeyboardButtonCallback,
     InputBotInlineResultDocument,
     InputBotInlineMessageMediaAuto,
     InputDocument,
@@ -37,11 +33,8 @@ from pyrogram.raw.types import (
     DocumentAttributeFilename
 )
 from pyrogram.raw.functions.messages import SetBotGuestChatResult, UploadMedia
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaDocument
 
 from VvipBot import ctx
-
-guest_eval_sessions = {}
 
 def create_exec_scope(client: Client, update) -> dict:
     return {
@@ -174,27 +167,8 @@ async def guest_chat_query_handler(client: Client, update, users, chats):
             if not code:
                 return
 
-            session_id = str(uuid.uuid4())[:8]
-            guest_eval_sessions[session_id] = {
-                "code": code,
-                "user_id": user_id
-            }
-
             is_doc, text_or_caption, doc = await process_eval(client, code, update)
             parsed = await client.parser.parse(text_or_caption, ParseMode.HTML)
-            
-            reply_markup = ReplyInlineMarkup(
-                rows=[
-                    KeyboardButtonRow(
-                        buttons=[
-                            KeyboardButtonCallback(
-                                text="Run",
-                                data=f"geval_run_{session_id}".encode("utf-8")
-                            )
-                        ]
-                    )
-                ]
-            )
             
             if is_doc:
                 uploaded_file = await client.save_file(doc)
@@ -221,8 +195,7 @@ async def guest_chat_query_handler(client: Client, update, users, chats):
                     document=input_doc,
                     send_message=InputBotInlineMessageMediaAuto(
                         message=parsed["message"],
-                        entities=parsed["entities"],
-                        reply_markup=reply_markup
+                        entities=parsed["entities"]
                     )
                 )
             else:
@@ -232,8 +205,7 @@ async def guest_chat_query_handler(client: Client, update, users, chats):
                     title="Eval Output",
                     send_message=InputBotInlineMessageText(
                         message=parsed["message"],
-                        entities=parsed["entities"],
-                        reply_markup=reply_markup
+                        entities=parsed["entities"]
                     )
                 )
             
@@ -242,46 +214,6 @@ async def guest_chat_query_handler(client: Client, update, users, chats):
                 result=inline_result
             ))
 
-async def geval_callback_handler(client: Client, query):
-    session_id = query.data.split("_")[-1]
-    session_data = guest_eval_sessions.get(session_id)
-    
-    if not session_data:
-        return await query.answer("Session expired", show_alert=True)
-        
-    user_id = session_data["user_id"]
-    if query.from_user.id != user_id:
-        return await query.answer("Not authorized", show_alert=True)
-        
-    code = session_data["code"]
-    await query.answer("Running...")
-    
-    is_doc, text_or_caption, doc = await process_eval(client, code, query)
-    
-    reply_markup = InlineKeyboardMarkup([
-        [InlineKeyboardButton("Run", callback_data=f"geval_run_{session_id}")]
-    ])
-    
-    try:
-        if is_doc:
-            await client.edit_inline_media(
-                inline_message_id=query.inline_message_id,
-                media=InputMediaDocument(doc, caption=text_or_caption, parse_mode=ParseMode.HTML),
-                reply_markup=reply_markup
-            )
-        else:
-            await client.edit_inline_text(
-                inline_message_id=query.inline_message_id,
-                text=text_or_caption,
-                parse_mode=ParseMode.HTML,
-                reply_markup=reply_markup
-            )
-    except pyrogram.errors.MessageNotModified:
-        pass
-    except Exception:
-        pass
-
 def setup_guest_chat_query(client: Client, owner_id: int):
     client.owner_id = owner_id
     client.add_handler(RawUpdateHandler(guest_chat_query_handler), group=1)
-    client.add_handler(CallbackQueryHandler(geval_callback_handler, filters.regex(r"^geval_run_")))
