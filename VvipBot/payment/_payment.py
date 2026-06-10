@@ -679,7 +679,7 @@ async def apply_coupon_callback(client, event):
     try:
         ask_msg = await client.ask(
             sender.id,
-            f"{em.ticket} Silakan masukkan kode kupon Anda.",
+            f"{em.ticket} Silakan masukkan kode kupon Anda.\n\nKetik <code>/batal</code> untuk membatalkan.",
             parse_mode="html",
         )
         coupon_code = ask_msg.text.strip().upper()
@@ -714,6 +714,12 @@ async def apply_coupon_callback(client, event):
         )
         await _create_payment_invoice(
             client, sender, item_index, tipe, final_amount, coupon_code
+        )
+    except client.userCancel:
+        await client.send_message(
+            sender.id,
+            f"{em.no_entry_age} <b>Proses Dibatalkan</b>",
+            parse_mode="html",
         )
     except Exception as e:
         await client.send_message(sender.id, str(e), parse_mode="html")
