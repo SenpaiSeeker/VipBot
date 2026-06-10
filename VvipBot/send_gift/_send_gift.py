@@ -133,7 +133,7 @@ async def gift_send_ask_handler(client, event):
     try:
         ask_msg = await client.ask(
             sender.id,
-            f"{em.busts_in_silhouette} Masukkan <b>Username atau ID</b> teman yang ingin Anda hadiahi paket <b>{name}</b>.",
+            f"{em.busts_in_silhouette} Masukkan <b>Username atau ID</b> teman yang ingin Anda hadiahi paket <b>{name}</b>.\n\nKetik <code>/batal</code> untuk membatalkan.",
             parse_mode="html",
         )
         recipient_input = ask_msg.text.strip()
@@ -189,6 +189,12 @@ async def gift_send_ask_handler(client, event):
             f"{em.white_check_mark} <b>Berhasil!</b>\n"
             f"Hadiah akses <b>{name}</b> telah berhasil dikirim ke "
             f"{client.ns.telegram.arg.getMention(recipient)}.",
+            parse_mode="html",
+        )
+    except client.userCancel:
+        await client.send_message(
+            sender.id,
+            f"{em.no_entry_age} <b>Proses Dibatalkan</b>",
             parse_mode="html",
         )
     except asyncio.TimeoutError:
