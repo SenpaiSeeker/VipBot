@@ -26,3 +26,4 @@ async def ask(self, chat_id, text, timeout=None, **kwargs):
 
 TelegramClient.listen = listen
 TelegramClient.ask = ask
+TelegramClient.userCancel = UserCancelled
