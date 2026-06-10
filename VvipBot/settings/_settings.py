@@ -262,7 +262,8 @@ async def set_start_photo_callback(client, event):
         prompt = (
             f"{em.frame} <b>Atur Foto Start</b>\n\n"
             f"Silakan kirim foto baru yang ingin Anda gunakan sebagai gambar di pesan /start.\n\n"
-            f"Ketik <code>/empty</code> untuk menghapus foto saat ini dan kembali ke default."
+            f"Ketik <code>/empty</code> untuk menghapus foto saat ini dan kembali ke default.\n\n"
+            f"Ketik <code>/batal</code> untuk membatalkan."
         )
         ask_photo_msg = await client.ask(chat_id, prompt, parse_mode="html")
 
@@ -298,6 +299,13 @@ async def set_start_photo_callback(client, event):
         await client.send_message(
             chat_id,
             f"{em.white_check_mark} <b>Sukses!</b> Foto /start telah berhasil diperbarui.",
+            buttons=back_btn,
+            parse_mode="html",
+        )
+    except client.userCancel:
+        await client.send_message(
+            chat_id,
+            f"{em.no_entry_age} <b>Proses Dibatalkan</b>",
             buttons=back_btn,
             parse_mode="html",
         )
@@ -337,7 +345,8 @@ async def set_start_text_callback(client, event):
             f"Silakan kirim teks baru untuk pesan /start. Anda dapat menggunakan variabel "
             f"<code>{{mention}}</code> untuk menyapa pengguna.\n\n"
             f"<b>Contoh:</b> <code>Halo {{mention}}, selamat datang di bot saya!</code>\n\n"
-            f"Ketik <code>/empty</code> untuk menghapus teks kustom dan kembali ke default."
+            f"Ketik <code>/empty</code> untuk menghapus teks kustom dan kembali ke default.\n\n"
+            f"Ketik <code>/batal</code> untuk membatalkan."
         )
         ask_text_msg = await client.ask(chat_id, prompt, parse_mode="html")
 
@@ -370,6 +379,13 @@ async def set_start_text_callback(client, event):
         await client.send_message(
             chat_id,
             f"{em.white_check_mark} <b>Sukses!</b> Teks /start telah berhasil diperbarui.",
+            buttons=back_btn,
+            parse_mode="html",
+        )
+    except client.userCancel:
+        await client.send_message(
+            chat_id,
+            f"{em.no_entry_age} <b>Proses Dibatalkan</b>",
             buttons=back_btn,
             parse_mode="html",
         )
@@ -407,7 +423,8 @@ async def set_broadcast_price_callback(client, event):
         prompt = (
             f"{em.glowing_star} <b>Atur Harga Broadcast Paid</b>\n\n"
             f"Masukkan jumlah Bintang (Stars) yang harus dibayar pengguna untuk melihat media broadcast.\n\n"
-            f"Ketik <code>0</code> atau <code>/empty</code> untuk menonaktifkan fitur ini."
+            f"Ketik <code>0</code> atau <code>/empty</code> untuk menonaktifkan fitur ini.\n\n"
+            f"Ketik <code>/batal</code> untuk membatalkan."
         )
         ask_msg = await client.ask(chat_id, prompt, parse_mode="html")
 
@@ -431,6 +448,13 @@ async def set_broadcast_price_callback(client, event):
             chat_id,
             f"{em.white_check_mark} <b>Sukses!</b> Harga broadcast telah diatur menjadi "
             f"<code>{stars_amount}</code> Stars.",
+            buttons=back_btn,
+            parse_mode="html",
+        )
+    except client.userCancel:
+        await client.send_message(
+            chat_id,
+            f"{em.no_entry_age} <b>Proses Dibatalkan</b>",
             buttons=back_btn,
             parse_mode="html",
         )
@@ -509,7 +533,8 @@ async def broadcast_callback(client, event):
         await event.delete()
         prompt = (
             f"{em.loudspeaker} <b>Kirim Pesan Broadcast</b>\n\n"
-            f"Silakan teruskan (forward) atau kirim pesan yang ingin Anda siarkan."
+            f"Silakan teruskan (forward) atau kirim pesan yang ingin Anda siarkan.\n\n"
+            f"Ketik <code>/batal</code> untuk membatalkan."
         )
         ask_message = await client.ask(chat_id, prompt, parse_mode="html")
 
@@ -560,16 +585,31 @@ async def broadcast_callback(client, event):
             f"{em.cross_mark} <b>Gagal:</b> <code>{fail_count}</code>",
             parse_mode="html",
         )
+    except client.userCancel:
+        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        back_btn = client.ns.telegram.button.build_button_grid(layout)
+        await client.send_message(
+            chat_id,
+            f"{em.no_entry_age} <b>Proses Dibatalkan</b>",
+            buttons=back_btn,
+            parse_mode="html",
+        )
     except asyncio.TimeoutError:
+        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        back_btn = client.ns.telegram.button.build_button_grid(layout)
         await client.send_message(
             chat_id,
             f"{em.alarm_clock} <b>Waktu Habis</b>\nProses telah dibatalkan otomatis.",
+            buttons=back_btn,
             parse_mode="html",
         )
     except Exception as e:
+        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        back_btn = client.ns.telegram.button.build_button_grid(layout)
         await client.send_message(
             chat_id,
             f"{em.cross_mark} <b>Terjadi Kesalahan</b>\n<pre>{e}</pre>",
+            buttons=back_btn,
             parse_mode="html",
         )
 
@@ -587,7 +627,7 @@ async def setup_listvvip(client, event):
 
     try:
         def ask(text):
-            return client.ask(chat_id, text, parse_mode="html")
+            return client.ask(chat_id, text + "\n\nKetik <code>/batal</code> untuk membatalkan.", parse_mode="html")
 
         def is_digit(t):
             return t.isdigit()
@@ -654,6 +694,24 @@ async def setup_listvvip(client, event):
         await client.send_message(
             chat_id,
             f"{em.white_check_mark} <b>Sukses!</b> Paket VVIP <b>{vvip_data['name']}</b> berhasil ditambahkan.",
+            parse_mode="html",
+        )
+    except client.userCancel:
+        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        back_btn = client.ns.telegram.button.build_button_grid(layout)
+        await client.send_message(
+            chat_id,
+            f"{em.no_entry_age} <b>Proses Dibatalkan</b>",
+            buttons=back_btn,
+            parse_mode="html",
+        )
+    except asyncio.TimeoutError:
+        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        back_btn = client.ns.telegram.button.build_button_grid(layout)
+        await client.send_message(
+            chat_id,
+            f"{em.alarm_clock} <b>Waktu Habis</b>\nProses telah dibatalkan otomatis.",
+            buttons=back_btn,
             parse_mode="html",
         )
     except Exception as e:
@@ -802,7 +860,7 @@ async def edit_vvip_price_callback(client, event):
     await event.delete()
     try:
         def ask(text):
-            return client.ask(chat_id, text, parse_mode="html")
+            return client.ask(chat_id, text + "\n\nKetik <code>/batal</code> untuk membatalkan.", parse_mode="html")
 
         new_price_msg = await ask(
             f"{em.money_bag} <b>Masukkan Harga Normal Baru</b>\n"
@@ -834,6 +892,24 @@ async def edit_vvip_price_callback(client, event):
             f"Harga paket VVIP <b>{name}</b> berhasil diubah.\n"
             f"Normal: <code>Rp {new_normal_price:,}</code>\n"
             f"Promo: <code>Rp {new_promo_price:,}</code>",
+            parse_mode="html",
+        )
+    except client.userCancel:
+        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        back_btn = client.ns.telegram.button.build_button_grid(layout)
+        await client.send_message(
+            chat_id,
+            f"{em.no_entry_age} <b>Proses Dibatalkan</b>",
+            buttons=back_btn,
+            parse_mode="html",
+        )
+    except asyncio.TimeoutError:
+        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        back_btn = client.ns.telegram.button.build_button_grid(layout)
+        await client.send_message(
+            chat_id,
+            f"{em.alarm_clock} <b>Waktu Habis</b>\nProses telah dibatalkan otomatis.",
+            buttons=back_btn,
             parse_mode="html",
         )
     except Exception as e:
@@ -892,7 +968,7 @@ async def set_api_key_prompt(client, event):
         if key_name == "SAWERIA":
             username_msg = await client.ask(
                 chat_id,
-                f"Kirim <b>Username Saweria</b> Anda.",
+                f"Kirim <b>Username Saweria</b> Anda.\n\nKetik <code>/batal</code> untuk membatalkan.",
                 parse_mode="html",
             )
             username_val = username_msg.text.strip()
@@ -929,6 +1005,20 @@ async def set_api_key_prompt(client, event):
 
         from services import initialize_bot_services
         await initialize_bot_services(client, ctx.db)
+    except client.userCancel:
+        await client.send_message(
+            chat_id,
+            f"{em.no_entry_age} <b>Proses Dibatalkan</b>",
+            buttons=back_btn,
+            parse_mode="html",
+        )
+    except asyncio.TimeoutError:
+        await client.send_message(
+            chat_id,
+            f"{em.alarm_clock} <b>Waktu Habis</b>\nProses telah dibatalkan otomatis.",
+            buttons=back_btn,
+            parse_mode="html",
+        )
     except Exception as e:
         await client.send_message(
             chat_id,
@@ -1010,7 +1100,7 @@ async def add_coupon_callback(client, event):
 
     try:
         def ask(text):
-            return client.ask(chat_id, text, parse_mode="html")
+            return client.ask(chat_id, text + "\n\nKetik <code>/batal</code> untuk membatalkan.", parse_mode="html")
 
         code_msg = await ask(f"Masukkan kode kupon unik (misal: <code>DISKONBARU</code>).")
         code = code_msg.text.strip().upper()
@@ -1054,6 +1144,24 @@ async def add_coupon_callback(client, event):
         await client.send_message(
             chat_id,
             f"{em.white_check_mark} Kupon <code>{code}</code> berhasil dibuat.",
+            parse_mode="html",
+        )
+    except client.userCancel:
+        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        back_btn = client.ns.telegram.button.build_button_grid(layout)
+        await client.send_message(
+            chat_id,
+            f"{em.no_entry_age} <b>Proses Dibatalkan</b>",
+            buttons=back_btn,
+            parse_mode="html",
+        )
+    except asyncio.TimeoutError:
+        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        back_btn = client.ns.telegram.button.build_button_grid(layout)
+        await client.send_message(
+            chat_id,
+            f"{em.alarm_clock} <b>Waktu Habis</b>\nProses telah dibatalkan otomatis.",
+            buttons=back_btn,
             parse_mode="html",
         )
     except Exception as e:
