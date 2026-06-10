@@ -192,7 +192,7 @@ async def confirm_bot_payment_callback(client, event):
     order_data_str = await ctx.db.getVars(client.uid, transaction_id)
     if not order_data_str:
         return await event.answer(
-            "💢 Invoice ini sudah tidak valid atau telah selesai.", alert=True
+            "% Invoice ini sudah tidak valid atau telah selesai.", alert=True
         )
 
     months_str, amount_raw_str = order_data_str.split("|")
@@ -253,21 +253,21 @@ async def start_creation_process_callback(client, event):
     try:
         api_id_msg = await client.ask(
             user_id,
-            f"{em.lock_with_key} <b>1/3: Masukkan API ID Anda.</b>\nDapatkan dari my.telegram.org.",
+            f"{em.lock_with_key} <b>1/3: Masukkan API ID Anda.</b>\nDapatkan dari my.telegram.org.\n\nKetik <code>/batal</code> untuk membatalkan.",
             parse_mode="html",
         )
         api_id = api_id_msg.text.strip()
 
         api_hash_msg = await client.ask(
             user_id,
-            f"{em.lock_with_key} <b>2/3: Masukkan API Hash Anda.</b>\nDapatkan dari my.telegram.org.",
+            f"{em.lock_with_key} <b>2/3: Masukkan API Hash Anda.</b>\nDapatkan dari my.telegram.org.\n\nKetik <code>/batal</code> untuk membatalkan.",
             parse_mode="html",
         )
         api_hash = api_hash_msg.text.strip()
 
         token_msg = await client.ask(
             user_id,
-            f"{em.robot} <b>3/3: Masukkan Bot Token Anda.</b>\nDapatkan dari @BotFather.",
+            f"{em.robot} <b>3/3: Masukkan Bot Token Anda.</b>\nDapatkan dari @BotFather.\n\nKetik <code>/batal</code> untuk membatalkan.",
             parse_mode="html",
         )
         token = token_msg.text.strip()
@@ -305,7 +305,7 @@ async def start_creation_process_callback(client, event):
             f"{em.party_popper} <b>Selamat!</b> Bot <b>{new_bot_name.first_name}</b> berhasil dibuat dan aktif.",
             parse_mode="html",
         )
-    except listen.UserCancelled:
+    except client.userCancel:
         await client.send_message(
             user_id,
             f"{em.no_entry_age} <b>Proses Dibatalkan</b>",
