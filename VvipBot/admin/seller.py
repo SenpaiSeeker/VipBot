@@ -77,10 +77,22 @@ async def give_access_callback(client, event):
 
     layout = [
         [
-            {"text": f"📅 {m} Bulan", "callback_data": f"do_give_{target_id}_{m}", "style": "primary", "emoji": 5431897022456145283}
+            {
+                "text": f"📅 {m} Bulan",
+                "callback_data": f"do_give_{target_id}_{m}",
+                "style": "primary",
+                "emoji": 5431897022456145283,
+            }
             for m in [1, 3, 6, 12]
         ],
-        [{"text": "◀️ Kembali", "callback_data": "close_panel", "style": "primary", "emoji": 5373098009640836781}],
+        [
+            {
+                "text": "◀️ Kembali",
+                "callback_data": "close_panel",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ],
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
 
@@ -118,9 +130,7 @@ async def do_give_access_callback(client, event):
             f"Masa aktif akses hingga: <code>{expiry_in_jakarta.strftime('%d %B %Y, %H:%M %Z')}</code>",
             parse_mode="html",
         )
-        await event.answer(
-            f"✅ Akses berhasil diberikan kepada {target_id}"
-        )
+        await event.answer(f"✅ Akses berhasil diberikan kepada {target_id}")
 
     except Exception as e:
         await event.answer(f"Gagal memproses. Error: {e}", alert=True)
@@ -307,7 +317,14 @@ async def list_akses_handler(client, event):
 
         text += f"{index}. {mention}\n"
         keyboard.append(
-            [{"text": f"❌ Cabut Akses ({uid})", "callback_data": f"del_acc_{uid}", "style": "danger", "emoji": 5465665476971471368}]
+            [
+                {
+                    "text": f"❌ Cabut Akses ({uid})",
+                    "callback_data": f"del_acc_{uid}",
+                    "style": "danger",
+                    "emoji": 5465665476971471368,
+                }
+            ]
         )
 
     btn = client.ns.telegram.button.build_button_grid(keyboard)
@@ -350,7 +367,14 @@ async def delete_access_callback(client, event):
 
         text += f"{index}. {mention}\n"
         keyboard.append(
-            [{"text": f"❌ Cabut Akses ({uid})", "callback_data": f"del_acc_{uid}", "style": "danger", "emoji": 5465665476971471368}]
+            [
+                {
+                    "text": f"❌ Cabut Akses ({uid})",
+                    "callback_data": f"del_acc_{uid}",
+                    "style": "danger",
+                    "emoji": 5465665476971471368,
+                }
+            ]
         )
 
     btn = client.ns.telegram.button.build_button_grid(keyboard)

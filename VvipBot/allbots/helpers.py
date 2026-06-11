@@ -1,7 +1,7 @@
 import asyncio
 import math
 from datetime import datetime, timezone
-from telethon import events
+
 from .. import ctx
 from ..admin.cache import _user_cache
 
@@ -112,12 +112,31 @@ async def _build_page(client, page: int) -> dict:
         next_page = (page + 1) % total_pages
         layout.append(
             [
-                {"text": "« Sebelumnya", "callback_data": f"allbots_{prev_page}", "style": "primary", "emoji": 5373098009640836781},
-                {"text": "Selanjutnya »", "callback_data": f"allbots_{next_page}", "style": "primary", "emoji": 5373098009640836781},
+                {
+                    "text": "« Sebelumnya",
+                    "callback_data": f"allbots_{prev_page}",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                },
+                {
+                    "text": "Selanjutnya »",
+                    "callback_data": f"allbots_{next_page}",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                },
             ]
         )
 
-    layout.append([{"text": "❌ Tutup Panel", "callback_data": "close_panel", "style": "danger", "emoji": 5465665476971471368}])
+    layout.append(
+        [
+            {
+                "text": "❌ Tutup Panel",
+                "callback_data": "close_panel",
+                "style": "danger",
+                "emoji": 5465665476971471368,
+            }
+        ]
+    )
 
     return {
         "empty": False,
@@ -128,7 +147,9 @@ async def _build_page(client, page: int) -> dict:
     }
 
 
-async def send_allbots_list(client, message_or_query, page: int, force_refresh: bool = False):
+async def send_allbots_list(
+    client, message_or_query, page: int, force_refresh: bool = False
+):
     if force_refresh:
         _page_cache.pop(page, None)
 

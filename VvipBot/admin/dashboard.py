@@ -172,7 +172,16 @@ async def show_stars_stats(client, event):
         transactions_history = (
             raw_result.history if hasattr(raw_result, "history") else []
         )
-        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        layout = [
+            [
+                {
+                    "text": "◀️ Kembali ke Pengaturan",
+                    "callback_data": "settings",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ]
+        ]
         btn = client.ns.telegram.button.build_button_grid(layout)
 
         if not transactions_history:
@@ -246,13 +255,30 @@ async def show_stars_stats(client, event):
             next_page = page + 1 if page < total_pages - 1 else 0
             layout.append(
                 [
-                    {"text": "« Sebelumnya", "callback_data": f"stats_{prev_page}", "style": "primary", "emoji": 5373098009640836781},
-                    {"text": "Selanjutnya »", "callback_data": f"stats_{next_page}", "style": "primary", "emoji": 5373098009640836781},
+                    {
+                        "text": "« Sebelumnya",
+                        "callback_data": f"stats_{prev_page}",
+                        "style": "primary",
+                        "emoji": 5373098009640836781,
+                    },
+                    {
+                        "text": "Selanjutnya »",
+                        "callback_data": f"stats_{next_page}",
+                        "style": "primary",
+                        "emoji": 5373098009640836781,
+                    },
                 ]
             )
 
         layout.append(
-            [{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]
+            [
+                {
+                    "text": "◀️ Kembali ke Pengaturan",
+                    "callback_data": "settings",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ]
         )
         btn = client.ns.telegram.button.build_button_grid(layout)
 
@@ -281,7 +307,16 @@ async def total_users_count_callback(client, event):
     )
 
     markup = client.ns.telegram.button.build_button_grid(
-        [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        [
+            [
+                {
+                    "text": "◀️ Kembali ke Pengaturan",
+                    "callback_data": "settings",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ]
+        ]
     )
 
     await event.edit(text, buttons=markup, parse_mode="html")

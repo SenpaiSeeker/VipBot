@@ -15,7 +15,14 @@ async def list_members_callback(client, event):
 
     em = client.ns.emoji
     members_list = await ctx.db.getListVars(client.uid, "vvip_members") or []
-    back_row = [{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]
+    back_row = [
+        {
+            "text": "◀️ Kembali ke Pengaturan",
+            "callback_data": "settings",
+            "style": "primary",
+            "emoji": 5373098009640836781,
+        }
+    ]
 
     if not members_list:
         text = f"{em.white_check_mark} Tidak ada member VVIP yang tercatat di database."
@@ -75,8 +82,18 @@ async def list_members_callback(client, event):
         next_page = (page + 1) % total_pages
         pagination_row.extend(
             [
-                {"text": "« Sebelumnya", "callback_data": f"list_members_{prev_page}", "style": "primary", "emoji": 5373098009640836781},
-                {"text": "Selanjutnya »", "callback_data": f"list_members_{next_page}", "style": "primary", "emoji": 5373098009640836781},
+                {
+                    "text": "« Sebelumnya",
+                    "callback_data": f"list_members_{prev_page}",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                },
+                {
+                    "text": "Selanjutnya »",
+                    "callback_data": f"list_members_{next_page}",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                },
             ]
         )
 
@@ -187,7 +204,16 @@ async def do_kick_member_callback(client, event):
         await ctx.db.removeListVars(client.uid, "vvip_members", record_to_remove)
         user_to_kick = await client.get_entity(user_id)
 
-        layout = [[{"text": "◀️ Kembali", "callback_data": "list_members_0", "style": "primary", "emoji": 5373098009640836781}]]
+        layout = [
+            [
+                {
+                    "text": "◀️ Kembali",
+                    "callback_data": "list_members_0",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ]
+        ]
         btn_back = client.ns.telegram.button.build_button_grid(layout)
 
         await event.edit(
@@ -249,7 +275,14 @@ async def check_active_menu_callback(client, event):
     if button_row:
         layout.append(button_row)
 
-    back_row = [{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]
+    back_row = [
+        {
+            "text": "◀️ Kembali ke Pengaturan",
+            "callback_data": "settings",
+            "style": "primary",
+            "emoji": 5373098009640836781,
+        }
+    ]
 
     if not layout:
         text = "Tidak ada VVIP dengan Chat ID valid yang terkonfigurasi."
@@ -284,9 +317,7 @@ async def list_active_members_callback(client, event):
 
     if chat_id not in ctx.ACTIVE_MEMBERS_CACHE:
         try:
-            await event.answer(
-                "⏳ Mengambil data member dari server Telegram..."
-            )
+            await event.answer("⏳ Mengambil data member dari server Telegram...")
             members = await client.get_participants(chat_id)
             members = [m for m in members if not m.bot]
             random.shuffle(members)
@@ -323,8 +354,18 @@ async def list_active_members_callback(client, event):
         next_p = (page + 1) % total_members
         pagination_row.extend(
             [
-                {"text": "«", "callback_data": f"list_active_{chat_id}_{prev_p}", "style": "primary", "emoji": 5373098009640836781},
-                {"text": "»", "callback_data": f"list_active_{chat_id}_{next_p}", "style": "primary", "emoji": 5373098009640836781},
+                {
+                    "text": "«",
+                    "callback_data": f"list_active_{chat_id}_{prev_p}",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                },
+                {
+                    "text": "»",
+                    "callback_data": f"list_active_{chat_id}_{next_p}",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                },
             ]
         )
 

@@ -1,4 +1,5 @@
 from telethon import events
+
 from .. import command, ctx
 
 
@@ -16,8 +17,18 @@ async def allbots_confirm_delete_callback(client, event):
 
     layout = [
         [
-            {"text": "✅ Ya, Hapus",    "callback_data": f"allbots_do_delete_{bot_id}", "style": "success", "emoji": 5427009714745517609},
-            {"text": "❌ Tidak",        "callback_data": f"allbots_detail_{bot_id}_0", "style": "danger",  "emoji": 5465665476971471368},
+            {
+                "text": "✅ Ya, Hapus",
+                "callback_data": f"allbots_do_delete_{bot_id}",
+                "style": "success",
+                "emoji": 5427009714745517609,
+            },
+            {
+                "text": "❌ Tidak",
+                "callback_data": f"allbots_detail_{bot_id}_0",
+                "style": "danger",
+                "emoji": 5465665476971471368,
+            },
         ]
     ]
 
@@ -27,7 +38,7 @@ async def allbots_confirm_delete_callback(client, event):
 
 @command(lambda ctx: events.CallbackQuery(pattern=b"^allbots_do_delete_"))
 async def allbots_do_delete_callback(client, event):
-    em = client.ns.emoji
+    client.ns.emoji
     payload = event.data.decode("utf-8")
     bot_id = int(payload.split("_")[3])
 
@@ -39,6 +50,7 @@ async def allbots_do_delete_callback(client, event):
         await event.answer("✅ Bot berhasil dihapus.", alert=True)
         event.data = b"allbots_list_0"
         from .list import allbots_list_callback
+
         await allbots_list_callback(client, event)
     except Exception as e:
         await event.answer(f"❌ Gagal menghapus bot: {e}", alert=True)

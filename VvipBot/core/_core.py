@@ -176,7 +176,16 @@ async def about_bot_callback(client, event):
         f"Semua proses dirancang agar cepat, aman, dan tanpa perlu menunggu konfirmasi manual!"
     )
 
-    layout = [[{"text": "◀️ Kembali ke Menu Utama", "callback_data": "start", "style": "primary", "emoji": 5373098009640836781}]]
+    layout = [
+        [
+            {
+                "text": "◀️ Kembali ke Menu Utama",
+                "callback_data": "start",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ]
+    ]
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     await event.edit(text, buttons=btn, parse_mode="html")
@@ -198,7 +207,16 @@ async def list_vvip_bot(client, event):
 
     if not vvip_list:
         text = f"{em.card_index_dividers} Saat ini belum ada paket VVIP yang tersedia."
-        layout.append([{"text": "◀️ Kembali ke Menu Utama", "callback_data": "start", "style": "primary", "emoji": 5373098009640836781}])
+        layout.append(
+            [
+                {
+                    "text": "◀️ Kembali ke Menu Utama",
+                    "callback_data": "start",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ]
+        )
         btn = client.ns.telegram.button.build_button_grid(layout)
         await event.edit(text, buttons=btn, parse_mode="html")
         return
@@ -237,7 +255,16 @@ async def list_vvip_bot(client, event):
             }
         ]
     )
-    layout.append([{"text": "◀️ Kembali ke Menu Utama", "callback_data": "start", "style": "primary", "emoji": 5373098009640836781}])
+    layout.append(
+        [
+            {
+                "text": "◀️ Kembali ke Menu Utama",
+                "callback_data": "start",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ]
+    )
 
     btn = client.ns.telegram.button.build_button_grid(layout)
     text = (
@@ -291,7 +318,14 @@ async def donate_callback(client, event):
                 "emoji": 6298332994260175589,
             },
         ],
-        [{"text": "◀️ Kembali ke Menu Utama", "callback_data": "start", "style": "primary", "emoji": 5373098009640836781}],
+        [
+            {
+                "text": "◀️ Kembali ke Menu Utama",
+                "callback_data": "start",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ],
     ]
 
     btn = client.ns.telegram.button.build_button_grid(layout)

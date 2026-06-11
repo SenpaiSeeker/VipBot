@@ -1,4 +1,5 @@
 from telethon import events
+
 from .. import command, ctx
 
 
@@ -10,10 +11,27 @@ async def allbots_duration_callback(client, event):
 
     layout = [
         [
-            {"text": "➕ Tambah Masa Aktif", "callback_data": f"allbots_extend_{bot_id}", "style": "success", "emoji": 5226945370684140473},
-            {"text": "➖ Kurangi Masa Aktif", "callback_data": f"allbots_reduce_{bot_id}", "style": "danger",  "emoji": 5229113891081956317},
+            {
+                "text": "➕ Tambah Masa Aktif",
+                "callback_data": f"allbots_extend_{bot_id}",
+                "style": "success",
+                "emoji": 5226945370684140473,
+            },
+            {
+                "text": "➖ Kurangi Masa Aktif",
+                "callback_data": f"allbots_reduce_{bot_id}",
+                "style": "danger",
+                "emoji": 5229113891081956317,
+            },
         ],
-        [{"text": "◀️ Kembali", "callback_data": f"allbots_detail_{bot_id}_0", "style": "primary", "emoji": 5373098009640836781}],
+        [
+            {
+                "text": "◀️ Kembali",
+                "callback_data": f"allbots_detail_{bot_id}_0",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ],
     ]
 
     btn = client.ns.telegram.button.build_button_grid(layout)
@@ -37,12 +55,14 @@ async def allbots_extend_callback(client, event):
     row = []
 
     for days in day_options:
-        row.append({
-            "text": f"➕{days} hari",
-            "callback_data": f"allbots_do_extend_{bot_id}_{days}",
-            "style": "success",
-            "emoji": 5226945370684140473,
-        })
+        row.append(
+            {
+                "text": f"➕{days} hari",
+                "callback_data": f"allbots_do_extend_{bot_id}_{days}",
+                "style": "success",
+                "emoji": 5226945370684140473,
+            }
+        )
         if len(row) == 3:
             layout.append(row)
             row = []
@@ -50,7 +70,16 @@ async def allbots_extend_callback(client, event):
     if row:
         layout.append(row)
 
-    layout.append([{"text": "◀️ Kembali", "callback_data": f"allbots_duration_{bot_id}", "style": "primary", "emoji": 5373098009640836781}])
+    layout.append(
+        [
+            {
+                "text": "◀️ Kembali",
+                "callback_data": f"allbots_duration_{bot_id}",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ]
+    )
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     await event.edit(
@@ -62,13 +91,14 @@ async def allbots_extend_callback(client, event):
 
 @command(lambda ctx: events.CallbackQuery(pattern=b"^allbots_do_extend_"))
 async def allbots_do_extend_callback(client, event):
-    em = client.ns.emoji
+    client.ns.emoji
     payload = event.data.decode("utf-8")
     parts = payload.split("_")
     bot_id = int(parts[3])
     days = int(parts[4])
 
     from datetime import datetime, timedelta, timezone
+
     exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
     current_exp = (
         datetime.fromisoformat(exp_date_str)
@@ -78,7 +108,9 @@ async def allbots_do_extend_callback(client, event):
     new_exp = current_exp + timedelta(days=days)
     await ctx.db.setVars(bot_id, "bot_expiration_date", new_exp.isoformat())
 
-    await event.answer(f"✅ {days} hari berhasil ditambahkan ke bot {bot_id}.", alert=True)
+    await event.answer(
+        f"✅ {days} hari berhasil ditambahkan ke bot {bot_id}.", alert=True
+    )
     event.data = f"allbots_duration_{bot_id}".encode("utf-8")
     await allbots_duration_callback(client, event)
 
@@ -94,12 +126,14 @@ async def allbots_reduce_callback(client, event):
     row = []
 
     for days in day_options:
-        row.append({
-            "text": f"➖{days} hari",
-            "callback_data": f"allbots_do_reduce_{bot_id}_{days}",
-            "style": "danger",
-            "emoji": 5229113891081956317,
-        })
+        row.append(
+            {
+                "text": f"➖{days} hari",
+                "callback_data": f"allbots_do_reduce_{bot_id}_{days}",
+                "style": "danger",
+                "emoji": 5229113891081956317,
+            }
+        )
         if len(row) == 3:
             layout.append(row)
             row = []
@@ -107,7 +141,16 @@ async def allbots_reduce_callback(client, event):
     if row:
         layout.append(row)
 
-    layout.append([{"text": "◀️ Kembali", "callback_data": f"allbots_duration_{bot_id}", "style": "primary", "emoji": 5373098009640836781}])
+    layout.append(
+        [
+            {
+                "text": "◀️ Kembali",
+                "callback_data": f"allbots_duration_{bot_id}",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ]
+    )
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     await event.edit(
@@ -119,13 +162,14 @@ async def allbots_reduce_callback(client, event):
 
 @command(lambda ctx: events.CallbackQuery(pattern=b"^allbots_do_reduce_"))
 async def allbots_do_reduce_callback(client, event):
-    em = client.ns.emoji
+    client.ns.emoji
     payload = event.data.decode("utf-8")
     parts = payload.split("_")
     bot_id = int(parts[3])
     days = int(parts[4])
 
     from datetime import datetime, timedelta, timezone
+
     exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
     current_exp = (
         datetime.fromisoformat(exp_date_str)
@@ -135,6 +179,8 @@ async def allbots_do_reduce_callback(client, event):
     new_exp = current_exp - timedelta(days=days)
     await ctx.db.setVars(bot_id, "bot_expiration_date", new_exp.isoformat())
 
-    await event.answer(f"✅ Masa aktif bot {bot_id} berhasil dikurangi {days} hari.", alert=True)
+    await event.answer(
+        f"✅ Masa aktif bot {bot_id} berhasil dikurangi {days} hari.", alert=True
+    )
     event.data = f"allbots_duration_{bot_id}".encode("utf-8")
     await allbots_duration_callback(client, event)

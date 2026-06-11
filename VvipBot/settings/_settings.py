@@ -1,14 +1,16 @@
 import asyncio
+import binascii
 import os
 import uuid
-import binascii
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
-from telethon import events, utils
-from telethon.tl import functions, types
+
+from telethon import events
 from telethon.extensions.html import unparse as html_unparse
+from telethon.tl import functions, types
+
 from .. import command, ctx, is_bot_owner
-from ..core._core import invalidate_setting_cache, get_cached_setting
+from ..core._core import invalidate_setting_cache
 
 
 @command(lambda ctx: events.CallbackQuery(pattern=b"^settings$"))
@@ -22,37 +24,119 @@ async def settings(client, event):
 
     layout = [
         [
-            {"text": "📷 Atur Foto Start",      "callback_data": "set_start_photo",       "style": "primary", "emoji": 5375074927252621134},
-            {"text": "📝 Atur Teks Start",       "callback_data": "set_start_text",        "style": "primary", "emoji": 5334673106202010226},
+            {
+                "text": "📷 Atur Foto Start",
+                "callback_data": "set_start_photo",
+                "style": "primary",
+                "emoji": 5375074927252621134,
+            },
+            {
+                "text": "📝 Atur Teks Start",
+                "callback_data": "set_start_text",
+                "style": "primary",
+                "emoji": 5334673106202010226,
+            },
         ],
         [
-            {"text": "➕ Tambah VVIP",          "callback_data": "setup_listvvip",        "style": "success", "emoji": 5226945370684140473},
-            {"text": "🗑️ Hapus VVIP",           "callback_data": "delete_listvvip",       "style": "danger",  "emoji": 5229113891081956317},
+            {
+                "text": "➕ Tambah VVIP",
+                "callback_data": "setup_listvvip",
+                "style": "success",
+                "emoji": 5226945370684140473,
+            },
+            {
+                "text": "🗑️ Hapus VVIP",
+                "callback_data": "delete_listvvip",
+                "style": "danger",
+                "emoji": 5229113891081956317,
+            },
         ],
         [
-            {"text": "✏️ Edit Harga VVIP",      "callback_data": "edit_price_listvvip",   "style": "primary", "emoji": 5334882760735598374},
+            {
+                "text": "✏️ Edit Harga VVIP",
+                "callback_data": "edit_price_listvvip",
+                "style": "primary",
+                "emoji": 5334882760735598374,
+            },
         ],
         [
-            {"text": "👥 Total Pengguna",        "callback_data": "total_users_count",     "style": "primary", "emoji": 5372926953978341366},
-            {"text": "🔍 Cek Member VVIP",       "callback_data": "list_members_0",        "style": "primary", "emoji": 5372926953978341366},
+            {
+                "text": "👥 Total Pengguna",
+                "callback_data": "total_users_count",
+                "style": "primary",
+                "emoji": 5372926953978341366,
+            },
+            {
+                "text": "🔍 Cek Member VVIP",
+                "callback_data": "list_members_0",
+                "style": "primary",
+                "emoji": 5372926953978341366,
+            },
         ],
         [
-            {"text": "✅ Cek Member Aktif",      "callback_data": "check_active_menu_init","style": "primary", "emoji": 5188217332748527444},
-            {"text": "🔎 Cek Status Grup VVIP",  "callback_data": "check_vvip_status",     "style": "primary", "emoji": 5188311512791393083},
+            {
+                "text": "✅ Cek Member Aktif",
+                "callback_data": "check_active_menu_init",
+                "style": "primary",
+                "emoji": 5188217332748527444,
+            },
+            {
+                "text": "🔎 Cek Status Grup VVIP",
+                "callback_data": "check_vvip_status",
+                "style": "primary",
+                "emoji": 5188311512791393083,
+            },
         ],
         [
-            {"text": "📢 Buat Broadcast",        "callback_data": "broadcast",             "style": "primary", "emoji": 5469903029144657419},
-            {"text": "⭐ Harga Broadcast Paid",  "callback_data": "set_broadcast_price",   "style": "primary", "emoji": 5458799228719472718},
+            {
+                "text": "📢 Buat Broadcast",
+                "callback_data": "broadcast",
+                "style": "primary",
+                "emoji": 5469903029144657419,
+            },
+            {
+                "text": "⭐ Harga Broadcast Paid",
+                "callback_data": "set_broadcast_price",
+                "style": "primary",
+                "emoji": 5458799228719472718,
+            },
         ],
         [
-            {"text": "🔑 Kelola Kunci API",      "callback_data": "api_settings",          "style": "primary", "emoji": 5330115548900501467},
-            {"text": "🎟️ Kelola Kupon",         "callback_data": "manage_coupons",        "style": "primary", "emoji": 5418010521309815154},
+            {
+                "text": "🔑 Kelola Kunci API",
+                "callback_data": "api_settings",
+                "style": "primary",
+                "emoji": 5330115548900501467,
+            },
+            {
+                "text": "🎟️ Kelola Kupon",
+                "callback_data": "manage_coupons",
+                "style": "primary",
+                "emoji": 5418010521309815154,
+            },
         ],
         [
-            {"text": "💰 Pendapatan VIP",        "callback_data": "vip_revenue_menu",      "style": "primary", "emoji": 5375296873982604963},
-            {"text": "📊 Statistik Stars",       "callback_data": "stats_0",               "style": "primary", "emoji": 5458799228719472718},
+            {
+                "text": "💰 Pendapatan VIP",
+                "callback_data": "vip_revenue_menu",
+                "style": "primary",
+                "emoji": 5375296873982604963,
+            },
+            {
+                "text": "📊 Statistik Stars",
+                "callback_data": "stats_0",
+                "style": "primary",
+                "emoji": 5458799228719472718,
+            },
         ],
-        [{"text": "◀️ Kembali ke Menu Utama", "callback_data": "start", "style": "primary", "emoji": 5373098009640836781}],
+        [
+            {
+                "text": "◀️ Kembali ke Menu Utama",
+                "callback_data": "start",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ],
     ]
 
     em = client.ns.emoji
@@ -107,10 +191,14 @@ async def check_vvip_status_callback(client, event):
             else:
                 try:
                     if isinstance(chat, types.Channel):
-                        full_chat = await client(functions.channels.GetFullChannelRequest(channel=chat))
+                        full_chat = await client(
+                            functions.channels.GetFullChannelRequest(channel=chat)
+                        )
                     else:
-                        full_chat = await client(functions.messages.GetFullChatRequest(chat_id=chat.id))
-                    
+                        full_chat = await client(
+                            functions.messages.GetFullChatRequest(chat_id=chat.id)
+                        )
+
                     exported = getattr(full_chat.full_chat, "exported_invite", None)
                     if exported and getattr(exported, "link", None):
                         invite_link = exported.link
@@ -148,7 +236,16 @@ async def check_vvip_status_callback(client, event):
     if report_text:
         await client.send_message(chat_id, report_text, parse_mode="html")
 
-    layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+    layout = [
+        [
+            {
+                "text": "◀️ Kembali ke Pengaturan",
+                "callback_data": "settings",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ]
+    ]
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     await status_msg.delete()
@@ -174,11 +271,35 @@ async def vip_revenue_menu_callback(client, event):
     )
     layout = [
         [
-            {"text": "📅 Harian (Hari Ini)",  "callback_data": "show_revenue_daily",   "style": "primary", "emoji": 5431897022456145283},
-            {"text": "📅 Mingguan (7 Hari)",  "callback_data": "show_revenue_weekly",  "style": "primary", "emoji": 5431897022456145283},
+            {
+                "text": "📅 Harian (Hari Ini)",
+                "callback_data": "show_revenue_daily",
+                "style": "primary",
+                "emoji": 5431897022456145283,
+            },
+            {
+                "text": "📅 Mingguan (7 Hari)",
+                "callback_data": "show_revenue_weekly",
+                "style": "primary",
+                "emoji": 5431897022456145283,
+            },
         ],
-        [{"text": "📅 Bulanan (Bulan Ini)",   "callback_data": "show_revenue_monthly", "style": "primary", "emoji": 5431897022456145283}],
-        [{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings",             "style": "primary", "emoji": 5373098009640836781}],
+        [
+            {
+                "text": "📅 Bulanan (Bulan Ini)",
+                "callback_data": "show_revenue_monthly",
+                "style": "primary",
+                "emoji": 5431897022456145283,
+            }
+        ],
+        [
+            {
+                "text": "◀️ Kembali ke Pengaturan",
+                "callback_data": "settings",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ],
     ]
 
     btn = client.ns.telegram.button.build_button_grid(layout)
@@ -204,7 +325,9 @@ async def show_vip_revenue_callback(client, event):
 
     for record in revenue_history:
         try:
-            record_date = datetime.fromisoformat(record["date"]).astimezone(ZoneInfo("Asia/Jakarta"))
+            record_date = datetime.fromisoformat(record["date"]).astimezone(
+                ZoneInfo("Asia/Jakarta")
+            )
             include_record = False
 
             if period == "daily":
@@ -236,7 +359,16 @@ async def show_vip_revenue_callback(client, event):
         f"{em.repeat} <b>Jumlah Transaksi:</b> <code>{transaction_count}</code>"
     )
 
-    layout = [[{"text": "◀️ Kembali", "callback_data": "vip_revenue_menu", "style": "primary", "emoji": 5373098009640836781}]]
+    layout = [
+        [
+            {
+                "text": "◀️ Kembali",
+                "callback_data": "vip_revenue_menu",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ]
+    ]
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     await event.edit(text, buttons=btn, parse_mode="html")
@@ -255,7 +387,16 @@ async def set_start_photo_callback(client, event):
     chat_id = sender.id
     await event.delete()
 
-    layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+    layout = [
+        [
+            {
+                "text": "◀️ Kembali ke Pengaturan",
+                "callback_data": "settings",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ]
+    ]
     back_btn = client.ns.telegram.button.build_button_grid(layout)
 
     try:
@@ -284,7 +425,7 @@ async def set_start_photo_callback(client, event):
                 f"{em.cross_mark} <b>Gagal:</b> Pesan yang dikirim bukan foto. Proses dibatalkan.",
                 buttons=back_btn,
                 parse_mode="html",
-                )
+            )
 
         photo = ask_photo_msg.photo
         photo_data = {
@@ -336,7 +477,16 @@ async def set_start_text_callback(client, event):
     chat_id = sender.id
     await event.delete()
 
-    layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+    layout = [
+        [
+            {
+                "text": "◀️ Kembali ke Pengaturan",
+                "callback_data": "settings",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ]
+    ]
     back_btn = client.ns.telegram.button.build_button_grid(layout)
 
     try:
@@ -416,7 +566,16 @@ async def set_broadcast_price_callback(client, event):
     chat_id = sender.id
     await event.delete()
 
-    layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+    layout = [
+        [
+            {
+                "text": "◀️ Kembali ke Pengaturan",
+                "callback_data": "settings",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ]
+    ]
     back_btn = client.ns.telegram.button.build_button_grid(layout)
 
     try:
@@ -474,9 +633,13 @@ async def set_broadcast_price_callback(client, event):
         )
 
 
-async def _send_broadcast_message(client, target_user_id, source_message, broadcast_price=0):
+async def _send_broadcast_message(
+    client, target_user_id, source_message, broadcast_price=0
+):
     raw_text = source_message.message or ""
-    reply_markup, cleaned_text = client.ns.telegram.button.create_inline_keyboard(raw_text)
+    reply_markup, cleaned_text = client.ns.telegram.button.create_inline_keyboard(
+        raw_text
+    )
     final_markup = reply_markup if reply_markup else source_message.reply_markup
 
     if broadcast_price > 0 and (source_message.photo or source_message.video):
@@ -487,20 +650,38 @@ async def _send_broadcast_message(client, target_user_id, source_message, broadc
         if source_message.photo:
             media_list.append(types.InputMediaUploadedPhoto(file=uploaded_file))
         elif source_message.video:
-            media_list.append(types.InputMediaUploadedDocument(
-                file=uploaded_file,
-                mime_type="video/mp4",
-                attributes=[types.DocumentAttributeVideo(
-                    duration=source_message.video.duration if hasattr(source_message.video, "duration") else 10,
-                    w=source_message.video.w if hasattr(source_message.video, "w") else 640,
-                    h=source_message.video.h if hasattr(source_message.video, "h") else 360,
-                )],
-            ))
+            media_list.append(
+                types.InputMediaUploadedDocument(
+                    file=uploaded_file,
+                    mime_type="video/mp4",
+                    attributes=[
+                        types.DocumentAttributeVideo(
+                            duration=(
+                                source_message.video.duration
+                                if hasattr(source_message.video, "duration")
+                                else 10
+                            ),
+                            w=(
+                                source_message.video.w
+                                if hasattr(source_message.video, "w")
+                                else 640
+                            ),
+                            h=(
+                                source_message.video.h
+                                if hasattr(source_message.video, "h")
+                                else 360
+                            ),
+                        )
+                    ],
+                )
+            )
 
         await client.send_message(
             target_user_id,
             message=cleaned_text,
-            file=types.InputMediaPaidMedia(stars_amount=broadcast_price, extended_media=media_list),
+            file=types.InputMediaPaidMedia(
+                stars_amount=broadcast_price, extended_media=media_list
+            ),
             buttons=final_markup,
         )
 
@@ -509,11 +690,23 @@ async def _send_broadcast_message(client, target_user_id, source_message, broadc
         return
 
     if source_message.photo:
-        await client.send_message(target_user_id, message=cleaned_text, file=source_message.photo, buttons=final_markup)
+        await client.send_message(
+            target_user_id,
+            message=cleaned_text,
+            file=source_message.photo,
+            buttons=final_markup,
+        )
     elif source_message.text:
-        await client.send_message(target_user_id, message=cleaned_text, buttons=final_markup)
+        await client.send_message(
+            target_user_id, message=cleaned_text, buttons=final_markup
+        )
     else:
-        await client.send_message(target_user_id, message=cleaned_text, file=source_message.media, buttons=final_markup)
+        await client.send_message(
+            target_user_id,
+            message=cleaned_text,
+            file=source_message.media,
+            buttons=final_markup,
+        )
 
 
 @command(lambda ctx: events.CallbackQuery(pattern=b"^broadcast$"))
@@ -566,7 +759,9 @@ async def broadcast_callback(client, event):
         async def send_to_user(target_user_id):
             nonlocal success_count, fail_count
             try:
-                await _send_broadcast_message(client, target_user_id, ask_message, broadcast_price)
+                await _send_broadcast_message(
+                    client, target_user_id, ask_message, broadcast_price
+                )
                 success_count += 1
             except Exception:
                 await ctx.db.removeListVars(client.uid, "user_ids", target_user_id)
@@ -586,7 +781,16 @@ async def broadcast_callback(client, event):
             parse_mode="html",
         )
     except client.userCancel:
-        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        layout = [
+            [
+                {
+                    "text": "◀️ Kembali ke Pengaturan",
+                    "callback_data": "settings",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ]
+        ]
         back_btn = client.ns.telegram.button.build_button_grid(layout)
         await client.send_message(
             chat_id,
@@ -595,7 +799,16 @@ async def broadcast_callback(client, event):
             parse_mode="html",
         )
     except asyncio.TimeoutError:
-        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        layout = [
+            [
+                {
+                    "text": "◀️ Kembali ke Pengaturan",
+                    "callback_data": "settings",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ]
+        ]
         back_btn = client.ns.telegram.button.build_button_grid(layout)
         await client.send_message(
             chat_id,
@@ -604,7 +817,16 @@ async def broadcast_callback(client, event):
             parse_mode="html",
         )
     except Exception as e:
-        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        layout = [
+            [
+                {
+                    "text": "◀️ Kembali ke Pengaturan",
+                    "callback_data": "settings",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ]
+        ]
         back_btn = client.ns.telegram.button.build_button_grid(layout)
         await client.send_message(
             chat_id,
@@ -626,8 +848,13 @@ async def setup_listvvip(client, event):
     await event.delete()
 
     try:
+
         def ask(text):
-            return client.ask(chat_id, text + "\n\nKetik <code>/batal</code> untuk membatalkan.", parse_mode="html")
+            return client.ask(
+                chat_id,
+                text + "\n\nKetik <code>/batal</code> untuk membatalkan.",
+                parse_mode="html",
+            )
 
         def is_digit(t):
             return t.isdigit()
@@ -637,25 +864,35 @@ async def setup_listvvip(client, event):
 
         vvip_data = {}
 
-        name_msg = await ask(f"{em.pen} <b>Langkah 1/8: Nama Kategori</b>\nContoh: <code>VVIP Bulanan</code>")
+        name_msg = await ask(
+            f"{em.pen} <b>Langkah 1/8: Nama Kategori</b>\nContoh: <code>VVIP Bulanan</code>"
+        )
         vvip_data["name"] = name_msg.text.strip()
 
-        price_msg = await ask(f"{em.money_bag} <b>Langkah 2/8: Harga Normal</b>\nContoh: <code>50000</code> (tanpa titik/koma)")
+        price_msg = await ask(
+            f"{em.money_bag} <b>Langkah 2/8: Harga Normal</b>\nContoh: <code>50000</code> (tanpa titik/koma)"
+        )
         if not is_digit(price_msg.text.strip()):
             raise ValueError("Nilai harus berupa angka.")
         vvip_data["price"] = int(price_msg.text.strip())
 
-        duration_msg = await ask(f"{em.hourglass} <b>Langkah 3/8: Durasi (Hari)</b>\nKirim <code>0</code> untuk permanen.")
+        duration_msg = await ask(
+            f"{em.hourglass} <b>Langkah 3/8: Durasi (Hari)</b>\nKirim <code>0</code> untuk permanen."
+        )
         if not is_digit(duration_msg.text.strip()):
             raise ValueError("Nilai harus berupa angka.")
         vvip_data["duration"] = int(duration_msg.text.strip())
 
-        chat_msg = await ask(f"<b>Langkah 4/8: Chat ID Grup Normal</b>\nContoh: <code>-100123456789</code>")
+        chat_msg = await ask(
+            f"<b>Langkah 4/8: Chat ID Grup Normal</b>\nContoh: <code>-100123456789</code>"
+        )
         if not is_chatid(chat_msg.text.strip()):
             raise ValueError("ID harus berupa angka bulat.")
         vvip_data["chat_id_normal"] = int(chat_msg.text.strip())
 
-        promo_msg = await ask(f"{em.party_popper} <b>Langkah 5/8: Harga Promo</b>\nKirim <code>0</code> jika tidak ada.")
+        promo_msg = await ask(
+            f"{em.party_popper} <b>Langkah 5/8: Harga Promo</b>\nKirim <code>0</code> jika tidak ada."
+        )
         if not is_digit(promo_msg.text.strip()):
             raise ValueError("Nilai harus berupa angka.")
         vvip_data["promo_price"] = int(promo_msg.text.strip())
@@ -666,7 +903,9 @@ async def setup_listvvip(client, event):
                 raise ValueError("ID harus berupa angka bulat.")
             vvip_data["chat_id_promo"] = int(chat_promo_msg.text.strip())
 
-            promo_text_msg = await ask(f"{em.pencil} <b>Langkah 7/8: Deskripsi Promo</b>\nKirim <code>/skip</code> untuk default.")
+            promo_text_msg = await ask(
+                f"{em.pencil} <b>Langkah 7/8: Deskripsi Promo</b>\nKirim <code>/skip</code> untuk default."
+            )
             vvip_data["promo_text"] = (
                 ""
                 if promo_text_msg.text.strip().lower() == "/skip"
@@ -679,7 +918,9 @@ async def setup_listvvip(client, event):
         else:
             vvip_data["chat_id_promo"], vvip_data["promo_text"] = 0, ""
 
-        normal_text_msg = await ask(f"{em.pencil} <b>Langkah 8/8: Deskripsi Normal</b>\nKirim <code>/skip</code> untuk default.")
+        normal_text_msg = await ask(
+            f"{em.pencil} <b>Langkah 8/8: Deskripsi Normal</b>\nKirim <code>/skip</code> untuk default."
+        )
         vvip_data["normal_text"] = (
             ""
             if normal_text_msg.text.strip().lower() == "/skip"
@@ -697,7 +938,16 @@ async def setup_listvvip(client, event):
             parse_mode="html",
         )
     except client.userCancel:
-        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        layout = [
+            [
+                {
+                    "text": "◀️ Kembali ke Pengaturan",
+                    "callback_data": "settings",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ]
+        ]
         back_btn = client.ns.telegram.button.build_button_grid(layout)
         await client.send_message(
             chat_id,
@@ -706,7 +956,16 @@ async def setup_listvvip(client, event):
             parse_mode="html",
         )
     except asyncio.TimeoutError:
-        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        layout = [
+            [
+                {
+                    "text": "◀️ Kembali ke Pengaturan",
+                    "callback_data": "settings",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ]
+        ]
         back_btn = client.ns.telegram.button.build_button_grid(layout)
         await client.send_message(
             chat_id,
@@ -731,7 +990,14 @@ async def delete_listvvip(client, event):
         return
 
     vvip_list = await ctx.db.getListVars(client.uid, "list_vvip") or []
-    back_row = [{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]
+    back_row = [
+        {
+            "text": "◀️ Kembali ke Pengaturan",
+            "callback_data": "settings",
+            "style": "primary",
+            "emoji": 5373098009640836781,
+        }
+    ]
 
     if not vvip_list:
         text = f"{em.white_check_mark} Tidak ada paket VVIP untuk dihapus."
@@ -748,7 +1014,14 @@ async def delete_listvvip(client, event):
         name = item.get("name", "Tanpa Nama")
         item_id = uuid.uuid4().hex[:8]
         ctx.vip_list[item_id] = name
-        button_row.append({"text": f"🗑️ Hapus {name}", "callback_data": f"delete_vvip {item_id}", "style": "danger", "emoji": 5229113891081956317})
+        button_row.append(
+            {
+                "text": f"🗑️ Hapus {name}",
+                "callback_data": f"delete_vvip {item_id}",
+                "style": "danger",
+                "emoji": 5229113891081956317,
+            }
+        )
         if len(button_row) == 2:
             layout.append(button_row)
             button_row = []
@@ -779,13 +1052,24 @@ async def confirm_delete_vvip(client, event):
 
     name = ctx.vip_list[item_id]
     vvip_list = await ctx.db.getListVars(client.uid, "list_vvip") or []
-    item_to_remove = next((item for item in vvip_list if item.get("name") == name), None)
+    item_to_remove = next(
+        (item for item in vvip_list if item.get("name") == name), None
+    )
 
-    back_row = [{"text": "◀️ Kembali", "callback_data": "delete_listvvip", "style": "primary", "emoji": 5373098009640836781}]
+    back_row = [
+        {
+            "text": "◀️ Kembali",
+            "callback_data": "delete_listvvip",
+            "style": "primary",
+            "emoji": 5373098009640836781,
+        }
+    ]
 
     if item_to_remove:
         await ctx.db.removeListVars(client.uid, "list_vvip", item_to_remove)
-        message = f"{em.white_check_mark} <b>Berhasil!</b> Paket <b>{name}</b> telah dihapus."
+        message = (
+            f"{em.white_check_mark} <b>Berhasil!</b> Paket <b>{name}</b> telah dihapus."
+        )
         del ctx.vip_list[item_id]
     else:
         message = f"{em.cross_mark} <b>Gagal!</b> Paket <b>{name}</b> tidak ditemukan."
@@ -803,7 +1087,14 @@ async def edit_price_listvvip_callback(client, event):
         return
 
     vvip_list = await ctx.db.getListVars(client.uid, "list_vvip") or []
-    back_row = [{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]
+    back_row = [
+        {
+            "text": "◀️ Kembali ke Pengaturan",
+            "callback_data": "settings",
+            "style": "primary",
+            "emoji": 5373098009640836781,
+        }
+    ]
 
     if not vvip_list:
         text = f"{em.cross_mark} Belum ada paket VVIP."
@@ -820,7 +1111,14 @@ async def edit_price_listvvip_callback(client, event):
         name = item.get("name", "Tanpa Nama")
         item_id = uuid.uuid4().hex[:8]
         ctx.vip_list_edit[item_id] = name
-        button_row.append({"text": f"✏️ Edit {name}", "callback_data": f"edit_vvip_price {item_id}", "style": "primary", "emoji": 5334882760735598374})
+        button_row.append(
+            {
+                "text": f"✏️ Edit {name}",
+                "callback_data": f"edit_vvip_price {item_id}",
+                "style": "primary",
+                "emoji": 5334882760735598374,
+            }
+        )
         if len(button_row) == 2:
             layout.append(button_row)
             button_row = []
@@ -859,8 +1157,13 @@ async def edit_vvip_price_callback(client, event):
 
     await event.delete()
     try:
+
         def ask(text):
-            return client.ask(chat_id, text + "\n\nKetik <code>/batal</code> untuk membatalkan.", parse_mode="html")
+            return client.ask(
+                chat_id,
+                text + "\n\nKetik <code>/batal</code> untuk membatalkan.",
+                parse_mode="html",
+            )
 
         new_price_msg = await ask(
             f"{em.money_bag} <b>Masukkan Harga Normal Baru</b>\n"
@@ -895,7 +1198,16 @@ async def edit_vvip_price_callback(client, event):
             parse_mode="html",
         )
     except client.userCancel:
-        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        layout = [
+            [
+                {
+                    "text": "◀️ Kembali ke Pengaturan",
+                    "callback_data": "settings",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ]
+        ]
         back_btn = client.ns.telegram.button.build_button_grid(layout)
         await client.send_message(
             chat_id,
@@ -904,7 +1216,16 @@ async def edit_vvip_price_callback(client, event):
             parse_mode="html",
         )
     except asyncio.TimeoutError:
-        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        layout = [
+            [
+                {
+                    "text": "◀️ Kembali ke Pengaturan",
+                    "callback_data": "settings",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ]
+        ]
         back_btn = client.ns.telegram.button.build_button_grid(layout)
         await client.send_message(
             chat_id,
@@ -929,12 +1250,37 @@ async def api_settings_callback(client, event):
         return
 
     saweria_user_id = await ctx.db.getVars(client.uid, "SAWERIA_USER_ID")
-    saweria_status = f"{em.white_check_mark} Aktif" if saweria_user_id else f"{em.cross_mark} Belum Diatur"
+    saweria_status = (
+        f"{em.white_check_mark} Aktif"
+        if saweria_user_id
+        else f"{em.cross_mark} Belum Diatur"
+    )
 
     layout = [
-        [{"text": "🔑 Atur Kunci Saweria", "callback_data": "set_api SAWERIA",  "style": "primary", "emoji": 5330115548900501467}],
-        [{"text": "🗑️ Hapus Semua Kunci",  "callback_data": "del_api_confirm",  "style": "danger",  "emoji": 5229113891081956317}],
-        [{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings",      "style": "primary", "emoji": 5373098009640836781}],
+        [
+            {
+                "text": "🔑 Atur Kunci Saweria",
+                "callback_data": "set_api SAWERIA",
+                "style": "primary",
+                "emoji": 5330115548900501467,
+            }
+        ],
+        [
+            {
+                "text": "🗑️ Hapus Semua Kunci",
+                "callback_data": "del_api_confirm",
+                "style": "danger",
+                "emoji": 5229113891081956317,
+            }
+        ],
+        [
+            {
+                "text": "◀️ Kembali ke Pengaturan",
+                "callback_data": "settings",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ],
     ]
 
     text = (
@@ -961,7 +1307,16 @@ async def set_api_key_prompt(client, event):
     _, key_name = payload.split(" ", 1)
     await event.delete()
 
-    layout = [[{"text": "◀️ Kembali ke Pengaturan API", "callback_data": "api_settings", "style": "primary", "emoji": 5373098009640836781}]]
+    layout = [
+        [
+            {
+                "text": "◀️ Kembali ke Pengaturan API",
+                "callback_data": "api_settings",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ]
+    ]
     back_btn = client.ns.telegram.button.build_button_grid(layout)
 
     try:
@@ -1004,6 +1359,7 @@ async def set_api_key_prompt(client, event):
                 return
 
         from services import initialize_bot_services
+
         await initialize_bot_services(client, ctx.db)
     except client.userCancel:
         await client.send_message(
@@ -1042,8 +1398,18 @@ async def confirm_delete_api_keys(client, event):
     )
     layout = [
         [
-            {"text": "🗑️ Ya, Hapus Semua", "callback_data": "do_del_api",    "style": "danger",  "emoji": 5229113891081956317},
-            {"text": "❌ Tidak, Batalkan",  "callback_data": "api_settings", "style": "primary", "emoji": 5465665476971471368},
+            {
+                "text": "🗑️ Ya, Hapus Semua",
+                "callback_data": "do_del_api",
+                "style": "danger",
+                "emoji": 5229113891081956317,
+            },
+            {
+                "text": "❌ Tidak, Batalkan",
+                "callback_data": "api_settings",
+                "style": "primary",
+                "emoji": 5465665476971471368,
+            },
         ]
     ]
 
@@ -1062,6 +1428,7 @@ async def do_delete_api_keys(client, event):
     await ctx.db.removeVars(client.uid, "SAWERIA_USER_ID")
 
     from services import initialize_bot_services
+
     await initialize_bot_services(client, ctx.db)
 
     await event.answer("✅ Semua kunci API berhasil dihapus.", alert=True)
@@ -1078,9 +1445,30 @@ async def manage_coupons_callback(client, event):
 
     text = f"{em.ticket} <b>Manajemen Kupon</b>\nKelola kode diskon untuk VVIP Anda."
     layout = [
-        [{"text": "➕ Buat Kupon Baru", "callback_data": "add_coupon",       "style": "success", "emoji": 5226945370684140473}],
-        [{"text": "📋 Lihat Kupon",      "callback_data": "list_coupons_0",  "style": "primary", "emoji": 5372926953978341366}],
-        [{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings",   "style": "primary", "emoji": 5373098009640836781}],
+        [
+            {
+                "text": "➕ Buat Kupon Baru",
+                "callback_data": "add_coupon",
+                "style": "success",
+                "emoji": 5226945370684140473,
+            }
+        ],
+        [
+            {
+                "text": "📋 Lihat Kupon",
+                "callback_data": "list_coupons_0",
+                "style": "primary",
+                "emoji": 5372926953978341366,
+            }
+        ],
+        [
+            {
+                "text": "◀️ Kembali ke Pengaturan",
+                "callback_data": "settings",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ],
     ]
 
     btn = client.ns.telegram.button.build_button_grid(layout)
@@ -1099,10 +1487,17 @@ async def add_coupon_callback(client, event):
     await event.delete()
 
     try:
-        def ask(text):
-            return client.ask(chat_id, text + "\n\nKetik <code>/batal</code> untuk membatalkan.", parse_mode="html")
 
-        code_msg = await ask(f"Masukkan kode kupon unik (misal: <code>DISKONBARU</code>).")
+        def ask(text):
+            return client.ask(
+                chat_id,
+                text + "\n\nKetik <code>/batal</code> untuk membatalkan.",
+                parse_mode="html",
+            )
+
+        code_msg = await ask(
+            f"Masukkan kode kupon unik (misal: <code>DISKONBARU</code>)."
+        )
         code = code_msg.text.strip().upper()
 
         type_msg = await ask(
@@ -1147,7 +1542,16 @@ async def add_coupon_callback(client, event):
             parse_mode="html",
         )
     except client.userCancel:
-        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        layout = [
+            [
+                {
+                    "text": "◀️ Kembali ke Pengaturan",
+                    "callback_data": "settings",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ]
+        ]
         back_btn = client.ns.telegram.button.build_button_grid(layout)
         await client.send_message(
             chat_id,
@@ -1156,7 +1560,16 @@ async def add_coupon_callback(client, event):
             parse_mode="html",
         )
     except asyncio.TimeoutError:
-        layout = [[{"text": "◀️ Kembali ke Pengaturan", "callback_data": "settings", "style": "primary", "emoji": 5373098009640836781}]]
+        layout = [
+            [
+                {
+                    "text": "◀️ Kembali ke Pengaturan",
+                    "callback_data": "settings",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ]
+        ]
         back_btn = client.ns.telegram.button.build_button_grid(layout)
         await client.send_message(
             chat_id,
@@ -1184,7 +1597,14 @@ async def list_coupons_callback(client, event):
     page = int(payload.split("_")[2])
 
     coupons = await ctx.db.getListVars(client.uid, "coupons") or []
-    back_row = [{"text": "◀️ Kembali", "callback_data": "manage_coupons", "style": "primary", "emoji": 5373098009640836781}]
+    back_row = [
+        {
+            "text": "◀️ Kembali",
+            "callback_data": "manage_coupons",
+            "style": "primary",
+            "emoji": 5373098009640836781,
+        }
+    ]
 
     if not coupons:
         btn = client.ns.telegram.button.build_button_grid([back_row])
@@ -1213,17 +1633,33 @@ async def list_coupons_callback(client, event):
     if total_pages > 1:
         prev_page = (page - 1 + total_pages) % total_pages
         next_page = page + 1 if page + 1 < total_pages else page
-        pagination_row.extend([
-            {"text": "«", "callback_data": f"list_coupons_{prev_page}", "style": "primary", "emoji": 5373098009640836781},
-            {"text": "»", "callback_data": f"list_coupons_{next_page}", "style": "primary", "emoji": 5373098009640836781},
-        ])
+        pagination_row.extend(
+            [
+                {
+                    "text": "«",
+                    "callback_data": f"list_coupons_{prev_page}",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                },
+                {
+                    "text": "»",
+                    "callback_data": f"list_coupons_{next_page}",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                },
+            ]
+        )
 
-    layout.append([{
-        "text": "🗑️ Hapus Kupon Ini",
-        "callback_data": f"delete_coupon {coupon['code']} {page}",
-        "style": "danger",
-        "emoji": 5229113891081956317,
-    }])
+    layout.append(
+        [
+            {
+                "text": "🗑️ Hapus Kupon Ini",
+                "callback_data": f"delete_coupon {coupon['code']} {page}",
+                "style": "danger",
+                "emoji": 5229113891081956317,
+            }
+        ]
+    )
 
     if pagination_row:
         layout.append(pagination_row)

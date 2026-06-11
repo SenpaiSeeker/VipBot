@@ -530,7 +530,7 @@ async def manual_check_payment_callback(client, event):
 
 @command(lambda ctx: events.CallbackQuery(pattern=b"^pay_all_vvip$"))
 async def pay_all_vvip_callback(client, event):
-    em = client.ns.emoji
+    client.ns.emoji
     vvip_list = await ctx.db.getListVars(client.uid, "list_vvip") or []
     selected_items = _get_all_vvip_items(vvip_list)
 
@@ -550,7 +550,16 @@ async def notes_data(client, event):
     item_index = int(event.data.decode("utf-8").split("_")[1])
     em = client.ns.emoji
     vvip_list = await ctx.db.getListVars(client.uid, "list_vvip") or []
-    layout = [[{"text": "◀️ Kembali ke Daftar VVIP", "callback_data": "list_vvip", "style": "primary", "emoji": 5373098009640836781}]]
+    layout = [
+        [
+            {
+                "text": "◀️ Kembali ke Daftar VVIP",
+                "callback_data": "list_vvip",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ]
+    ]
 
     try:
         item = vvip_list[item_index]
@@ -591,7 +600,12 @@ async def notes_data(client, event):
                     "style": "primary",
                     "emoji": 5418010521309815154,
                 },
-                {"text": "◀️ Kembali", "callback_data": "list_vvip", "style": "primary", "emoji": 5373098009640836781},
+                {
+                    "text": "◀️ Kembali",
+                    "callback_data": "list_vvip",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                },
             ],
         ]
         btn = client.ns.telegram.button.build_button_grid(layout)
@@ -610,7 +624,16 @@ async def promo_detail(client, event):
     item_index = int(event.data.decode("utf-8").split("_")[2])
     em = client.ns.emoji
     vvip_list = await ctx.db.getListVars(client.uid, "list_vvip") or []
-    layout = [[{"text": "◀️ Kembali ke Daftar VVIP", "callback_data": "list_vvip", "style": "primary", "emoji": 5373098009640836781}]]
+    layout = [
+        [
+            {
+                "text": "◀️ Kembali ke Daftar VVIP",
+                "callback_data": "list_vvip",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ]
+    ]
 
     try:
         item = vvip_list[item_index]
@@ -651,7 +674,12 @@ async def promo_detail(client, event):
                     "style": "primary",
                     "emoji": 5418010521309815154,
                 },
-                {"text": "◀️ Kembali", "callback_data": "list_vvip", "style": "primary", "emoji": 5373098009640836781},
+                {
+                    "text": "◀️ Kembali",
+                    "callback_data": "list_vvip",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                },
             ],
         ]
         btn = client.ns.telegram.button.build_button_grid(layout)
@@ -741,14 +769,12 @@ async def paynow(client, event):
 @command(lambda ctx: events.CallbackQuery(pattern=b"^renew_sub_(\\d+)"))
 async def renew_subscription_callback(client, event):
     item_index = int(event.data.decode("utf-8").split("_")[2])
-    em = client.ns.emoji
+    client.ns.emoji
     vvip_list = await ctx.db.getListVars(client.uid, "list_vvip") or []
     try:
         item = vvip_list[item_index]
     except IndexError:
-        return await event.answer(
-            "❌ Paket VVIP tidak ditemukan.", alert=True
-        )
+        return await event.answer("❌ Paket VVIP tidak ditemukan.", alert=True)
 
     if item.get("promo_price", 0) > 0:
         event.data = f"promo_detail_{item_index}".encode("utf-8")

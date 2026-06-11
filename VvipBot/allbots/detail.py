@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
+
 from telethon import events
+
 from .. import command, ctx
 
 
@@ -42,10 +44,27 @@ async def allbots_detail_callback(client, event):
 
     layout = [
         [
-            {"text": "🗑️ Hapus Bot",           "callback_data": f"allbots_confirm_delete_{bot_id}", "style": "danger",  "emoji": 5229113891081956317},
-            {"text": "⏳ Kelola Masa Aktif",    "callback_data": f"allbots_duration_{bot_id}",       "style": "primary", "emoji": 5449428597922079323},
+            {
+                "text": "🗑️ Hapus Bot",
+                "callback_data": f"allbots_confirm_delete_{bot_id}",
+                "style": "danger",
+                "emoji": 5229113891081956317,
+            },
+            {
+                "text": "⏳ Kelola Masa Aktif",
+                "callback_data": f"allbots_duration_{bot_id}",
+                "style": "primary",
+                "emoji": 5449428597922079323,
+            },
         ],
-        [{"text": "◀️ Kembali ke Daftar", "callback_data": "allbots_list_0", "style": "primary", "emoji": 5373098009640836781}],
+        [
+            {
+                "text": "◀️ Kembali ke Daftar",
+                "callback_data": "allbots_list_0",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ],
     ]
 
     btn = client.ns.telegram.button.build_button_grid(layout)

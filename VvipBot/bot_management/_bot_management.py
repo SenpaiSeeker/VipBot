@@ -1,8 +1,9 @@
 import asyncio
 from datetime import datetime, timedelta, timezone
+
 from telethon import events
-from .. import command, ctx, is_bot_owner
-from helpers import listen
+
+from .. import command, ctx
 
 BASE_PRICE_BOT = 100000
 
@@ -42,9 +43,24 @@ async def get_bot_purchase_panel(client, user_id, months=1):
 
     layout = [
         [
-            {"text": "➖",                       "callback_data": f"adjust_bot_month_{months - 1}", "style": "danger",  "emoji": 5229113891081956317},
-            {"text": f"📅 {months} Bulan",       "callback_data": "noop",                           "style": "primary", "emoji": 5431897022456145283},
-            {"text": "➕",                       "callback_data": f"adjust_bot_month_{months + 1}", "style": "success", "emoji": 5226945370684140473},
+            {
+                "text": "➖",
+                "callback_data": f"adjust_bot_month_{months - 1}",
+                "style": "danger",
+                "emoji": 5229113891081956317,
+            },
+            {
+                "text": f"📅 {months} Bulan",
+                "callback_data": "noop",
+                "style": "primary",
+                "emoji": 5431897022456145283,
+            },
+            {
+                "text": "➕",
+                "callback_data": f"adjust_bot_month_{months + 1}",
+                "style": "success",
+                "emoji": 5226945370684140473,
+            },
         ],
         [
             {
@@ -54,7 +70,14 @@ async def get_bot_purchase_panel(client, user_id, months=1):
                 "emoji": 5375296873982604963,
             }
         ],
-        [{"text": "◀️ Kembali", "callback_data": "start", "style": "primary", "emoji": 5373098009640836781}],
+        [
+            {
+                "text": "◀️ Kembali",
+                "callback_data": "start",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ],
     ]
 
     btn = client.ns.telegram.button.build_button_grid(layout)
@@ -73,7 +96,16 @@ async def create_bot_callback(client, event):
             f"Maaf, server saat ini sudah mencapai batas maksimal pembuatan bot (25 Bot). "
             f"Silakan coba lagi nanti."
         )
-        layout = [[{"text": "◀️ Kembali", "callback_data": "start", "style": "primary", "emoji": 5373098009640836781}]]
+        layout = [
+            [
+                {
+                    "text": "◀️ Kembali",
+                    "callback_data": "start",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ]
+        ]
         btn = client.ns.telegram.button.build_button_grid(layout)
         return await event.edit(text_warning, buttons=btn, parse_mode="html")
 
@@ -89,8 +121,22 @@ async def create_bot_callback(client, event):
                 f"Tekan tombol di bawah untuk memulai proses pembuatan."
             )
             layout = [
-                [{"text": "🚀 Lanjutkan Membuat Bot", "callback_data": "start_creation_process", "style": "primary", "emoji": 5445284980978621387}],
-                [{"text": "◀️ Kembali", "callback_data": "start", "style": "primary", "emoji": 5373098009640836781}],
+                [
+                    {
+                        "text": "🚀 Lanjutkan Membuat Bot",
+                        "callback_data": "start_creation_process",
+                        "style": "primary",
+                        "emoji": 5445284980978621387,
+                    }
+                ],
+                [
+                    {
+                        "text": "◀️ Kembali",
+                        "callback_data": "start",
+                        "style": "primary",
+                        "emoji": 5373098009640836781,
+                    }
+                ],
             ]
             btn = client.ns.telegram.button.build_button_grid(layout)
             return await event.edit(text, buttons=btn, parse_mode="html")
@@ -156,7 +202,7 @@ async def proceed_bot_payment_callback(client, event):
             f"│\n"
             f"├─ {em.shopping_bags} <b>Produk:</b> Akses Buat Bot {months} Bulan (Langganan)\n"
             f"├─ {em.money_bag} <b>Jumlah:</b> <code>Rp {amount_raw:,}</code>\n"
-            f"├─ <b>Order ID:</b> <a href=\"https://saweria.co/qris/{transaction_id}\">{transaction_id}</a>\n"
+            f'├─ <b>Order ID:</b> <a href="https://saweria.co/qris/{transaction_id}">{transaction_id}</a>\n'
             f"│\n"
             f"╰─ {em.down_pointing} <b>Jika sudah membayar, silakan klik tombol di bawah ini.</b>\n"
         )
@@ -173,7 +219,9 @@ async def proceed_bot_payment_callback(client, event):
         btn = client.ns.telegram.button.build_button_grid(layout)
 
         await event.delete()
-        await client.send_message(sender.id, caption, file=qr_image_stream, buttons=btn, parse_mode="html")
+        await client.send_message(
+            sender.id, caption, file=qr_image_stream, buttons=btn, parse_mode="html"
+        )
     except Exception as e:
         await client.send_message(
             sender.id,
@@ -213,9 +261,20 @@ async def confirm_bot_payment_callback(client, event):
                 f"Terima kasih! Langganan Anda untuk membuat bot selama "
                 f"<b>{months} bulan</b> telah diaktifkan."
             )
-            layout = [[{"text": "🚀 Lanjutkan Membuat Bot", "callback_data": "start_creation_process", "style": "primary", "emoji": 5445284980978621387}]]
+            layout = [
+                [
+                    {
+                        "text": "🚀 Lanjutkan Membuat Bot",
+                        "callback_data": "start_creation_process",
+                        "style": "primary",
+                        "emoji": 5445284980978621387,
+                    }
+                ]
+            ]
             btn = client.ns.telegram.button.build_button_grid(layout)
-            await client.send_message(sender.id, success_text, buttons=btn, parse_mode="html")
+            await client.send_message(
+                sender.id, success_text, buttons=btn, parse_mode="html"
+            )
 
             owner_notif = (
                 f"{em.money_bag} <b>Langganan Akses Baru!</b>\n\n"
@@ -230,9 +289,7 @@ async def confirm_bot_payment_callback(client, event):
                 alert=True,
             )
     except Exception as e:
-        await event.answer(
-            f"❌ Terjadi Kesalahan: {e}", alert=True
-        )
+        await event.answer(f"❌ Terjadi Kesalahan: {e}", alert=True)
 
 
 @command(lambda ctx: events.CallbackQuery(pattern=b"^start_creation_process$"))
@@ -242,12 +299,18 @@ async def start_creation_process_callback(client, event):
     em = client.ns.emoji
 
     expiry_date_str = await ctx.db.getVars(user_id, "user_expiry_date")
-    if not expiry_date_str or datetime.fromisoformat(expiry_date_str) < datetime.now(timezone.utc):
-        return await event.answer("Langganan Anda tidak valid atau telah berakhir.", alert=True)
+    if not expiry_date_str or datetime.fromisoformat(expiry_date_str) < datetime.now(
+        timezone.utc
+    ):
+        return await event.answer(
+            "Langganan Anda tidak valid atau telah berakhir.", alert=True
+        )
 
     all_bots_data = await ctx.db.getBots(is_token=True)
     if len(all_bots_data) >= 30:
-        return await event.answer("Kapasitas bot sudah penuh (30 Bot). Silakan buat nanti.", alert=True)
+        return await event.answer(
+            "Kapasitas bot sudah penuh (30 Bot). Silakan buat nanti.", alert=True
+        )
 
     await event.delete()
     try:
@@ -384,18 +447,46 @@ async def list_my_bots_callback(client, event):
     if total_pages > 1:
         prev_page = (page - 1 + total_pages) % total_pages
         next_page = (page + 1) % total_pages
-        pagination_row.extend([
-            {"text": "« Sebelumnya", "callback_data": f"list_my_bots_{prev_page}", "style": "primary", "emoji": 5373098009640836781},
-            {"text": "Selanjutnya »", "callback_data": f"list_my_bots_{next_page}", "style": "primary", "emoji": 5373098009640836781},
-        ])
+        pagination_row.extend(
+            [
+                {
+                    "text": "« Sebelumnya",
+                    "callback_data": f"list_my_bots_{prev_page}",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                },
+                {
+                    "text": "Selanjutnya »",
+                    "callback_data": f"list_my_bots_{next_page}",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                },
+            ]
+        )
 
     if pagination_row:
         layout.append(pagination_row)
 
-    layout.extend([
-        [{"text": f"🔧 Kelola {bot_name}", "callback_data": f"manage_bot {bot_id}", "style": "primary", "emoji": 5449428597922079323}],
-        [{"text": "◀️ Kembali", "callback_data": "start", "style": "primary", "emoji": 5373098009640836781}],
-    ])
+    layout.extend(
+        [
+            [
+                {
+                    "text": f"🔧 Kelola {bot_name}",
+                    "callback_data": f"manage_bot {bot_id}",
+                    "style": "primary",
+                    "emoji": 5449428597922079323,
+                }
+            ],
+            [
+                {
+                    "text": "◀️ Kembali",
+                    "callback_data": "start",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ],
+        ]
+    )
 
     btn = client.ns.telegram.button.build_button_grid(layout)
     await event.edit(text, buttons=btn, parse_mode="html")
@@ -424,13 +515,36 @@ async def manage_bot_callback(client, event):
     exp_date_str = await ctx.db.getVars(bot_id_to_manage, "bot_expiration_date")
     days_left_text = "Tidak diatur"
     if exp_date_str:
-        days_left = (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days
+        days_left = (
+            datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)
+        ).days
         days_left_text = f"{days_left} hari"
 
     layout = [
-        [{"text": "➕ Minta Perpanjangan", "callback_data": f"request_extend_duration {bot_id_to_manage}", "style": "success", "emoji": 5226945370684140473}],
-        [{"text": f"🗑️ Hapus Bot Ini",     "callback_data": f"confirm_delete_bot {bot_id_to_manage}",     "style": "danger",  "emoji": 5229113891081956317}],
-        [{"text": "◀️ Kembali ke Daftar Bot", "callback_data": "list_my_bots_0",                          "style": "primary", "emoji": 5373098009640836781}],
+        [
+            {
+                "text": "➕ Minta Perpanjangan",
+                "callback_data": f"request_extend_duration {bot_id_to_manage}",
+                "style": "success",
+                "emoji": 5226945370684140473,
+            }
+        ],
+        [
+            {
+                "text": f"🗑️ Hapus Bot Ini",
+                "callback_data": f"confirm_delete_bot {bot_id_to_manage}",
+                "style": "danger",
+                "emoji": 5229113891081956317,
+            }
+        ],
+        [
+            {
+                "text": "◀️ Kembali ke Daftar Bot",
+                "callback_data": "list_my_bots_0",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ],
     ]
 
     text = (
@@ -489,7 +603,9 @@ async def request_extend_duration_callback(client, event):
             ]
         ]
         btn_owner = main_bot_client.ns.telegram.button.build_button_grid(layout_owner)
-        await main_bot_client.send_message(ctx.owner_id, txt_owner, buttons=btn_owner, parse_mode="html")
+        await main_bot_client.send_message(
+            ctx.owner_id, txt_owner, buttons=btn_owner, parse_mode="html"
+        )
 
         await event.answer(
             "✅ Permintaan perpanjangan telah dikirim ke Owner Utama.",
@@ -522,7 +638,9 @@ async def owner_approve_extension_callback(client, event):
         )
         new_exp_date = current_exp_date + timedelta(days=days_to_add)
 
-        await ctx.db.setVars(bot_id_to_extend, "bot_expiration_date", new_exp_date.isoformat())
+        await ctx.db.setVars(
+            bot_id_to_extend, "bot_expiration_date", new_exp_date.isoformat()
+        )
         await event.edit(
             f"{em.white_check_mark} <b>Persetujuan Berhasil!</b>\n"
             f"Durasi untuk bot <code>{bot_id_to_extend}</code> telah ditambah "
@@ -557,7 +675,9 @@ async def owner_close_request_callback(client, event):
     em = client.ns.emoji
 
     if sender.id != ctx.owner_id:
-        return await event.answer("Hanya Owner Utama yang bisa melakukan ini.", alert=True)
+        return await event.answer(
+            "Hanya Owner Utama yang bisa melakukan ini.", alert=True
+        )
 
     try:
         await event.edit(
@@ -590,8 +710,18 @@ async def confirm_delete_bot_callback(client, event):
 
     layout = [
         [
-            {"text": "✅ Ya, Saya Yakin Hapus", "callback_data": f"do_delete_bot {bot_id_to_manage}", "style": "success", "emoji": 5427009714745517609},
-            {"text": "❌ Tidak, Batalkan",       "callback_data": f"manage_bot {bot_id_to_manage}",    "style": "danger",  "emoji": 5465665476971471368},
+            {
+                "text": "✅ Ya, Saya Yakin Hapus",
+                "callback_data": f"do_delete_bot {bot_id_to_manage}",
+                "style": "success",
+                "emoji": 5427009714745517609,
+            },
+            {
+                "text": "❌ Tidak, Batalkan",
+                "callback_data": f"manage_bot {bot_id_to_manage}",
+                "style": "danger",
+                "emoji": 5465665476971471368,
+            },
         ]
     ]
 
@@ -621,9 +751,20 @@ async def do_delete_bot_callback(client, event):
         await ctx.db.removeBot(bot_id_to_manage)
         await ctx.db.removeAllVars(bot_id_to_manage)
 
-        ctx.log.print(f"Bot {bot_id_to_manage} telah dihapus oleh owner-nya ({user_id}).")
+        ctx.log.print(
+            f"Bot {bot_id_to_manage} telah dihapus oleh owner-nya ({user_id})."
+        )
 
-        layout = [[{"text": "◀️ Kembali ke Daftar Bot", "callback_data": "list_my_bots_0", "style": "primary", "emoji": 5373098009640836781}]]
+        layout = [
+            [
+                {
+                    "text": "◀️ Kembali ke Daftar Bot",
+                    "callback_data": "list_my_bots_0",
+                    "style": "primary",
+                    "emoji": 5373098009640836781,
+                }
+            ]
+        ]
         btn = client.ns.telegram.button.build_button_grid(layout)
 
         await event.edit(
@@ -636,4 +777,4 @@ async def do_delete_bot_callback(client, event):
         await event.edit(
             f"{em.cross_mark} Terjadi kesalahan saat menghapus bot: <code>{e}</code>",
             parse_mode="html",
-    )
+        )

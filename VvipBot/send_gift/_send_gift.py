@@ -36,7 +36,16 @@ async def list_gift_handler(client, event):
             ]
         )
 
-    layout.append([{"text": "◀️ Kembali", "callback_data": "start", "style": "primary", "emoji": 5373098009640836781}])
+    layout.append(
+        [
+            {
+                "text": "◀️ Kembali",
+                "callback_data": "start",
+                "style": "primary",
+                "emoji": 5373098009640836781,
+            }
+        ]
+    )
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     text = (
