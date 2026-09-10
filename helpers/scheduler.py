@@ -28,9 +28,7 @@ class Scheduler:
     def start(self):
         if self._is_started:
             return
-
         loop = asyncio.get_event_loop()
         for spec, func in self.jobs:
             aiocron.crontab(spec, func=func, loop=loop)
-
         self._is_started = True

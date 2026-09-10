@@ -21,11 +21,20 @@ from pyrogram import filters
 from pyrogram.enums import ParseMode
 
 from helpers import listen
-from helpers.saweria_message_generator import (
-    generate_safe_saweria_message,
-)
+from helpers.saweria_message_generator import generate_safe_saweria_message
 
 ALL_HANDLERS = []
+
+HANDLER_MAP = {
+    "message": pyrogram.handlers.MessageHandler,
+    "callback": pyrogram.handlers.CallbackQueryHandler,
+    "pre_checkout": pyrogram.handlers.PreCheckoutQueryHandler,
+}
+
+IGNORED_HANDLER_ERRORS = (
+    pyrogram.errors.MessageNotModified,
+    pyrogram.errors.MessageDeleteForbidden,
+)
 
 
 class HandlerContext(SimpleNamespace):
@@ -36,28 +45,28 @@ ctx = HandlerContext()
 
 
 def command(filter_lambda, handler_type="message"):
-
     def decorator(func):
         ALL_HANDLERS.append((func, filter_lambda, handler_type))
         return func
-
     return decorator
 
 
 def seller_only(func):
-
     @wraps(func)
     async def wrapper(client, update, *args, **kwargs):
         user_id = update.from_user.id
         seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
         if user_id == ctx.owner_id or user_id in seller_list:
             return await func(client, update, *args, **kwargs)
-        else:
-            error_message = f"{client.ns.emoji.cross_mark} **Akses Ditolak!**\nAnda tidak memiliki izin untuk menggunakan perintah ini."
-            if isinstance(update, pyrogram.types.CallbackQuery):
-                return await update.answer(error_message, show_alert=True)
-            elif isinstance(update, pyrogram.types.Message):
-                return await update.reply_text(error_message, quote=True)
+        error_message = (
+            f"{client.ns.emoji.cross_mark} **Akses Ditolak!**\n"
+            "Anda tidak memiliki izin untuk menggunakan perintah ini."
+        )
+        if isinstance(update, pyrogram.types.CallbackQuery):
+            return await update.answer(error_message, show_alert=True)
+        if isinstance(update, pyrogram.types.Message):
+            return await update.reply_text(error_message, quote=True)
+        return None
 
     return wrapper
 
@@ -81,31 +90,26 @@ async def check_new_user(client, update):
         return
 
     user_list = await ctx.db.getListVars(client.me.id, "user_ids") or []
-    if update.from_user.id not in user_list:
-        await ctx.db.setListVars(
-            client.me.id,
-            "user_ids",
-            update.from_user.id,
-        )
-        owner_of_this_bot = (
-            await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
-        )
+    if update.from_user.id in user_list:
+        return
 
-        try:
-            mention_user = client.ns.telegram.arg.getMention(update.from_user)
-            notification_text = (
-                f"**{client.ns.emoji.bust_in_silhouette} Pengguna Baru Telah Memulai Bot Anda!**\n\n"
-                f"**Bot:** {client.me.mention}\n"
-                f"**Pengguna:** {mention_user}\n"
-                f"**ID:** `{update.from_user.id}`"
-            )
-            await client.send_message(owner_of_this_bot, notification_text)
-        except Exception:
-            pass
-
-        ctx.log.print(
-            f"{ctx.log.CYAN}User baru {client.ns.telegram.arg.getMention(update.from_user, logs=True)} memulai bot {client.me.first_name}"
+    await ctx.db.setListVars(client.me.id, "user_ids", update.from_user.id)
+    owner_of_this_bot = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
+    try:
+        mention_user = client.ns.telegram.arg.getMention(update.from_user)
+        notification_text = (
+            f"**{client.ns.emoji.bust_in_silhouette} Pengguna Baru Telah Memulai Bot Anda!**\n\n"
+            f"**Bot:** {client.me.mention}\n"
+            f"**Pengguna:** {mention_user}\n"
+            f"**ID:** `{update.from_user.id}`"
         )
+        await client.send_message(owner_of_this_bot, notification_text)
+    except Exception:
+        pass
+
+    ctx.log.print(
+        f"{ctx.log.CYAN}User baru {client.ns.telegram.arg.getMention(update.from_user, logs=True)} memulai bot {client.me.first_name}"
+    )
 
 
 def _load_all_handlers():
@@ -126,57 +130,59 @@ def _load_all_handlers():
                 importlib.import_module(f".{entry.name}", package=__name__)
 
 
+async def _log_handler_error(e):
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+    tb_info = traceback.extract_tb(exc_traceback)[-1]
+    filename = os.path.basename(tb_info.filename)
+    func_name = tb_info.name
+    line_no = tb_info.lineno
+    log_message = (
+        f"{ctx.log.RED}[ERROR]: {ctx.log.CYAN}{filename}:{func_name}:{line_no} "
+        f"{ctx.log.WHITE}| {ctx.log.YELLOW}{type(e).__name__}: {ctx.log.RED}{e}"
+    )
+    ctx.log.print(log_message)
+
+
+def _make_handler_wrapper(original_func):
+    async def handler_wrapper(client, update):
+        sender = getattr(update, "from_user", None) or getattr(
+            update, "sender_chat", None
+        )
+        if sender is not None:
+            sender.id
+        try:
+            await original_func(client, update)
+        except IGNORED_HANDLER_ERRORS:
+            pass
+        except Exception as e:
+            await _log_handler_error(e)
+
+    return handler_wrapper
+
+
 _load_all_handlers()
 
 
-def register_all_handlers(
-    client: pyrogram.Client,
-    db_instance,
-    bot_manager,
-    owner_id,
-):
+def register_all_handlers(client, db_instance, bot_manager, owner_id):
     ctx.db = db_instance
     ctx.manager = bot_manager
     ctx.owner_id = owner_id
     ctx.log = client.ns.utils.log()
     ctx.ACTIVE_MEMBERS_CACHE = {}
-    HANDLER_MAP = {
-        "message": pyrogram.handlers.MessageHandler,
-        "callback": pyrogram.handlers.CallbackQueryHandler,
-        "pre_checkout": pyrogram.handlers.PreCheckoutQueryHandler,
-    }
+
     for func, filter_lambda, handler_type in ALL_HANDLERS:
         actual_filter = filter_lambda(ctx)
         HandlerClass = HANDLER_MAP.get(handler_type)
         if not HandlerClass:
             ctx.log.print(
-                f"{ctx.log.YELLOW}Handler type '{handler_type}' tidak dikenal. Melewati pendaftaran."
+                f"{ctx.log.YELLOW}Handler type '{handler_type}' tidak dikenal. "
+                "Melewati pendaftaran."
             )
             continue
 
-        async def handler_wrapper(original_func, c, u):
-            if hasattr(u, "from_user") and u.from_user:
-                u.from_user.id
-            elif hasattr(u, "sender_chat") and u.sender_chat:
-                u.sender_chat.id
-            try:
-                await original_func(c, u)
-            except (
-                pyrogram.errors.MessageNotModified,
-                pyrogram.errors.MessageDeleteForbidden,
-            ):
-                pass
-            except Exception as e:
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                tb_info = traceback.extract_tb(exc_traceback)[-1]
-                filename = os.path.basename(tb_info.filename)
-                func_name = tb_info.name
-                line_no = tb_info.lineno
-                log_message = f"{ctx.log.RED}[ERROR]: {ctx.log.CYAN}{filename}:{func_name}:{line_no} {ctx.log.WHITE}| {ctx.log.YELLOW}{type(e).__name__}: {ctx.log.RED}{e}"
-                ctx.log.print(log_message)
-
-        wrapped_func = partial(handler_wrapper, func)
         if handler_type == "pre_checkout":
-            client.add_handler(HandlerClass(wrapped_func))
+            client.add_handler(HandlerClass(_make_handler_wrapper(func)))
         else:
-            client.add_handler(HandlerClass(wrapped_func, filters=actual_filter))
+            client.add_handler(
+                HandlerClass(_make_handler_wrapper(func), filters=actual_filter)
+            )

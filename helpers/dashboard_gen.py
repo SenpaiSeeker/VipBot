@@ -32,11 +32,7 @@ class DashboardGenerator:
             linewidth=1.5,
         )
         ax.set_ylim(0, 100)
-        ax.set_ylabel(
-            "Persentase Penggunaan",
-            color="white",
-            fontsize=12,
-        )
+        ax.set_ylabel("Persentase Penggunaan", color="white", fontsize=12)
         ax.tick_params(colors="white", labelsize=12)
         ax.set_title(
             "Visualisasi Kesehatan Server",
@@ -72,6 +68,4 @@ class DashboardGenerator:
 
     async def generate_dashboard(self, stats_data):
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(
-            executor, self._sync_generate_dashboard, stats_data
-        )
+        return await loop.run_in_executor(executor, self._sync_generate_dashboard, stats_data)

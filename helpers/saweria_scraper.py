@@ -1,6 +1,7 @@
 import asyncio
 import io
 import json
+import time
 from typing import Optional, Tuple
 
 import cloudscraper25 as cloudscraper
@@ -8,12 +9,17 @@ from bs4 import BeautifulSoup
 
 from .qrcode_gen import QrCodeGenerator
 
+MAX_RETRIES = 3
+RETRY_DELAY = 5
+REQUEST_TIMEOUT = 15
+
 
 class SaweriaScraper(QrCodeGenerator):
     BACKEND = "https://backend.saweria.co"
     FRONTEND = "https://saweria.co"
     HEADERS = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "application/json, text/plain, */*",
         "Referer": "https://saweria.co/",
     }
@@ -25,34 +31,31 @@ class SaweriaScraper(QrCodeGenerator):
     async def get_user_id(self, username: str) -> Optional[str]:
         if not username or not isinstance(username, str):
             raise ValueError("Username harus berupa string dan tidak boleh kosong.")
+        return await asyncio.to_thread(self._fetch_user_id, username)
 
-        def _sync_get_with_retries(retries=3, delay=5):
-            url = f"{self.FRONTEND}/{username}"
-            for attempt in range(retries):
-                try:
-                    res = self.scraper.get(url, headers=self.HEADERS, timeout=15)
-                    if res.status_code == 200:
-                        soup = BeautifulSoup(res.text, "html.parser")
-                        next_data = soup.find(id="__NEXT_DATA__")
-                        if next_data:
-                            data = json.loads(next_data.text)
-                            user_id = (
-                                data.get("props", {})
-                                .get("pageProps", {})
-                                .get("data", {})
-                                .get("id")
-                            )
-                            if user_id:
-                                return user_id
-                except Exception:
-                    pass
-                if attempt < retries - 1:
-                    import time
-
-                    time.sleep(delay)
-            return None
-
-        return await asyncio.to_thread(_sync_get_with_retries)
+    def _fetch_user_id(self, username: str):
+        url = f"{self.FRONTEND}/{username}"
+        for attempt in range(MAX_RETRIES):
+            try:
+                res = self.scraper.get(url, headers=self.HEADERS, timeout=REQUEST_TIMEOUT)
+                if res.status_code == 200:
+                    soup = BeautifulSoup(res.text, "html.parser")
+                    next_data = soup.find(id="__NEXT_DATA__")
+                    if next_data:
+                        user_id = (
+                            json.loads(next_data.text)
+                            .get("props", {})
+                            .get("pageProps", {})
+                            .get("data", {})
+                            .get("id")
+                        )
+                        if user_id:
+                            return user_id
+            except Exception:
+                pass
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(RETRY_DELAY)
+        return None
 
     async def create_payment(
         self,
@@ -80,18 +83,7 @@ class SaweriaScraper(QrCodeGenerator):
                 "phone": "",
             },
         }
-
-        def _sync_post():
-            res = self.scraper.post(
-                f"{self.BACKEND}/donations/{user_id}",
-                json=payload,
-                headers=self.HEADERS,
-            )
-            if not res.ok:
-                raise Exception(f"Gagal membuat pembayaran: {res.text}")
-            return res.json()["data"]
-
-        data = await asyncio.to_thread(_sync_post)
+        data = await asyncio.to_thread(self._post_payment, user_id, payload)
         qr_string = data["qr_string"]
         transaction_id = data["id"]
         amount_raw = data["amount_raw"]
@@ -100,20 +92,29 @@ class SaweriaScraper(QrCodeGenerator):
             data=qr_string,
             creator_text=f"Created by: {creator_name}",
         )
-
         qr_image_stream = io.BytesIO(qr_image_bytes)
         qr_image_stream.name = f"{transaction_id}.png"
 
         return (qr_string, transaction_id, qr_image_stream, amount_raw)
 
-    async def check_paid_status(self, transaction_id: str) -> bool:
-        def _sync_get():
-            res = self.scraper.get(
-                f"{self.BACKEND}/donations/qris/{transaction_id}",
-                headers=self.HEADERS,
-            )
-            if not res.ok:
-                raise Exception("Transaction ID not found")
-            return res.json()["data"]["qr_string"] == ""
+    def _post_payment(self, user_id: str, payload: dict):
+        res = self.scraper.post(
+            f"{self.BACKEND}/donations/{user_id}",
+            json=payload,
+            headers=self.HEADERS,
+        )
+        if not res.ok:
+            raise Exception(f"Gagal membuat pembayaran: {res.text}")
+        return res.json()["data"]
 
-        return await asyncio.to_thread(_sync_get)
+    async def check_paid_status(self, transaction_id: str) -> bool:
+        return await asyncio.to_thread(self._fetch_paid_status, transaction_id)
+
+    def _fetch_paid_status(self, transaction_id: str) -> bool:
+        res = self.scraper.get(
+            f"{self.BACKEND}/donations/qris/{transaction_id}",
+            headers=self.HEADERS,
+        )
+        if not res.ok:
+            raise Exception("Transaction ID not found")
+        return res.json()["data"]["qr_string"] == ""

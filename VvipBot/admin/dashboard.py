@@ -1,11 +1,30 @@
 from .. import *
 
+ITEMS_PER_PAGE = 5
+JAKARTA_TIMEZONE = ZoneInfo("Asia/Jakarta")
 
-@command(lambda ctx: filters.command("dashboard") & filters.user(ctx.owner_id))
-async def dashboard_command_handler(client, message):
-    msg = await message.reply_text(
-        f"{client.ns.emoji.hourglass} **Sedang Memproses...**\nMohon tunggu sebentar."
-    )
+
+def _back_to_settings_layout(client):
+    return [
+        [
+            {
+                "text": "• Kembali ke Pengaturan •",
+                "callback_data": "settings",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("key"),
+            }
+        ]
+    ]
+
+
+async def _reply(client, callback_query, text, btn):
+    if callback_query.message.photo:
+        await callback_query.edit_message_caption(text, reply_markup=btn)
+    else:
+        await callback_query.edit_message_text(text, reply_markup=btn)
+
+
+async def _collect_platform_stats(client):
     all_bots_data = await ctx.db.getBots(is_token=True)
     total_bots = len(all_bots_data)
     unique_users = set()
@@ -14,19 +33,21 @@ async def dashboard_command_handler(client, message):
         bot_id = int(bot_data["name"])
         user_ids = await ctx.db.getListVars(bot_id, "user_ids") or []
         bot_user_counts[bot_id] = len(user_ids)
-        for user_id in user_ids:
-            unique_users.add(user_id)
-    total_users = len(unique_users)
-    top_bot_id = (
-        max(bot_user_counts, key=bot_user_counts.get) if bot_user_counts else None
-    )
+        unique_users.update(user_ids)
+
     top_bot_info = "N/A"
-    if top_bot_id:
+    if bot_user_counts:
+        top_bot_id = max(bot_user_counts, key=bot_user_counts.get)
         top_bot_instance = ctx.manager.running_bots.get(top_bot_id)
         top_bot_name = (
             top_bot_instance.me.first_name if top_bot_instance else f"ID {top_bot_id}"
         )
         top_bot_info = f"{top_bot_name} ({bot_user_counts[top_bot_id]} pengguna)"
+
+    return total_bots, len(unique_users), top_bot_info
+
+
+async def _gather_server_stats(client):
     try:
         stats = await client.ns.server.monitor.get_detailed_stats()
         stats_data = {
@@ -34,20 +55,24 @@ async def dashboard_command_handler(client, message):
             "ram": stats.ram["percent"],
             "disk": stats.disk["percent"],
         }
-        cpu_bar = stats.cpu["bar"]
-        cpu_pct = stats.cpu["percent"]
-        ram_bar = stats.ram["bar"]
-        ram_pct = stats.ram["percent"]
-        disk_bar = stats.disk["bar"]
-        disk_pct = stats.disk["percent"]
         server_stats_text = (
-            f"- CPU: `[{cpu_bar}] {cpu_pct}%`\n"
-            f"- RAM: `[{ram_bar}] {ram_pct}%`\n"
-            f"- Disk: `[{disk_bar}] {disk_pct}%`"
+            f"- CPU: `[{stats.cpu['bar']}] {stats.cpu['percent']}%`\n"
+            f"- RAM: `[{stats.ram['bar']}] {stats.ram['percent']}%`\n"
+            f"- Disk: `[{stats.disk['bar']}] {stats.disk['percent']}%`"
         )
     except Exception as e:
         stats_data = {"cpu": 0, "ram": 0, "disk": 0}
         server_stats_text = f"Gagal mengambil statistik server: `{e}`"
+    return stats_data, server_stats_text
+
+
+@command(lambda ctx: filters.command("dashboard") & filters.user(ctx.owner_id))
+async def dashboard_command_handler(client, message):
+    msg = await message.reply_text(
+        f"{client.ns.emoji.hourglass} **Sedang Memproses...**\nMohon tunggu sebentar."
+    )
+    total_bots, total_users, top_bot_info = await _collect_platform_stats(client)
+    stats_data, server_stats_text = await _gather_server_stats(client)
 
     dashboard_text = (
         f"**{client.ns.emoji.chart_bar} Dashboard Platform**\n\n"
@@ -104,12 +129,17 @@ async def refund_stars_callback(client, callback_query):
             await ctx.db.removeVars(client.me.id, db_key)
 
 
+def _describe_peer(peer_obj):
+    if peer_obj and hasattr(peer_obj, "first_name"):
+        return peer_obj.first_name
+    return peer_obj.title if peer_obj else "sumber tidak dikenal"
+
+
 @command(lambda ctx: filters.regex("^stats_(\\d+)"), handler_type="callback")
 async def show_stars_stats(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
     page = int(callback_query.data.split("_")[1])
-    items_per_page = 5
     try:
         await callback_query.answer(
             "<emoji id=5451732530048802485>⏳</emoji> **Sedang Memproses...**\nMohon tunggu sebentar."
@@ -124,23 +154,12 @@ async def show_stars_stats(client, callback_query):
             raw_result.history if hasattr(raw_result, "history") else []
         )
         if not transactions_history:
-            layout = [
-                [
-                    {
-                        "text": "• Kembali ke Pengaturan •",
-                        "callback_data": "settings",
-                        "style": "blue",
-                        "emoji": client.ns.emoji.id("key"),
-                    }
-                ]
-            ]
-            btn = client.ns.telegram.button.build_button_grid(layout)
             text = "Belum ada transaksi Stars yang tercatat."
-            if callback_query.message.photo:
-                await callback_query.edit_message_caption(text, reply_markup=btn)
-                return
-            await callback_query.edit_message_text(text, reply_markup=btn)
-            return
+            btn = client.ns.telegram.button.build_button_grid(
+                _back_to_settings_layout(client)
+            )
+            return await _reply(client, callback_query, text, btn)
+
         total_balance = raw_result.balance.amount
         total_income = sum(
             t.amount.amount for t in transactions_history if t.amount.amount > 0
@@ -150,29 +169,24 @@ async def show_stars_stats(client, callback_query):
         )
         total_transactions_count = len(transactions_history)
         peer_map = {p.id: p for p in raw_result.users + raw_result.chats}
-        total_pages = math.ceil(total_transactions_count / items_per_page)
-        paginated_transactions = transactions_history[
-            page * items_per_page : (page + 1) * items_per_page
+        total_pages = math.ceil(total_transactions_count / ITEMS_PER_PAGE)
+        paginated = transactions_history[
+            page * ITEMS_PER_PAGE : (page + 1) * ITEMS_PER_PAGE
         ]
-        jakarta_timezone = ZoneInfo("Asia/Jakarta")
+
         transactions_text_list = []
-        for t in paginated_transactions:
+        for t in paginated:
             peer_id = (
                 t.peer.peer.user_id
                 if hasattr(t.peer.peer, "user_id")
                 else t.peer.peer.channel_id
             )
-            peer_obj = peer_map.get(peer_id)
-            peer_mention = (
-                peer_obj.first_name
-                if peer_obj and hasattr(peer_obj, "first_name")
-                else (peer_obj.title if peer_obj else "sumber tidak dikenal")
-            )
+            peer_mention = _describe_peer(peer_map.get(peer_id))
             amount = t.amount.amount
             amount_str = f"+{amount}" if amount > 0 else str(amount)
             transaction_date = datetime.fromtimestamp(
                 t.date, tz=timezone.utc
-            ).astimezone(jakarta_timezone)
+            ).astimezone(JAKARTA_TIMEZONE)
             transactions_text_list.append(
                 f"• `{transaction_date.strftime('%d %b, %H:%M %Z')}`: **{amount_str}{client.ns.emoji.star}** dari {peer_mention}"
             )
@@ -206,21 +220,9 @@ async def show_stars_stats(client, callback_query):
                     },
                 ]
             )
-        layout.append(
-            [
-                {
-                    "text": "• Kembali ke Pengaturan •",
-                    "callback_data": "settings",
-                    "style": "blue",
-                    "emoji": client.ns.emoji.id("key"),
-                }
-            ]
-        )
+        layout.append(_back_to_settings_layout(client)[0])
         btn = client.ns.telegram.button.build_button_grid(layout)
-        if callback_query.message.photo:
-            await callback_query.edit_message_caption(text, reply_markup=btn)
-        else:
-            await callback_query.edit_message_text(text, reply_markup=btn)
+        await _reply(client, callback_query, text, btn)
     except Exception as e:
         ctx.log.print(
             f"{ctx.log.RED} Error fetching stars stats: {e}\n{traceback.format_exc()}"
@@ -241,22 +243,10 @@ async def total_users_count_callback(client, callback_query):
         f"Jumlah keseluruhan pengguna yang pernah memulai bot ini adalah: **{total_count} pengguna**."
     )
     markup = client.ns.telegram.button.build_button_grid(
-        [
-            [
-                {
-                    "text": "• Kembali ke Pengaturan •",
-                    "callback_data": "settings",
-                    "style": "blue",
-                    "emoji": client.ns.emoji.id("key"),
-                }
-            ]
-        ]
+        _back_to_settings_layout(client)
     )
     try:
-        if callback_query.message.photo:
-            await callback_query.edit_message_caption(text, reply_markup=markup)
-        else:
-            await callback_query.edit_message_text(text, reply_markup=markup)
+        await _reply(client, callback_query, text, markup)
     except pyrogram.errors.MessageNotModified:
         await callback_query.answer()
     except Exception:

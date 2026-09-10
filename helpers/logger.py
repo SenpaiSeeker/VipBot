@@ -29,45 +29,41 @@ class LoggerHandler(AnsiColors):
         }
 
     def formatTime(self):
-        utc_time = datetime.datetime.now(datetime.timezone.utc)
-        local_time = utc_time.astimezone(self.tz)
-        return local_time.strftime(self.datefmt)
+        now = datetime.datetime.now(datetime.timezone.utc)
+        return now.astimezone(self.tz).strftime(self.datefmt)
 
     def format(self, record):
         level_color = self.colors.get(record["levelname"], self.RESET)
-        pipe_color = self.colors["PIPE"]
-        record["levelname"] = f"{pipe_color}│ {level_color}{record['levelname']:<8}"
-        record["message"] = (
-            f"{pipe_color}│ {level_color}{record['message']}{self.RESET}"
-        )
+        pipe = self.colors["PIPE"]
+        level = f"{pipe}│ {level_color}{record['levelname']:<8}"
+        message = f"{pipe}│ {level_color}{record['message']}{self.RESET}"
+        module = f"{pipe}│ {self.colors['MODULE']}{os.path.basename(record.get('module', '<unknown>'))}"
         return self.fmt.format(
             asctime=f"{self.colors['TIME']}[ {self.formatTime()} ]",
-            levelname=record["levelname"],
-            module=f"{pipe_color}│ {self.colors['MODULE']}{os.path.basename(record.get('module', '<unknown>'))}",
+            levelname=level,
+            module=module,
             funcName=record.get("funcName", "<unknown>"),
             lineno=record.get("lineno", 0),
-            message=record["message"],
+            message=message,
         )
 
     def print(self, message, isPrint=True):
-        text = f"{self.CYAN}[ {self.WHITE}{self.formatTime()} {self.CYAN}] {self.WHITE}│ {message}{self.RESET}"
+        head = f"{self.CYAN}[ {self.WHITE}{self.formatTime()} {self.CYAN}] {self.WHITE}│ {message}{self.RESET}"
         if isPrint:
-            print(f"\033[2K{text}")
+            print(f"\033[2K{head}")
         else:
-            return text
+            return head
 
     def log(self, level, message):
         frame = sys._getframe(2)
-        filename = os.path.basename(frame.f_globals.get("__file__", "<unknown>"))
         record = {
             "levelname": level,
-            "module": filename,
+            "module": os.path.basename(frame.f_globals.get("__file__", "<unknown>")),
             "funcName": frame.f_code.co_name,
             "lineno": frame.f_lineno,
             "message": message,
         }
-        formatted_message = self.format(record)
-        print(f"\033[2K{formatted_message}")
+        print(f"\033[2K{self.format(record)}")
 
     def debug(self, message):
         self.log("DEBUG", message)
@@ -99,7 +95,6 @@ class CustomLogHandler(logging.Handler):
             "message": record.getMessage(),
         }
         try:
-            msg = self.formatter_util.format(custom_record)
-            print(f"\033[2K{msg}")
+            print(f"\033[2K{self.formatter_util.format(custom_record)}")
         except Exception:
             self.handleError(record)

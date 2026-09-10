@@ -4,21 +4,18 @@ BASE_PRICE_BOT = 100000
 def calculate_bot_price(months):
     total = BASE_PRICE_BOT * months
     discount_percentage = 0
-    
     if months >= 6:
         discount_percentage = 0.2
     elif months >= 3:
         discount_percentage = 0.1
-        
     discount = int(total * discount_percentage)
     final_price = total - discount
-    
     return total, discount, final_price
 
 
 async def get_bot_purchase_panel(client, user_id, months=1):
     total, discount, final_price = calculate_bot_price(months)
-    
+
     formatted_price = f"{BASE_PRICE_BOT:,}"
     formatted_total = f"{total:,}"
     formatted_discount = f"-Rp {discount:,}"
@@ -26,18 +23,18 @@ async def get_bot_purchase_panel(client, user_id, months=1):
 
     text = (
         f"**{client.ns.emoji.gem} Beli Akses Pembuatan Bot**\n\n"
-        f"Dapatkan akses untuk membuat bot VVIP Anda sendiri dengan berlangganan.\n\n"
+        "Dapatkan akses untuk membuat bot VVIP Anda sendiri dengan berlangganan.\n\n"
         f"Harga: `Rp {formatted_price}/bulan`\n\n"
-        f"**Diskon:**\n"
-        f"• 3+ Bulan: 10%\n"
-        f"• 6+ Bulan: 20%\n\n"
-        f"**Pilihan Anda:**\n"
+        "**Diskon:**\n"
+        "• 3+ Bulan: 10%\n"
+        "• 6+ Bulan: 20%\n\n"
+        "**Pilihan Anda:**\n"
         f"• Durasi: **{months} bulan**\n"
         f"• Harga Normal: `Rp {formatted_total}`\n"
         f"• Diskon: `{formatted_discount}`\n"
         f"• **Total Bayar: `Rp {formatted_final}`**"
     )
-    
+
     layout = [
         [
             {
@@ -75,6 +72,5 @@ async def get_bot_purchase_panel(client, user_id, months=1):
             }
         ],
     ]
-    
     btn = client.ns.telegram.button.build_button_grid(layout)
     return text, btn

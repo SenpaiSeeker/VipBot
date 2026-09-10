@@ -1,21 +1,10 @@
-import asyncio
-import pyrogram
 from pyrogram import filters
+
 from .. import command, ctx, is_bot_owner
 
 
-@command(
-    lambda ctx: filters.regex("^settings$"),
-    handler_type="callback",
-)
-async def settings(client, callback_query):
-    if not await is_bot_owner(client, callback_query.from_user.id):
-        return await callback_query.answer(
-            "🚫 Anda tidak memiliki akses ke menu ini.",
-            show_alert=True,
-        )
-        
-    layout = [
+def _settings_layout(client):
+    return [
         [
             {
                 "text": "🖼️ Atur Foto Start",
@@ -139,10 +128,25 @@ async def settings(client, callback_query):
             }
         ],
     ]
-    
-    txt_content = f"**{client.ns.emoji.toolbox} Panel Pengaturan Owner**\n\nSelamat datang di pusat kendali bot Anda! Silakan pilih menu di bawah untuk mengelola berbagai aspek bot."
-    btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
+
+@command(
+    lambda ctx: filters.regex("^settings$"),
+    handler_type="callback",
+)
+async def settings(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return await callback_query.answer(
+            "🚫 Anda tidak memiliki akses ke menu ini.",
+            show_alert=True,
+        )
+
+    txt_content = (
+        f"**{client.ns.emoji.toolbox} Panel Pengaturan Owner**\n\n"
+        "Selamat datang di pusat kendali bot Anda! Silakan pilih menu di bawah "
+        "untuk mengelola berbagai aspek bot."
+    )
+    btn = client.ns.telegram.button.build_button_grid(_settings_layout(client))
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt_content, reply_markup=btn)
     else:

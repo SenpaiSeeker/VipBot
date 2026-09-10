@@ -2,6 +2,18 @@ from .. import *
 from .helpers import invalidate_page_cache, send_allbots_list
 
 
+def _expiry_delta_layout(client, bot_id: int, page: int, sign: str, days: int):
+    callback_prefix = f"allbots_do_{'extend' if sign == '+' else 'reduce'}"
+    style = "green" if sign == "+" else "red"
+    emoji = client.ns.emoji.id("plus") if sign == "+" else client.ns.emoji.id("minus")
+    return {
+        "text": f"{sign}{days} hari",
+        "callback_data": f"{callback_prefix}_{bot_id}_{days}_{page}",
+        "style": style,
+        "emoji": emoji,
+    }
+
+
 @command(
     lambda ctx: filters.regex("^allbots_duration_(\\d+)_(\\d+)"),
     handler_type="callback",
@@ -52,13 +64,7 @@ async def allbots_extend_callback(client, callback_query):
     bot_id = int(callback_query.matches[0].group(1))
     page = int(callback_query.matches[0].group(2))
     buttons = [
-        {
-            "text": f"+{days} hari",
-            "callback_data": f"allbots_do_extend_{bot_id}_{days}_{page}",
-            "style": "green",
-            "emoji": client.ns.emoji.id("plus"),
-        }
-        for days in [7, 30, 90]
+        _expiry_delta_layout(client, bot_id, page, "+", days) for days in [7, 30, 90]
     ]
     layout = [
         buttons,
@@ -113,13 +119,7 @@ async def allbots_reduce_callback(client, callback_query):
     bot_id = int(callback_query.matches[0].group(1))
     page = int(callback_query.matches[0].group(2))
     buttons = [
-        {
-            "text": f"-{days} hari",
-            "callback_data": f"allbots_do_reduce_{bot_id}_{days}_{page}",
-            "style": "red",
-            "emoji": client.ns.emoji.id("minus"),
-        }
-        for days in [7, 30, 90]
+        _expiry_delta_layout(client, bot_id, page, "-", days) for days in [7, 30, 90]
     ]
     layout = [
         buttons,

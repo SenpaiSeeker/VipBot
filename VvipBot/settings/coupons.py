@@ -1,8 +1,22 @@
 import asyncio
-from datetime import datetime, timezone, timedelta
-import pyrogram
+from datetime import datetime, timedelta, timezone
+
 from pyrogram import filters
+
 from .. import command, ctx, is_bot_owner, listen
+
+
+def _back_to_coupons_layout(client):
+    return [
+        [
+            {
+                "text": "• Kembali •",
+                "callback_data": "manage_coupons",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("back_arrow"),
+            }
+        ]
+    ]
 
 
 @command(
@@ -12,8 +26,11 @@ from .. import command, ctx, is_bot_owner, listen
 async def manage_coupons_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
-    text = f"**{client.ns.emoji.ticket_admit} Manajemen Kupon**\nKelola kode diskon untuk VVIP Anda."
+
+    text = (
+        f"**{client.ns.emoji.ticket_admit} Manajemen Kupon**\n"
+        "Kelola kode diskon untuk VVIP Anda."
+    )
     layout = [
         [
             {
@@ -41,7 +58,6 @@ async def manage_coupons_callback(client, callback_query):
         ],
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -55,10 +71,10 @@ async def manage_coupons_callback(client, callback_query):
 async def add_coupon_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     chat_id = callback_query.from_user.id
     await callback_query.message.delete()
-    
+
     try:
         def ask(text):
             return client.ask(
@@ -70,38 +86,29 @@ async def add_coupon_callback(client, callback_query):
         code = (
             await ask(f"**1/4:** Masukkan kode kupon unik (misal: `DISKONBARU`).")
         ).text.upper()
-        
+
         type_msg = await ask(
             "**2/4:** Pilih tipe diskon:\n1. Persentase (%)\n2. Potongan Harga Tetap"
         )
         discount_type = "percentage" if "1" in type_msg.text else "fixed"
-        
+
         value_prompt = (
             "**3/4:** Masukkan nilai persentase."
             if discount_type == "percentage"
             else "**3/4:** Masukkan jumlah potongan harga."
         )
         discount_value = int((await ask(value_prompt)).text)
-        
-        uses_left = int(
-            (
-                await ask(
-                    "**4/4:** Berapa kali kupon ini bisa digunakan?"
-                )
-            ).text
-        )
-        
-        expiry_days_msg = await ask(
-            "**5/5:** Berapa hari kupon ini akan berlaku?"
-        )
+
+        uses_left = int((await ask("**4/4:** Berapa kali kupon ini bisa digunakan?")).text)
+
+        expiry_days_msg = await ask("**5/5:** Berapa hari kupon ini akan berlaku?")
         expiry_days = int(expiry_days_msg.text)
-        
         expiry_date = (
             (datetime.now(timezone.utc) + timedelta(days=expiry_days)).isoformat()
             if expiry_days > 0
             else None
-                )
-                
+        )
+
         coupon_data = {
             "code": code,
             "discount_type": discount_type,
@@ -109,19 +116,23 @@ async def add_coupon_callback(client, callback_query):
             "uses_left": uses_left,
             "expiry_date": expiry_date,
         }
-        
         await ctx.db.setListVars(client.me.id, "coupons", coupon_data)
-        
+
         await client.send_message(
             chat_id,
             f"{client.ns.emoji.white_check_mark} Kupon `{code}` berhasil dibuat.",
         )
-                
     except (listen.UserCancelled, asyncio.TimeoutError, ValueError):
         await client.send_message(
             chat_id,
             f"{client.ns.emoji.cross_mark} **Proses Dibatalkan**",
         )
+
+
+def _format_expiry(coupon):
+    if coupon.get("expiry_date"):
+        return datetime.fromisoformat(coupon["expiry_date"]).strftime("%d %b %Y")
+    return "Permanent"
 
 
 @command(
@@ -131,32 +142,20 @@ async def add_coupon_callback(client, callback_query):
 async def list_coupons_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     page = int(callback_query.data.split("_")[2])
     coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
-    
-    back_row = [
-        {
-            "text": "• Kembali •",
-            "callback_data": "manage_coupons",
-            "style": "blue",
-            "emoji": client.ns.emoji.id("back_arrow"),
-        }
-    ]
-    
+    back_row = _back_to_coupons_layout(client)[0]
+
     if not coupons:
         text = "Tidak ada kupon yang dibuat."
         btn = client.ns.telegram.button.build_button_grid([back_row])
         await callback_query.edit_message_caption(text, reply_markup=btn)
         return
-        
+
     total_pages = len(coupons)
     page = max(0, min(page, total_pages - 1))
     coupon = coupons[page]
-    
-    expiry_text = "Permanent"
-    if coupon.get("expiry_date"):
-        expiry_text = datetime.fromisoformat(coupon["expiry_date"]).strftime("%d %b %Y")
 
     text = (
         f"**{client.ns.emoji.pencil} Detail Kupon ({page + 1}/{total_pages})**\n"
@@ -164,16 +163,14 @@ async def list_coupons_callback(client, callback_query):
         f"- Tipe: `{coupon['discount_type']}`\n"
         f"- Nilai: `{coupon['discount_value']}`\n"
         f"- Sisa Penggunaan: `{coupon['uses_left']}`\n"
-        f"- Berlaku hingga: `{expiry_text}`"
+        f"- Berlaku hingga: `{_format_expiry(coupon)}`"
     )
-    
+
     layout = []
     pagination_row = []
-    
     if total_pages > 1:
         prev_page = (page - 1 + total_pages) % total_pages
         next_page = (page + 1) % total_pages if page + 1 < total_pages else page
-        
         pagination_row.extend(
             [
                 {
@@ -190,7 +187,7 @@ async def list_coupons_callback(client, callback_query):
                 },
             ]
         )
-        
+
     layout.append(
         [
             {
@@ -201,11 +198,9 @@ async def list_coupons_callback(client, callback_query):
             }
         ]
     )
-    
     if pagination_row:
         layout.append(pagination_row)
-    layout.append(back_row)
-    
+    layout.append([back_row])
     btn = client.ns.telegram.button.build_button_grid(layout)
     await callback_query.edit_message_caption(text, reply_markup=btn)
 
@@ -217,20 +212,18 @@ async def list_coupons_callback(client, callback_query):
 async def delete_coupon_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     _, code, page_str = callback_query.data.split()
     coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
     coupon_to_remove = next((c for c in coupons if c.get("code") == code), None)
-    
     if coupon_to_remove:
         await ctx.db.removeListVars(client.me.id, "coupons", coupon_to_remove)
         await callback_query.answer("Kupon berhasil dihapus.", show_alert=True)
-        
+
     new_page = int(page_str)
     remaining_coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
-    
     if new_page >= len(remaining_coupons) and len(remaining_coupons) > 0:
         new_page = len(remaining_coupons) - 1
-        
+
     callback_query.data = f"list_coupons_{new_page}"
     await list_coupons_callback(client, callback_query)

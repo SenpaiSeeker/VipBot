@@ -2,15 +2,7 @@ from .. import *
 from .helpers import _resolve_owner_text, send_allbots_list
 
 
-@command(
-    lambda ctx: filters.regex("^allbots_detail_(\\d+)_(\\d+)"), handler_type="callback"
-)
-async def allbots_detail_callback(client, callback_query):
-    if callback_query.from_user.id != ctx.owner_id:
-        return
-    bot_id = int(callback_query.matches[0].group(1))
-    page = int(callback_query.matches[0].group(2))
-
+async def _build_detail_text(client, bot_id: int):
     bot_username = "Offline"
     bot_name = f"Bot ID {bot_id}"
     try:
@@ -39,8 +31,11 @@ async def allbots_detail_callback(client, callback_query):
         f"• **Pemilik:** {owner_text}\n"
         f"• **Sisa Aktif:** `{days_left}` hari"
     )
+    return text
 
-    layout = [
+
+def _build_detail_layout(client, bot_id: int, page: int):
+    return [
         [
             {
                 "text": "🗑️ Hapus Bot",
@@ -66,6 +61,18 @@ async def allbots_detail_callback(client, callback_query):
             }
         ],
     ]
+
+
+@command(
+    lambda ctx: filters.regex("^allbots_detail_(\\d+)_(\\d+)"), handler_type="callback"
+)
+async def allbots_detail_callback(client, callback_query):
+    if callback_query.from_user.id != ctx.owner_id:
+        return
+    bot_id = int(callback_query.matches[0].group(1))
+    page = int(callback_query.matches[0].group(2))
+    text = await _build_detail_text(client, bot_id)
+    layout = _build_detail_layout(client, bot_id, page)
     await callback_query.edit_message_text(
         text, reply_markup=client.ns.telegram.button.build_button_grid(layout)
     )

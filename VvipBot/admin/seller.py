@@ -1,6 +1,63 @@
 from .. import *
 
 
+async def _build_seller_list(client):
+    seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
+    if not seller_list:
+        return None, "Belum ada seller yang terdaftar."
+    text = f"**{client.ns.emoji.bust_in_silhouette} Daftar Seller Aktif**\n\n"
+    keyboard = []
+    for index, user_id in enumerate(seller_list, 1):
+        try:
+            user_obj = await client.get_users(user_id)
+            mention = client.ns.telegram.arg.getMention(user_obj)
+        except Exception:
+            mention = f"ID: `{user_id}`"
+        text += f"{index}. {mention}\n"
+        keyboard.append(
+            [
+                {
+                    "text": f"Hapus Seller 🗑️ ({user_id})",
+                    "callback_data": f"del_sell_{user_id}",
+                    "style": "red",
+                    "emoji": client.ns.emoji.id("minus"),
+                }
+            ]
+        )
+    btn = client.ns.telegram.button.build_button_grid(keyboard)
+    return text, btn
+
+
+async def _build_access_list(client):
+    user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
+    access_users = [
+        uid for uid in user_ids if await ctx.db.getVars(uid, "user_expiry_date")
+    ]
+    if not access_users:
+        return None, "Tidak ada pengguna yang memiliki akses aktif saat ini."
+    text = f"**{client.ns.emoji.key} Daftar Pengguna Berakses**\n\n"
+    keyboard = []
+    for index, uid in enumerate(access_users, 1):
+        try:
+            user_obj = await client.get_users(uid)
+            mention = client.ns.telegram.arg.getMention(user_obj)
+        except Exception:
+            mention = f"ID: `{uid}`"
+        text += f"{index}. {mention}\n"
+        keyboard.append(
+            [
+                {
+                    "text": f"Cabut Akses 🚫 ({uid})",
+                    "callback_data": f"del_acc_{uid}",
+                    "style": "red",
+                    "emoji": client.ns.emoji.id("minus"),
+                }
+            ]
+        )
+    btn = client.ns.telegram.button.build_button_grid(keyboard)
+    return text, btn
+
+
 @command(lambda ctx: filters.command("akses"))
 @seller_only
 async def access_command_handler(client, message):
@@ -28,7 +85,7 @@ async def access_command_handler(client, message):
             f"**Pengguna:** {client.ns.telegram.arg.getMention(target_user)}\n"
             f"**ID:** `{target_user.id}`\n"
             f"**Status:** `{status_text}`\n\n"
-            f"Pilih tindakan untuk pengguna ini:"
+            "Pilih tindakan untuk pengguna ini:"
         )
         layout = [
             [
@@ -163,29 +220,9 @@ async def add_seller_handler(client, message):
 
 @command(lambda ctx: filters.command("listseller") & filters.user(ctx.owner_id))
 async def list_seller_handler(client, message):
-    seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
-    if not seller_list:
-        return await message.reply_text("Belum ada seller yang terdaftar.")
-    text = f"**{client.ns.emoji.bust_in_silhouette} Daftar Seller Aktif**\n\n"
-    keyboard = []
-    for index, user_id in enumerate(seller_list, 1):
-        try:
-            user_obj = await client.get_users(user_id)
-            mention = client.ns.telegram.arg.getMention(user_obj)
-        except Exception:
-            mention = f"ID: `{user_id}`"
-        text += f"{index}. {mention}\n"
-        keyboard.append(
-            [
-                {
-                    "text": f"Hapus Seller 🗑️ ({user_id})",
-                    "callback_data": f"del_sell_{user_id}",
-                    "style": "red",
-                    "emoji": client.ns.emoji.id("minus"),
-                }
-            ]
-        )
-    btn = client.ns.telegram.button.build_button_grid(keyboard)
+    text, btn = await _build_seller_list(client)
+    if text is None:
+        return await message.reply_text(btn)
     await message.reply_text(text, reply_markup=btn)
 
 
@@ -199,64 +236,17 @@ async def delete_seller_callback(client, callback_query):
         "Seller `{user_id}` berhasil dihapus.".format(user_id=target_id),
         show_alert=True,
     )
-    seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
-    if not seller_list:
-        await callback_query.edit_message_text("Belum ada seller yang terdaftar.")
-        return
-    text = f"**{client.ns.emoji.bust_in_silhouette} Daftar Seller Aktif**\n\n"
-    keyboard = []
-    for index, user_id in enumerate(seller_list, 1):
-        try:
-            user_obj = await client.get_users(user_id)
-            mention = client.ns.telegram.arg.getMention(user_obj)
-        except Exception:
-            mention = f"ID: `{user_id}`"
-        text += f"{index}. {mention}\n"
-        keyboard.append(
-            [
-                {
-                    "text": f"Hapus Seller 🗑️ ({user_id})",
-                    "callback_data": f"del_sell_{user_id}",
-                    "style": "red",
-                    "emoji": client.ns.emoji.id("minus"),
-                }
-            ]
-        )
-    btn = client.ns.telegram.button.build_button_grid(keyboard)
+    text, btn = await _build_seller_list(client)
+    if text is None:
+        return await callback_query.edit_message_text(btn)
     await callback_query.edit_message_text(text, reply_markup=btn)
 
 
 @command(lambda ctx: filters.command("listakses") & filters.user(ctx.owner_id))
 async def list_akses_handler(client, message):
-    user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
-    access_users = []
-    for uid in user_ids:
-        if await ctx.db.getVars(uid, "user_expiry_date"):
-            access_users.append(uid)
-    if not access_users:
-        return await message.reply_text(
-            "Tidak ada pengguna yang memiliki akses aktif saat ini."
-        )
-    text = f"**{client.ns.emoji.key} Daftar Pengguna Berakses**\n\n"
-    keyboard = []
-    for index, uid in enumerate(access_users, 1):
-        try:
-            user_obj = await client.get_users(uid)
-            mention = client.ns.telegram.arg.getMention(user_obj)
-        except Exception:
-            mention = f"ID: `{uid}`"
-        text += f"{index}. {mention}\n"
-        keyboard.append(
-            [
-                {
-                    "text": f"Cabut Akses 🚫 ({uid})",
-                    "callback_data": f"del_acc_{uid}",
-                    "style": "red",
-                    "emoji": client.ns.emoji.id("minus"),
-                }
-            ]
-        )
-    btn = client.ns.telegram.button.build_button_grid(keyboard)
+    text, btn = await _build_access_list(client)
+    if text is None:
+        return await message.reply_text(btn)
     await message.reply_text(text, reply_markup=btn)
 
 
@@ -270,33 +260,7 @@ async def delete_access_callback(client, callback_query):
         "Akses untuk `{user_id}` telah dicabut.".format(user_id=target_id),
         show_alert=True,
     )
-    user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
-    access_users = [
-        uid for uid in user_ids if await ctx.db.getVars(uid, "user_expiry_date")
-    ]
-    if not access_users:
-        await callback_query.edit_message_text(
-            "Tidak ada pengguna yang memiliki akses aktif saat ini."
-        )
-        return
-    text = f"**{client.ns.emoji.key} Daftar Pengguna Berakses**\n\n"
-    keyboard = []
-    for index, uid in enumerate(access_users, 1):
-        try:
-            user_obj = await client.get_users(uid)
-            mention = client.ns.telegram.arg.getMention(user_obj)
-        except Exception:
-            mention = f"ID: `{uid}`"
-        text += f"{index}. {mention}\n"
-        keyboard.append(
-            [
-                {
-                    "text": f"Cabut Akses 🚫 ({uid})",
-                    "callback_data": f"del_acc_{uid}",
-                    "style": "red",
-                    "emoji": client.ns.emoji.id("minus"),
-                }
-            ]
-        )
-    btn = client.ns.telegram.button.build_button_grid(keyboard)
+    text, btn = await _build_access_list(client)
+    if text is None:
+        return await callback_query.edit_message_text(btn)
     await callback_query.edit_message_text(text, reply_markup=btn)

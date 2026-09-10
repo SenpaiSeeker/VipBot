@@ -5,11 +5,11 @@ import pyrogram
 
 class Argument:
     def __init__(self, client):
-        self.client: pyrogram.Client = client
+        self.client = client
 
     def getMention(
         self,
-        user: pyrogram.types.User,
+        user,
         logs: bool = False,
         no_tag: bool = False,
         tag_and_id: bool = False,
@@ -17,20 +17,16 @@ class Argument:
         name = user.first_name
         if user.last_name:
             name += f" {user.last_name}"
-
         if logs:
             return f"{name} ({user.id})"
         if no_tag:
             return name
-
-        link = f"tg://user?id={user.id}"
-        mention = f"<a href='{link}'>{name}</a>"
+        mention = f"<a href='tg://user?id={user.id}'>{name}</a>"
         if tag_and_id:
             mention += f" (<code>{user.id}</code>)"
-
         return mention
 
-    async def getNamebot(self, bot_token: str) -> dict:
+    async def getNamebot(self, bot_token: str):
         temp_bot_client = pyrogram.Client(
             name="temp_bot_name_fetcher",
             api_id=self.client.api_id,
@@ -44,16 +40,19 @@ class Argument:
         except Exception:
             return "Bot token invalid"
 
+    @staticmethod
+    def _slice_args(source_text, command_str):
+        try:
+            return source_text[len(command_str) :].strip()
+        except (IndexError, TypeError, AttributeError):
+            return ""
+
     def getMessage(
         self,
         message: pyrogram.types.Message,
         is_arg: bool = False,
         is_tuple: bool = False,
-    ) -> Union[
-        str,
-        pyrogram.types.Message,
-        Tuple[Optional[str], Optional[str]],
-    ]:
+    ) -> Union[str, pyrogram.types.Message, Tuple[Optional[str], Optional[str]]]:
         full_text = message.text or message.caption or ""
         full_html = getattr(full_text, "html", full_text)
         command_parts = full_text.split()
@@ -77,33 +76,16 @@ class Argument:
             part1 = command_parts[1] if len(command_parts) > 1 else None
             part2 = None
             if len(command_parts) > 2:
-                part2 = " ".join(command_parts[2:]).strip()
-                if part2 == "":
-                    part2 = None
-            else:
-                if replied_text:
-                    part2 = replied_text
-                elif quote_text:
-                    part2 = quote_text
+                part2 = " ".join(command_parts[2:]).strip() or None
+            elif replied_text or quote_text:
+                part2 = replied_text or quote_text
             return part1, part2
 
         if is_arg:
             if quote_text:
                 return quote_text
-
             if len(command_parts) > 1:
-                command_str = command_parts[0]
-                try:
-                    source_text = full_html if isinstance(full_html, str) else full_text
-                    args_html = source_text[len(command_str) :].strip()
-                except (
-                    IndexError,
-                    TypeError,
-                    AttributeError,
-                ):
-                    args_html = " ".join(command_parts[1:])
-                return args_html
-
+                return self._slice_args(full_html, command_parts[0])
             if replied and replied_text:
                 return getattr(replied_text, "html", str(replied_text))
             return ""
@@ -112,12 +94,7 @@ class Argument:
             return replied
 
         if len(command_parts) > 1:
-            command_str = command_parts[0]
-            try:
-                args_html = full_html[len(command_str) :].strip()
-            except (IndexError, TypeError, AttributeError):
-                args_html = " ".join(command_parts[1:])
-            return args_html
+            return self._slice_args(full_html, command_parts[0])
 
         return ""
 

@@ -584,16 +584,13 @@ class EmojiParse:
     def __getattr__(self, name):
         if name.startswith("_"):
             raise AttributeError(name)
-
         if name in _ATTR_CACHE:
             return _ATTR_CACHE[name]
-
         if name in _EMOJI_MAP:
             eid, char = _EMOJI_MAP[name]
             result = f'<emoji id="{eid}">{char}</emoji>'
             _ATTR_CACHE[name] = result
             return result
-
         raise AttributeError(f"Emoji '{name}' tidak ditemukan dalam EmojiParse.")
 
     def id(self, name):

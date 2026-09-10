@@ -28,7 +28,6 @@ async def allbots_confirm_delete_callback(client, callback_query):
             },
         ]
     ]
-
     text = (
         f"**{client.ns.emoji.warning} Konfirmasi Penghapusan**\n\n"
         f"Anda yakin ingin menghapus bot dengan ID `{bot_id}` secara permanen?"

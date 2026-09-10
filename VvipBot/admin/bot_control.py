@@ -14,6 +14,7 @@ async def extend_command_handler(client, message):
         return await message.reply_text(
             "**Format salah.** `jumlah_hari` harus berupa angka bulat.\nContoh: `/extend 12345678 30`"
         )
+
     exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
     current_exp_date = (
         datetime.fromisoformat(exp_date_str)
@@ -27,6 +28,7 @@ async def extend_command_handler(client, message):
     await message.reply_text(
         f"{client.ns.emoji.white_check_mark} **Sukses!** Durasi bot `{bot_id}` berhasil diubah. Masa aktif baru: `{formatted_new_date}`."
     )
+
     owner_bot_id = await ctx.db.getVars(bot_id, "owner_id")
     if owner_bot_id:
         try:
@@ -47,6 +49,7 @@ async def broadcast_owners_handler(client, message):
         return await message.reply_text(
             "Gunakan: `/broadcast_owners <pesan>` atau balas ke sebuah pesan."
         )
+
     all_bots_data = await ctx.db.getBots(is_token=True)
     owner_ids = set()
     for bot in all_bots_data:

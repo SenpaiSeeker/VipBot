@@ -40,11 +40,15 @@ if not hasattr(ctx, "eval_history"):
         "last_time": None,
     }
 
+
 def shell(code: str) -> str:
     try:
-        return subprocess.check_output(code, shell=True, stderr=subprocess.STDOUT, text=True)
+        return subprocess.check_output(
+            code, shell=True, stderr=subprocess.STDOUT, text=True
+        )
     except subprocess.CalledProcessError as e:
         return e.output
+
 
 def get_eval_payload(message: Message) -> str:
     cmd_len = len(message.command) if hasattr(message, "command") and message.command else 0
@@ -60,14 +64,20 @@ def get_eval_payload(message: Message) -> str:
     if args:
         return args
     if message.reply_to_message:
-        target_text = message.reply_to_message.text or message.reply_to_message.caption or ""
+        target_text = (
+            message.reply_to_message.text
+            or message.reply_to_message.caption
+            or ""
+        )
         return target_text
     return ""
+
 
 async def resolve_awaitables(obj: Any) -> Any:
     if inspect.iscoroutine(obj) or inspect.isawaitable(obj):
         return await obj
     return obj
+
 
 def create_exec_scope(client: pyrogram.Client, message: Message, **kwargs) -> Dict[str, Any]:
     if not hasattr(ctx, "kwargs"):
@@ -111,12 +121,10 @@ def create_exec_scope(client: pyrogram.Client, message: Message, **kwargs) -> Di
     scope.update(kwargs)
     return scope
 
+
 async def aexec(code: str, client: pyrogram.Client, message: Message, **kwargs) -> Any:
     exec_scope = create_exec_scope(client, message, **kwargs)
-    try:
-        tree = ast.parse(code)
-    except SyntaxError:
-        raise
+    tree = ast.parse(code)
     if tree.body and isinstance(tree.body[-1], ast.Expr):
         tree.body[-1] = ast.Return(value=tree.body[-1].value)
     func_def = ast.AsyncFunctionDef(
@@ -143,6 +151,7 @@ async def aexec(code: str, client: pyrogram.Client, message: Message, **kwargs) 
     result = await runner(**exec_scope)
     return await resolve_awaitables(result)
 
+
 def format_output(
     client: pyrogram.Client,
     code: str,
@@ -168,12 +177,16 @@ def format_output(
         final_output = str(result).strip()
     else:
         final_output = "None"
-    
+
     escaped_code = html.escape(code)
     escaped_output = html.escape(final_output)
 
     out_len_limit = 777
-    short_output = escaped_output[:out_len_limit] + "..." if len(escaped_output) > out_len_limit else escaped_output
+    short_output = (
+        escaped_output[:out_len_limit] + "..."
+        if len(escaped_output) > out_len_limit
+        else escaped_output
+    )
 
     display_text = f"<b>{client.ns.emoji.zap} Input:</b>\n"
     display_text += f"<pre><code class='language-python'>{escaped_code}</code></pre>\n\n"
@@ -183,6 +196,7 @@ def format_output(
 
     return display_text, final_output
 
+
 async def execute_and_format(
     client: pyrogram.Client, message: Message, code: str, **kwargs
 ) -> Tuple[str, Any, Optional[io.BytesIO]]:
@@ -191,22 +205,28 @@ async def execute_and_format(
     result = None
     exc_traceback = None
     start_time = time()
-    
+
     try:
-        with contextlib.redirect_stdout(stdout_capture), contextlib.redirect_stderr(stderr_capture):
-            result = await asyncio.wait_for(aexec(code, client, message, **kwargs), timeout=60.0)
+        with contextlib.redirect_stdout(
+            stdout_capture
+        ), contextlib.redirect_stderr(stderr_capture):
+            result = await asyncio.wait_for(
+                aexec(code, client, message, **kwargs), timeout=60.0
+            )
     except asyncio.TimeoutError:
-        exc_traceback = f"{client.ns.emoji.cross_mark} TimeoutError: Execution exceeded 60 seconds."
+        exc_traceback = (
+            f"{client.ns.emoji.cross_mark} TimeoutError: Execution exceeded 60 seconds."
+        )
     except asyncio.CancelledError:
         exc_traceback = "CancelledError: Execution was cancelled."
     except Exception:
         exc_traceback = traceback.format_exc()
-    
+
     end_time = time()
     execution_time = end_time - start_time
     stdout_val = stdout_capture.getvalue()
     stderr_val = stderr_capture.getvalue()
-    
+
     ctx.eval_history.update(
         {
             "last_code": code,
@@ -216,7 +236,7 @@ async def execute_and_format(
             "last_time": execution_time,
         }
     )
-    
+
     display_text, raw_output = format_output(
         client,
         code,
@@ -226,39 +246,46 @@ async def execute_and_format(
         exc_traceback,
         execution_time,
     )
-    
+
     document = None
     if len(raw_output) > 777:
         document = io.BytesIO(str.encode(raw_output))
         document.name = "output.txt"
-    
+
     layout = [
         [
             {
                 "text": "Run Again",
                 "callback_data": f"eval_run_{message.chat.id}_{message.id}",
-                "style": "green"
+                "style": "green",
             },
             {
                 "text": "Delete",
                 "callback_data": f"eval_del_{message.chat.id}_{message.id}",
-                "style": "red"
+                "style": "red",
             },
         ]
     ]
     keyboard = client.ns.telegram.button.build_button_grid(layout)
-    
+
     return display_text, keyboard, document
+
 
 @command(lambda ctx: filters.command("eval") & filters.user(ctx.owner_id))
 async def eval_bot_handler(client: pyrogram.Client, message: Message):
     code = get_eval_payload(message)
     if not code:
-        return await message.reply(f"{client.ns.emoji.cross_mark} Berikan kode untuk dievaluasi atau balas ke sebuah pesan.")
-    
-    status_msg = await message.reply(f"{client.ns.emoji.repeat} <code>Memproses kode...</code>")
+        return await message.reply(
+            f"{client.ns.emoji.cross_mark} Berikan kode untuk dievaluasi atau balas ke sebuah pesan."
+        )
+
+    status_msg = await message.reply(
+        f"{client.ns.emoji.repeat} <code>Memproses kode...</code>"
+    )
     try:
-        text, keyboard, document = await execute_and_format(client, message, code, update=message)
+        text, keyboard, document = await execute_and_format(
+            client, message, code, update=message
+        )
         if document:
             await status_msg.delete()
             await message.reply_document(
@@ -268,9 +295,15 @@ async def eval_bot_handler(client: pyrogram.Client, message: Message):
                 reply_parameters=ReplyParameters(message_id=message.id),
             )
         else:
-            await status_msg.edit_text(text, reply_markup=keyboard, link_preview_options=LinkPreviewOptions(is_disabled=True))
+            await status_msg.edit_text(
+                text,
+                reply_markup=keyboard,
+                link_preview_options=LinkPreviewOptions(is_disabled=True),
+            )
     except Exception as e:
-        error_text = f"<b>Kesalahan Handler:</b>\n<code>{html.escape(str(traceback.format_exc()))}</code>"
+        error_text = (
+            f"<b>Kesalahan Handler:</b>\n<code>{html.escape(str(traceback.format_exc()))}</code>"
+        )
         if status_msg:
             try:
                 await status_msg.edit_text(error_text)
@@ -279,34 +312,39 @@ async def eval_bot_handler(client: pyrogram.Client, message: Message):
         else:
             await message.reply(error_text)
 
+
 @command(
     lambda ctx: filters.regex(r"^eval_") & filters.user(ctx.owner_id),
-    handler_type="callback"
+    handler_type="callback",
 )
-async def eval_callback_handler(client: pyrogram.Client, query: pyrogram.types.CallbackQuery):
+async def eval_callback_handler(
+    client: pyrogram.Client, query: pyrogram.types.CallbackQuery
+):
     data = query.data.split("_")
     if len(data) < 4:
         return
-    
+
     action = data[1]
     chat_id = int(data[2])
     message_id = int(data[3])
-    
+
     if action == "del":
         try:
             await client.delete_messages(chat_id, [message_id, query.message.id])
         except Exception:
             await query.answer("Tidak bisa menghapus pesan.")
-    
+
     elif action == "run":
         try:
             trigger_message = await client.get_messages(chat_id, message_id)
             code = get_eval_payload(trigger_message)
             if not code:
-                return await query.answer("Kode tidak ditemukan untuk dijalankan kembali.", show_alert=True)
-            
+                return await query.answer(
+                    "Kode tidak ditemukan untuk dijalankan kembali.", show_alert=True
+                )
+
             await query.answer("Menjalankan kembali kode...")
-            
+
             text, keyboard, document = await execute_and_format(
                 client,
                 trigger_message,
@@ -315,15 +353,17 @@ async def eval_callback_handler(client: pyrogram.Client, query: pyrogram.types.C
             )
 
             if code.endswith("return"):
-                return            
-            
+                return
+
             is_current_msg_media = bool(query.message.document or query.message.photo)
-            
+
             if document:
                 if is_current_msg_media:
                     await query.edit_message_media(
-                        media=pyrogram.types.InputMediaDocument(media=document, caption=text),
-                        reply_markup=keyboard
+                        media=pyrogram.types.InputMediaDocument(
+                            media=document, caption=text
+                        ),
+                        reply_markup=keyboard,
                     )
                 else:
                     await query.message.delete()
@@ -348,11 +388,28 @@ async def eval_callback_handler(client: pyrogram.Client, query: pyrogram.types.C
                     await query.edit_message_text(
                         text=text,
                         reply_markup=keyboard,
-                        link_preview_options=LinkPreviewOptions(is_disabled=True)
+                        link_preview_options=LinkPreviewOptions(is_disabled=True),
                     )
         except Exception as e:
             await query.answer(f"Error: {e}", show_alert=True)
-            
+
+
+def _select_database(config, target_name, db_class):
+    if target_name == config.file_name:
+        return config
+    return db_class(
+        storage_type=config.storage_type,
+        file_name=target_name,
+        keys_encrypt=config.keys_encrypt,
+        method_encrypt=config.method_encrypt,
+        auto_backup=False,
+    )
+
+
+async def _close_unless_default(db, config):
+    if db != config:
+        await db.close_async()
+
 
 @command(lambda ctx: filters.command("restore") & filters.user(ctx.owner_id))
 async def restore_database_handler(client, message):
@@ -444,42 +501,18 @@ async def tfdatabase_command_handler(client, message):
     try:
         from helpers.database import DataBase
 
-        source_db = (
-            ctx.db
-            if source_db_name == ctx.db.file_name
-            else DataBase(
-                storage_type=ctx.db.storage_type,
-                file_name=source_db_name,
-                keys_encrypt=ctx.db.keys_encrypt,
-                method_encrypt=ctx.db.method_encrypt,
-                auto_backup=False,
-            )
-        )
-        target_db = (
-            ctx.db
-            if target_db_name == ctx.db.file_name
-            else DataBase(
-                storage_type=ctx.db.storage_type,
-                file_name=target_db_name,
-                keys_encrypt=ctx.db.keys_encrypt,
-                method_encrypt=ctx.db.method_encrypt,
-                auto_backup=False,
-            )
-        )
+        source_db = _select_database(ctx.db, source_db_name, DataBase)
+        target_db = _select_database(ctx.db, target_db_name, DataBase)
         source_data = await source_db._get_user_vars(source_id)
         if not source_data:
-            if source_db != ctx.db:
-                await source_db.close_async()
-            if target_db != ctx.db:
-                await target_db.close_async()
+            await _close_unless_default(source_db, ctx.db)
+            await _close_unless_default(target_db, ctx.db)
             return await msg.edit_text(
                 f"{client.ns.emoji.cross_mark} Data sumber tidak ditemukan pada database."
             )
         await target_db._set_user_vars(target_id, source_data)
-        if source_db != ctx.db:
-            await source_db.close_async()
-        if target_db != ctx.db:
-            await target_db.close_async()
+        await _close_unless_default(source_db, ctx.db)
+        await _close_unless_default(target_db, ctx.db)
         await msg.edit_text(
             f"{client.ns.emoji.white_check_mark} **Transfer Database Berhasil!**\n\n"
             f"**Sumber:** `{source_id}` (`{source_db_name}`)\n"
@@ -509,37 +542,15 @@ async def tfbot_command_handler(client, message):
     try:
         from helpers.database import DataBase
 
-        source_db = (
-            ctx.db
-            if source_db_name == ctx.db.file_name
-            else DataBase(
-                storage_type=ctx.db.storage_type,
-                file_name=source_db_name,
-                keys_encrypt=ctx.db.keys_encrypt,
-                method_encrypt=ctx.db.method_encrypt,
-                auto_backup=False,
-            )
-        )
-        target_db = (
-            ctx.db
-            if target_db_name == ctx.db.file_name
-            else DataBase(
-                storage_type=ctx.db.storage_type,
-                file_name=target_db_name,
-                keys_encrypt=ctx.db.keys_encrypt,
-                method_encrypt=ctx.db.method_encrypt,
-                auto_backup=False,
-            )
-        )
+        source_db = _select_database(ctx.db, source_db_name, DataBase)
+        target_db = _select_database(ctx.db, target_db_name, DataBase)
         bots_token = await source_db.getBots(is_token=True)
         bots_session = await source_db.getBots(is_token=False)
         all_bots = bots_token + bots_session
         bot_data = next((b for b in all_bots if str(b["name"]) == str(bot_id)), None)
         if not bot_data:
-            if source_db != ctx.db:
-                await source_db.close_async()
-            if target_db != ctx.db:
-                await target_db.close_async()
+            await _close_unless_default(source_db, ctx.db)
+            await _close_unless_default(target_db, ctx.db)
             return await msg.edit_text(
                 f"{client.ns.emoji.cross_mark} Bot dengan ID `{bot_id}` tidak ditemukan di `{source_db_name}`."
             )
@@ -560,10 +571,8 @@ async def tfbot_command_handler(client, message):
         await source_db.removeAllVars(bot_id)
         if bot_id in getattr(ctx.manager, "running_bots", {}):
             await ctx.manager.stop_bot(bot_id)
-        if source_db != ctx.db:
-            await source_db.close_async()
-        if target_db != ctx.db:
-            await target_db.close_async()
+        await _close_unless_default(source_db, ctx.db)
+        await _close_unless_default(target_db, ctx.db)
         await msg.edit_text(
             f"{client.ns.emoji.white_check_mark} **Migrasi Bot Berhasil!**\n\n"
             f"**Bot ID:** `{bot_id}`\n"

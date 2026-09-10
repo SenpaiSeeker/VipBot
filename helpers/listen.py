@@ -62,7 +62,6 @@ class Client:
 
         loop = asyncio.get_running_loop()
         future = loop.create_future()
-
         future.add_done_callback(functools.partial(self._clear, chat_id))
         self._conversations[chat_id] = future
 
@@ -96,37 +95,29 @@ class Client:
             self._clear(chat_id, future)
 
 
-@patch(pyrogram.types.Chat)
-class Chat:
-    @patchable
-    def listen(self, *args, **kwargs):
-        return self._client.listen(self.id, *args, **kwargs)
+def _build_entity_patch(entity_id_attr):
+    def _listen(self, *args, **kwargs):
+        return self._client.listen(getattr(self, entity_id_attr), *args, **kwargs)
 
-    @patchable
-    def cancel(self):
-        return self._client.cancel(self.id)
+    def _cancel(self):
+        return self._client.cancel(getattr(self, entity_id_attr))
 
-    @patchable
-    async def ask(self, text, timeout=None, **kwargs):
-        request = await self._client.send_message(self.id, text, **kwargs)
-        response = await self.listen(timeout=timeout)
+    async def _ask(self, text, timeout=None, **kwargs):
+        chat_id = getattr(self, entity_id_attr)
+        request = await self._client.send_message(chat_id, text, **kwargs)
+        response = await self._client.listen(chat_id, timeout)
         response.request = request
         return response
 
+    return {"listen": _listen, "cancel": _cancel, "ask": _ask}
 
-@patch(pyrogram.types.User)
-class User:
-    @patchable
-    def listen(self, *args, **kwargs):
-        return self._client.listen(self.id, *args, **kwargs)
 
-    @patchable
-    def cancel(self):
-        return self._client.cancel(self.id)
-
-    @patchable
-    async def ask(self, text, timeout=None, **kwargs):
-        request = await self._client.send_message(self.id, text, **kwargs)
-        response = await self.listen(timeout=timeout)
-        response.request = request
-        return response
+for _entity_cls, _attr in (
+    (pyrogram.types.Chat, "id"),
+    (pyrogram.types.User, "id"),
+):
+    for _name, _func in _build_entity_patch(_attr).items():
+        _func.patchable = True
+        _old = getattr(_entity_cls, _name, None)
+        setattr(_entity_cls, "old" + _name, _old)
+        setattr(_entity_cls, _name, _func)

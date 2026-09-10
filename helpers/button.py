@@ -5,52 +5,60 @@ import pyrogram
 
 
 class Button:
+    URL_PATTERN = (
+        r"(?:https?://)?(?:www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:[/?]\S+)?|tg://\S+$"
+    )
+    INLINE_PATTERN = r"\| ([^|]+) - ([^|]+) \|"
+    REPLY_PATTERN = r"\|\s*([^\|]+?)\s*\|"
+
     def get_urls(self, text):
-        return re.findall(
-            r"(?:https?://)?(?:www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:[/?]\S+)?|tg://\S+$",
-            text,
-        )
+        return re.findall(self.URL_PATTERN, text)
 
     def parse_buttons_and_text(self, text, mode="inline"):
         if mode == "inline":
-            button_data = re.findall(r"\| ([^|]+) - ([^|]+) \|", text)
-            extracted_text = (
-                re.split(r"\| [^|]+ - [^|]+ \|", text)[0].strip()
-                if "|" in text
-                else text.strip()
-            )
+            button_data = re.findall(self.INLINE_PATTERN, text)
+            if "|" in text:
+                extracted_text = re.split(self.INLINE_PATTERN, text)[0].strip()
+            else:
+                extracted_text = text.strip()
             return button_data, extracted_text
-        elif mode == "reply":
-            pattern = r"\|\s*([^\|]+?)\s*\|"
-            raw_data = re.findall(pattern, text)
-            extracted_text = re.sub(pattern, "", text).strip()
+
+        if mode == "reply":
+            raw_data = re.findall(self.REPLY_PATTERN, text)
+            extracted_text = re.sub(self.REPLY_PATTERN, "", text).strip()
             buttons = []
             for chunk in raw_data:
-                parts = chunk.split("-")
-                for part in parts:
+                for part in chunk.split("-"):
                     if ";" in part:
                         label, *params = part.split(";")
-                        buttons.append(
-                            (
-                                label.strip().strip("]"),
-                                [p.strip() for p in params],
-                            )
-                        )
+                        buttons.append((label.strip().strip("]"), [p.strip() for p in params]))
                     else:
                         buttons.append((part.strip().strip("]"), []))
             return buttons, extracted_text
-        else:
-            raise ValueError("Invalid parse mode. Use 'inline' or 'reply'.")
 
-    def create_inline_keyboard(
-        self,
-        text,
-        inline_cmd=None,
-        is_id=None,
-        cb_prefix=None,
-    ):
+        raise ValueError("Invalid parse mode. Use 'inline' or 'reply'.")
+
+    @staticmethod
+    def _style_enum(style_val):
+        if style_val == "red":
+            return pyrogram.enums.ButtonStyle.DANGER
+        if style_val == "blue":
+            return pyrogram.enums.ButtonStyle.PRIMARY
+        if style_val == "green":
+            return pyrogram.enums.ButtonStyle.SUCCESS
+        return None
+
+    @staticmethod
+    def _custom_emoji_id(value):
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return value
+
+    def create_inline_keyboard(self, text, inline_cmd=None, is_id=None, cb_prefix=None):
         layout = []
         buttons, remaining_text = self.parse_buttons_and_text(text, mode="inline")
+
         for label, payload in buttons:
             cb_data, *extra_params = payload.split(";")
 
@@ -59,7 +67,7 @@ class Button:
             is_user = "user" in extra_params
             is_webapp = "webapp" in extra_params
 
-            if not is_url and not is_copy and not is_user and not is_webapp:
+            if not (is_url or is_copy or is_user or is_webapp):
                 if cb_prefix:
                     cb_data = f"{cb_prefix}_{cb_data}"
                 elif inline_cmd and is_id:
@@ -73,18 +81,13 @@ class Button:
                 param = param.strip()
                 if param.startswith("style="):
                     style_val = param.split("=")[1].lower()
-                    if style_val == "red":
-                        button_kwargs["style"] = pyrogram.enums.ButtonStyle.DANGER
-                    elif style_val == "blue":
-                        button_kwargs["style"] = pyrogram.enums.ButtonStyle.PRIMARY
-                    elif style_val == "green":
-                        button_kwargs["style"] = pyrogram.enums.ButtonStyle.SUCCESS
+                    style_enum = self._style_enum(style_val)
+                    if style_enum is not None:
+                        button_kwargs["style"] = style_enum
                 elif param.startswith("emoji="):
-                    val = param.split("=")[1]
-                    try:
-                        button_kwargs["icon_custom_emoji_id"] = int(val)
-                    except ValueError:
-                        button_kwargs["icon_custom_emoji_id"] = val
+                    button_kwargs["icon_custom_emoji_id"] = self._custom_emoji_id(
+                        param.split("=")[1]
+                    )
 
             if is_user:
                 button_kwargs["user_id"] = cb_data
@@ -104,10 +107,7 @@ class Button:
             else:
                 layout.append([button])
 
-        return (
-            pyrogram.types.InlineKeyboardMarkup(layout),
-            remaining_text,
-        )
+        return pyrogram.types.InlineKeyboardMarkup(layout), remaining_text
 
     def create_button_keyboard(self, text):
         layout = []
@@ -142,20 +142,13 @@ class Button:
                     )
 
                 if "style" in btn_kwargs and isinstance(btn_kwargs["style"], str):
-                    style_val = btn_kwargs["style"].lower()
-                    if style_val == "red":
-                        btn_kwargs["style"] = pyrogram.enums.ButtonStyle.DANGER
-                    elif style_val == "blue":
-                        btn_kwargs["style"] = pyrogram.enums.ButtonStyle.PRIMARY
-                    elif style_val == "green":
-                        btn_kwargs["style"] = pyrogram.enums.ButtonStyle.SUCCESS
+                    style_enum = self._style_enum(btn_kwargs["style"].lower())
+                    if style_enum is not None:
+                        btn_kwargs["style"] = style_enum
 
                 if "emoji" in btn_kwargs:
                     emoji_val = btn_kwargs.pop("emoji")
-                    try:
-                        btn_kwargs["icon_custom_emoji_id"] = int(emoji_val)
-                    except (ValueError, TypeError):
-                        btn_kwargs["icon_custom_emoji_id"] = emoji_val
+                    btn_kwargs["icon_custom_emoji_id"] = self._custom_emoji_id(emoji_val)
 
                 row.append(pyrogram.types.InlineKeyboardButton(**btn_kwargs))
 

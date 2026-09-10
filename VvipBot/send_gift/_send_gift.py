@@ -20,6 +20,76 @@ async def send_star_gift_raw(client, user_id: int, gift_id: int):
     return result
 
 
+async def _require_owner(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        await callback_query.answer(
+            "🚫 Anda tidak memiliki akses ke menu ini.",
+            show_alert=True,
+        )
+        return False
+    return True
+
+
+async def _send_gift_detail(client, message, gift):
+    price = gift.star_count
+    emoji = "❓️"
+    if hasattr(gift, "sticker") and hasattr(gift.sticker, "emoji"):
+        emoji = f"{gift.sticker.emoji} "
+
+    caption = (
+        f"<b>{client.ns.emoji.gift} Info Hadiah</b>\n\n"
+        f"<b>{client.ns.emoji.id_card} ID:</b> <code>{gift.id}</code>\n"
+        f"<b>{client.ns.emoji.money_bag} Harga:</b> <code>{price} Stars</code>\n"
+        f"<b>{client.ns.emoji.performing_arts} Emoji:</b> {emoji}\n"
+    )
+    buttons = [
+        [
+            {
+                "text": "🎁 Kirim ke Teman",
+                "callback_data": f"gift_send_ask_{gift.id}",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("gift"),
+            }
+        ],
+        [
+            {
+                "text": "👤 Klaim Sendiri",
+                "callback_data": f"gift_claim_self_{gift.id}",
+                "style": "green",
+                "emoji": client.ns.emoji.id("bust_in_silhouette"),
+            }
+        ],
+    ]
+    markup = client.ns.telegram.button.build_button_grid(buttons)
+
+    file_path = None
+    try:
+        if hasattr(gift, "sticker") and gift.sticker.thumbs:
+            thumb = gift.sticker.thumbs[-1]
+            file_path = await client.download_media(thumb.file_id)
+            await client.send_photo(
+                message.chat.id,
+                photo=file_path,
+                caption=caption,
+                reply_markup=markup,
+            )
+            return
+        await client.send_message(
+            message.chat.id,
+            text=caption,
+            reply_markup=markup,
+        )
+    except Exception:
+        await client.send_message(
+            message.chat.id,
+            text=caption,
+            reply_markup=markup,
+        )
+    finally:
+        if file_path and await aiofiles.os.path.exists(file_path):
+            await aiofiles.os.remove(file_path)
+
+
 @command(lambda ctx: filters.command("gift") & filters.private)
 async def send_gift_handler(client, message):
     if not await is_bot_owner(client, message.from_user.id):
@@ -38,14 +108,19 @@ async def send_gift_handler(client, message):
                 gift_id_arg = message.command[2]
             except Exception:
                 pass
+
         if not user_id_target:
             return await message.reply_text(
-                f"{client.ns.emoji.cross_mark} **Target tidak ditemukan.**\nBalas pesan pengguna atau gunakan format:\n`/gift [username] [gift_id]`"
+                f"{client.ns.emoji.cross_mark} **Target tidak ditemukan.**\n"
+                "Balas pesan pengguna atau gunakan format:\n"
+                "`/gift [username] [gift_id]`"
             )
         if not gift_id_arg or not gift_id_arg.isdigit():
             return await message.reply_text(
-                f"{client.ns.emoji.cross_mark} **ID Hadiah tidak valid.**\nGunakan `/listgift` untuk melihat ID."
+                f"{client.ns.emoji.cross_mark} **ID Hadiah tidak valid.**\n"
+                "Gunakan `/listgift` untuk melihat ID."
             )
+
         gift_id = int(gift_id_arg)
         status_msg = await message.reply_text(
             f"{client.ns.emoji.repeat} Memproses pengiriman hadiah..."
@@ -59,6 +134,7 @@ async def send_gift_handler(client, message):
             return await status_msg.edit(
                 f"{client.ns.emoji.cross_mark} Gift ID `{gift_id}` tidak ditemukan atau tidak tersedia."
             )
+
         target_user = await client.get_users(user_id_target)
         mention = client.ns.telegram.arg.getMention(target_user)
         await status_msg.edit(
@@ -89,64 +165,9 @@ async def list_gift_handler(client, message):
             )
         for gift in gifts:
             if not gift.is_sold_out:
-                price = gift.star_count
-                emoji = "❓️"
-                if hasattr(gift, "sticker") and hasattr(gift.sticker, "emoji"):
-                    emoji = f"{gift.sticker.emoji} "
-
-                caption = (
-                    f"<b>{client.ns.emoji.gift} Info Hadiah</b>\n\n"
-                    f"<b>{client.ns.emoji.id_card} ID:</b> <code>{gift.id}</code>\n"
-                    f"<b>{client.ns.emoji.money_bag} Harga:</b> <code>{price} Stars</code>\n"
-                    f"<b>{client.ns.emoji.performing_arts} Emoji:</b> {emoji}\n"
-                )
-                buttons = [
-                    [
-                        {
-                            "text": "🎁 Kirim ke Teman",
-                            "callback_data": f"gift_send_ask_{gift.id}",
-                            "style": "blue",
-                            "emoji": client.ns.emoji.id("gift"),
-                        }
-                    ],
-                    [
-                        {
-                            "text": "👤 Klaim Sendiri",
-                            "callback_data": f"gift_claim_self_{gift.id}",
-                            "style": "green",
-                            "emoji": client.ns.emoji.id("bust_in_silhouette"),
-                        }
-                    ],
-                ]
-                markup = client.ns.telegram.button.build_button_grid(buttons)
-                if hasattr(gift, "sticker") and gift.sticker.thumbs:
-                    thumb = gift.sticker.thumbs[-1]
-                    file_path = None
-                    try:
-                        file_path = await client.download_media(thumb.file_id)
-                        await client.send_photo(
-                            message.chat.id,
-                            photo=file_path,
-                            caption=caption,
-                            reply_markup=markup,
-                        )
-                    except Exception:
-                        await client.send_message(
-                            message.chat.id,
-                            text=caption,
-                            reply_markup=markup,
-                        )
-                    finally:
-                        if file_path and await aiofiles.os.path.exists(file_path):
-                            await aiofiles.os.remove(file_path)
-                else:
-                    await client.send_message(
-                        message.chat.id,
-                        text=caption,
-                        reply_markup=markup,
-                    )
+                await _send_gift_detail(client, message, gift)
                 await asyncio.sleep(1.5)
-            await status_msg.delete()
+        await status_msg.delete()
     except Exception as e:
         await status_msg.edit(
             f"{client.ns.emoji.cross_mark} Gagal mengirim hadiah: `{e}`"
@@ -158,11 +179,8 @@ async def list_gift_handler(client, message):
     handler_type="callback",
 )
 async def claim_self_gift_callback(client, callback_query):
-    if not await is_bot_owner(client, callback_query.from_user.id):
-        return await callback_query.answer(
-            "🚫 Anda tidak memiliki akses ke menu ini.",
-            show_alert=True,
-        )
+    if not await _require_owner(client, callback_query):
+        return
     gift_id = int(callback_query.data.split("_")[3])
     user_id = callback_query.from_user.id
     try:
@@ -183,19 +201,16 @@ async def claim_self_gift_callback(client, callback_query):
     handler_type="callback",
 )
 async def ask_send_gift_callback(client, callback_query):
-    if not await is_bot_owner(client, callback_query.from_user.id):
-        return await callback_query.answer(
-            "🚫 Anda tidak memiliki akses ke menu ini.",
-            show_alert=True,
-        )
+    if not await _require_owner(client, callback_query):
+        return
     gift_id = int(callback_query.data.split("_")[3])
     chat_id = callback_query.message.chat.id
     try:
         await callback_query.edit_message_reply_markup(None)
         prompt = (
             f"**{client.ns.emoji.bust_in_silhouette} Kirim Hadiah**\n\n"
-            f"Silakan kirim **User ID** atau **Username** (@username) tujuan penerima hadiah.\n\n"
-            f"Ketik `/batal` untuk membatalkan."
+            "Silakan kirim **User ID** atau **Username** (@username) tujuan penerima hadiah.\n\n"
+            "Ketik `/batal` untuk membatalkan."
         )
         ask_msg = await client.ask(chat_id, prompt, timeout=60)
         if ask_msg.text.lower() == "/batal":
