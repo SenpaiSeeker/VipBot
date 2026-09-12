@@ -1,0 +1,21 @@
+# Virtual env & Python
+env/
+venv/
+__pycache__/
+*.py[cod]
+*.session*
+*_session*
+
+# Runtime data
+vvip_database*.json
+unknown_errors.txt
+backup_*
+temp_media/
+
+# Node
+node_modules/
+dist/
+npm-debug.log*
+
+# Logs
+*.log

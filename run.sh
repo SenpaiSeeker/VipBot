@@ -6,8 +6,6 @@ MAGENTA='\033[38;5;201m'
 CYAN='\033[38;5;51m'
 WHITE='\033[38;5;255m'
 ORANGE='\033[38;5;208m'
-PURPLE='\033[38;5;93m'
-GRAY='\033[38;5;244m'
 NC='\033[0m'
 
 if [ "$EUID" -ne 0 ]; then
@@ -16,14 +14,12 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 PROJECT_DIR="$(pwd)"
-VENV_PYTHON=""
+APP_DIR="$PROJECT_DIR/src"
+NODE_BIN="$(command -v node)"
 
-if [ -f "$PROJECT_DIR/env/bin/python3" ]; then
-    VENV_PYTHON="$PROJECT_DIR/env/bin/python3"
-elif [ -f "$PROJECT_DIR/env/bin/python" ]; then
-    VENV_PYTHON="$PROJECT_DIR/env/bin/python"
-else
-    echo -e "${RED}❌ Virtual environment tidak ditemukan di directory 'env'.${NC}"
+if [ -z "$NODE_BIN" ] || [ ! -f "$APP_DIR/dist/index.js" ]; then
+    echo -e "${RED}❌ Node.js atau hasil build (src/dist/index.js) tidak ditemukan.${NC}"
+    echo -e "${RED}   Jalankan dulu: cd src && npm run build${NC}"
     exit 1
 fi
 
@@ -36,7 +32,7 @@ function banner() {
     echo
 }
 
-if [ ! -d envpath ]; then
+if [ ! -d "envpath" ]; then
     echo -e "${RED}❌ Direktori envpath tidak ditemukan${NC}"
     exit 1
 fi
@@ -65,7 +61,7 @@ function show_menu() {
         local name_only="$(basename "$file_path")"
         local base_name="${name_only%.*}"
         local service_name="vipbot_${base_name}"
-        
+
         local raw_status
         local status_color
         if systemctl is-active --quiet "$service_name" 2>/dev/null; then
@@ -75,15 +71,15 @@ function show_menu() {
             raw_status="[OFF]"
             status_color="${RED}"
         fi
-        
+
         local padded_status
         printf -v padded_status "%-5s" "${raw_status}"
         local status="${status_color}${padded_status}${NC}"
-        
+
         local idx_str="$((i+1))."
-        
+
         printf " ${YELLOW}%-4s${NC}${WHITE}%-12s${NC} %b   " "${idx_str}" "${base_name}" "${status}"
-        
+
         if [ "$(( (i+1) % per_row ))" -eq 0 ]; then
             echo
         fi
@@ -203,7 +199,7 @@ function main() {
                     echo -e "${RED}❌ Kunci enkripsi massal wajib diisi!${NC}"
                     exit 1
                 fi
-                
+
                 echo -e "${BLUE}Menulis berkas unit systemd secara massal...${NC}"
                 for idx in "${selected_indices[@]}"; do
                     local file_path="${sorted_env_files[$((idx-1))]}"
@@ -211,7 +207,7 @@ function main() {
                     local base_name="${name_only%.*}"
                     local service_name="vipbot_${base_name}"
                     local service_file="/etc/systemd/system/${service_name}.service"
-                    
+
                     cat <<EOF > "$service_file"
 [Unit]
 Description=VipBot - ${base_name}
@@ -220,11 +216,9 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=${PROJECT_DIR}
+WorkingDirectory=${APP_DIR}
 Environment="DB_KEY=${DB_KEY}"
-Environment="PATH=${PROJECT_DIR}/env/bin:/usr/local/bin:/usr/bin:/bin"
-Environment="PYTHONUNBUFFERED=1"
-ExecStart=${VENV_PYTHON} -u main.py --key ${DB_KEY} --env ${file_path}
+ExecStart=${NODE_BIN} dist/index.js --key ${DB_KEY} --env ${PROJECT_DIR}/${file_path}
 Restart=always
 RestartSec=5
 Nice=10
@@ -238,7 +232,7 @@ EOF
                     systemctl enable "$service_name" >/dev/null 2>&1
                     echo -e " ${GREEN}✔${NC} Terkonfigurasi: ${WHITE}${service_name}${NC}"
                 done
-                
+
                 systemctl daemon-reload
                 echo -e "${BLUE}Menjalankan seluruh layanan baru...${NC}"
                 for idx in "${selected_indices[@]}"; do
@@ -334,11 +328,11 @@ EOF
                     echo -e "${RED}❌ Kunci enkripsi wajib diisi!${NC}"
                     exit 1
                 fi
-                
+
                 local SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
-                
+
                 echo -e "${BLUE}Membuat berkas unit systemd...${NC}"
-                
+
                 cat <<EOF > "$SERVICE_FILE"
 [Unit]
 Description=VipBot - ${BASE_NAME}
@@ -347,11 +341,9 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=${PROJECT_DIR}
+WorkingDirectory=${APP_DIR}
 Environment="DB_KEY=${DB_KEY}"
-Environment="PATH=${PROJECT_DIR}/env/bin:/usr/local/bin:/usr/bin:/bin"
-Environment="PYTHONUNBUFFERED=1"
-ExecStart=${VENV_PYTHON} -u main.py --key ${DB_KEY} --env ${SELECTED_ENV}
+ExecStart=${NODE_BIN} dist/index.js --key ${DB_KEY} --env ${PROJECT_DIR}/${SELECTED_ENV}
 Restart=always
 RestartSec=5
 Nice=10
@@ -365,7 +357,7 @@ EOF
                 systemctl daemon-reload
                 systemctl enable "$SERVICE_NAME"
                 systemctl start "$SERVICE_NAME"
-                
+
                 echo -e "${GREEN}✔ Layanan ${SERVICE_NAME} berhasil dipasang dan dijalankan.${NC}"
                 ;;
             2)
