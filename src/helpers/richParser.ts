@@ -16,17 +16,39 @@ export class CustomEmojiParser {
     }
 }
 
+function _escapeHtml(s: string): string {
+    return s
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
 function _markdown_to_html(text: string): string {
     const link = /\[([^\]]+)\]\(([^\s)]+)\)/g;
     text = text.replace(link, '<a href="$2">$1</a>');
+    const boldItalic = /\*\*\*([^*]+?)\*\*\*/g;
+    text = text.replace(boldItalic, "<b><i>$1</i></b>");
     const bold = /\*\*([^*]+?)\*\*/g;
     text = text.replace(bold, "<b>$1</b>");
-    const italic = /__([^_]+?)__/g;
+    const underline = /__([^_]+?)__/g;
+    text = text.replace(underline, "<u>$1</u>");
+    const italic = /(?<!_)_([^_\n]+?)_(?!_)/g;
     text = text.replace(italic, "<i>$1</i>");
     const strike = /~~([^~]+?)~~/g;
     text = text.replace(strike, "<s>$1</s>");
+    const spoiler = /\|\|([^|\n]+?)\|\|/g;
+    text = text.replace(spoiler, "<spoiler>$1</spoiler>");
+    const codeBlock = /```([\w+\-]*?)\n([\s\S]*?)```/g;
+    text = text.replace(
+        codeBlock,
+        (_m, lang: string, code: string) =>
+            `<pre><code class="language-${_escapeHtml(lang) || "text"}">${_escapeHtml(
+                code.trim()
+            )}</code></pre>`
+    );
     const code = /`([^`\n]+?)`/g;
-    text = text.replace(code, "<code>$1</code>");
+    text = text.replace(code, (_m, c: string) => `<code>${_escapeHtml(c)}</code>`);
     return text;
 }
 
