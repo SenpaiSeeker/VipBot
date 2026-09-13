@@ -143,8 +143,8 @@ export const proceed_bot_payment_callback = command(
             `Akses Buat Bot VVIP ${months} bulan`,
             client.me.username
         );
-        const transaction_id: string = payment.transaction_id;
-        const qr_image_stream: any = payment.qr_image_stream;
+        const transaction_id: string = payment.id;
+        const qr_image_stream: any = payment.image?.buffer;
         const amount_raw: number = payment.amount_raw;
 
         const order_data = `${months}|${amount_raw}`;

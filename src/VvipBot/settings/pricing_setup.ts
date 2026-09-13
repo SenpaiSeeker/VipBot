@@ -3,6 +3,7 @@ import { TelegramClient } from "teleproto";
 import { command, ctx, is_bot_owner } from "../index";
 import { Filters } from "../filters";
 import { UserCancelledError, WaitTimeoutError, ValueError } from "../../types";
+import { entitiesToMarkdown, entitiesToHtml } from "../../helpers/entities";
 
 const ERROR_MESSAGES: Record<string, string> = {
     "settings.setup_vvip.err_must_be_number":
@@ -76,9 +77,15 @@ export const set_start_photo_callback = command(
             );
         }
 
-        const photo_id =
-            ask_msg.photo.sizes[ask_msg.photo.sizes.length - 1].file_id;
-        await ctx.db.setVars(client.me.id, "start_photo_id", photo_id);
+        const photo_bytes = await client.downloadMedia(ask_msg);
+        if (!photo_bytes || typeof photo_bytes !== "object") {
+            return await client.send_message(
+                chat_id,
+                `${client.ns.emoji.cross_mark} **Gagal:** Foto tidak dapat diunduh.`,
+                { reply_markup: back_btn }
+            );
+        }
+        await ctx.db.setVars(client.me.id, "start_photo_id", photo_bytes);
         await client.send_message(
             chat_id,
             `${client.ns.emoji.white_check_mark} **Sukses!** Foto /start berhasil diperbarui.`,
@@ -118,19 +125,20 @@ export const set_start_text_callback = command(
             "Ketik `/batal` untuk membatalkan.";
         const ask_text_msg = await client.ask(chat_id, prompt, 600);
 
-        const text_value = String(ask_text_msg.message || ask_text_msg.text || "");
-        if (!text_value) {
+        const raw_text = String(ask_text_msg.message || ask_text_msg.text || "");
+        if (!raw_text) {
             return await client.send_message(
                 chat_id,
                 `${client.ns.emoji.cross_mark} **Gagal:** Pesan bukan teks.`,
                 { reply_markup: back_btn }
             );
         }
-        if (text_value.toLowerCase() === "/batal") {
+        if (raw_text.toLowerCase() === "/batal") {
             throw new UserCancelledError();
         }
-        if (text_value.toLowerCase() === "/empty") {
+        if (raw_text.toLowerCase() === "/empty") {
             await ctx.db.removeVars(client.me.id, "start_text_template");
+            await ctx.db.removeVars(client.me.id, "start_text_template_html");
             return await client.send_message(
                 chat_id,
                 `${client.ns.emoji.white_check_mark} **Sukses!** Teks /start telah dihapus.`,
@@ -138,7 +146,16 @@ export const set_start_text_callback = command(
             );
         }
 
-        await ctx.db.setVars(client.me.id, "start_text_template", text_value);
+        const mdText =
+            entitiesToMarkdown(raw_text, ask_text_msg.entities) || raw_text;
+        const htmlText =
+            entitiesToHtml(raw_text, ask_text_msg.entities) || raw_text;
+        await ctx.db.setVars(client.me.id, "start_text_template", mdText);
+        await ctx.db.setVars(
+            client.me.id,
+            "start_text_template_html",
+            htmlText
+        );
         await client.send_message(
             chat_id,
             `${client.ns.emoji.white_check_mark} **Sukses!** Teks /start berhasil diperbarui.`,

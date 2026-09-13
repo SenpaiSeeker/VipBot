@@ -57,8 +57,8 @@ async function _build_payment(
         client.me.username
     );
     const qr_string: string = payment.qr_string;
-    const transaction_id: string = payment.transaction_id;
-    const qr_image_stream: Any = payment.qr_image_stream;
+    const transaction_id: string = payment.id;
+    const qr_image_stream: Any = payment.image?.buffer;
     const amount_raw: number = payment.amount_raw;
 
     const formatted_amount = Math.trunc(Number(amount_raw)).toLocaleString("id-ID");

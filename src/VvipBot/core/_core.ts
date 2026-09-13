@@ -65,7 +65,7 @@ async function _send_or_edit_photo(
 async function get_start_keyboard_and_content(
     client: TelegramClient,
     user: Any
-): Promise<[Any, string, string]> {
+): Promise<[Any, string, string, string | undefined]> {
     const is_owner = await is_bot_owner(client, user.id);
     const is_main_bot = toId(client.me.id) === toId(ctx.manager.main_bot_id);
 
@@ -73,14 +73,31 @@ async function get_start_keyboard_and_content(
         ? MAIN_BOT_TEXT
         : SECONDARY_BOT_TEXT;
 
-    const db_text = await ctx.db.getVars(client.me.id, "start_text_template");
-    if (db_text != null) {
-        text_template = db_text;
+    let parse_mode: string | undefined;
+    const db_html = await ctx.db.getVars(client.me.id, "start_text_template_html");
+    if (db_html != null) {
+        text_template = db_html;
+        parse_mode = "html";
+    } else {
+        const db_text = await ctx.db.getVars(client.me.id, "start_text_template");
+        if (db_text != null) {
+            text_template = db_text;
+        }
     }
 
     const db_photo = await ctx.db.getVars(client.me.id, "start_photo_id");
-    const photo_id =
-        db_photo != null ? db_photo : DEFAULT_START_PHOTOS["main"];
+    let photo_id: Any = db_photo != null ? db_photo : DEFAULT_START_PHOTOS["main"];
+    if (
+        photo_id &&
+        typeof photo_id === "object" &&
+        Array.isArray(photo_id.data)
+    ) {
+        try {
+            photo_id = Buffer.from(photo_id.data);
+        } catch {
+            photo_id = DEFAULT_START_PHOTOS["main"];
+        }
+    }
 
     let welcome_text = text_template;
     if (is_main_bot) {
@@ -154,19 +171,21 @@ async function get_start_keyboard_and_content(
     );
 
     const btn = client.ns.telegram.button.build_button_grid(layout);
-    return [btn, welcome_text, photo_id];
+    return [btn, welcome_text, photo_id, parse_mode];
 }
 
 export const start_bot = command((_c: Any) =>
     and_(Filters.command("start"), Filters.private)
 )(async (client: TelegramClient, message: Any) => {
-    const [btn, txt, photo_id] = await get_start_keyboard_and_content(
-        client,
-        message.from_user
-    );
+    const [btn, txt, photo_id, parse_mode] =
+        await get_start_keyboard_and_content(
+            client,
+            message.from_user
+        );
     await message.reply_photo(photo_id, {
         caption: txt,
         reply_markup: btn,
+        parse_mode,
     });
     await check_new_user(client, message);
 });
@@ -175,13 +194,17 @@ export const start_callback = command(
     (_c: Any) => Filters.regex("^start$"),
     "callback"
 )(async (client: TelegramClient, callback_query: Any) => {
-    const [btn, txt, photo_id] = await get_start_keyboard_and_content(
-        client,
-        callback_query.from_user
-    );
+    const [btn, txt, photo_id, parse_mode] =
+        await get_start_keyboard_and_content(
+            client,
+            callback_query.from_user
+        );
     const message = callback_query.message;
     if (message && message.photo) {
-        await callback_query.edit_message_caption(txt, { reply_markup: btn });
+        await callback_query.edit_message_caption(txt, {
+            reply_markup: btn,
+            parse_mode,
+        });
     } else {
         if (message) {
             try {
@@ -193,6 +216,7 @@ export const start_callback = command(
         await client.send_photo(callback_query.from_user.id, photo_id, {
             caption: txt,
             reply_markup: btn,
+            parse_mode,
         });
     }
 });
