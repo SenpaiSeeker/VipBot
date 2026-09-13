@@ -347,7 +347,12 @@ export const eval_callback_handler = command(
         ),
     "callback"
 )(async (client: TelegramClient, query: Any) => {
-    const data = query.data.split("_");
+    const raw_data: Any = query.data;
+    const data_str =
+        typeof raw_data === "string"
+            ? raw_data
+            : Buffer.from(raw_data ?? "").toString("utf-8");
+    const data = data_str.split("_");
     if (data.length < 4) {
         return;
     }
@@ -367,10 +372,11 @@ export const eval_callback_handler = command(
         }
     } else if (action === "run") {
         try {
-            const trigger_message = await client.get_messages(
+            const msgs = await client.get_messages(
                 chat_id,
                 message_id
             );
+            const trigger_message = Array.isArray(msgs) ? msgs[0] : msgs;
             const code = await get_eval_payload(client, trigger_message);
             if (!code) {
                 return await query.answer(

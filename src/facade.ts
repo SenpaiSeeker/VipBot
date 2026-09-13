@@ -63,7 +63,7 @@ export function patchTelegramClient(_client: TelegramClient): void {
                     options.parse_mode === undefined
                         ? RichParseMode
                         : options.parse_mode,
-                replyMarkup: options.reply_markup ?? options.buttons,
+                buttons: options.reply_markup ?? options.buttons,
                 replyTo: options.reply_to_message_id ?? undefined,
                 linkPreview: !options.disable_web_page_preview,
                 noforwards: options.protect_content,
@@ -334,7 +334,7 @@ export function patchTelegramClient(_client: TelegramClient): void {
             options: Any = {}
         ) {
             return this.edit({
-                message: text ?? "",
+                text: text ?? "",
                 parseMode:
                     options.parse_mode === undefined
                         ? RichParseMode
