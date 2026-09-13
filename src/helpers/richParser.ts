@@ -17,6 +17,8 @@ export class CustomEmojiParser {
 }
 
 function _markdown_to_html(text: string): string {
+    const link = /\[([^\]]+)\]\(([^\s)]+)\)/g;
+    text = text.replace(link, '<a href="$2">$1</a>');
     const bold = /\*\*([^*]+?)\*\*/g;
     text = text.replace(bold, "<b>$1</b>");
     const italic = /__([^_]+?)__/g;
