@@ -24,7 +24,58 @@ function _escapeHtml(s: string): string {
         .replace(/"/g, "&quot;");
 }
 
+function _apply_blockquote(text: string): string {
+    const lines = text.split("\n");
+    const out: string[] = [];
+    let i = 0;
+
+    while (i < lines.length) {
+        const m = /^(>+)[ \t]?(.*)$/.exec(lines[i]);
+        if (!m) {
+            out.push(lines[i]);
+            i++;
+            continue;
+        }
+
+        let expandable = false;
+        const parts: string[] = [];
+        while (i < lines.length) {
+            const mm = /^(>+)[ \t]?(.*)$/.exec(lines[i]);
+            if (!mm) break;
+            if (mm[1].length >= 3) {
+                expandable = true;
+            }
+            parts.push(mm[2]);
+            i++;
+        }
+
+        const attr = expandable ? " expandable" : "";
+        out.push(`<blockquote${attr}>${parts.join("\n")}</blockquote>`);
+    }
+
+    return out.join("\n");
+}
+
+function _apply_headings(text: string): string {
+    return text.replace(
+        /^#{1,6}\s+(.*)$/gm,
+        (m, h: string) => `<b>${h}</b>`
+    );
+}
+
 function _markdown_to_html(text: string): string {
+    const blocks: string[] = [];
+    text = text.replace(
+        /```([\w+\-]*?)\n([\s\S]*?)```/g,
+        (_m, lang: string, code: string) => {
+            blocks.push(`\u0000BLK\u0000${lang}\u0000${code}\u0000`);
+            return `\u0000IDX${blocks.length - 1}\u0000`;
+        }
+    );
+
+    text = _apply_headings(text);
+    text = _apply_blockquote(text);
+
     const link = /\[([^\]]+)\]\(([^\s)]+)\)/g;
     text = text.replace(link, '<a href="$2">$1</a>');
     const boldItalic = /\*\*\*([^*]+?)\*\*\*/g;
@@ -39,16 +90,19 @@ function _markdown_to_html(text: string): string {
     text = text.replace(strike, "<s>$1</s>");
     const spoiler = /\|\|([^|\n]+?)\|\|/g;
     text = text.replace(spoiler, "<spoiler>$1</spoiler>");
-    const codeBlock = /```([\w+\-]*?)\n([\s\S]*?)```/g;
-    text = text.replace(
-        codeBlock,
-        (_m, lang: string, code: string) =>
-            `<pre><code class="language-${_escapeHtml(lang) || "text"}">${_escapeHtml(
-                code.trim()
-            )}</code></pre>`
-    );
     const code = /`([^`\n]+?)`/g;
     text = text.replace(code, (_m, c: string) => `<code>${_escapeHtml(c)}</code>`);
+
+    text = text.replace(/\u0000IDX(\d+)\u0000/g, (_m, idx: string) => {
+        const raw = blocks[Number(idx)] || "";
+        const parts = raw.split("\u0000");
+        const lang = parts[2] || "";
+        const code = parts.slice(3, -1).join("\u0000");
+        return `<pre><code class="language-${_escapeHtml(lang) || "text"}">${_escapeHtml(
+            code.trim()
+        )}</code></pre>`;
+    });
+
     return text;
 }
 
