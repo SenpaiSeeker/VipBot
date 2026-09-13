@@ -163,19 +163,22 @@ export function command(...names: (string | string[])[]): AnyFilter {
 
 export function user(users: Any | Any[]): AnyFilter {
     const list = Array.isArray(users) ? users : [users];
-    const ids = new Set<string>();
-    for (const u of list) {
-        const id = _userIdOf(u);
-        if (id !== undefined) {
-            ids.add(id);
-        }
-    }
     return (ctx: FilterContext) => {
         const sid = _senderIdOf(ctx);
         if (sid === undefined) {
             return false;
         }
-        return ids.has(sid);
+        for (const item of list) {
+            const resolved = typeof item === "function" ? item(ctx) : item;
+            const id = _userIdOf(resolved);
+            if (id === undefined) {
+                continue;
+            }
+            if (id === sid) {
+                return true;
+            }
+        }
+        return false;
     };
 }
 

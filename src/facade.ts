@@ -454,7 +454,8 @@ export function patchTelegramClient(_client: TelegramClient): void {
             options: Any = {}
         ) {
             return this.edit({
-                message: text ?? "",
+                message: this.messageId,
+                text: text ?? "",
                 parseMode:
                     options.parse_mode === undefined
                         ? RichParseMode
