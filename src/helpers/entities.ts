@@ -58,8 +58,7 @@ export function entitiesToHtml(
             tags.push([s, "<spoiler>"]);
             closes.push([s + l, "</spoiler>"]);
         } else if (cls === "MessageEntityBlockquote") {
-            const expandable =
-                "collapsible" in e && (e as any).collapsible === true;
+            const expandable = (e as any).collapsed === true;
             const attr = expandable ? ' expandable' : '';
             tags.push([s, `<blockquote${attr}>`]);
             closes.push([s + l, "</blockquote>"]);
