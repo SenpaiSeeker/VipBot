@@ -1,13 +1,15 @@
 import { TelegramClient } from "teleproto";
 import { command, ctx } from "../index";
-import { Filters } from "../filters";
+import { Filters, and_ } from "../filters";
 import { toId } from "../../types";
 import { invalidate_page_cache, send_allbots_list } from "./helpers";
 
 export const allbots_command_handler = command(
     (_c: any) =>
-        Filters.command("allbots") &&
-        Filters.user((_c2: any) => ctx.owner_id as any),
+        and_(
+            Filters.command("allbots"),
+            Filters.user((_c2: any) => ctx.owner_id as any)
+        ),
     "message"
 )(async (client: TelegramClient, message: any) => {
     invalidate_page_cache();

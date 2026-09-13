@@ -1,7 +1,7 @@
 import { TelegramClient } from "teleproto";
 import { downloadMedia } from "teleproto/client/downloads";
 import { command, ctx, is_bot_owner } from "../index";
-import { Filters } from "../filters";
+import { Filters, and_ } from "../filters";
 import { toId, WaitTimeoutError, UserCancelledError } from "../../types";
 import fs from "fs";
 
@@ -153,7 +153,7 @@ async function _send_gift_detail(
 }
 
 export const send_gift_handler = command(
-    (_c: any) => Filters.command("gift") && Filters.private,
+    (_c: any) => and_(Filters.command("gift"), Filters.private),
     "message"
 )(async (client: TelegramClient, message: Any) => {
     if (!(await is_bot_owner(client, message.from_user.id))) {
@@ -234,7 +234,7 @@ export const send_gift_handler = command(
 });
 
 export const list_gift_handler = command(
-    (_c: any) => Filters.command("listgift") && Filters.private,
+    (_c: any) => and_(Filters.command("listgift"), Filters.private),
     "message"
 )(async (client: TelegramClient, message: Any) => {
     if (!(await is_bot_owner(client, message.from_user.id))) {

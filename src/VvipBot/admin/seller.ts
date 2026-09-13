@@ -1,6 +1,6 @@
 import { TelegramClient } from "teleproto";
 import { command, ctx, seller_only } from "../index";
-import { Filters } from "../filters";
+import { Filters, and_ } from "../filters";
 import { toId } from "../../types";
 
 type Any = any;
@@ -252,8 +252,10 @@ export const revoke_access_callback = command(
 
 export const add_seller_handler = command(
     (_c: any) =>
-        Filters.command("addseller") &&
-        Filters.user((_c2: any) => ctx.owner_id as Any),
+        and_(
+            Filters.command("addseller"),
+            Filters.user((_c2: any) => ctx.owner_id as Any)
+        ),
     "message"
 )(async (client: TelegramClient, message: Any) => {
     const [user_id_target] = await client.ns.telegram.arg.getReasonAndId(
@@ -296,8 +298,10 @@ export const add_seller_handler = command(
 
 export const list_seller_handler = command(
     (_c: any) =>
-        Filters.command("listseller") &&
-        Filters.user((_c2: any) => ctx.owner_id as Any),
+        and_(
+            Filters.command("listseller"),
+            Filters.user((_c2: any) => ctx.owner_id as Any)
+        ),
     "message"
 )(async (client: TelegramClient, message: Any) => {
     const [text, btn] = await _build_seller_list(client);
@@ -329,8 +333,10 @@ export const delete_seller_callback = command(
 
 export const list_akses_handler = command(
     (_c: any) =>
-        Filters.command("listakses") &&
-        Filters.user((_c2: any) => ctx.owner_id as Any),
+        and_(
+            Filters.command("listakses"),
+            Filters.user((_c2: any) => ctx.owner_id as Any)
+        ),
     "message"
 )(async (client: TelegramClient, message: Any) => {
     const [text, btn] = await _build_access_list(client);

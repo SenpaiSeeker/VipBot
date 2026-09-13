@@ -1,6 +1,6 @@
 import { TelegramClient } from "teleproto";
 import { command, ctx } from "../index";
-import { Filters } from "../filters";
+import { Filters, and_ } from "../filters";
 import { toId } from "../../types";
 
 function _fmtDate(d: Date): string {
@@ -13,8 +13,10 @@ function _fmtDate(d: Date): string {
 
 export const extend_command_handler = command(
     (_c: any) =>
-        Filters.command("extend") &&
-        Filters.user((_c2: any) => ctx.owner_id as any),
+        and_(
+            Filters.command("extend"),
+            Filters.user((_c2: any) => ctx.owner_id as any)
+        ),
     "message"
 )(async (client: TelegramClient, message: any) => {
     const [bot_id, days_str] = await client.ns.telegram.arg.getReasonAndId(
@@ -72,8 +74,10 @@ export const extend_command_handler = command(
 
 export const broadcast_owners_handler = command(
     (_c: any) =>
-        Filters.command("broadcast_owners") &&
-        Filters.user((_c2: any) => ctx.owner_id as any),
+        and_(
+            Filters.command("broadcast_owners"),
+            Filters.user((_c2: any) => ctx.owner_id as any)
+        ),
     "message"
 )(async (client: TelegramClient, message: any) => {
     const broadcast_msg = await client.ns.telegram.arg.getMessage(message);

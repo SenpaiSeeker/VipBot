@@ -200,8 +200,11 @@ export function _make_handler_wrapper(original_func: Any): Any {
             sender.id;
         }
         try {
+            console.log("[DBG-WRAP-BEGIN]");
             await original_func(client, update, ...args);
+            console.log("[DBG-WRAP-END]");
         } catch (e) {
+            console.error("[DBG-WRAP-ERR]", e);
             const ee = e as Any;
             if (IGNORED_HANDLER_ERRORS.some((Cls) => ee instanceof Cls)) {
                 return;
@@ -300,7 +303,9 @@ export function register_all_handlers(
 
     for (const entry of ALL_HANDLERS) {
         entry._computedFilter = entry.filterLambda(ctx as Any);
-
+        if (!entry._computedFilter) {
+            console.log(`[DBG-REG] EMPTY_COMPUTED slot=${ALL_HANDLERS.indexOf(entry)}`);
+        }
         if (entry.handlerType === "pre_checkout") {
             client.addEventHandler(
                 async (rawUpdate: Any) => {
@@ -353,6 +358,16 @@ export function register_all_handlers(
             if (!message) {
                 return;
             }
+            console.log(
+                `[DBG-MSG] text=${JSON.stringify(message.message ?? message.text ?? "")} from=${JSON.stringify(message.fromId ?? null)} chat=${JSON.stringify(message.chat ? { _: message.chat._, id: message.chat.id } : null)} peer=${message.peerId ? message.peerId.className : null} out=${!!message.out}`
+            );
+            if (String(message.message ?? message.text ?? "").trim().toLowerCase() === "/start") {
+                const fctx2: FilterContext = { kind: "message", message, client };
+                const priv = await (Filters.private as AnyFilter)(fctx2);
+                const cmdf = Filters.command("start") as AnyFilter;
+                const cmd = await cmdf(fctx2);
+                console.log(`[DBG-START] private=${priv} command=${cmd}`);
+            }
             for (const entry of ALL_HANDLERS) {
                 if (entry.handlerType !== "message") {
                     continue;
@@ -363,6 +378,7 @@ export function register_all_handlers(
                     client,
                 };
                 if (await entry._computedFilter!(fctx)) {
+                    console.log(`[DBG-HIT] slot=${ALL_HANDLERS.indexOf(entry)} handlerType=${entry.handlerType}`);
                     await _make_handler_wrapper(entry.func)(client, message);
                 }
             }
@@ -372,4 +388,8 @@ export function register_all_handlers(
 
     _installServiceHandler(client);
     patchListen();
+    console.log(`[DBG-REG] total=${ALL_HANDLERS.length} computed=${ALL_HANDLERS.filter((e) => !!e._computedFilter).length}`);
+    ALL_HANDLERS.forEach((e, i) =>
+        console.log(`[DBG-SLOT] ${i} ${e.handlerType} ${e.func.toString().replace(/\s+/g, " ").slice(0, 140)}`)
+    );
 }

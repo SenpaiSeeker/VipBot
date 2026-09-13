@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as path from "path";
 import { execSync } from "child_process";
 import { sessions, TelegramClient } from "teleproto";
 import { configure, getConfig } from "./config";
@@ -9,14 +10,23 @@ import { BotManager } from "./bot_manager";
 import { register_all_handlers, ctx } from "./VvipBot/index";
 import { initialize_bot_services } from "./services";
 import { LoggerHandler } from "./helpers/logger";
+import { load_session, save_session } from "./helpers/sessionStore";
 
 const log = new LoggerHandler();
 
 type Any = any;
 
+function session_prefix_for_env(env_file: string): string {
+    return path.basename(env_file).replace(/\.env$/, "");
+}
+
 function build_main_client(config: ReturnType<typeof getConfig>): TelegramClient {
+    const saved = load_session(session_prefix_for_env(config.ENV_FILE));
+    const session = saved
+        ? new sessions.StringSession(saved)
+        : new sessions.StringSession();
     return new TelegramClient(
-        new sessions.MemorySession(),
+        session,
         config.API_ID,
         config.API_HASH,
         {}
@@ -31,7 +41,7 @@ function clean_sessions(): void {
     }
 }
 
-function register_signal_handlers(): () => Promise<void> {
+function register_signal_handlers(): Promise<void> {
     let stop_resolve: (() => void) | undefined;
     const stop_promise = new Promise<void>((resolve) => {
         stop_resolve = resolve;
@@ -43,7 +53,7 @@ function register_signal_handlers(): () => Promise<void> {
     };
     process.on("SIGINT", handler);
     process.on("SIGTERM", handler);
-    return () => stop_promise;
+    return stop_promise;
 }
 
 async function shutdown(app: TelegramClient, manager: BotManager): Promise<void> {
@@ -88,7 +98,17 @@ async function main(): Promise<void> {
         app.ns.utils.grad.render_text("VVIP Meneger");
         log.print(`${log.MAGENTA}Developed by NorSodikin`);
 
-        await app.start();
+        await app.start({ botAuthToken: config.BOT_TOKEN });
+        Object.defineProperty(app, "me", {
+            value: await app.getMe(),
+            writable: true,
+            configurable: true,
+            enumerable: true,
+        });
+        save_session(
+            session_prefix_for_env(config.ENV_FILE),
+            String((app.session as Any).save())
+        );
         log.info(`Bot utama '${app.me.firstName}' berhasil dimulai.`);
 
         await initialize_bot_services(app, db);
@@ -110,6 +130,7 @@ async function main(): Promise<void> {
         log.print(`${log.RED}[FATAL] Terjadi error saat memulai: ${e}`);
     } finally {
         await shutdown(app, manager);
+        process.exit(0);
     }
 }
 

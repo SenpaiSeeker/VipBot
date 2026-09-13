@@ -1,0 +1,9 @@
+import "./index";
+import "./core";
+import "./settings";
+import "./admin";
+import "./allbots";
+import "./bot_management";
+import "./member";
+import "./payment";
+import "./send_gift";

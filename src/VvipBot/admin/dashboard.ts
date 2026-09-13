@@ -1,6 +1,6 @@
 import { Api, TelegramClient } from "teleproto";
 import { command, ctx } from "../index";
-import { Filters } from "../filters";
+import { Filters, and_ } from "../filters";
 import { is_bot_owner } from "../index";
 
 const ITEMS_PER_PAGE = 5;
@@ -92,8 +92,10 @@ async function _gather_server_stats(client: any) {
 
 export const dashboard_command_handler = command(
     (_c: any) =>
-        Filters.command("dashboard") &&
-        Filters.user((_c2: any) => ctx.owner_id as any),
+        and_(
+            Filters.command("dashboard"),
+            Filters.user((_c2: any) => ctx.owner_id as any)
+        ),
     "message"
 )(async (client: TelegramClient, message: any) => {
     const msg = await message.reply_text(

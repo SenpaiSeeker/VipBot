@@ -4,7 +4,9 @@ import { LoggerHandler } from "./helpers/logger";
 import { schedule } from "./database";
 import { initialize_bot_services } from "./services";
 import { register_all_handlers, ctx } from "./VvipBot/index";
+import "./VvipBot/register";
 import { toId } from "./types";
+import { load_session, save_session } from "./helpers/sessionStore";
 
 type Any = any;
 
@@ -59,6 +61,13 @@ export class BotManager {
             await client.start({
                 botAuthToken: String(bot_data["bot_token"]),
             });
+            Object.defineProperty(client, "me", {
+                value: await client.getMe(),
+                writable: true,
+                configurable: true,
+                enumerable: true,
+            });
+            save_session(`bot_${bot_id}`, String((client.session as Any).save()));
             await initialize_bot_services(client, this.db);
             this.running_bots[toId(client.me.id)] = client;
             log.info(

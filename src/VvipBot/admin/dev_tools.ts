@@ -8,7 +8,7 @@ import AdmZip from "adm-zip";
 import { TelegramClient } from "teleproto";
 import { command, ctx } from "../index";
 import { is_bot_owner } from "../index";
-import { Filters } from "../filters";
+import { Filters, and_ } from "../filters";
 import { DataBase } from "../../helpers/database";
 
 type Any = any;
@@ -292,7 +292,7 @@ async function execute_and_format(
 
 export const eval_bot_handler = command(
     (_c: any) =>
-        Filters.command("eval") && Filters.user((_c2: any) => ctx.owner_id),
+        and_(Filters.command("eval"), Filters.user((_c2: any) => ctx.owner_id)),
     "message"
 )(async (client: TelegramClient, message: Any) => {
     const code = await get_eval_payload(client, message);
@@ -341,8 +341,10 @@ export const eval_bot_handler = command(
 
 export const eval_callback_handler = command(
     (_c: any) =>
-        Filters.regex(/^eval_/) &&
-        Filters.user((_c2: any) => ctx.owner_id as Any),
+        and_(
+            Filters.regex(/^eval_/),
+            Filters.user((_c2: any) => ctx.owner_id as Any)
+        ),
     "callback"
 )(async (client: TelegramClient, query: Any) => {
     const data = query.data.split("_");
@@ -439,8 +441,10 @@ function _select_database(
 
 export const restore_database_handler = command(
     (_c: any) =>
-        Filters.command("restore") &&
-        Filters.user((_c2: any) => ctx.owner_id as Any),
+        and_(
+            Filters.command("restore"),
+            Filters.user((_c2: any) => ctx.owner_id as Any)
+        ),
     "message"
 )(async (client: TelegramClient, message: Any) => {
     const reply_target: Any = await _reply_msg(client, message);
@@ -522,8 +526,10 @@ export const restore_database_handler = command(
 
 export const tfdatabase_command_handler = command(
     (_c: any) =>
-        Filters.command("tfdatabase") &&
-        Filters.user((_c2: any) => ctx.owner_id as Any),
+        and_(
+            Filters.command("tfdatabase"),
+            Filters.user((_c2: any) => ctx.owner_id as Any)
+        ),
     "message"
 )(async (client: TelegramClient, message: Any) => {
     const args = _msgText(message).trim().split(/\s+/);
@@ -585,8 +591,10 @@ export const tfdatabase_command_handler = command(
 
 export const tfbot_command_handler = command(
     (_c: any) =>
-        Filters.command("tfbot") &&
-        Filters.user((_c2: any) => ctx.owner_id as Any),
+        and_(
+            Filters.command("tfbot"),
+            Filters.user((_c2: any) => ctx.owner_id as Any)
+        ),
     "message"
 )(async (client: TelegramClient, message: Any) => {
     const args = _msgText(message).trim().split(/\s+/);
