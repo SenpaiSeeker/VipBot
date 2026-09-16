@@ -119,8 +119,20 @@ def _load_all_handlers():
     for module_name in flat_modules:
         importlib.import_module(f".{module_name}", package=__name__)
 
+    legacy_packages = {
+        "admin",
+        "allbots",
+        "bot_management",
+        "core",
+        "member",
+        "payment",
+        "send_gift",
+        "settings",
+    }
     for entry in sorted(os.scandir(current_dir), key=lambda e: e.name):
         if entry.is_dir() and not entry.name.startswith("_"):
+            if entry.name in legacy_packages:
+                continue
             pkg_init = os.path.join(entry.path, "__init__.py")
             if os.path.isfile(pkg_init):
                 importlib.import_module(f".{entry.name}", package=__name__)
