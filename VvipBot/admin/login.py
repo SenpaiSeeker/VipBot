@@ -32,7 +32,7 @@ async def login_command_handler(client, message):
                 owner_id_arg = parts[1]
 
     if not bot_token:
-        return await message.reply_text(usage_text)
+        return await message.reply_text(usage_text, parse_mode=ParseMode.MARKDOWN)
 
     try:
         new_bot_id = int(bot_token.split(":", 1)[0])
