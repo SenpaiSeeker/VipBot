@@ -1,4 +1,5 @@
-from .. import *
+from . import *
+
 
 DEFAULT_START_PHOTO = "https://files.catbox.moe/ozzvtz.jpg"
 

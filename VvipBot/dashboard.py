@@ -1,4 +1,4 @@
-from .. import *
+from . import *
 
 
 @command(lambda ctx: filters.command("dashboard") & filters.user(ctx.owner_id))

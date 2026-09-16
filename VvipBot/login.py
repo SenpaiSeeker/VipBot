@@ -1,6 +1,6 @@
 from config import API_HASH, API_ID
 
-from .. import *
+from . import *
 
 
 @command(lambda ctx: filters.command("login") & filters.user(ctx.owner_id))
