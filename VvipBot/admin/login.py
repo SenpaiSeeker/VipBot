@@ -9,9 +9,9 @@ async def login_command_handler(client, message):
         f"{client.ns.emoji.robot} **Perintah Login Bot**\n\n"
         "Khusus Owner Utama untuk membuat / mengaktifkan ulang bot yang mati.\n\n"
         f"{client.ns.emoji.pen} **Format:**\n"
-        "`/login <bot_token>`\n"
-        "`/login <bot_token> <owner_id>`\n"
-        "atau balas pesan berisi bot token dengan `/login` atau `/login <owner_id>`.\n\n"
+        "`/login (bot_token)`\n"
+        "`/login (bot_token) (owner_id)`\n"
+        "atau balas pesan berisi bot token dengan `/login` atau `/login (owner_id)`.\n\n"
         "`owner_id` bersifat opsional. Jika tidak diberikan dan sudah tersimpan "
         "sebelumnya, data owner lama akan dipakai."
     )
@@ -22,16 +22,15 @@ async def login_command_handler(client, message):
     owner_id_arg = parts[1] if len(parts) >= 2 else None
 
     if not bot_token:
-        return await message.reply_text(usage_text, parse_mode=ParseMode.MARKDOWN)
+        return await message.reply_text(usage_text)
 
     try:
         new_bot_id = int(bot_token.split(":", 1)[0])
     except (ValueError, IndexError):
         return await message.reply_text(
             f"{client.ns.emoji.cross_mark} **Token tidak valid.**\n"
-            "Format token yang benar: `<bot_id>:<secret>`\n"
-            "Contoh: `123456789:AAH...`",
-            parse_mode=ParseMode.MARKDOWN
+            "Format token yang benar: `(bot_id):(secret]`\n"
+            "Contoh: `123456789:AAH...`"
         )
 
     owner_id = None
