@@ -30,7 +30,8 @@ async def login_command_handler(client, message):
         return await message.reply_text(
             f"{client.ns.emoji.cross_mark} **Token tidak valid.**\n"
             "Format token yang benar: `<bot_id>:<secret>`\n"
-            "Contoh: `123456789:AAH...`"
+            "Contoh: `123456789:AAH...`",
+            parse_mode=ParseMode.MARKDOWN
         )
 
     owner_id = None
