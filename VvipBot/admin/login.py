@@ -16,20 +16,10 @@ async def login_command_handler(client, message):
         "sebelumnya, data owner lama akan dipakai."
     )
 
-    parts = (message.text or "").strip().split()
-    bot_token = None
-    owner_id_arg = None
-
-    if len(parts) >= 2:
-        bot_token = parts[1]
-        if len(parts) >= 3:
-            owner_id_arg = parts[2]
-    elif message.reply_to_message and message.reply_to_message.text:
-        replied_parts = message.reply_to_message.text.strip().split()
-        if replied_parts:
-            bot_token = replied_parts[0]
-            if len(parts) >= 2:
-                owner_id_arg = parts[1]
+    args_text = client.ns.telegram.arg.getMessage(message, is_arg=True)
+    parts = (args_text or "").strip().split()
+    bot_token = parts[0] if parts else None
+    owner_id_arg = parts[1] if len(parts) >= 2 else None
 
     if not bot_token:
         return await message.reply_text(usage_text, parse_mode=ParseMode.MARKDOWN)
