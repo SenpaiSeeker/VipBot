@@ -1,5 +1,7 @@
 from .. import *
 
+DEFAULT_START_PHOTO = "https://files.catbox.moe/ozzvtz.jpg"
+
 
 async def get_start_keyboard_and_content(client, user):
     is_owner = await is_bot_owner(client, user.id)
@@ -23,7 +25,7 @@ async def get_start_keyboard_and_content(client, user):
     main_text_template = db_text_template if db_text_template is not None else _default_text
     
     db_photo_id = await ctx.db.getVars(client.me.id, "start_photo_id")
-    photo_id = db_photo_id if db_photo_id is not None else "https://files.catbox.moe/ozzvtz.jpg"
+    photo_id = db_photo_id if db_photo_id is not None else None
 
     welcome_text = main_text_template.format(
         mention=client.ns.telegram.arg.getMention(user)
@@ -95,7 +97,10 @@ async def get_start_keyboard_and_content(client, user):
 @command(lambda ctx: filters.command("start") & filters.private)
 async def start_bot(client, message):
     btn, txt, photo_id = await get_start_keyboard_and_content(client, message.from_user)
-    await message.reply_photo(photo=photo_id, caption=txt, reply_markup=btn)
+    if photo_id:
+        await message.reply_photo(photo=photo_id, caption=txt, reply_markup=btn)
+    else:
+        await message.reply_text(txt, reply_markup=btn)
     await check_new_user(client, message)
 
 
@@ -111,13 +116,16 @@ async def start_callback(client, callback_query):
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
-        await callback_query.message.delete()
-        await client.send_photo(
-            callback_query.from_user.id,
-            photo=photo_id,
-            caption=txt,
-            reply_markup=btn,
-        )
+        if photo_id:
+            await callback_query.message.delete()
+            await client.send_photo(
+                callback_query.from_user.id,
+                photo=photo_id,
+                caption=txt,
+                reply_markup=btn,
+            )
+        else:
+            await callback_query.edit_message_text(txt, reply_markup=btn)
 
 
 @command(

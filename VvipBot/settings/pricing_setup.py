@@ -3,6 +3,7 @@ import uuid
 import pyrogram
 from pyrogram import filters
 from .. import command, ctx, is_bot_owner, listen
+from ..core import DEFAULT_START_PHOTO
 
 
 @command(
@@ -10,6 +11,129 @@ from .. import command, ctx, is_bot_owner, listen
     handler_type="callback",
 )
 async def set_start_photo_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+        
+    chat_id = callback_query.from_user.id
+    await callback_query.message.delete()
+    
+    layout = [
+        [
+            {
+                "text": "🖼️ Gunakan Foto Default",
+                "callback_data": "set_default_start_photo",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("frame"),
+            },
+            {
+                "text": "📤 Kirim Foto Baru",
+                "callback_data": "ask_start_photo",
+                "style": "green",
+                "emoji": client.ns.emoji.id("inbox_tray"),
+            },
+        ],
+        [
+            {
+                "text": "🗑️ Hapus Foto (Teks Saja)",
+                "callback_data": "clear_start_photo",
+                "style": "red",
+                "emoji": client.ns.emoji.id("minus"),
+            }
+        ],
+        [
+            {
+                "text": "• Kembali ke Pengaturan •",
+                "callback_data": "settings",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("back_arrow"),
+            }
+        ],
+    ]
+    btn = client.ns.telegram.button.build_button_grid(layout)
+    
+    await client.send_message(
+        chat_id,
+        f"**{client.ns.emoji.frame} Atur Foto Start**\n\n"
+        f"Silakan pilih opsi di bawah ini untuk mengubah foto sambutan `/start`.\n\n"
+        f"**{client.ns.emoji.warning} Perhatian:**\n"
+        f"Semakin besar ukuran foto, maka semakin lama juga respon `/start`.\n"
+        f"Gunakan foto berukuran kecil agar bot tetap cepat merespons.\n\n"
+        f"Jika foto tidak diatur, maka `/start` hanya akan mengirim **teks sambutan saja**.",
+        reply_markup=btn,
+    )
+
+
+@command(
+    lambda ctx: filters.regex("^set_default_start_photo$"),
+    handler_type="callback",
+)
+async def set_default_start_photo_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+        
+    chat_id = callback_query.from_user.id
+    await ctx.db.setVars(client.me.id, "start_photo_id", DEFAULT_START_PHOTO)
+    
+    layout = [
+        [
+            {
+                "text": "• Kembali ke Pengaturan •",
+                "callback_data": "settings",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("back_arrow"),
+            }
+        ]
+    ]
+    btn = client.ns.telegram.button.build_button_grid(layout)
+    
+    await callback_query.message.delete()
+    
+    await client.send_message(
+        chat_id,
+        f"{client.ns.emoji.white_check_mark} **Sukses!**\n"
+        f"Foto `/start` diatur ke **foto default**.",
+        reply_markup=btn,
+    )
+
+
+@command(
+    lambda ctx: filters.regex("^clear_start_photo$"),
+    handler_type="callback",
+)
+async def clear_start_photo_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+        
+    chat_id = callback_query.from_user.id
+    await ctx.db.removeVars(client.me.id, "start_photo_id")
+    
+    layout = [
+        [
+            {
+                "text": "• Kembali ke Pengaturan •",
+                "callback_data": "settings",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("back_arrow"),
+            }
+        ]
+    ]
+    btn = client.ns.telegram.button.build_button_grid(layout)
+    
+    await callback_query.message.delete()
+    
+    await client.send_message(
+        chat_id,
+        f"{client.ns.emoji.white_check_mark} **Sukses!**\n"
+        f"Foto `/start` telah dihapus. Sekarang `/start` hanya akan mengirim **teks sambutan**.",
+        reply_markup=btn,
+    )
+
+
+@command(
+    lambda ctx: filters.regex("^ask_start_photo$"),
+    handler_type="callback",
+)
+async def ask_start_photo_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
         
@@ -30,8 +154,11 @@ async def set_start_photo_callback(client, callback_query):
     
     try:
         prompt = (
-            "Kirim foto baru untuk menyambut user.\n\n"
-            "Ketik `/batal` untuk membatalkan."
+            f"**{client.ns.emoji.frame} Kirim Foto Baru**\n\n"
+            f"Silakan kirim foto baru untuk menyambut user.\n\n"
+            f"**{client.ns.emoji.warning} Perhatian:** Semakin besar ukuran foto, maka semakin lama juga respon `/start`.\n\n"
+            f"Ketik `/batal` untuk membatalkan.\n"
+            f"Ketik `/empty` untuk menghapus foto dan hanya mengirim teks."
         )
         ask_msg = await client.ask(chat_id, prompt, timeout=120)
         
