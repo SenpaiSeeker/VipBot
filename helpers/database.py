@@ -377,4 +377,6 @@ class DataBase:
             b for b in full_data.get("bots", []) if b.get("user_id") != user_id_str
         ]
 
+        full_data.setdefault("vars", {}).pop(user_id_str, None)
+
         await self._save_data(full_data)
