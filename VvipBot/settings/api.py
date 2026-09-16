@@ -1,7 +1,9 @@
 import asyncio
-import pyrogram
+
 from pyrogram import filters
+
 from services import initialize_bot_services
+
 from .. import command, ctx, is_bot_owner, listen
 
 
@@ -12,14 +14,14 @@ from .. import command, ctx, is_bot_owner, listen
 async def api_settings_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
     saweria_status = (
         f"{client.ns.emoji.white_check_mark} Ativ"
         if saweria_user_id
         else f"{client.ns.emoji.cross_mark} Belum Diatur"
     )
-    
+
     layout = [
         [
             {
@@ -46,10 +48,10 @@ async def api_settings_callback(client, callback_query):
             }
         ],
     ]
-    
+
     text = f"**{client.ns.emoji.key} Pengelola Kunci API untuk {client.me.mention}**\n\nAtur koneksi pembayaran Saweria untuk bot Anda.\n\n**Status Layanan:**\n- `Gateway Pembayaran (Saweria)`: **{saweria_status}**\n\nPilih tindakan:"
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -63,11 +65,11 @@ async def api_settings_callback(client, callback_query):
 async def set_api_key_prompt(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     chat_id = callback_query.from_user.id
     _, key_name = callback_query.data.split(" ", 1)
     await callback_query.message.delete()
-    
+
     layout = [
         [
             {
@@ -79,8 +81,9 @@ async def set_api_key_prompt(client, callback_query):
         ]
     ]
     back_btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     try:
+
         def ask(p):
             return client.ask(
                 chat_id,
@@ -92,37 +95,35 @@ async def set_api_key_prompt(client, callback_query):
             username_msg = await ask(f"**2/2:** Kirim **Username Saweria** Anda.")
             if username_msg.text and username_msg.text.lower() == "/batal":
                 raise listen.UserCancelled
-                
+
             processing_msg = await client.send_message(
                 chat_id,
                 f"{client.ns.emoji.hourglass} **Sedang Memproses...**\nMohon tunggu sebentar.",
             )
-            
+
             try:
                 saweria_temp = client.ns.payment.SaweriaScraper()
                 user_id_saweria = await saweria_temp.get_user_id(
                     username=username_msg.text
                 )
-                
+
                 if not user_id_saweria:
-                    raise Exception(
-                        "Username Saweria tidak ditemukan."
-                    )
-                    
+                    raise Exception("Username Saweria tidak ditemukan.")
+
                 await ctx.db.setVars(
                     client.me.id,
                     "SAWERIA_USER_ID",
                     user_id_saweria,
                 )
-                
+
                 await processing_msg.delete()
-                
+
                 await client.send_message(
                     chat_id,
                     f"{client.ns.emoji.white_check_mark} **Sukses!**\nKunci Saweria berhasil disimpan.",
                     reply_markup=back_btn,
                 )
-                
+
             except Exception as e:
                 await processing_msg.edit_text(
                     f"{client.ns.emoji.cross_mark} **Gagal!**\n`Error: {e}`",
@@ -136,9 +137,9 @@ async def set_api_key_prompt(client, callback_query):
                 reply_markup=back_btn,
             )
             return
-            
+
         await initialize_bot_services(client, ctx.db)
-        
+
     except (listen.UserCancelled, asyncio.TimeoutError):
         await client.send_message(
             chat_id,
@@ -154,7 +155,7 @@ async def set_api_key_prompt(client, callback_query):
 async def confirm_delete_api_keys(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     text = f"**{client.ns.emoji.exclamation} Konfirmasi**\n\nAnda yakin ingin menghapus **SEMUA** kunci API?"
     layout = [
         [
@@ -173,7 +174,7 @@ async def confirm_delete_api_keys(client, callback_query):
         ]
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -187,12 +188,13 @@ async def confirm_delete_api_keys(client, callback_query):
 async def do_delete_api_keys(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     await ctx.db.removeVars(client.me.id, "SAWERIA_USER_ID")
-    
+
     from services import initialize_bot_services
+
     await initialize_bot_services(client, ctx.db)
-    
+
     await callback_query.answer(
         "Semua kunci API untuk bot ini telah berhasil dihapus.",
         show_alert=True,

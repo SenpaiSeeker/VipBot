@@ -55,9 +55,7 @@ async def login_command_handler(client, message):
 
     if new_bot_id in ctx.manager.running_bots:
         running = ctx.manager.running_bots[new_bot_id]
-        bot_name = (
-            running.me.first_name if running.me else f"ID {new_bot_id}"
-        )
+        bot_name = running.me.first_name if running.me else f"ID {new_bot_id}"
         return await message.reply_text(
             f"{client.ns.emoji.warning} Bot **{bot_name}** (`{new_bot_id}`) "
             "sudah berjalan. Tidak perlu login ulang."
@@ -81,9 +79,7 @@ async def login_command_handler(client, message):
 
     expiry_date_str = await ctx.db.getVars(new_bot_id, "bot_expiration_date")
     if not expiry_date_str:
-        expiry_date_str = (
-            datetime.now(timezone.utc) + timedelta(days=365)
-        ).isoformat()
+        expiry_date_str = (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
 
     bot_data = {
         "name": str(new_bot_id),
@@ -112,9 +108,7 @@ async def login_command_handler(client, message):
         owner_source = "Owner Utama"
 
     try:
-        formatted_expiry = datetime.fromisoformat(
-            expiry_date_str
-        ).strftime("%d %b %Y")
+        formatted_expiry = datetime.fromisoformat(expiry_date_str).strftime("%d %b %Y")
     except ValueError:
         formatted_expiry = expiry_date_str
 

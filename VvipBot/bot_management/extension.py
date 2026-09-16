@@ -1,7 +1,8 @@
-from datetime import datetime, timezone, timedelta
-import pyrogram
+from datetime import datetime, timedelta, timezone
+
 from pyrogram import filters
-from .. import command, ctx, is_bot_owner
+
+from .. import command, ctx
 
 
 @command(
@@ -12,14 +13,14 @@ async def request_extend_duration_callback(client, callback_query):
     bot_id_to_request = int(callback_query.data.split(" ", 1)[1])
     requester = callback_query.from_user
     bot_name = f"ID {bot_id_to_request}"
-    
+
     try:
         bot_instance = ctx.manager.running_bots.get(bot_id_to_request)
         if bot_instance and bot_instance.is_connected:
             bot_name = bot_instance.me.first_name
     except Exception:
         pass
-        
+
     try:
         main_bot_client = ctx.manager.main_bot_client
         if not main_bot_client or not main_bot_client.is_connected:
@@ -34,7 +35,7 @@ async def request_extend_duration_callback(client, callback_query):
             f"**Bot:** **{bot_name}** (`{bot_id_to_request}`)\n\n"
             f"Setujui untuk menambah masa aktif bot ini sebanyak 30 hari."
         )
-        
+
         layout_owner = [
             [
                 {
@@ -52,7 +53,7 @@ async def request_extend_duration_callback(client, callback_query):
             ]
         ]
         btn_owner = main_bot_client.ns.telegram.button.build_button_grid(layout_owner)
-        
+
         await main_bot_client.send_message(
             ctx.owner_id, txt_owner, reply_markup=btn_owner
         )
@@ -77,7 +78,7 @@ async def owner_approve_extension_callback(client, callback_query):
             "Hanya Owner Utama yang bisa menyetujui permintaan ini.",
             show_alert=True,
         )
-        
+
     try:
         _, bot_id_str, requester_id_str = callback_query.data.split()
         bot_id_to_extend, requester_id, days_to_add = (
@@ -85,14 +86,14 @@ async def owner_approve_extension_callback(client, callback_query):
             int(requester_id_str),
             30,
         )
-        
+
         exp_date_str = await ctx.db.getVars(bot_id_to_extend, "bot_expiration_date")
         current_exp_date = (
             datetime.fromisoformat(exp_date_str)
             if exp_date_str
             else datetime.now(timezone.utc)
         )
-        
+
         new_exp_date = current_exp_date + timedelta(days=days_to_add)
         await ctx.db.setVars(
             bot_id_to_extend,
@@ -104,7 +105,7 @@ async def owner_approve_extension_callback(client, callback_query):
             f"{client.ns.emoji.white_check_mark} **Persetujuan Berhasil!**\n"
             f"Durasi untuk bot `{bot_id_to_extend}` telah ditambah **{days_to_add} hari**."
         )
-        
+
         try:
             bot_instance = ctx.manager.running_bots.get(bot_id_to_extend)
             bot_name = (
@@ -112,16 +113,14 @@ async def owner_approve_extension_callback(client, callback_query):
                 if bot_instance and bot_instance.is_connected
                 else f"ID {bot_id_to_extend}"
             )
-            
+
             await client.send_message(
                 requester_id,
                 f"{client.ns.emoji.party_popper} **Kabar Baik!**\n\n"
                 f"Permintaan perpanjangan Anda untuk bot **{bot_name}** telah disetujui dan diperpanjang.",
             )
         except Exception as e:
-            ctx.log.print(
-                f"Gagal kirim notif persetujuan ke {requester_id}: {e}"
-            )
+            ctx.log.print(f"Gagal kirim notif persetujuan ke {requester_id}: {e}")
     except Exception as e:
         await callback_query.edit_message_text(
             f"{client.ns.emoji.cross_mark} Gagal menyetujui permintaan: `{e}`"
@@ -138,7 +137,7 @@ async def owner_close_request_callback(client, callback_query):
             "Hanya Owner Utama yang bisa melakukan ini.",
             show_alert=True,
         )
-        
+
     try:
         await callback_query.edit_message_text(
             f"{client.ns.emoji.cross_mark} Permintaan telah ditolak/ditutup oleh Owner Utama."

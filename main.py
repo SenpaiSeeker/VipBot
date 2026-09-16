@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import os
 import signal
 import traceback
 
@@ -56,7 +55,7 @@ async def shutdown(app: pyrogram.Client, manager: BotManager):
         stop_tasks = [
             manager.stop_bot(bot_id) for bot_id in list(manager.running_bots.keys())
         ]
-        
+
         if stop_tasks:
             await asyncio.gather(*stop_tasks, return_exceptions=True)
     except Exception:
@@ -76,7 +75,7 @@ async def clean_sessions():
         process = await asyncio.create_subprocess_shell(
             "rm -rf *.session* /tmp/*.session*",
             stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.DEVNULL
+            stderr=asyncio.subprocess.DEVNULL,
         )
         await process.communicate()
     except Exception:

@@ -1,7 +1,8 @@
 import asyncio
 import uuid
-import pyrogram
+
 from pyrogram import filters
+
 from .. import command, ctx, is_bot_owner, listen
 from ..core import DEFAULT_START_PHOTO
 
@@ -13,10 +14,10 @@ from ..core import DEFAULT_START_PHOTO
 async def set_start_photo_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     chat_id = callback_query.from_user.id
     await callback_query.message.delete()
-    
+
     layout = [
         [
             {
@@ -50,7 +51,7 @@ async def set_start_photo_callback(client, callback_query):
         ],
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     await client.send_message(
         chat_id,
         f"**{client.ns.emoji.frame} Atur Foto Start**\n\n"
@@ -70,10 +71,10 @@ async def set_start_photo_callback(client, callback_query):
 async def set_default_start_photo_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     chat_id = callback_query.from_user.id
     await ctx.db.setVars(client.me.id, "start_photo_id", DEFAULT_START_PHOTO)
-    
+
     layout = [
         [
             {
@@ -85,9 +86,9 @@ async def set_default_start_photo_callback(client, callback_query):
         ]
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     await callback_query.message.delete()
-    
+
     await client.send_message(
         chat_id,
         f"{client.ns.emoji.white_check_mark} **Sukses!**\n"
@@ -103,10 +104,10 @@ async def set_default_start_photo_callback(client, callback_query):
 async def clear_start_photo_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     chat_id = callback_query.from_user.id
     await ctx.db.removeVars(client.me.id, "start_photo_id")
-    
+
     layout = [
         [
             {
@@ -118,9 +119,9 @@ async def clear_start_photo_callback(client, callback_query):
         ]
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     await callback_query.message.delete()
-    
+
     await client.send_message(
         chat_id,
         f"{client.ns.emoji.white_check_mark} **Sukses!**\n"
@@ -136,10 +137,10 @@ async def clear_start_photo_callback(client, callback_query):
 async def ask_start_photo_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     chat_id = callback_query.from_user.id
     await callback_query.message.delete()
-    
+
     layout = [
         [
             {
@@ -151,7 +152,7 @@ async def ask_start_photo_callback(client, callback_query):
         ]
     ]
     back_btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     try:
         prompt = (
             f"**{client.ns.emoji.frame} Kirim Foto Baru**\n\n"
@@ -161,35 +162,35 @@ async def ask_start_photo_callback(client, callback_query):
             f"Ketik `/empty` untuk menghapus foto dan hanya mengirim teks."
         )
         ask_msg = await client.ask(chat_id, prompt, timeout=120)
-        
+
         if ask_msg.text:
             if ask_msg.text.lower() == "/batal":
                 raise listen.UserCancelled
             if ask_msg.text.lower() == "/empty":
                 await ctx.db.removeVars(client.me.id, "start_photo_id")
-                
+
                 return await client.send_message(
                     chat_id,
                     f"{client.ns.emoji.white_check_mark} **Sukses!** Foto /start telah dihapus.",
                     reply_markup=back_btn,
                 )
-                
+
         if not ask_msg.photo:
             return await client.send_message(
                 chat_id,
                 f"{client.ns.emoji.cross_mark} **Gagal:** Pesan bukan foto.",
                 reply_markup=back_btn,
             )
-            
+
         photo_id = ask_msg.photo.sizes[-1].file_id
         await ctx.db.setVars(client.me.id, "start_photo_id", photo_id)
-        
+
         await client.send_message(
             chat_id,
             f"{client.ns.emoji.white_check_mark} **Sukses!** Foto /start berhasil diperbarui.",
             reply_markup=back_btn,
         )
-        
+
     except (listen.UserCancelled, asyncio.TimeoutError):
         await client.send_message(
             chat_id,
@@ -205,10 +206,10 @@ async def ask_start_photo_callback(client, callback_query):
 async def set_start_text_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     chat_id = callback_query.from_user.id
     await callback_query.message.delete()
-    
+
     layout = [
         [
             {
@@ -220,7 +221,7 @@ async def set_start_text_callback(client, callback_query):
         ]
     ]
     back_btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     try:
         prompt = (
             f"**{client.ns.emoji.writing_hand} Atur Teks Start**\n\n"
@@ -229,38 +230,38 @@ async def set_start_text_callback(client, callback_query):
             f"Ketik `/batal` untuk membatalkan."
         )
         ask_text_msg = await client.ask(chat_id, prompt, timeout=600)
-        
+
         if not ask_text_msg.text:
             return await client.send_message(
                 chat_id,
                 f"{client.ns.emoji.cross_mark} **Gagal:** Pesan bukan teks.",
                 reply_markup=back_btn,
             )
-            
+
         if ask_text_msg.text.lower() == "/batal":
             raise listen.UserCancelled
-            
+
         if ask_text_msg.text.lower() == "/empty":
             await ctx.db.removeVars(client.me.id, "start_text_template")
-            
+
             return await client.send_message(
                 chat_id,
                 f"{client.ns.emoji.white_check_mark} **Sukses!** Teks /start telah dihapus.",
                 reply_markup=back_btn,
             )
-            
+
         await ctx.db.setVars(
             client.me.id,
             "start_text_template",
             ask_text_msg.text.markdown,
         )
-        
+
         await client.send_message(
             chat_id,
             f"{client.ns.emoji.white_check_mark} **Sukses!** Teks /start berhasil diperbarui.",
             reply_markup=back_btn,
         )
-        
+
     except (listen.UserCancelled, asyncio.TimeoutError):
         await client.send_message(
             chat_id,
@@ -279,34 +280,34 @@ async def check_vvip_status_callback(client, callback_query):
             "🚫 Anda tidak memiliki akses ke menu ini.",
             show_alert=True,
         )
-        
+
     chat_id = callback_query.message.chat.id
     await callback_query.message.delete()
-    
+
     status_msg = await client.send_message(
         chat_id,
         f"{client.ns.emoji.hourglass} Sedang Memeriksa Status Grup...\nMohon tunggu, proses ini mungkin memakan waktu.",
     )
-    
+
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     if not vvip_list:
         return await status_msg.edit(
             f"{client.ns.emoji.cross_mark} Belum ada data VVIP."
         )
-        
+
     report_text = f"{client.ns.emoji.mag} Laporan Status Grup VVIP\n\n"
-    
+
     for item in vvip_list:
         chat_id_target = item.get("chat_id_normal")
         name = item.get("name")
-        
+
         try:
             chat = await client.get_chat(chat_id_target)
-            
+
             if hasattr(chat, "restrictions") and chat.restrictions:
                 restriction = chat.restrictions[0]
                 reason_text = f"{restriction.reason}: {restriction.text}"
-                
+
                 report_text += (
                     f"{client.ns.emoji.folder} Nama: {name}\n"
                     f"{client.ns.emoji.bulb} Grup: {chat.title}\n"
@@ -315,7 +316,7 @@ async def check_vvip_status_callback(client, callback_query):
                 )
             else:
                 link = chat.invite_link or "N/A"
-                
+
                 report_text += (
                     f"{client.ns.emoji.folder} Nama: {name}\n"
                     f"{client.ns.emoji.bulb} Grup: {chat.title}\n"
@@ -327,14 +328,14 @@ async def check_vvip_status_callback(client, callback_query):
                 f"{client.ns.emoji.folder} Nama: {name}\n"
                 f"{client.ns.emoji.cross_mark} Error: Tidak dapat mengakses grup (ID: {chat_id_target}). Pastikan bot adalah admin.\n\n"
             )
-            
+
         if len(report_text) > 3500:
             await client.send_message(chat_id, report_text)
             report_text = ""
-            
+
     if report_text:
         await client.send_message(chat_id, report_text)
-        
+
     layout = [
         [
             {
@@ -346,9 +347,9 @@ async def check_vvip_status_callback(client, callback_query):
         ]
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     await status_msg.delete()
-    
+
     await client.send_message(
         chat_id,
         f"{client.ns.emoji.white_check_mark} Pemeriksaan Selesai.",
@@ -363,11 +364,12 @@ async def check_vvip_status_callback(client, callback_query):
 async def setup_listvvip(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     chat_id = callback_query.from_user.id
     await callback_query.message.delete()
-    
+
     try:
+
         def ask(text):
             return client.ask(
                 chat_id,
@@ -398,7 +400,7 @@ async def setup_listvvip(client, callback_query):
             return t.lstrip("-").isdigit()
 
         vvip_data = {}
-        
+
         vvip_data["name"] = validate(
             await ask(
                 f"**{client.ns.emoji.pencil} Langkah 1/8: Nama Kategori**\nContoh: `VVIP Bulanan`"
@@ -406,7 +408,7 @@ async def setup_listvvip(client, callback_query):
             lambda t: True,
             "",
         )
-        
+
         vvip_data["price"] = int(
             validate(
                 await ask(
@@ -416,7 +418,7 @@ async def setup_listvvip(client, callback_query):
                 "settings.setup_vvip.err_must_be_number",
             )
         )
-        
+
         vvip_data["duration"] = int(
             validate(
                 await ask(
@@ -426,7 +428,7 @@ async def setup_listvvip(client, callback_query):
                 "settings.setup_vvip.err_must_be_number",
             )
         )
-        
+
         vvip_data["chat_id_normal"] = int(
             validate(
                 await ask(
@@ -436,7 +438,7 @@ async def setup_listvvip(client, callback_query):
                 "settings.setup_vvip.err_must_be_chat_id",
             )
         )
-        
+
         vvip_data["promo_price"] = int(
             validate(
                 await ask(
@@ -446,7 +448,7 @@ async def setup_listvvip(client, callback_query):
                 "settings.setup_vvip.err_must_be_number",
             )
         )
-        
+
         if vvip_data["promo_price"] > 0:
             vvip_data["chat_id_promo"] = int(
                 validate(
@@ -457,7 +459,7 @@ async def setup_listvvip(client, callback_query):
                     "settings.setup_vvip.err_must_be_chat_id",
                 )
             )
-            
+
             prompt_promo = (
                 f"**{client.ns.emoji.pencil} Langkah 7/8: Teks Deskripsi Promo**\n"
                 f"Gunakan `{{name}}` dan `{{promo_price}}`.\n\n"
@@ -465,7 +467,7 @@ async def setup_listvvip(client, callback_query):
                 f"Ketik `/batal` untuk membatalkan."
             )
             promo_text_msg = await client.ask(chat_id, prompt_promo, timeout=600)
-            
+
             if promo_text_msg.text and promo_text_msg.text.lower() == "/batal":
                 raise listen.UserCancelled
             vvip_data["promo_text"] = (
@@ -476,7 +478,7 @@ async def setup_listvvip(client, callback_query):
                 vvip_data["chat_id_promo"],
                 vvip_data["promo_text"],
             ) = (0, "")
-            
+
         prompt_normal = (
             f"**{client.ns.emoji.pencil} Langkah 8/8: Teks Deskripsi Normal**\n"
             f"Gunakan `{{name}}` and `{{price}}`.\n\n"
@@ -484,20 +486,20 @@ async def setup_listvvip(client, callback_query):
             f"Ketik `/batal` untuk membatalkan."
         )
         normal_text_msg = await client.ask(chat_id, prompt_normal, timeout=600)
-        
+
         if normal_text_msg.text and normal_text_msg.text.lower() == "/batal":
             raise listen.UserCancelled
         vvip_data["normal_text"] = (
             "" if normal_text_msg.text.lower() == "/skip" else normal_text_msg.text
         )
-        
+
         await ctx.db.setListVars(client.me.id, "list_vvip", vvip_data)
-        
+
         await client.send_message(
             chat_id,
             f"{client.ns.emoji.white_check_mark} **Sukses!**\nPaket VVIP **{vvip_data['name']}** berhasil ditambahkan.",
         )
-        
+
     except listen.UserCancelled:
         await client.send_message(
             chat_id,
@@ -517,7 +519,7 @@ async def setup_listvvip(client, callback_query):
 async def delete_listvvip(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     back_row = [
         {
@@ -527,26 +529,26 @@ async def delete_listvvip(client, callback_query):
             "emoji": client.ns.emoji.id("back_arrow"),
         }
     ]
-    
+
     if not vvip_list:
         text = f"{client.ns.emoji.white_check_mark} Tidak ada paket VVIP untuk dihapus."
         btn = client.ns.telegram.button.build_button_grid([back_row])
-        
+
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
         return await callback_query.edit_message_text(text, reply_markup=btn)
-        
+
     if not hasattr(ctx, "vip_list"):
         ctx.vip_list = {}
-        
+
     layout = []
     button_row = []
-    
+
     for item in vvip_list:
         name = item.get("name", "Tanpa Nama")
         item_id = uuid.uuid4().hex[:8]
         ctx.vip_list[item_id] = name
-        
+
         button_row.append(
             {
                 "text": f"🗑️ Hapus {name}",
@@ -558,14 +560,14 @@ async def delete_listvvip(client, callback_query):
         if len(button_row) == 2:
             layout.append(button_row)
             button_row = []
-            
+
     if button_row:
         layout.append(button_row)
     layout.append(back_row)
-    
+
     text = f"**{client.ns.emoji.minus} Hapus Paket VVIP**\n\nPilih paket VVIP yang ingin Anda hapus."
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -579,25 +581,25 @@ async def delete_listvvip(client, callback_query):
 async def confirm_delete_vvip(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     _, item_id = callback_query.data.split(" ", 1)
     if not hasattr(ctx, "vip_list") or item_id not in ctx.vip_list:
         return await callback_query.answer(
             "Sesi tidak ditemukan atau kedaluwarsa.",
             show_alert=True,
         )
-        
+
     name = ctx.vip_list[item_id]
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     item_to_remove = next(
         (item for item in vvip_list if item.get("name") == name),
         None,
     )
-    
+
     if item_to_remove:
         await ctx.db.removeListVars(client.me.id, "list_vvip", item_to_remove)
         await callback_query.answer("Kategori berhasil dihapus.", show_alert=True)
-        
+
     await delete_listvvip(client, callback_query)
 
 
@@ -608,7 +610,7 @@ async def confirm_delete_vvip(client, callback_query):
 async def edit_price_listvvip_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     back_row = [
         {
@@ -618,26 +620,26 @@ async def edit_price_listvvip_callback(client, callback_query):
             "emoji": client.ns.emoji.id("back_arrow"),
         }
     ]
-    
+
     if not vvip_list:
         text = f"{client.ns.emoji.cross_mark} Belum ada paket VVIP."
         btn = client.ns.telegram.button.build_button_grid([back_row])
-        
+
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
         return await callback_query.edit_message_text(text, reply_markup=btn)
-        
+
     if not hasattr(ctx, "vip_list_edit"):
         ctx.vip_list_edit = {}
-        
+
     layout = []
     button_row = []
-    
+
     for item in vvip_list:
         name = item.get("name", "Tanpa Nama")
         item_id = uuid.uuid4().hex[:8]
         ctx.vip_list_edit[item_id] = name
-        
+
         button_row.append(
             {
                 "text": f"✏️ Edit {name}",
@@ -649,14 +651,14 @@ async def edit_price_listvvip_callback(client, callback_query):
         if len(button_row) == 2:
             layout.append(button_row)
             button_row = []
-            
+
     if button_row:
         layout.append(button_row)
     layout.append(back_row)
-    
+
     text = f"**{client.ns.emoji.pencil} Edit Harga VVIP**\n\nPilih paket VVIP yang ingin Anda ubah harganya."
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -670,32 +672,33 @@ async def edit_price_listvvip_callback(client, callback_query):
 async def edit_vvip_price_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-        
+
     chat_id = callback_query.from_user.id
     _, item_id = callback_query.data.split(" ", 1)
-    
+
     if not hasattr(ctx, "vip_list_edit") or item_id not in ctx.vip_list_edit:
         return await callback_query.answer(
             "Sesi tidak ditemukan atau kedaluwarsa.",
             show_alert=True,
         )
-        
+
     name = ctx.vip_list_edit[item_id]
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     old_item = next(
         (item for item in vvip_list if item.get("name") == name),
         None,
     )
-    
+
     if not old_item:
         return await callback_query.answer(
             "Paket VVIP tidak ditemukan.",
             show_alert=True,
         )
-        
+
     await callback_query.message.delete()
-    
+
     try:
+
         def ask(text):
             return client.ask(
                 chat_id,
@@ -706,30 +709,30 @@ async def edit_vvip_price_callback(client, callback_query):
         new_price_msg = await ask(
             f"**{client.ns.emoji.money_bag} Masukkan Harga Normal Baru**\nContoh: `50000`\n\nHarga sebelumnya: `{old_item.get('price', 0)}`"
         )
-        
+
         if new_price_msg.text.lower() == "/batal":
             raise listen.UserCancelled
         if not new_price_msg.text.isdigit():
             raise ValueError
-            
+
         new_price = int(new_price_msg.text)
 
         new_promo_msg = await ask(
             f"**{client.ns.emoji.party_popper} Masukkan Harga Promo Baru**\nContoh: `25000` atau `0`.\n\nHarga sebelumnya: `{old_item.get('promo_price', 0)}`"
         )
-        
+
         if new_promo_msg.text.lower() == "/batal":
             raise listen.UserCancelled
         if not new_promo_msg.text.isdigit():
             raise ValueError
-            
+
         new_promo = int(new_promo_msg.text)
 
         await ctx.db.removeListVars(client.me.id, "list_vvip", old_item)
-        
+
         old_item["price"] = new_price
         old_item["promo_price"] = new_promo
-        
+
         await ctx.db.setListVars(client.me.id, "list_vvip", old_item)
         del ctx.vip_list_edit[item_id]
 
@@ -737,7 +740,7 @@ async def edit_vvip_price_callback(client, callback_query):
             chat_id,
             f"{client.ns.emoji.white_check_mark} **Sukses!**\nHarga paket VVIP **{name}** berhasil diubah.",
         )
-        
+
     except listen.UserCancelled:
         await client.send_message(
             chat_id,

@@ -22,17 +22,19 @@ async def get_start_keyboard_and_content(client, user):
         )
 
     db_text_template = await ctx.db.getVars(client.me.id, "start_text_template")
-    main_text_template = db_text_template if db_text_template is not None else _default_text
-    
+    main_text_template = (
+        db_text_template if db_text_template is not None else _default_text
+    )
+
     db_photo_id = await ctx.db.getVars(client.me.id, "start_photo_id")
     photo_id = db_photo_id if db_photo_id is not None else None
 
     welcome_text = main_text_template.format(
         mention=client.ns.telegram.arg.getMention(user)
     )
-    
+
     layout = []
-    
+
     if is_main_bot:
         layout.append(
             [
@@ -50,7 +52,7 @@ async def get_start_keyboard_and_content(client, user):
                 },
             ]
         )
-        
+
     if is_owner:
         layout.append(
             [
@@ -62,7 +64,7 @@ async def get_start_keyboard_and_content(client, user):
                 }
             ]
         )
-        
+
     layout.extend(
         [
             [
@@ -89,7 +91,7 @@ async def get_start_keyboard_and_content(client, user):
             ],
         ]
     )
-    
+
     btn = client.ns.telegram.button.build_button_grid(layout)
     return btn, welcome_text, photo_id
 
@@ -112,7 +114,7 @@ async def start_callback(client, callback_query):
     btn, txt, photo_id = await get_start_keyboard_and_content(
         client, callback_query.from_user
     )
-    
+
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt, reply_markup=btn)
     else:
@@ -144,7 +146,7 @@ async def about_bot_callback(client, callback_query):
         f"3. **Akses Instan:** Link undangan akan otomatis terkirim setelah pembayaran terkonfirmasi.\n\n"
         f"Semua proses dirancang agar cepat, aman, dan tanpa perlu menunggu konfirmasi manual!"
     )
-    
+
     layout = [
         [
             {
@@ -156,7 +158,7 @@ async def about_bot_callback(client, callback_query):
         ]
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -181,7 +183,7 @@ async def close_panel_callback(client, callback_query):
 async def list_vvip_bot(client, callback_query):
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     layout = []
-    
+
     if not vvip_list:
         text = f"{client.ns.emoji.card_index_dividers} Saat ini belum ada paket VVIP yang tersedia."
         layout.append(
@@ -195,7 +197,7 @@ async def list_vvip_bot(client, callback_query):
             ]
         )
         btn = client.ns.telegram.button.build_button_grid(layout)
-        
+
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
         return await callback_query.edit_message_text(text, reply_markup=btn)
@@ -203,7 +205,7 @@ async def list_vvip_bot(client, callback_query):
     for index, item in enumerate(vvip_list):
         name = item.get("name", "N/A")
         promo_price = item.get("promo_price", 0)
-        
+
         button_row = [
             {
                 "text": f"📂 {name}",
@@ -212,7 +214,7 @@ async def list_vvip_bot(client, callback_query):
                 "emoji": client.ns.emoji.id("open_folder"),
             }
         ]
-        
+
         if promo_price > 0:
             button_row.append(
                 {
@@ -223,7 +225,7 @@ async def list_vvip_bot(client, callback_query):
                 }
             )
         layout.append(button_row)
-        
+
     layout.append(
         [
             {
@@ -234,7 +236,7 @@ async def list_vvip_bot(client, callback_query):
             }
         ]
     )
-    
+
     layout.append(
         [
             {
@@ -246,12 +248,12 @@ async def list_vvip_bot(client, callback_query):
         ]
     )
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     text = (
         f"{client.ns.emoji.books} **Daftar VVIP Bot: {client.me.mention}**\n\n"
         f"Berikut adalah daftar paket eksklusif yang kami tawarkan. Klik pada salah satu paket untuk melihat detail lengkap dan penawaran spesial."
     )
-    
+
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -270,7 +272,7 @@ async def donate_callback(client, callback_query):
         f"Setiap Star yang Anda berikan memberikan kami semangat untuk terus berinovasi. Pilih jumlah donasi di bawah ini untuk memulai.\n\n"
         f"Terima kasih atas dukungan Anda!"
     )
-    
+
     layout = [
         [
             {
@@ -310,7 +312,7 @@ async def donate_callback(client, callback_query):
         ],
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     try:
         if callback_query.message.photo:
             await callback_query.edit_message_caption(caption=text, reply_markup=btn)
@@ -343,9 +345,9 @@ async def process_donation_callback(client, callback_query):
         return await callback_query.answer(
             "Jumlah donasi tidak valid!", show_alert=True
         )
-        
+
     await callback_query.answer("Mempersiapkan invoice donasi...")
-    
+
     invoice = {
         "title": "Donasi untuk Pengembangan Bot",
         "description": "Dukungan Anda sebesar {stars} Bintang (Stars) sangat kami hargai. Terima kasih!".format(
@@ -357,7 +359,7 @@ async def process_donation_callback(client, callback_query):
             pyrogram.types.LabeledPrice(f"Donasi {star_amount} Stars", star_amount)
         ],
     }
-    
+
     try:
         await client.send_invoice(callback_query.from_user.id, **invoice)
     except Exception as e:
@@ -365,4 +367,4 @@ async def process_donation_callback(client, callback_query):
         await callback_query.answer(
             "Gagal membuat invoice donasi. Coba lagi nanti.",
             show_alert=True,
-    )
+        )

@@ -1,11 +1,12 @@
 import asyncio
 import re
-from datetime import datetime, timezone, timedelta
-import pyrogram
+from datetime import datetime, timezone
+
 from pyrogram import filters
-from .. import command, ctx, is_bot_owner, listen
+
+from .. import command, ctx, listen
+from .invoice import _create_all_vvip_payment_invoice, _create_payment_invoice
 from .verifier import _get_all_vvip_items
-from .invoice import _create_payment_invoice, _create_all_vvip_payment_invoice
 
 
 @command(
@@ -15,22 +16,22 @@ from .invoice import _create_payment_invoice, _create_all_vvip_payment_invoice
 async def pay_all_vvip_callback(client, callback_query):
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     selected_items = _get_all_vvip_items(vvip_list)
-    
+
     if not selected_items:
         return await callback_query.answer(
             "❌ Tidak ada paket VIP valid untuk pembelian semua VIP.",
             show_alert=True,
         )
-        
+
     if callback_query.message.photo:
         await callback_query.message.delete()
     else:
         await callback_query.edit_message_text(
             f"{client.ns.emoji.hourglass} **Sedang Memproses...**\nMohon tunggu sebentar."
         )
-        
+
     total_amount = sum((item.get("price", 0) for item in selected_items))
-    
+
     await _create_all_vvip_payment_invoice(
         client,
         callback_query.from_user,
@@ -45,7 +46,7 @@ async def pay_all_vvip_callback(client, callback_query):
 )
 async def notes_data(client, callback_query):
     item_id = callback_query.matches[0].group(1)
-    
+
     if item_id.isdigit():
         item_index = int(item_id)
     else:
@@ -55,9 +56,9 @@ async def notes_data(client, callback_query):
                 show_alert=True,
             )
         item_index = ctx.vip_list[item_id]
-        
+
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-    
+
     layout = [
         [
             {
@@ -68,18 +69,18 @@ async def notes_data(client, callback_query):
             }
         ]
     ]
-    
+
     try:
         item = vvip_list[item_index]
     except IndexError:
         item = None
-        
+
     if item:
         name = item.get("name")
         price_val = item.get("price", 0)
         normal_text = item.get("normal_text", "")
         formatted_price = f"{price_val:,}"
-        
+
         desc = (
             normal_text.format(name=name, price=formatted_price)
             if normal_text
@@ -94,7 +95,7 @@ async def notes_data(client, callback_query):
                 f"╰─ Silakan klik tombol 'Bayar' di bawah untuk melanjutkan!\n"
             )
         )
-        
+
         layout = [
             [
                 {
@@ -120,14 +121,14 @@ async def notes_data(client, callback_query):
             ],
         ]
         btn = client.ns.telegram.button.build_button_grid(layout)
-        
+
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(desc, reply_markup=btn)
         return await callback_query.edit_message_text(desc, reply_markup=btn)
 
     text = f"{client.ns.emoji.cross_mark} Paket VVIP tidak ditemukan."
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -140,7 +141,7 @@ async def notes_data(client, callback_query):
 )
 async def promo_detail(client, callback_query):
     item_id = callback_query.matches[0].group(1)
-    
+
     if item_id.isdigit():
         item_index = int(item_id)
     else:
@@ -150,9 +151,9 @@ async def promo_detail(client, callback_query):
                 show_alert=True,
             )
         item_index = ctx.vip_list[item_id]
-        
+
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-    
+
     layout = [
         [
             {
@@ -163,18 +164,18 @@ async def promo_detail(client, callback_query):
             }
         ]
     ]
-    
+
     try:
         item = vvip_list[item_index]
     except IndexError:
         item = None
-        
+
     if item and item.get("promo_price", 0) > 0:
         name = item.get("name")
         promo_price_val = item.get("promo_price", 0)
         promo_text = item.get("promo_text", "")
         formatted_promo = f"{promo_price_val:,}"
-        
+
         desc = (
             promo_text.format(
                 name=name,
@@ -192,7 +193,7 @@ async def promo_detail(client, callback_query):
                 f"╰─ Segera amankan slot Anda sebelum promo berakhir!\n"
             )
         )
-        
+
         layout = [
             [
                 {
@@ -218,14 +219,14 @@ async def promo_detail(client, callback_query):
             ],
         ]
         btn = client.ns.telegram.button.build_button_grid(layout)
-        
+
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(desc, reply_markup=btn)
         return await callback_query.edit_message_text(desc, reply_markup=btn)
 
     text = f"{client.ns.emoji.cross_mark} Paket promo tidak ditemukan atau tidak aktif."
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
@@ -243,32 +244,32 @@ async def apply_coupon_callback(client, callback_query):
     tipe = match.group(2)
     original_amount = int(match.group(3))
     await callback_query.message.delete()
-    
+
     try:
         ask_msg = await client.ask(
             chat_id,
             "Silakan masukkan kode kupon Anda.\n\nKetik `/batal` untuk membatalkan.",
             timeout=300,
         )
-        
+
         if ask_msg.text.lower() == "/batal":
             raise listen.UserCancelled
-            
+
         coupon_code = ask_msg.text.upper()
         coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
         coupon = next(
             (c for c in coupons if c.get("code") == coupon_code),
             None,
         )
-        
+
         if not coupon:
             raise ValueError(f"{client.ns.emoji.cross_mark} Kode kupon tidak valid.")
-            
+
         if coupon.get("uses_left", 1) <= 0:
             raise ValueError(
                 f"{client.ns.emoji.cross_mark} Kupon ini sudah habis digunakan."
             )
-            
+
         expiry_str = coupon.get("expiry_date")
         if expiry_str and datetime.fromisoformat(expiry_str) < datetime.now(
             timezone.utc
@@ -276,15 +277,15 @@ async def apply_coupon_callback(client, callback_query):
             raise ValueError(
                 f"{client.ns.emoji.cross_mark} Kupon ini sudah kedaluwarsa."
             )
-            
+
         discount_type = coupon["discount_type"]
         discount_value = coupon["discount_value"]
-        
+
         if discount_type == "percentage":
             final_amount = original_amount - original_amount * (discount_value / 100)
         else:
             final_amount = original_amount - discount_value
-            
+
         final_amount = max(1000, int(final_amount))
 
         await client.send_message(
@@ -299,7 +300,7 @@ async def apply_coupon_callback(client, callback_query):
             final_amount,
             coupon_code,
         )
-        
+
     except listen.UserCancelled:
         await client.send_message(
             chat_id,
@@ -328,14 +329,14 @@ async def paynow(client, callback_query):
     item_index = int(match.group(1))
     tipe = match.group(2)
     amount = int(match.group(3))
-    
+
     if callback_query.message.photo:
         await callback_query.message.delete()
     else:
         await callback_query.edit_message_text(
             f"{client.ns.emoji.hourglass} **Sedang Memproses...**\nMohon tunggu sebentar."
         )
-        
+
     await _create_payment_invoice(
         client,
         callback_query.from_user,
@@ -352,7 +353,7 @@ async def paynow(client, callback_query):
 async def renew_subscription_callback(client, callback_query):
     item_index = int(callback_query.matches[0].group(1))
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-    
+
     try:
         item = vvip_list[item_index]
     except IndexError:
@@ -360,7 +361,7 @@ async def renew_subscription_callback(client, callback_query):
             "❌ Paket VVIP tidak ditemukan.",
             show_alert=True,
         )
-        
+
     if item.get("promo_price", 0) > 0:
         callback_query.data = f"promo_detail_{item_index}"
         callback_query.matches = [re.match("promo_detail_(\\d+)", callback_query.data)]

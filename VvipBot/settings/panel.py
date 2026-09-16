@@ -1,7 +1,6 @@
-import asyncio
-import pyrogram
 from pyrogram import filters
-from .. import command, ctx, is_bot_owner
+
+from .. import command, is_bot_owner
 
 
 @command(
@@ -14,7 +13,7 @@ async def settings(client, callback_query):
             "🚫 Anda tidak memiliki akses ke menu ini.",
             show_alert=True,
         )
-        
+
     layout = [
         [
             {
@@ -139,10 +138,10 @@ async def settings(client, callback_query):
             }
         ],
     ]
-    
+
     txt_content = f"**{client.ns.emoji.toolbox} Panel Pengaturan Owner**\n\nSelamat datang di pusat kendali bot Anda! Silakan pilih menu di bawah untuk mengelola berbagai aspek bot."
     btn = client.ns.telegram.button.build_button_grid(layout)
-    
+
     if callback_query.message.photo:
         await callback_query.edit_message_caption(txt_content, reply_markup=btn)
     else:

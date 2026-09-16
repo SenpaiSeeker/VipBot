@@ -4,7 +4,7 @@ import aiofiles.os
 from pyrogram import filters
 from pyrogram.raw import functions, types
 
-from .. import command, ctx, is_bot_owner
+from .. import command, is_bot_owner
 
 
 async def send_star_gift_raw(client, user_id: int, gift_id: int):

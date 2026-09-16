@@ -64,5 +64,7 @@ async def allbots_do_delete_callback(client, callback_query):
         await send_allbots_list(client, callback_query, page, force_refresh=True)
         await callback_query.answer("✅ Bot berhasil dihapus.", show_alert=True)
     except Exception as e:
-        await callback_query.answer("❌Gagal menghapus bot: {e}".format(e=e), show_alert=True)
+        await callback_query.answer(
+            "❌Gagal menghapus bot: {e}".format(e=e), show_alert=True
+        )
         await send_allbots_list(client, callback_query, 0, force_refresh=True)

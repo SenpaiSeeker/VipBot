@@ -4,21 +4,21 @@ BASE_PRICE_BOT = 100000
 def calculate_bot_price(months):
     total = BASE_PRICE_BOT * months
     discount_percentage = 0
-    
+
     if months >= 6:
         discount_percentage = 0.2
     elif months >= 3:
         discount_percentage = 0.1
-        
+
     discount = int(total * discount_percentage)
     final_price = total - discount
-    
+
     return total, discount, final_price
 
 
 async def get_bot_purchase_panel(client, user_id, months=1):
     total, discount, final_price = calculate_bot_price(months)
-    
+
     formatted_price = f"{BASE_PRICE_BOT:,}"
     formatted_total = f"{total:,}"
     formatted_discount = f"-Rp {discount:,}"
@@ -37,7 +37,7 @@ async def get_bot_purchase_panel(client, user_id, months=1):
         f"• Diskon: `{formatted_discount}`\n"
         f"• **Total Bayar: `Rp {formatted_final}`**"
     )
-    
+
     layout = [
         [
             {
@@ -75,6 +75,6 @@ async def get_bot_purchase_panel(client, user_id, months=1):
             }
         ],
     ]
-    
+
     btn = client.ns.telegram.button.build_button_grid(layout)
     return text, btn
