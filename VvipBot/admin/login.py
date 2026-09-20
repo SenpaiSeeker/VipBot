@@ -67,9 +67,7 @@ async def login_command_handler(client, message):
     existing_owner = await ctx.db.getVars(new_bot_id, "owner_id")
     resolved_owner = owner_id or existing_owner or ctx.owner_id
 
-    expiry_date_str = await ctx.db.getVars(new_bot_id, "bot_expiration_date")
-    if not expiry_date_str:
-        expiry_date_str = (datetime.now(timezone.utc) + timedelta(days=31)).isoformat()
+    expiry_date_str = (datetime.now(timezone.utc) + timedelta(days=31)).isoformat()
 
     bot_data = {
         "name": str(new_bot_id),
