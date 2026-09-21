@@ -44,10 +44,12 @@ async def set_notif_chat_callback(client, callback_query):
                 reply_markup=back_btn,
             )
 
-        if ask_msg.text.lower() == "/batal":
+        raw = ask_msg.text.strip()
+
+        if raw.lower() == "/batal":
             raise listen.UserCancelled
 
-        if ask_msg.text.lower() == "/none":
+        if raw.lower() == "/none":
             await ctx.db.removeVars(client.me.id, "notif_chat_id")
 
             return await client.send_message(
@@ -56,11 +58,38 @@ async def set_notif_chat_callback(client, callback_query):
                 reply_markup=back_btn,
             )
 
-        await ctx.db.setVars(client.me.id, "notif_chat_id", ask_msg.text)
+        if raw.lstrip("-").isdigit():
+            chat_target = int(raw)
+            await ctx.db.setVars(client.me.id, "notif_chat_id", chat_target)
+
+            return await client.send_message(
+                chat_id,
+                f"{client.ns.emoji.white_check_mark} **Sukses!** Tempat notifikasi diatur ke `{chat_target}`.",
+                reply_markup=back_btn,
+            )
+
+        if raw.startswith("@") and len(raw) > 1:
+            try:
+                await client.resolve_peer(raw)
+            except Exception:
+                return await client.send_message(
+                    chat_id,
+                    f"{client.ns.emoji.cross_mark} **Gagal:** Username `{raw}` tidak valid atau bot tidak dapat menjangkau target tersebut.",
+                    reply_markup=back_btn,
+                )
+
+            await ctx.db.setVars(client.me.id, "notif_chat_id", raw)
+
+            return await client.send_message(
+                chat_id,
+                f"{client.ns.emoji.white_check_mark} **Sukses!** Tempat notifikasi diatur ke `{raw}`.",
+                reply_markup=back_btn,
+            )
 
         await client.send_message(
             chat_id,
-            f"{client.ns.emoji.white_check_mark} **Sukses!** Tempat notifikasi diatur ke `{ask_msg.text}`.",
+            f"{client.ns.emoji.cross_mark} **Gagal:** Format tidak valid.\n\n"
+            f"Gunakan **ID chat** (angka), **@username**, atau `/none` untuk kembali ke default.",
             reply_markup=back_btn,
         )
 

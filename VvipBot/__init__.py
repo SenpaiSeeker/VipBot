@@ -70,10 +70,14 @@ async def is_bot_owner(client, user_id):
 
 
 async def get_notification_target(client):
-    target = await ctx.db.getVars(client.me.id, "notif_chat_id")
-    if not target:
-        target = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
-    return target
+    raw = await ctx.db.getVars(client.me.id, "notif_chat_id")
+
+    if raw is not None:
+        value = str(raw).strip()
+        if value and not value.startswith("/"):
+            return raw
+
+    return await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
 
 
 async def check_new_user(client, update):
