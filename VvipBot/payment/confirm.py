@@ -145,7 +145,11 @@ async def manual_check_payment_callback(client, callback_query):
                     f"{client.ns.emoji.exclamation} Setiap link hanya berlaku 1 kali klik dan kedaluwarsa dalam 60 menit.\n",
                     protect_content=True,
                 )
-                await callback_query.message.delete()
+
+                try:
+                    await callback_query.message.delete()
+                except Exception:
+                    pass
 
                 asyncio.create_task(
                     verify_user_join_multiple(
@@ -156,18 +160,26 @@ async def manual_check_payment_callback(client, callback_query):
                     )
                 )
 
-                owner_bot_id = await get_notification_target(client)
-
-                bot_mention_str = client.me.mention
-                user_mention_str = client.ns.telegram.arg.getMention(user)
-
-                await client.send_message(
-                    owner_bot_id,
-                    f"{client.ns.emoji.money_bag} **Pemasukan Baru!**\n\n"
-                    f"**Pengguna:** {user_mention_str}\n"
-                    f"**Bot:** {bot_mention_str}\n"
-                    f"**Kategori:** `Semua VIP` (Bundle)",
+                await callback_query.answer(
+                    "✅ Pembayaran berhasil dikonfirmasi!", show_alert=False
                 )
+
+                try:
+                    owner_bot_id = await get_notification_target(client)
+
+                    bot_mention_str = client.me.mention
+                    user_mention_str = client.ns.telegram.arg.getMention(user)
+
+                    await client.send_message(
+                        owner_bot_id,
+                        f"{client.ns.emoji.money_bag} **Pemasukan Baru!**\n\n"
+                        f"**Pengguna:** {user_mention_str}\n"
+                        f"**Bot:** {bot_mention_str}\n"
+                        f"**Kategori:** `Semua VIP` (Bundle)",
+                    )
+                except Exception as e:
+                    ctx.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
+
                 return
 
             try:
@@ -252,24 +264,35 @@ async def manual_check_payment_callback(client, callback_query):
                 f"{client.ns.emoji.exclamation} Link ini hanya berlaku untuk 1 kali klik dan akan kedaluwarsa dalam 60 menit jika tidak digunakan.\n",
                 protect_content=True,
             )
-            await callback_query.message.delete()
+
+            try:
+                await callback_query.message.delete()
+            except Exception:
+                pass
 
             asyncio.create_task(
                 verify_user_join(client, user, target_chat_id, link_msg)
             )
 
-            owner_bot_id = await get_notification_target(client)
-
-            user_mention_str = client.ns.telegram.arg.getMention(user)
-            bot_mention_str = client.me.mention
-
-            await client.send_message(
-                owner_bot_id,
-                f"{client.ns.emoji.money_bag} **Pemasukan Baru!**\n\n"
-                f"**Pengguna:** {user_mention_str}\n"
-                f"**Bot:** {bot_mention_str}\n"
-                f"**Kategori:** `{name}` ({tipe.title()})",
+            await callback_query.answer(
+                "✅ Pembayaran berhasil dikonfirmasi!", show_alert=False
             )
+
+            try:
+                owner_bot_id = await get_notification_target(client)
+
+                user_mention_str = client.ns.telegram.arg.getMention(user)
+                bot_mention_str = client.me.mention
+
+                await client.send_message(
+                    owner_bot_id,
+                    f"{client.ns.emoji.money_bag} **Pemasukan Baru!**\n\n"
+                    f"**Pengguna:** {user_mention_str}\n"
+                    f"**Bot:** {bot_mention_str}\n"
+                    f"**Kategori:** `{name}` ({tipe.title()})",
+                )
+            except Exception as e:
+                ctx.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
         else:
             await callback_query.answer(
                 "❌ Pembayaran belum terdeteksi. Silakan coba lagi setelah beberapa saat.",
