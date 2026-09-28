@@ -80,6 +80,37 @@ async def get_notification_target(client):
     return await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
 
 
+LIST_VVIP_ICON_DEFAULT = {
+    "normal": "open_folder",
+    "promo": "party_popper",
+}
+
+
+def _sanitize_emoji_id(value):
+    if value is None or isinstance(value, bool):
+        return None
+
+    try:
+        emoji_id = int(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+
+    return emoji_id if emoji_id > 0 else None
+
+
+async def get_list_vvip_icon(client, kind):
+    if kind not in LIST_VVIP_ICON_DEFAULT:
+        return client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT["normal"])
+
+    saved = await ctx.db.getVars(client.me.id, "list_vvip_icon")
+    if isinstance(saved, dict):
+        emoji_id = _sanitize_emoji_id(saved.get(kind))
+        if emoji_id:
+            return emoji_id
+
+    return client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT[kind])
+
+
 async def check_new_user(client, update):
     if not update or not getattr(update, "from_user", None):
         return

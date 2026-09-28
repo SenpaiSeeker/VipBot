@@ -53,6 +53,14 @@ async def settings(client, callback_query):
         ],
         [
             {
+                "text": "🎨 Atur Icon List VVIP",
+                "callback_data": "set_listvvip_icon",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("art"),
+            }
+        ],
+        [
+            {
                 "text": "👥 Total Pengguna",
                 "callback_data": "total_users_count",
                 "style": "blue",

@@ -182,6 +182,8 @@ async def close_panel_callback(client, callback_query):
 )
 async def list_vvip_bot(client, callback_query):
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    normal_icon = await get_list_vvip_icon(client, "normal")
+    promo_icon = await get_list_vvip_icon(client, "promo")
     layout = []
 
     if not vvip_list:
@@ -211,7 +213,7 @@ async def list_vvip_bot(client, callback_query):
                 "text": f"📂 {name}",
                 "callback_data": f"notes_{index}",
                 "style": "blue",
-                "emoji": client.ns.emoji.id("open_folder"),
+                "emoji": normal_icon,
             }
         ]
 
@@ -221,7 +223,7 @@ async def list_vvip_bot(client, callback_query):
                     "text": f"🎉 Promo {name}",
                     "callback_data": f"promo_detail_{index}",
                     "style": "green",
-                    "emoji": client.ns.emoji.id("party_popper"),
+                    "emoji": promo_icon,
                 }
             )
         layout.append(button_row)
