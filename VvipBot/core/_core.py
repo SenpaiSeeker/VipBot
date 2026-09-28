@@ -210,7 +210,7 @@ async def list_vvip_bot(client, callback_query):
 
         button_row = [
             {
-                "text": f"📂 {name}",
+                "text": name,
                 "callback_data": f"notes_{index}",
                 "style": "blue",
                 "emoji": normal_icon,
@@ -220,7 +220,7 @@ async def list_vvip_bot(client, callback_query):
         if promo_price > 0:
             button_row.append(
                 {
-                    "text": f"🎉 Promo {name}",
+                    "text": f"Promo {name}",
                     "callback_data": f"promo_detail_{index}",
                     "style": "green",
                     "emoji": promo_icon,
