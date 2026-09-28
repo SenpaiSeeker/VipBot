@@ -287,7 +287,6 @@ async def subscription_checker_method():
             members_to_keep.append(member)
 
         if len(members_to_keep) != len(members):
-            await manager.db.removeVars(bot_id, "vvip_members")
-            if members_to_keep:
-                for m in members_to_keep:
-                    await manager.db.setListVars(bot_id, "vvip_members", m)
+            await manager.db.replaceListVars(
+                bot_id, "vvip_members", members_to_keep
+            )

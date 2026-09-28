@@ -99,24 +99,23 @@ def _sanitize_emoji_id(value):
 
 
 async def get_list_vvip_icon(client, kind):
-    if kind not in LIST_VVIP_ICON_DEFAULT:
-        return client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT["normal"])
-
+    default_name = LIST_VVIP_ICON_DEFAULT.get(kind, LIST_VVIP_ICON_DEFAULT["normal"])
     saved = await ctx.db.getVars(client.me.id, "list_vvip_icon")
+
     if isinstance(saved, dict):
         emoji_id = _sanitize_emoji_id(saved.get(kind))
         if emoji_id:
             return emoji_id
 
-    return client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT[kind])
+    return client.ns.emoji.id(default_name)
 
 
 async def check_new_user(client, update):
     if not update or not getattr(update, "from_user", None):
         return
 
-    user_list = await ctx.db.getListVars(client.me.id, "user_ids") or []
-    if update.from_user.id not in user_list:
+    already_seen = await ctx.db.isMemberOf(client.me.id, "user_ids", update.from_user.id)
+    if not already_seen:
         await ctx.db.setListVars(
             client.me.id,
             "user_ids",

@@ -50,9 +50,17 @@ class CipherHandler:
         key_bytes = self.key.encode("utf-8")
         if isinstance(data, str):
             data = data.encode("utf-8")
-        return bytes(
-            [data[i] ^ key_bytes[i % len(key_bytes)] for i in range(len(data))]
-        )
+
+        if not data:
+            return b""
+
+        key_len = len(key_bytes)
+        repeats = -(-len(data) // key_len)
+        mask = (key_bytes * repeats)[: len(data)]
+
+        return (
+            int.from_bytes(data, "big") ^ int.from_bytes(mask, "big")
+        ).to_bytes(len(data), "big")
 
     def _base64_encode(self, data: str) -> str:
         encoded_bytes = base64.b64encode(data.encode("utf-8"))

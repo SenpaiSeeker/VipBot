@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 import zipfile
+from copy import deepcopy
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -27,6 +28,8 @@ class DataBase:
         )
 
         self._lock = asyncio.Lock()
+        self._data = None
+        self._member_cache = {}
         self.auto_backup = options.get("auto_backup", False)
         self.backup_bot_token = options.get("backup_bot_token")
         self.backup_chat_id = options.get("backup_chat_id")
@@ -135,26 +138,84 @@ class DataBase:
                 pass
 
     async def _load_data(self):
+        if self._data is None:
+            async with self._lock:
+                if self._data is None:
+                    self._data = await self._read_data_file()
+
+        return self._data
+
+    async def _mutate(self, mutator):
         async with self._lock:
-            try:
-                async with aiofiles.open(self.data_file, "r") as f:
-                    content = await f.read()
+            if self._data is None:
+                self._data = await self._read_data_file()
 
-                    if not content.strip():
-                        return {"vars": {}, "bots": []}
+            if mutator(self._data) is False:
+                return
 
-                    return json.loads(content)
-            except (FileNotFoundError, json.JSONDecodeError):
-                return {"vars": {}, "bots": []}
+            await self._write_data_file()
+
+    def _invalidate_members(self, user_id=None):
+        if user_id is None:
+            self._member_cache.clear()
+            return
+
+        target = str(user_id)
+        for key in [k for k in self._member_cache if k[0] == target]:
+            del self._member_cache[key]
+
+    @staticmethod
+    def _as_probe(value):
+        try:
+            return json.dumps(value, sort_keys=True)
+        except (TypeError, ValueError):
+            return str(value)
+
+    async def isMemberOf(self, user_id, query_name, value, var_key="variabel"):
+        cache_key = (str(user_id), var_key, query_name)
+        members = self._member_cache.get(cache_key)
+
+        if members is None:
+            items = await self.getListVars(user_id, query_name, var_key)
+            members = {self._as_probe(item) for item in items}
+            self._member_cache[cache_key] = members
+
+        return self._as_probe(value) in members
 
     async def _save_data(self, data):
         async with self._lock:
-            temp_file = f"{self.data_file}.tmp"
+            self._data = data
+            await self._write_data_file()
 
-            async with aiofiles.open(temp_file, "w") as f:
-                await f.write(json.dumps(data, indent=4))
+    async def _read_data_file(self):
+        try:
+            async with aiofiles.open(self.data_file, "r") as f:
+                content = await f.read()
+        except FileNotFoundError:
+            return {"vars": {}, "bots": []}
 
-            await aiofiles.os.replace(temp_file, self.data_file)
+        if not content.strip():
+            return {"vars": {}, "bots": []}
+
+        try:
+            return await self._run_sync(json.loads, content)
+        except json.JSONDecodeError as e:
+            broken = f"{self.data_file}.corrupt"
+            await self._run_sync(shutil.copy2, self.data_file, broken)
+            raise RuntimeError(
+                f"Database '{self.data_file}' rusak ({e}). "
+                f"Salinan disimpan ke '{broken}'. Perbaiki atau hapus file "
+                f"sebelum menjalankan bot lagi."
+            ) from e
+
+    async def _write_data_file(self):
+        temp_file = f"{self.data_file}.tmp"
+        content = await self._run_sync(json.dumps, self._data, separators=(",", ":"))
+
+        async with aiofiles.open(temp_file, "w") as f:
+            await f.write(content)
+
+        await aiofiles.os.replace(temp_file, self.data_file)
 
     async def _encrypt_async(self, data: str) -> str:
         return await self._run_sync(self.cipher.encrypt, data)
@@ -162,30 +223,58 @@ class DataBase:
     async def _decrypt_async(self, data: str):
         return await self._run_sync(self.cipher.decrypt, data)
 
+    def _decrypt_sync(self, values):
+        return [self.cipher.decrypt(v) for v in values]
+
+    def _encrypt_sync(self, values):
+        return [self.cipher.encrypt(v) for v in values]
+
+    async def _decrypt_many_async(self, values):
+        if not values:
+            return []
+
+        if len(values) < 16:
+            return [await self._decrypt_async(v) for v in values]
+
+        return await self._run_sync(self._decrypt_sync, values)
+
+    def _namespace(self, data, user_id, var_key):
+        return (
+            data.setdefault("vars", {})
+            .setdefault(str(user_id), {})
+            .setdefault(var_key, {})
+        )
+
     async def _get_user_vars(self, user_id):
-        user_id_str = str(user_id)
         data = await self._load_data()
-        return data.get("vars", {}).get(user_id_str, {})
+        return deepcopy(data.get("vars", {}).get(str(user_id), {}))
 
     async def _set_user_vars(self, user_id, user_data):
         user_id_str = str(user_id)
-        full_data = await self._load_data()
+        snapshot = deepcopy(user_data)
 
-        full_data.setdefault("vars", {})[user_id_str] = user_data
-        await self._save_data(full_data)
+        await self._mutate(
+            lambda data: data.setdefault("vars", {}).__setitem__(
+                user_id_str, snapshot
+            )
+        )
 
     async def setVars(self, user_id, query_name, value, var_key="variabel"):
         val_str = json.dumps(value)
         encrypted_value = await self._encrypt_async(val_str)
 
-        user_data = await self._get_user_vars(user_id)
-        user_data.setdefault(var_key, {})[query_name] = encrypted_value
+        def apply(data):
+            self._namespace(data, user_id, var_key)[query_name] = encrypted_value
+            return True
 
-        await self._set_user_vars(user_id, user_data)
+        await self._mutate(apply)
+        self._invalidate_members(user_id)
 
     async def getVars(self, user_id, query_name, var_key="variabel"):
-        user_data = await self._get_user_vars(user_id)
-        encrypted_value = user_data.get(var_key, {}).get(query_name)
+        data = await self._load_data()
+        encrypted_value = (
+            data.get("vars", {}).get(str(user_id), {}).get(var_key, {}).get(query_name)
+        )
 
         if not encrypted_value:
             return None
@@ -201,38 +290,70 @@ class DataBase:
         return decrypted
 
     async def removeVars(self, user_id, query_name, var_key="variabel"):
-        user_data = await self._get_user_vars(user_id)
+        def apply(data):
+            bucket = data.get("vars", {}).get(str(user_id), {}).get(var_key)
+            if not bucket or bucket.pop(query_name, None) is None:
+                return False
+            return True
 
-        if user_data.get(var_key, {}).pop(query_name, None):
-            await self._set_user_vars(user_id, user_data)
+        await self._mutate(apply)
+        self._invalidate_members(user_id)
 
     async def setListVars(self, user_id, query_name, value, var_key="variabel"):
         val_str = json.dumps(value)
         encrypted_value = await self._encrypt_async(val_str)
 
-        user_data = await self._get_user_vars(user_id)
-        user_data.setdefault(var_key, {}).setdefault(query_name, [])
+        def apply(data):
+            target = self._namespace(data, user_id, var_key).setdefault(
+                query_name, []
+            )
 
-        if encrypted_value not in user_data[var_key][query_name]:
-            user_data[var_key][query_name].append(encrypted_value)
-            await self._set_user_vars(user_id, user_data)
+            if encrypted_value in target:
+                return False
+
+            target.append(encrypted_value)
+            return True
+
+        await self._mutate(apply)
+        self._invalidate_members(user_id)
+
+    async def replaceListVars(self, user_id, query_name, values, var_key="variabel"):
+        if not values:
+            return await self.removeVars(user_id, query_name, var_key)
+
+        encrypted_values = await self._run_sync(
+            self._encrypt_sync, [json.dumps(v) for v in values]
+        )
+
+        def apply(data):
+            self._namespace(data, user_id, var_key)[query_name] = encrypted_values
+            return True
+
+        await self._mutate(apply)
+        self._invalidate_members(user_id)
 
     async def getListVars(self, user_id, query_name, var_key="variabel"):
-        user_data = await self._get_user_vars(user_id)
-        encrypted_list = user_data.get(var_key, {}).get(query_name, [])
+        data = await self._load_data()
+        encrypted_list = (
+            data.get("vars", {})
+            .get(str(user_id), {})
+            .get(var_key, {})
+            .get(query_name, [])
+        )
         decoded_list = []
 
-        for v in encrypted_list:
-            decrypted = await self._decrypt_async(v)
+        if not encrypted_list:
+            return decoded_list
 
-            try:
-                s = decrypted if isinstance(decrypted, str) else json.dumps(decrypted)
-                decoded_list.append(
-                    json.loads(s)
-                    if isinstance(decrypted, str) and decrypted.startswith(("[", "{"))
-                    else decrypted
-                )
-            except Exception:
+        decrypted_values = await self._decrypt_many_async(encrypted_list)
+
+        for decrypted in decrypted_values:
+            if isinstance(decrypted, str) and decrypted.startswith(("[", "{")):
+                try:
+                    decoded_list.append(json.loads(decrypted))
+                except Exception:
+                    decoded_list.append(decrypted)
+            else:
                 decoded_list.append(decrypted)
 
         return decoded_list
@@ -241,63 +362,64 @@ class DataBase:
         val_str = json.dumps(value)
         encrypted_value = await self._encrypt_async(val_str)
 
-        user_data = await self._get_user_vars(user_id)
+        def apply(data):
+            target = (
+                data.get("vars", {}).get(str(user_id), {}).get(var_key, {}).get(
+                    query_name
+                )
+            )
+            if not target:
+                return False
 
-        try:
-            user_data.get(var_key, {}).get(query_name, []).remove(encrypted_value)
-            await self._set_user_vars(user_id, user_data)
-        except (ValueError, KeyError):
-            pass
+            try:
+                target.remove(encrypted_value)
+            except ValueError:
+                return False
+
+            return True
+
+        await self._mutate(apply)
+        self._invalidate_members(user_id)
 
     async def removeAllVars(self, user_id):
         user_id_str = str(user_id)
-        full_data = await self._load_data()
 
-        if user_id_str in full_data.get("vars", {}):
-            del full_data["vars"][user_id_str]
-            await self._save_data(full_data)
+        def apply(data):
+            if user_id_str not in data.get("vars", {}):
+                return False
+
+            del data["vars"][user_id_str]
+            return True
+
+        await self._mutate(apply)
+        self._invalidate_members(user_id)
 
     async def allVars(self, user_id, var_key="variabel"):
         user_data = await self._get_user_vars(user_id)
         encrypted_data = user_data.get(var_key, {})
         decrypted = {}
 
+        def decode(raw_value):
+            if isinstance(raw_value, str) and raw_value.startswith(("[", "{")):
+                return json.loads(raw_value)
+            return raw_value
+
         for key, value in encrypted_data.items():
             if isinstance(value, list):
-                temp_list = []
+                if not value:
+                    decrypted[key] = []
+                    continue
 
-                for v in value:
-                    try:
-                        decrypted_v = await self._decrypt_async(v)
-                        s = (
-                            decrypted_v
-                            if isinstance(decrypted_v, str)
-                            else json.dumps(decrypted_v)
-                        )
-                        temp_list.append(
-                            json.loads(s)
-                            if isinstance(decrypted_v, str)
-                            and decrypted_v.startswith(("[", "{"))
-                            else decrypted_v
-                        )
-                    except Exception:
-                        temp_list.append(v)
-
-                decrypted[key] = temp_list
+                try:
+                    decoded = await self._decrypt_many_async(value)
+                    decrypted[key] = [
+                        decode(d) for d in decoded
+                    ]
+                except Exception:
+                    decrypted[key] = value
             else:
                 try:
-                    decrypted_v = await self._decrypt_async(value)
-                    s = (
-                        decrypted_v
-                        if isinstance(decrypted_v, str)
-                        else json.dumps(decrypted_v)
-                    )
-                    decrypted[key] = (
-                        json.loads(s)
-                        if isinstance(decrypted_v, str)
-                        and decrypted_v.startswith(("[", "{"))
-                        else decrypted_v
-                    )
+                    decrypted[key] = decode(await self._decrypt_async(value))
                 except Exception:
                     decrypted[key] = value
 
@@ -317,21 +439,22 @@ class DataBase:
         if value:
             bot_data[field] = await self._encrypt_async(value)
 
-        full_data = await self._load_data()
-        bots_list = full_data.get("bots", [])
+        def apply(data):
+            bots_list = data.setdefault("bots", [])
+            existing_index = next(
+                (i for i, d in enumerate(bots_list) if d.get("user_id") == user_id_str),
+                -1,
+            )
 
-        existing_index = next(
-            (i for i, d in enumerate(bots_list) if d.get("user_id") == user_id_str),
-            -1,
-        )
+            if existing_index != -1:
+                bots_list[existing_index].update(bot_data)
+            else:
+                bots_list.append({"user_id": user_id_str, **bot_data})
 
-        if existing_index != -1:
-            bots_list[existing_index].update(bot_data)
-        else:
-            bots_list.append({"user_id": user_id_str, **bot_data})
+            return True
 
-        full_data["bots"] = bots_list
-        await self._save_data(full_data)
+        await self._mutate(apply)
+        self._invalidate_members(user_id)
 
     async def getBots(self, is_token=False):
         data = await self._load_data()
@@ -371,10 +494,16 @@ class DataBase:
 
     async def removeBot(self, user_id):
         user_id_str = str(user_id)
-        full_data = await self._load_data()
 
-        full_data["bots"] = [
-            b for b in full_data.get("bots", []) if b.get("user_id") != user_id_str
-        ]
+        def apply(data):
+            bots = data.get("bots", [])
+            remaining = [b for b in bots if b.get("user_id") != user_id_str]
 
-        await self._save_data(full_data)
+            if len(remaining) == len(bots):
+                return False
+
+            data["bots"] = remaining
+            return True
+
+        await self._mutate(apply)
+        self._invalidate_members(user_id)
