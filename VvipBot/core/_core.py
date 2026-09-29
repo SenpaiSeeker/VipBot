@@ -234,13 +234,18 @@ async def list_vvip_bot(client, callback_query):
             )
         layout.append(button_row)
 
+    buy_all_entry = custom_icons.get(LIST_VVIP_ICON_BUY_ALL_KEY)
+    buy_all_icon = (
+        buy_all_entry["id"] if buy_all_entry else client.ns.emoji.id("shopping_cart")
+    )
+
     layout.append(
         [
             {
-                "text": "🛒 Ambil Semua VIP",
+                "text": "Ambil Semua VIP",
                 "callback_data": "pay_all_vvip",
                 "style": "green",
-                "emoji": client.ns.emoji.id("shopping_cart"),
+                "emoji": buy_all_icon,
             }
         ]
     )

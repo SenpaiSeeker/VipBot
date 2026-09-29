@@ -5,6 +5,7 @@ import pyrogram
 from pyrogram import filters
 
 from .. import (
+    LIST_VVIP_ICON_BUY_ALL_KEY,
     LIST_VVIP_ICON_DEFAULT,
     _sanitize_emoji_id,
     command,
@@ -90,6 +91,22 @@ async def render_list_vvip_icon_menu(client, callback_query):
     if button_row:
         layout.append(button_row)
 
+    buy_all_entry = icons.get(LIST_VVIP_ICON_BUY_ALL_KEY)
+    buy_all_icon = (
+        buy_all_entry["id"] if buy_all_entry else client.ns.emoji.id("shopping_cart")
+    )
+    buy_all_label = "Ambil Semua VIP ✓" if buy_all_entry else "Ambil Semua VIP"
+    layout.append(
+        [
+            {
+                "text": buy_all_label,
+                "callback_data": "set_listvvip_icon_item buy_all",
+                "style": "green",
+                "emoji": buy_all_icon,
+            }
+        ]
+    )
+
     layout.append(
         [
             {
@@ -116,7 +133,8 @@ async def render_list_vvip_icon_menu(client, callback_query):
         f"atau **ID custom emoji** untuk paket tersebut.\n\n"
         f"Icon bawaan: `{client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT['normal'])}` "
         f"normal / `{client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT['promo'])}` promo.\n"
-        f"Icon kustom akan dipakai di tombol paket pada menu daftar VVIP."
+        f"Icon kustom akan dipakai di tombol paket pada menu daftar VVIP.\n"
+        f"Tombol **Ambil Semua VIP** juga bisa diubah iconnya."
     )
 
     if callback_query.message.photo:
@@ -154,14 +172,20 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
         )
 
     _, item_id = callback_query.data.split(" ", 1)
-    if not hasattr(ctx, "vip_list_icon") or item_id not in ctx.vip_list_icon:
-        return await callback_query.answer(
-            "Sesi tidak ditemukan atau kedaluwarsa. Buka kembali menu dari Pengaturan.",
-            show_alert=True,
-        )
+    if item_id == "buy_all":
+        name = LIST_VVIP_ICON_BUY_ALL_KEY
+        display_name = "Ambil Semua VIP"
+    else:
+        if not hasattr(ctx, "vip_list_icon") or item_id not in ctx.vip_list_icon:
+            return await callback_query.answer(
+                "Sesi tidak ditemukan atau kedaluwarsa. Buka kembali menu dari Pengaturan.",
+                show_alert=True,
+            )
 
-    item = ctx.vip_list_icon[item_id]
-    name = item.get("name", "Tanpa Nama")
+        item = ctx.vip_list_icon[item_id]
+        name = item.get("name", "Tanpa Nama")
+        display_name = name
+
     chat_id = callback_query.from_user.id
     await callback_query.message.delete()
 
@@ -183,7 +207,7 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
 
     try:
         prompt = (
-            f"**{client.ns.emoji.art} Atur Icon Paket `{name}`**\n\n"
+            f"**{client.ns.emoji.art} Atur Icon Paket `{display_name}`**\n\n"
             f"Icon saat ini: {current_display}\n"
             f"ID bawaan: `{default_id}`\n\n"
             f"Kirim **custom emoji** yang ingin digunakan, "
@@ -244,7 +268,7 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
         await client.send_message(
             chat_id,
             f"{client.ns.emoji.white_check_mark} **Sukses!**\n"
-            f"Icon paket **{name}** {status}.\n\n"
+            f"Icon paket **{display_name}** {status}.\n\n"
             f"ID aktif: {result_display}",
             reply_markup=back_btn,
         )

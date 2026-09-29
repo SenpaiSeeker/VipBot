@@ -83,7 +83,10 @@ async def get_notification_target(client):
 LIST_VVIP_ICON_DEFAULT = {
     "normal": "open_folder",
     "promo": "party_popper",
+    "buy_all": "shopping_cart",
 }
+
+LIST_VVIP_ICON_BUY_ALL_KEY = "!_buy_all_"
 
 
 def _sanitize_emoji_id(value):

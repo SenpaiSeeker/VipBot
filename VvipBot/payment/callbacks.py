@@ -6,7 +6,14 @@ from pyrogram import filters
 
 from helpers import parse_dt
 
-from .. import command, ctx, get_list_vvip_icons, listen, render_list_vvip_icon_html
+from .. import (
+    LIST_VVIP_ICON_BUY_ALL_KEY,
+    command,
+    ctx,
+    get_list_vvip_icons,
+    listen,
+    render_list_vvip_icon_html,
+)
 from .invoice import _create_all_vvip_payment_invoice, _create_payment_invoice
 from .verifier import _get_all_vvip_items
 
@@ -37,7 +44,8 @@ async def pay_all_vvip_callback(client, callback_query):
     packages_text = "\n".join(package_lines)
 
     text = (
-        f"{client.ns.emoji.shopping_cart} **Ringkasan Ambil Semua VIP**\n\n"
+        f"{render_list_vvip_icon_html(client, icons, LIST_VVIP_ICON_BUY_ALL_KEY, kind='buy_all')} "
+        f"**Ringkasan Ambil Semua VIP**\n\n"
         f"{packages_text}\n\n"
         f"{client.ns.emoji.money_bag} **Total:** `Rp {int(total_amount):,}` "
         f"({len(selected_items)} paket)"
