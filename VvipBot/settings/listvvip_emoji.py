@@ -1,4 +1,5 @@
 import asyncio
+import uuid
 
 import pyrogram
 from pyrogram import filters
@@ -8,15 +9,10 @@ from .. import (
     _sanitize_emoji_id,
     command,
     ctx,
-    get_list_vvip_icon,
+    get_list_vvip_icons,
     is_bot_owner,
     listen,
 )
-
-KIND_LABEL = {
-    "normal": "Icon Normal",
-    "promo": "Icon Promo",
-}
 
 
 def build_back_layout(label="• Kembali ke Pengaturan •"):
@@ -29,34 +25,6 @@ def build_back_layout(label="• Kembali ke Pengaturan •"):
                 "emoji": "back_arrow",
             }
         ]
-    ]
-
-
-def build_menu_layout():
-    return [
-        [
-            {
-                "text": "📂 Ubah Icon Normal",
-                "callback_data": "set_listvvip_icon_normal",
-                "style": "blue",
-                "emoji": "open_folder",
-            },
-            {
-                "text": "🎉 Ubah Icon Promo",
-                "callback_data": "set_listvvip_icon_promo",
-                "style": "green",
-                "emoji": "party_popper",
-            },
-        ],
-        [
-            {
-                "text": "♻️ Kembalikan ke Bawaan",
-                "callback_data": "reset_listvvip_icon",
-                "style": "red",
-                "emoji": "repeat",
-            }
-        ],
-        build_back_layout()[0],
     ]
 
 
@@ -73,30 +41,76 @@ def extract_custom_emoji_id(message):
 
 
 async def render_list_vvip_icon_menu(client, callback_query):
-    normal_icon = await get_list_vvip_icon(client, "normal")
-    promo_icon = await get_list_vvip_icon(client, "promo")
-    saved = await ctx.db.getVars(client.me.id, "list_vvip_icon")
-    saved = saved if isinstance(saved, dict) else {}
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    icons = await get_list_vvip_icons(client)
 
-    normal_note = f"kustom `{saved['normal']}`" if saved.get("normal") else "bawaan"
-    promo_note = f"kustom `{saved['promo']}`" if saved.get("promo") else "bawaan"
+    if not hasattr(ctx, "vip_list_icon"):
+        ctx.vip_list_icon = {}
 
-    layout = build_menu_layout()
+    layout = []
+    if not vvip_list:
+        text = f"{client.ns.emoji.cross_mark} Belum ada paket VVIP. Tambahkan paket terlebih dahulu."
+        back_row = build_back_layout()[0]
+        back_row[0]["emoji"] = client.ns.emoji.id(back_row[0]["emoji"])
+        layout.append(back_row)
+        btn = client.ns.telegram.button.build_button_grid(layout)
+
+        if callback_query.message.photo:
+            return await callback_query.edit_message_caption(text, reply_markup=btn)
+        return await callback_query.edit_message_text(text, reply_markup=btn)
+
+    button_row = []
+    for item in vvip_list:
+        name = item.get("name", "Tanpa Nama")
+        item_id = uuid.uuid4().hex[:8]
+        ctx.vip_list_icon[item_id] = item
+
+        status_icon = icons[name] if name in icons else client.ns.emoji.id(
+            LIST_VVIP_ICON_DEFAULT["normal"]
+        )
+
+        button_row.append(
+            {
+                "text": f"{name} ✓" if name in icons else name,
+                "callback_data": f"set_listvvip_icon_item {item_id}",
+                "style": "blue",
+                "emoji": status_icon,
+            }
+        )
+        if len(button_row) == 2:
+            layout.append(button_row)
+            button_row = []
+
+    if button_row:
+        layout.append(button_row)
+
+    layout.append(
+        [
+            {
+                "text": "♻️ Kembalikan Semua ke Bawaan",
+                "callback_data": "reset_listvvip_icon",
+                "style": "red",
+                "emoji": "repeat",
+            }
+        ]
+    )
+    layout.append(build_back_layout()[0])
+
     for row in layout:
-        for btn in row:
-            btn["emoji"] = client.ns.emoji.id(btn["emoji"])
+        for btn_cfg in row:
+            if not isinstance(btn_cfg.get("emoji"), int):
+                btn_cfg["emoji"] = client.ns.emoji.id(btn_cfg["emoji"])
 
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     text = (
-        f"**{client.ns.emoji.art} Atur Icon List VVIP**\n\n"
-        f"Kustomisasi icon tombol pada daftar paket VVIP "
-        f"(icon `{client.ns.emoji.open_folder}` normal dan "
-        f"`{client.ns.emoji.party_popper}` promo).\n\n"
-        f"**Icon Normal:** `{normal_icon}` ({normal_note})\n"
-        f"**Icon Promo:** `{promo_icon}` ({promo_note})\n\n"
-        f"Kirim **custom emoji** atau **ID custom emoji** yang ingin dipakai.\n"
-        f"Jika tidak diatur, bot akan memakai **ID bawaan**."
+        f"{client.ns.emoji.art} **Atur Icon List VVIP**\n\n"
+        f"Kustomisasi icon tiap paket VVIP secara **individu**.\n"
+        f"Pilih paket berdasarkan **nama**, lalu kirim **custom emoji** "
+        f"atau **ID custom emoji** untuk paket tersebut.\n\n"
+        f"Icon bawaan: `{client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT['normal'])}` "
+        f"normal / `{client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT['promo'])}` promo.\n"
+        f"Icon kustom akan dipakai di tombol paket pada menu daftar VVIP."
     )
 
     if callback_query.message.photo:
@@ -116,34 +130,53 @@ async def set_listvvip_icon_callback(client, callback_query):
             show_alert=True,
         )
 
+    if not hasattr(ctx, "vip_list_icon"):
+        ctx.vip_list_icon = {}
+
     await render_list_vvip_icon_menu(client, callback_query)
 
 
 @command(
-    lambda ctx: filters.regex("^set_listvvip_icon_(normal|promo)$"),
+    lambda ctx: filters.regex("^set_listvvip_icon_item\\s(.+)"),
     handler_type="callback",
 )
-async def set_listvvip_icon_prompt(client, callback_query):
+async def set_listvvip_icon_item_prompt(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
-        return
+        return await callback_query.answer(
+            "🚫 Anda tidak memiliki akses ke menu ini.",
+            show_alert=True,
+        )
 
-    kind = callback_query.matches[0].group(1)
+    _, item_id = callback_query.data.split(" ", 1)
+    if not hasattr(ctx, "vip_list_icon") or item_id not in ctx.vip_list_icon:
+        return await callback_query.answer(
+            "Sesi tidak ditemukan atau kedaluwarsa. Buka kembali menu dari Pengaturan.",
+            show_alert=True,
+        )
+
+    item = ctx.vip_list_icon[item_id]
+    name = item.get("name", "Tanpa Nama")
     chat_id = callback_query.from_user.id
     await callback_query.message.delete()
 
     layout = build_back_layout("• Kembali ke Menu Icon •")
-    for btn in layout[0]:
-        btn["emoji"] = client.ns.emoji.id(btn["emoji"])
+    layout[0][0]["callback_data"] = "set_listvvip_icon"
+    for btn_cfg in layout[0]:
+        btn_cfg["emoji"] = client.ns.emoji.id(btn_cfg["emoji"])
     back_btn = client.ns.telegram.button.build_button_grid(layout)
 
-    default_id = client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT[kind])
+    default_id = client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT["normal"])
+    current_id = await ctx.db.getVars(client.me.id, "list_vvip_icon")
+    current_id = current_id.get(name) if isinstance(current_id, dict) else None
+    current_display = f"`{current_id}`" if current_id else "bawaan"
 
     try:
         prompt = (
-            f"**{client.ns.emoji.art} Atur {KIND_LABEL[kind]}**\n\n"
+            f"**{client.ns.emoji.art} Atur Icon Paket `{name}`**\n\n"
+            f"Icon saat ini: {current_display}\n"
+            f"ID bawaan: `{default_id}`\n\n"
             f"Kirim **custom emoji** yang ingin digunakan, "
             f"atau tulis **ID custom emoji** secara langsung.\n\n"
-            f"ID bawaan saat ini: `{default_id}`\n\n"
             f"Ketik `/default` untuk kembali ke ID bawaan.\n"
             f"Ketik `/batal` untuk membatalkan."
         )
@@ -178,23 +211,25 @@ async def set_listvvip_icon_prompt(client, callback_query):
         saved = saved if isinstance(saved, dict) else {}
 
         if emoji_id:
-            saved[kind] = emoji_id
+            saved[name] = emoji_id
         else:
-            saved.pop(kind, None)
+            saved.pop(name, None)
 
         if saved:
             await ctx.db.setVars(client.me.id, "list_vvip_icon", saved)
         else:
             await ctx.db.removeVars(client.me.id, "list_vvip_icon")
 
-        result = await get_list_vvip_icon(client, kind)
         status = "diubah" if emoji_id else "dikembalikan ke ID bawaan"
+        result_display = (
+            f"`{emoji_id}`" if emoji_id else f"`{client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT['normal'])}`"
+        )
 
         await client.send_message(
             chat_id,
             f"{client.ns.emoji.white_check_mark} **Sukses!**\n"
-            f"{KIND_LABEL[kind]} daftar VVIP {status}.\n\n"
-            f"ID aktif: `{result}`",
+            f"Icon paket **{name}** {status}.\n\n"
+            f"ID aktif: {result_display}",
             reply_markup=back_btn,
         )
 
@@ -212,11 +247,14 @@ async def set_listvvip_icon_prompt(client, callback_query):
 )
 async def reset_listvvip_icon_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
-        return
+        return await callback_query.answer(
+            "🚫 Anda tidak memiliki akses ke menu ini.",
+            show_alert=True,
+        )
 
     await ctx.db.removeVars(client.me.id, "list_vvip_icon")
     await callback_query.answer(
-        "Icon list VVIP dikembalikan ke ID bawaan.",
+        "Semua icon list VVIP dikembalikan ke ID bawaan.",
         show_alert=True,
     )
 

@@ -98,16 +98,19 @@ def _sanitize_emoji_id(value):
     return emoji_id if emoji_id > 0 else None
 
 
-async def get_list_vvip_icon(client, kind):
-    default_name = LIST_VVIP_ICON_DEFAULT.get(kind, LIST_VVIP_ICON_DEFAULT["normal"])
+async def get_list_vvip_icons(client):
     saved = await ctx.db.getVars(client.me.id, "list_vvip_icon")
 
-    if isinstance(saved, dict):
-        emoji_id = _sanitize_emoji_id(saved.get(kind))
-        if emoji_id:
-            return emoji_id
+    if not isinstance(saved, dict):
+        return {}
 
-    return client.ns.emoji.id(default_name)
+    icons = {}
+    for name, raw in saved.items():
+        emoji_id = _sanitize_emoji_id(raw)
+        if emoji_id:
+            icons[str(name)] = emoji_id
+
+    return icons
 
 
 async def check_new_user(client, update):
