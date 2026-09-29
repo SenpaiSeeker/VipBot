@@ -6,7 +6,7 @@ from pyrogram import filters
 
 from helpers import parse_dt
 
-from .. import command, ctx, listen
+from .. import command, ctx, get_list_vvip_icons, listen, render_list_vvip_icon_html
 from .invoice import _create_all_vvip_payment_invoice, _create_payment_invoice
 from .verifier import _get_all_vvip_items
 
@@ -16,6 +16,64 @@ from .verifier import _get_all_vvip_items
     handler_type="callback",
 )
 async def pay_all_vvip_callback(client, callback_query):
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    selected_items = _get_all_vvip_items(vvip_list)
+
+    if not selected_items:
+        return await callback_query.answer(
+            "❌ Tidak ada paket VIP valid untuk pembelian semua VIP.",
+            show_alert=True,
+        )
+
+    total_amount = sum((item.get("price", 0) for item in selected_items))
+    icons = await get_list_vvip_icons(client)
+
+    package_lines = []
+    for item in selected_items:
+        name = item.get("name", "Paket")
+        price = item.get("price", 0)
+        icon_html = render_list_vvip_icon_html(client, icons, name)
+        package_lines.append(f"{icon_html} **{name}** — `Rp {int(price):,}`")
+    packages_text = "\n".join(package_lines)
+
+    text = (
+        f"{client.ns.emoji.shopping_cart} **Ringkasan Ambil Semua VIP**\n\n"
+        f"{packages_text}\n\n"
+        f"{client.ns.emoji.money_bag} **Total:** `Rp {int(total_amount):,}` "
+        f"({len(selected_items)} paket)"
+    )
+
+    layout = [
+        [
+            {
+                "text": "💳 Lakukan Pembayaran",
+                "callback_data": "pay_all_vvip_confirm",
+                "style": "green",
+                "emoji": client.ns.emoji.id("white_check_mark"),
+            }
+        ],
+        [
+            {
+                "text": "• Kembali ke Daftar VVIP •",
+                "callback_data": "list_vvip",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("back_arrow"),
+            }
+        ],
+    ]
+    btn = client.ns.telegram.button.build_button_grid(layout)
+
+    if callback_query.message.photo:
+        await callback_query.edit_message_caption(text, reply_markup=btn)
+    else:
+        await callback_query.edit_message_text(text, reply_markup=btn)
+
+
+@command(
+    lambda ctx: filters.regex("^pay_all_vvip_confirm$"),
+    handler_type="callback",
+)
+async def pay_all_vvip_confirm_callback(client, callback_query):
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     selected_items = _get_all_vvip_items(vvip_list)
 

@@ -209,7 +209,8 @@ async def list_vvip_bot(client, callback_query):
         name = item.get("name", "N/A")
         promo_price = item.get("promo_price", 0)
 
-        item_icon = custom_icons.get(name)
+        item_entry = custom_icons.get(name)
+        item_icon = item_entry["id"] if item_entry else None
         item_normal_icon = item_icon or normal_icon
         item_promo_icon = item_icon or promo_icon
 

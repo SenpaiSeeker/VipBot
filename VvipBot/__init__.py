@@ -106,11 +106,25 @@ async def get_list_vvip_icons(client):
 
     icons = {}
     for name, raw in saved.items():
-        emoji_id = _sanitize_emoji_id(raw)
-        if emoji_id:
-            icons[str(name)] = emoji_id
+        if isinstance(raw, dict):
+            emoji_id = _sanitize_emoji_id(raw.get("id"))
+            if emoji_id:
+                icons[str(name)] = {"id": emoji_id, "char": raw.get("char")}
+        else:
+            emoji_id = _sanitize_emoji_id(raw)
+            if emoji_id:
+                icons[str(name)] = {"id": emoji_id, "char": None}
 
     return icons
+
+
+def render_list_vvip_icon_html(client, icons, name, kind="normal"):
+    entry = icons.get(name)
+    if entry and entry.get("char"):
+        return f'<emoji id="{entry["id"]}">{entry["char"]}</emoji>'
+
+    default_name = LIST_VVIP_ICON_DEFAULT.get(kind, LIST_VVIP_ICON_DEFAULT["normal"])
+    return getattr(client.ns.emoji, default_name)
 
 
 async def check_new_user(client, update):

@@ -28,16 +28,22 @@ def build_back_layout(label="• Kembali ke Pengaturan •"):
     ]
 
 
-def extract_custom_emoji_id(message):
+def extract_custom_emoji(message):
     for entity in getattr(message, "entities", None) or []:
         if entity.type != pyrogram.enums.MessageEntityType.CUSTOM_EMOJI:
             continue
 
         emoji_id = _sanitize_emoji_id(getattr(entity, "custom_emoji_id", None))
-        if emoji_id:
-            return emoji_id
+        if not emoji_id:
+            continue
 
-    return None
+        offset = getattr(entity, "offset", 0)
+        length = getattr(entity, "length", 0)
+        char = (message.text or "")[offset : offset + length]
+
+        return emoji_id, char
+
+    return None, None
 
 
 async def render_list_vvip_icon_menu(client, callback_query):
@@ -65,7 +71,7 @@ async def render_list_vvip_icon_menu(client, callback_query):
         item_id = uuid.uuid4().hex[:8]
         ctx.vip_list_icon[item_id] = item
 
-        status_icon = icons[name] if name in icons else client.ns.emoji.id(
+        status_icon = icons[name]["id"] if name in icons else client.ns.emoji.id(
             LIST_VVIP_ICON_DEFAULT["normal"]
         )
 
@@ -167,8 +173,13 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
 
     default_id = client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT["normal"])
     current_id = await ctx.db.getVars(client.me.id, "list_vvip_icon")
-    current_id = current_id.get(name) if isinstance(current_id, dict) else None
-    current_display = f"`{current_id}`" if current_id else "bawaan"
+    raw_current = current_id.get(name) if isinstance(current_id, dict) else None
+    if isinstance(raw_current, dict):
+        current_display = f"`{raw_current.get('id')}`"
+    elif raw_current:
+        current_display = f"`{raw_current}`"
+    else:
+        current_display = "bawaan"
 
     try:
         prompt = (
@@ -192,10 +203,12 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
             "/reset",
         ):
             emoji_id = None
+            emoji_char = None
         else:
-            emoji_id = extract_custom_emoji_id(ask_msg) or _sanitize_emoji_id(
-                ask_msg.text
-            )
+            emoji_id, emoji_char = extract_custom_emoji(ask_msg)
+            if not emoji_id:
+                emoji_id = _sanitize_emoji_id(ask_msg.text)
+                emoji_char = None
 
             if not emoji_id:
                 return await client.send_message(
@@ -211,7 +224,10 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
         saved = saved if isinstance(saved, dict) else {}
 
         if emoji_id:
-            saved[name] = emoji_id
+            if emoji_char:
+                saved[name] = {"id": emoji_id, "char": emoji_char}
+            else:
+                saved[name] = emoji_id
         else:
             saved.pop(name, None)
 
