@@ -3,6 +3,8 @@ from datetime import datetime, timedelta, timezone
 
 from pyrogram import filters
 
+from helpers import parse_dt
+
 from .. import command, ctx, is_bot_owner, listen
 
 
@@ -151,8 +153,9 @@ async def list_coupons_callback(client, callback_query):
     coupon = coupons[page]
 
     expiry_text = "Permanent"
-    if coupon.get("expiry_date"):
-        expiry_text = datetime.fromisoformat(coupon["expiry_date"]).strftime("%d %b %Y")
+    coupon_expiry = parse_dt(coupon.get("expiry_date"))
+    if coupon_expiry:
+        expiry_text = coupon_expiry.strftime("%d %b %Y")
 
     text = (
         f"**{client.ns.emoji.pencil} Detail Kupon ({page + 1}/{total_pages})**\n"

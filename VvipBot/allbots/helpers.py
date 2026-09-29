@@ -1,5 +1,7 @@
 import math
 
+from helpers import parse_dt
+
 from .. import *
 from ..admin.cache import _user_cache
 
@@ -72,11 +74,13 @@ async def _build_page(client, page: int) -> dict:
         owner_text = await _resolve_owner_text(client, owner_id)
 
         exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
-        days_left = (
-            (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days
-            if exp_date_str
-            else "N/A"
-        )
+        try:
+            exp_date = parse_dt(exp_date_str)
+            days_left = (
+                (exp_date - datetime.now(timezone.utc)).days if exp_date else "N/A"
+            )
+        except (TypeError, ValueError):
+            days_left = "N/A"
 
         text_lines.append(
             f"<b>{index:2}:</b> {bot_username} (<code>{bot_id}</code>)\n"

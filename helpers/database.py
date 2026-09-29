@@ -381,6 +381,42 @@ class DataBase:
         await self._mutate(apply)
         self._invalidate_members(user_id)
 
+    async def updateListVars(self, user_id, query_name, updater, var_key="variabel"):
+        async with self._lock:
+            if self._data is None:
+                self._data = await self._read_data_file()
+
+            bucket = self._namespace(self._data, user_id, var_key)
+            encrypted_list = list(bucket.get(query_name) or [])
+
+            decoded_list = []
+            if encrypted_list:
+                decrypted_values = await self._decrypt_many_async(encrypted_list)
+                for d in decrypted_values:
+                    if isinstance(d, str) and d.startswith(("[", "{")):
+                        try:
+                            decoded_list.append(json.loads(d))
+                        except Exception:
+                            decoded_list.append(d)
+                    else:
+                        decoded_list.append(d)
+
+            new_list = await updater(decoded_list)
+            if new_list is None:
+                return
+
+            new_list = list(new_list)
+            if not new_list:
+                bucket.pop(query_name, None)
+            else:
+                bucket[query_name] = await self._run_sync(
+                    self._encrypt_sync, [json.dumps(v) for v in new_list]
+                )
+
+            await self._write_data_file()
+
+        self._invalidate_members(user_id)
+
     async def removeAllVars(self, user_id):
         user_id_str = str(user_id)
 

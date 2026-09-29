@@ -547,7 +547,7 @@ async def delete_listvvip(client, callback_query):
     for item in vvip_list:
         name = item.get("name", "Tanpa Nama")
         item_id = uuid.uuid4().hex[:8]
-        ctx.vip_list[item_id] = name
+        ctx.vip_list[item_id] = item
 
         button_row.append(
             {
@@ -589,15 +589,12 @@ async def confirm_delete_vvip(client, callback_query):
             show_alert=True,
         )
 
-    name = ctx.vip_list[item_id]
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-    item_to_remove = next(
-        (item for item in vvip_list if item.get("name") == name),
-        None,
-    )
+    name = ctx.vip_list[item_id].get("name", "Tanpa Nama")
+    item_to_remove = ctx.vip_list[item_id]
 
     if item_to_remove:
         await ctx.db.removeListVars(client.me.id, "list_vvip", item_to_remove)
+        ctx.vip_list.pop(item_id, None)
         await callback_query.answer("Kategori berhasil dihapus.", show_alert=True)
 
     await delete_listvvip(client, callback_query)
@@ -638,7 +635,7 @@ async def edit_price_listvvip_callback(client, callback_query):
     for item in vvip_list:
         name = item.get("name", "Tanpa Nama")
         item_id = uuid.uuid4().hex[:8]
-        ctx.vip_list_edit[item_id] = name
+        ctx.vip_list_edit[item_id] = item
 
         button_row.append(
             {
@@ -682,16 +679,18 @@ async def edit_vvip_price_callback(client, callback_query):
             show_alert=True,
         )
 
-    name = ctx.vip_list_edit[item_id]
+    name = ctx.vip_list_edit[item_id].get("name", "Tanpa Nama")
+    old_item = ctx.vip_list_edit[item_id]
+
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-    old_item = next(
-        (item for item in vvip_list if item.get("name") == name),
+    item_index = next(
+        (i for i, item in enumerate(vvip_list) if item == old_item),
         None,
     )
 
-    if not old_item:
+    if item_index is None:
         return await callback_query.answer(
-            "Paket VVIP tidak ditemukan.",
+            "Paket VVIP tidak ditemukan atau telah berubah.",
             show_alert=True,
         )
 
@@ -728,13 +727,11 @@ async def edit_vvip_price_callback(client, callback_query):
 
         new_promo = int(new_promo_msg.text)
 
-        await ctx.db.removeListVars(client.me.id, "list_vvip", old_item)
+        vvip_list[item_index]["price"] = new_price
+        vvip_list[item_index]["promo_price"] = new_promo
 
-        old_item["price"] = new_price
-        old_item["promo_price"] = new_promo
-
-        await ctx.db.setListVars(client.me.id, "list_vvip", old_item)
-        del ctx.vip_list_edit[item_id]
+        await ctx.db.replaceListVars(client.me.id, "list_vvip", vvip_list)
+        ctx.vip_list_edit.pop(item_id, None)
 
         await client.send_message(
             chat_id,

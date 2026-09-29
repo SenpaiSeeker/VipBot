@@ -1,9 +1,10 @@
 import asyncio
 from datetime import datetime, timezone
 
+import pyrogram
 from pyrogram import filters
 
-from helpers import listen
+from helpers import listen, parse_dt
 
 from .. import command, ctx
 
@@ -14,11 +15,9 @@ from .. import command, ctx
 )
 async def start_creation_process_callback(client, callback_query):
     user_id = callback_query.from_user.id
-    expiry_date_str = await ctx.db.getVars(user_id, "user_expiry_date")
+    expiry_date = parse_dt(await ctx.db.getVars(user_id, "user_expiry_date"))
 
-    if not expiry_date_str or datetime.fromisoformat(expiry_date_str) < datetime.now(
-        timezone.utc
-    ):
+    if not expiry_date or expiry_date < datetime.now(timezone.utc):
         return await callback_query.answer(
             "Langganan Anda tidak valid atau telah berakhir.",
             show_alert=True,
@@ -77,7 +76,7 @@ async def start_creation_process_callback(client, callback_query):
 
         new_bot_name = await client.ns.telegram.arg.getNamebot(token)
 
-        if "invalid" in [new_bot_name]:
+        if not isinstance(new_bot_name, pyrogram.types.User):
             raise ValueError("Token bot yang Anda masukkan tidak valid.")
 
         await msg.edit(

@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 from pyrogram import Client
@@ -11,6 +12,18 @@ from .gradient import Gradient
 from .logger import LoggerHandler
 from .monitor import ServerMonitor
 from .saweria_scraper import SaweriaScraper
+
+
+def parse_dt(value) -> "datetime | None":
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        parsed = value
+    else:
+        parsed = datetime.fromisoformat(str(value))
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
 
 
 class CleanNamespace:

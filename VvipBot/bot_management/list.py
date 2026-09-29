@@ -2,6 +2,8 @@ from datetime import datetime, timezone
 
 from pyrogram import filters
 
+from helpers import parse_dt
+
 from .. import command, ctx
 
 
@@ -46,11 +48,9 @@ async def list_my_bots_callback(client, callback_query):
     except Exception:
         bot_name = f"ID {bot_id} (Error)"
 
-    exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
+    exp_date = parse_dt(await ctx.db.getVars(bot_id, "bot_expiration_date"))
     days_left = (
-        (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days
-        if exp_date_str
-        else "N/A"
+        (exp_date - datetime.now(timezone.utc)).days if exp_date else "N/A"
     )
 
     text = (
@@ -138,13 +138,11 @@ async def manage_bot_callback(client, callback_query):
     except Exception:
         pass
 
-    exp_date_str = await ctx.db.getVars(bot_id_to_manage, "bot_expiration_date")
+    exp_date = parse_dt(await ctx.db.getVars(bot_id_to_manage, "bot_expiration_date"))
     days_left_text = "Tidak diatur"
 
-    if exp_date_str:
-        days_left = (
-            datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)
-        ).days
+    if exp_date:
+        days_left = (exp_date - datetime.now(timezone.utc)).days
         days_left_text = f"{days_left} hari"
 
     layout = [

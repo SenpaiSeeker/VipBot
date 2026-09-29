@@ -1,3 +1,5 @@
+from helpers import parse_dt
+
 from .. import *
 
 
@@ -13,11 +15,9 @@ async def access_command_handler(client, message):
     try:
         target_user = await client.get_users(user_id_target)
         has_access = False
-        user_expiry_str = await ctx.db.getVars(target_user.id, "user_expiry_date")
-        if user_expiry_str:
-            expiry_date = datetime.fromisoformat(user_expiry_str)
-            if expiry_date > datetime.now(timezone.utc):
-                has_access = True
+        expiry = parse_dt(await ctx.db.getVars(target_user.id, "user_expiry_date"))
+        if expiry and expiry > datetime.now(timezone.utc):
+            has_access = True
         status_text = (
             f"{client.ns.emoji.white_check_mark} Memiliki Akses"
             if has_access
@@ -89,12 +89,10 @@ async def do_give_access_callback(client, callback_query):
     months_to_add = int(months_str)
     try:
         target_user = await client.get_users(target_id)
-        current_expiry_str = await ctx.db.getVars(target_id, "user_expiry_date")
-        start_date = datetime.now(timezone.utc)
-        if current_expiry_str:
-            current_expiry = datetime.fromisoformat(current_expiry_str)
-            if current_expiry > start_date:
-                start_date = current_expiry
+        current_expiry = parse_dt(
+            await ctx.db.getVars(target_id, "user_expiry_date")
+        ) or datetime.now(timezone.utc)
+        start_date = max(current_expiry, datetime.now(timezone.utc))
         new_expiry_date = start_date + timedelta(days=30 * months_to_add)
         await ctx.db.setVars(target_id, "user_expiry_date", new_expiry_date.isoformat())
         expiry_in_jakarta = new_expiry_date.astimezone(ZoneInfo("Asia/Jakarta"))
@@ -229,9 +227,11 @@ async def delete_seller_callback(client, callback_query):
 @command(lambda ctx: filters.command("listakses") & filters.user(ctx.owner_id))
 async def list_akses_handler(client, message):
     user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
+    now = datetime.now(timezone.utc)
     access_users = []
     for uid in user_ids:
-        if await ctx.db.getVars(uid, "user_expiry_date"):
+        expiry = parse_dt(await ctx.db.getVars(uid, "user_expiry_date"))
+        if expiry and expiry > now:
             access_users.append(uid)
     if not access_users:
         return await message.reply_text(
@@ -271,9 +271,12 @@ async def delete_access_callback(client, callback_query):
         show_alert=True,
     )
     user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
-    access_users = [
-        uid for uid in user_ids if await ctx.db.getVars(uid, "user_expiry_date")
-    ]
+    now = datetime.now(timezone.utc)
+    access_users = []
+    for uid in user_ids:
+        expiry = parse_dt(await ctx.db.getVars(uid, "user_expiry_date"))
+        if expiry and expiry > now:
+            access_users.append(uid)
     if not access_users:
         await callback_query.edit_message_text(
             "Tidak ada pengguna yang memiliki akses aktif saat ini."

@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 
 from pyrogram import filters
 
+from helpers import parse_dt
+
 from .. import command, ctx, listen
 from .invoice import _create_all_vvip_payment_invoice, _create_payment_invoice
 from .verifier import _get_all_vvip_items
@@ -82,7 +84,7 @@ async def notes_data(client, callback_query):
         formatted_price = f"{price_val:,}"
 
         desc = (
-            normal_text.format(name=name, price=formatted_price)
+            normal_text.replace("{name}", name).replace("{price}", formatted_price)
             if normal_text
             else (
                 f"╭─ **{client.ns.emoji.sparkles} Detail Paket VVIP**\n"
@@ -177,9 +179,8 @@ async def promo_detail(client, callback_query):
         formatted_promo = f"{promo_price_val:,}"
 
         desc = (
-            promo_text.format(
-                name=name,
-                promo_price=formatted_promo,
+            promo_text.replace("{name}", name).replace(
+                "{promo_price}", formatted_promo
             )
             if promo_text
             else (
@@ -271,9 +272,8 @@ async def apply_coupon_callback(client, callback_query):
             )
 
         expiry_str = coupon.get("expiry_date")
-        if expiry_str and datetime.fromisoformat(expiry_str) < datetime.now(
-            timezone.utc
-        ):
+        coupon_expiry = parse_dt(expiry_str)
+        if coupon_expiry and coupon_expiry < datetime.now(timezone.utc):
             raise ValueError(
                 f"{client.ns.emoji.cross_mark} Kupon ini sudah kedaluwarsa."
             )

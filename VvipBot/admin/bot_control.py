@@ -1,3 +1,5 @@
+from helpers import parse_dt
+
 from .. import *
 
 
@@ -16,7 +18,7 @@ async def extend_command_handler(client, message):
         )
     exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
     current_exp_date = (
-        datetime.fromisoformat(exp_date_str)
+        parse_dt(exp_date_str)
         if exp_date_str
         else datetime.now(timezone.utc)
     )

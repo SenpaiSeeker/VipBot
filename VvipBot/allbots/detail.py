@@ -1,3 +1,5 @@
+from helpers import parse_dt
+
 from .. import *
 from .helpers import _resolve_owner_text, send_allbots_list
 
@@ -24,11 +26,9 @@ async def allbots_detail_callback(client, callback_query):
     owner_id = await ctx.db.getVars(bot_id, "owner_id")
     owner_text = await _resolve_owner_text(client, owner_id)
 
-    exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
+    exp_date = parse_dt(await ctx.db.getVars(bot_id, "bot_expiration_date"))
     days_left = (
-        (datetime.fromisoformat(exp_date_str) - datetime.now(timezone.utc)).days
-        if exp_date_str
-        else "N/A"
+        (exp_date - datetime.now(timezone.utc)).days if exp_date else "N/A"
     )
 
     text = (

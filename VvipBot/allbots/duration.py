@@ -1,3 +1,5 @@
+from helpers import parse_dt
+
 from .. import *
 from .helpers import invalidate_page_cache, send_allbots_list
 
@@ -89,10 +91,9 @@ async def allbots_do_extend_callback(client, callback_query):
     page = int(callback_query.matches[0].group(3))
     current_expiry_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
     start_date = datetime.now(timezone.utc)
-    if current_expiry_str:
-        current_expiry = datetime.fromisoformat(current_expiry_str)
-        if current_expiry > start_date:
-            start_date = current_expiry
+    current_expiry = parse_dt(current_expiry_str)
+    if current_expiry and current_expiry > start_date:
+        start_date = current_expiry
     await ctx.db.setVars(
         bot_id, "bot_expiration_date", (start_date + timedelta(days=days)).isoformat()
     )
@@ -148,14 +149,16 @@ async def allbots_do_reduce_callback(client, callback_query):
     bot_id = int(callback_query.matches[0].group(1))
     days = int(callback_query.matches[0].group(2))
     page = int(callback_query.matches[0].group(3))
-    current_expiry_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
-    if not current_expiry_str:
+    current_expiry = parse_dt(
+        await ctx.db.getVars(bot_id, "bot_expiration_date")
+    )
+    if not current_expiry:
         await callback_query.answer(
             "Bot ini tidak memiliki tanggal kedaluwarsa untuk dikurangi.",
             show_alert=True,
         )
         return
-    new_expiry_date = datetime.fromisoformat(current_expiry_str) - timedelta(days=days)
+    new_expiry_date = current_expiry - timedelta(days=days)
     await ctx.db.setVars(bot_id, "bot_expiration_date", new_expiry_date.isoformat())
     await callback_query.answer(
         f"Masa aktif bot {bot_id} berhasil dikurangi {days} hari.",

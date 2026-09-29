@@ -261,6 +261,8 @@ async def total_users_count_callback(client, callback_query):
         await callback_query.answer()
     except Exception:
         await callback_query.answer(
-            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>",
+            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
+                e=e
+            ),
             show_alert=True,
         )

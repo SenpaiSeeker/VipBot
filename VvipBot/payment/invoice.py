@@ -64,10 +64,7 @@ async def _create_payment_invoice(
             creator_name=client.me.username,
         )
 
-        order_data = f"{item_index}|{tipe}|{amount_raw}"
-
-        if coupon_code:
-            order_data += f"|{coupon_code}"
+        order_data = f"{item_index}|{tipe}|{amount_raw}|{user.id}|{coupon_code or ''}"
 
         await ctx.db.setVars(client.me.id, transaction_id, order_data)
 
@@ -160,7 +157,7 @@ async def _create_all_vvip_payment_invoice(client, user, selected_items, total_a
         )
 
         package_indexes = ",".join((str(item.get("index")) for item in selected_items))
-        order_data = f"ALL|normal|{int(amount_raw)}|{package_indexes}"
+        order_data = f"ALL|normal|{int(amount_raw)}|{user.id}|{package_indexes}"
 
         await ctx.db.setVars(client.me.id, transaction_id, order_data)
 

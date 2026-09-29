@@ -6,6 +6,7 @@ import pyrogram
 import VvipBot as handlers
 from database import schedule
 from helpers.logger import LoggerHandler
+from helpers import parse_dt
 from services import initialize_bot_services
 from VvipBot import ctx
 
@@ -95,7 +96,9 @@ async def expiration_checker_method():
             if not expiry_date_str:
                 continue
 
-            expiry_date = datetime.fromisoformat(expiry_date_str)
+            expiry_date = parse_dt(expiry_date_str)
+            if not expiry_date:
+                continue
             time_remaining = expiry_date - datetime.now(timezone.utc)
             days_left = time_remaining.days
 
@@ -209,7 +212,7 @@ async def subscription_checker_method():
                 members_to_keep.append(member)
                 continue
 
-            expiry_date = datetime.fromisoformat(expiry_date_str)
+            expiry_date = parse_dt(expiry_date_str)
             user_id = member["user_id"]
             if now > expiry_date:
                 try:

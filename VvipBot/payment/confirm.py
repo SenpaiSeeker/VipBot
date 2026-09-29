@@ -23,20 +23,32 @@ async def manual_check_payment_callback(client, callback_query):
 
     ref_parts = ref_data_str.split("|")
     is_bundle_order = ref_parts[0] == "ALL"
-    tipe = ref_parts[1]
-    amount_raw = int(ref_parts[2])
+    tipe = ref_parts[1] if len(ref_parts) > 1 else ("normal" if is_bundle_order else None)
+    amount_raw = int(ref_parts[2]) if len(ref_parts) > 2 else 0
     coupon_code = None
     bundle_indexes = []
 
-    if is_bundle_order:
-        bundle_indexes = (
-            [int(i) for i in ref_parts[3].split(",") if i.strip().isdigit()]
-            if len(ref_parts) > 3
-            else []
+    if len(ref_parts) >= 5:
+        buyer_id = int(ref_parts[3])
+        extra = ref_parts[4]
+    else:
+        buyer_id = None
+        extra = ref_parts[3] if len(ref_parts) > 3 else None
+
+    if buyer_id and buyer_id != user.id:
+        return await callback_query.answer(
+            "⚠️ Invoice ini milik pengguna lain.",
+            show_alert=True,
         )
+
+    if is_bundle_order:
+        if extra:
+            bundle_indexes = [
+                int(i) for i in extra.split(",") if i.strip().isdigit()
+            ]
     else:
         item_index = int(ref_parts[0])
-        coupon_code = ref_parts[3] if len(ref_parts) > 3 else None
+        coupon_code = extra or None
 
     try:
         is_owner_confirm = await is_bot_owner(client, user.id)
@@ -228,17 +240,21 @@ async def manual_check_payment_callback(client, callback_query):
                 member_data["expiry_date"] = expiry_date.isoformat()
 
             if coupon_code:
-                coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
+                coupon_consumed = {"found": False}
 
-                for c in coupons:
-                    if c.get("code") == coupon_code:
-                        c["uses_left"] = c.get("uses_left", 1) - 1
-                        break
+                async def _consume_coupon(coupons):
+                    new_coupons = []
+                    for c in coupons:
+                        c = dict(c)
+                        if c.get("code") == coupon_code:
+                            c["uses_left"] = max(int(c.get("uses_left", 1)) - 1, 0)
+                            coupon_consumed["found"] = True
+                        new_coupons.append(c)
+                    return new_coupons if coupon_consumed["found"] else None
 
-                await ctx.db.removeVars(client.me.id, "coupons")
-
-                for c in coupons:
-                    await ctx.db.setListVars(client.me.id, "coupons", c)
+                await ctx.db.updateListVars(
+                    client.me.id, "coupons", _consume_coupon
+                )
 
             await ctx.db.setListVars(client.me.id, "vvip_members", member_data)
 

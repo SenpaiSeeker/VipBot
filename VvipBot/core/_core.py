@@ -29,8 +29,8 @@ async def get_start_keyboard_and_content(client, user):
     db_photo_id = await ctx.db.getVars(client.me.id, "start_photo_id")
     photo_id = db_photo_id if db_photo_id is not None else None
 
-    welcome_text = main_text_template.format(
-        mention=client.ns.telegram.arg.getMention(user)
+    welcome_text = main_text_template.replace(
+        "{mention}", client.ns.telegram.arg.getMention(user)
     )
 
     layout = []

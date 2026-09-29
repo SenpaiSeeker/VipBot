@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from pyrogram import filters
 
 from config import BACKUP_BOT
+from helpers import parse_dt
 
 from .. import command, ctx
 from .pricing import calculate_bot_price, get_bot_purchase_panel
@@ -42,12 +43,9 @@ async def create_bot_callback(client, callback_query):
         return await callback_query.edit_message_text(text_warning, reply_markup=btn)
 
     user_id = callback_query.from_user.id
-    user_expiry_str = await ctx.db.getVars(user_id, "user_expiry_date")
+    user_expiry = parse_dt(await ctx.db.getVars(user_id, "user_expiry_date"))
 
-    if user_expiry_str:
-        expiry_date = datetime.fromisoformat(user_expiry_str)
-
-        if expiry_date > datetime.now(timezone.utc):
+    if user_expiry and user_expiry > datetime.now(timezone.utc):
             text = (
                 f"{client.ns.emoji.white_check_mark} **Anda Sudah Berlangganan!**\n\n"
                 f"Anda sudah memiliki akses untuk membuat bot. Tekan tombol di bawah untuk memulai proses pembuatan."
@@ -137,7 +135,7 @@ async def proceed_bot_payment_callback(client, callback_query):
             creator_name=client.me.username,
         )
 
-        order_data = f"{months}|{amount_raw}"
+        order_data = f"{months}|{amount_raw}|{user_id}"
         await ctx.db.setVars(client.me.id, transaction_id, order_data)
 
         caption = (
@@ -185,7 +183,8 @@ async def proceed_bot_payment_callback(client, callback_query):
     handler_type="callback",
 )
 async def confirm_bot_payment_callback(client, callback_query):
-    transaction_id = callback_query.data.split("_")[-1]
+    prefix = "confirm_bot_payment_"
+    transaction_id = callback_query.data[len(prefix):]
     user = callback_query.from_user
     order_data_str = await ctx.db.getVars(client.me.id, transaction_id)
 
@@ -195,9 +194,22 @@ async def confirm_bot_payment_callback(client, callback_query):
             show_alert=True,
         )
 
-    months_str, amount_raw_str = order_data_str.split("|")
+    parts = order_data_str.split("|")
+    if len(parts) < 3:
+        return await callback_query.answer(
+            "<emoji id=6271786398404055377>⚠️</emoji> Invoice ini sudah tidak valid.",
+            show_alert=True,
+        )
+
+    months_str, amount_raw_str, buyer_id_str = parts[:3]
     months = int(months_str)
     amount_raw = int(amount_raw_str)
+
+    if buyer_id_str and int(buyer_id_str) != user.id:
+        return await callback_query.answer(
+            "<emoji id=6271786398404055377>⚠️</emoji> Invoice ini milik pengguna lain.",
+            show_alert=True,
+        )
 
     try:
         is_paid = await client.services.saweria.check_paid_status(transaction_id)

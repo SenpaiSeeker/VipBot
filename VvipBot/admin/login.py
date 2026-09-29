@@ -1,3 +1,7 @@
+from helpers import parse_dt
+
+import pyrogram
+
 from config import API_HASH, API_ID
 
 from .. import *
@@ -57,7 +61,7 @@ async def login_command_handler(client, message):
 
     try:
         bot_info = await client.ns.telegram.arg.getNamebot(bot_token)
-        if "invalid" in [bot_info]:
+        if not isinstance(bot_info, pyrogram.types.User):
             raise ValueError("Bot token tidak valid.")
     except Exception as e:
         return await msg.edit_text(
@@ -96,7 +100,7 @@ async def login_command_handler(client, message):
         owner_source = "Owner Utama"
 
     try:
-        formatted_expiry = datetime.fromisoformat(expiry_date_str).strftime("%d %b %Y")
+        formatted_expiry = parse_dt(expiry_date_str).strftime("%d %b %Y")
     except ValueError:
         formatted_expiry = expiry_date_str
 
