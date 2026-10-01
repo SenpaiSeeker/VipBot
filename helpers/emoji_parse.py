@@ -577,6 +577,14 @@ _EMOJI_MAP = {
 _ATTR_CACHE = {}
 
 
+def _render_html_entity(eid, char):
+    return f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
+
+
+def _render_markdown(eid, char):
+    return f"![{char}](tg://emoji?id={eid})"
+
+
 class EmojiParse:
     def __init__(self):
         self._data = _EMOJI_MAP
@@ -590,17 +598,35 @@ class EmojiParse:
 
         if name in _EMOJI_MAP:
             eid, char = _EMOJI_MAP[name]
-            result = f'<emoji id="{eid}">{char}</emoji>'
+            result = _render_html_entity(eid, char)
             _ATTR_CACHE[name] = result
             return result
 
         raise AttributeError(f"Emoji '{name}' tidak ditemukan dalam EmojiParse.")
+
+    def md(self, name):
+        entry = _EMOJI_MAP.get(name)
+        if not entry:
+            raise AttributeError(f"Emoji '{name}' tidak ditemukan dalam EmojiParse.")
+        return _render_markdown(entry[0], entry[1])
+
+    def html(self, name):
+        entry = _EMOJI_MAP.get(name)
+        if not entry:
+            raise AttributeError(f"Emoji '{name}' tidak ditemukan dalam EmojiParse.")
+        return _render_html_entity(entry[0], entry[1])
 
     def id(self, name):
         entry = _EMOJI_MAP.get(name)
         if not entry:
             raise AttributeError(f"Emoji '{name}' tidak ditemukan dalam EmojiParse.")
         return int(entry[0])
+
+    def char(self, name):
+        entry = _EMOJI_MAP.get(name)
+        if not entry:
+            raise AttributeError(f"Emoji '{name}' tidak ditemukan dalam EmojiParse.")
+        return entry[1]
 
     def all_names(self):
         return list(_EMOJI_MAP.keys())

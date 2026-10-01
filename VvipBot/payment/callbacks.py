@@ -2,6 +2,7 @@ import asyncio
 import re
 from datetime import datetime, timezone
 
+import pyrogram
 from pyrogram import filters
 
 from helpers import parse_dt
@@ -16,6 +17,13 @@ from .. import (
 )
 from .invoice import _create_all_vvip_payment_invoice, _create_payment_invoice
 from .verifier import _get_all_vvip_items
+
+
+def _build_pay_all_rows(selected_items):
+    return [
+        [item.get("name", "Paket"), f"Rp {int(item.get('price', 0)):,}"]
+        for item in selected_items
+    ]
 
 
 @command(
@@ -35,20 +43,19 @@ async def pay_all_vvip_callback(client, callback_query):
     total_amount = sum((item.get("price", 0) for item in selected_items))
     icons = await get_list_vvip_icons(client)
 
-    package_lines = []
-    for item in selected_items:
-        name = item.get("name", "Paket")
-        price = item.get("price", 0)
-        icon_html = render_list_vvip_icon_html(client, icons, name)
-        package_lines.append(f"{icon_html} **{name}** — `Rp {int(price):,}`")
-    packages_text = "\n".join(package_lines)
-
+    table = client.ns.table
+    rows = _build_pay_all_rows(selected_items)
     text = (
-        f"{render_list_vvip_icon_html(client, icons, LIST_VVIP_ICON_BUY_ALL_KEY, kind='buy_all')} "
-        f"**Ringkasan Ambil Semua VIP**\n\n"
-        f"{packages_text}\n\n"
-        f"{client.ns.emoji.money_bag} **Total:** `Rp {int(total_amount):,}` "
-        f"({len(selected_items)} paket)"
+        f"{client.ns.emoji.md('shopping_cart')} **Ringkasan Ambil Semua VIP**\n\n"
+        f"{table.md(['Paket', 'Harga'], rows, ['l', 'r'])}\n\n"
+        f"{client.ns.emoji.md('money_bag')} **Total: Rp {int(total_amount):,}** ({len(selected_items)} paket)"
+    )
+
+    caption_text = (
+        f"{render_list_vvip_icon_html(client, icons, LIST_VVIP_ICON_BUY_ALL_KEY, kind='buy_all')}"
+        f" <b>Ringkasan Ambil Semua VIP</b>\n\n"
+        f"{table.caption(['Paket', 'Harga'], rows, ['l', 'r'])}"
+        f"\n\n<b>Total:</b> <code>Rp {int(total_amount):,}</code> ({len(selected_items)} paket)"
     )
 
     layout = [
@@ -72,9 +79,12 @@ async def pay_all_vvip_callback(client, callback_query):
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
+        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
 
 
 @command(
@@ -95,7 +105,12 @@ async def pay_all_vvip_confirm_callback(client, callback_query):
         await callback_query.message.delete()
     else:
         await callback_query.edit_message_text(
-            f"{client.ns.emoji.hourglass} **Sedang Memproses...**\nMohon tunggu sebentar."
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
+                    f"Mohon tunggu sebentar."
+                )
+            )
         )
 
     total_amount = sum((item.get("price", 0) for item in selected_items))
@@ -106,6 +121,19 @@ async def pay_all_vvip_confirm_callback(client, callback_query):
         selected_items,
         total_amount,
     )
+
+
+def _build_package_detail_table(client, emoji_name, title, rows, footer):
+    table = client.ns.table
+    rich = (
+        f"{client.ns.emoji.md(emoji_name)} **{title}**\n\n"
+        f"{table.md(['Info', 'Rincian'], rows)}\n\n{footer}"
+    )
+    caption = (
+        f"{client.ns.emoji.html(emoji_name)} <b>{title}</b>\n\n"
+        f"{table.caption(['Info', 'Rincian'], rows)}\n\n{footer}"
+    )
+    return rich, caption
 
 
 @command(
@@ -148,20 +176,30 @@ async def notes_data(client, callback_query):
         price_val = item.get("price", 0)
         normal_text = item.get("normal_text", "")
         formatted_price = f"{price_val:,}"
+        default_rows = [
+            ("Nama Paket", f"`{name}`"),
+            (
+                "Deskripsi",
+                "Dapatkan akses instan ke konten premium dan eksklusif setelah pembayaran berhasil.",
+            ),
+            ("Harga Normal", f"`Rp {formatted_price}`"),
+        ]
+        default_footer = (
+            "Silakan klik tombol **Bayar** di bawah untuk melanjutkan!"
+        )
+        rich_desc, caption_desc = _build_package_detail_table(
+            client, "sparkles", "Detail Paket VVIP", default_rows, default_footer
+        )
 
         desc = (
             normal_text.replace("{name}", name).replace("{price}", formatted_price)
             if normal_text
-            else (
-                f"╭─ **{client.ns.emoji.sparkles} Detail Paket VVIP**\n"
-                f"│\n"
-                f"├─ {client.ns.emoji.open_folder} **Nama Paket:** `{name}`\n"
-                f"├─ {client.ns.emoji.pencil} **Deskripsi:** Dapatkan akses instan ke konten premium dan eksklusif setelah pembayaran berhasil.\n"
-                f"│\n"
-                f"├─ {client.ns.emoji.gem} **Harga Normal:** `Rp {formatted_price}`\n"
-                f"│\n"
-                f"╰─ Silakan klik tombol 'Bayar' di bawah untuk melanjutkan!\n"
-            )
+            else rich_desc
+        )
+        caption_text = (
+            normal_text.replace("{name}", name).replace("{price}", formatted_price)
+            if normal_text
+            else caption_desc
         )
 
         layout = [
@@ -191,16 +229,33 @@ async def notes_data(client, callback_query):
         btn = client.ns.telegram.button.build_button_grid(layout)
 
         if callback_query.message.photo:
-            return await callback_query.edit_message_caption(desc, reply_markup=btn)
-        return await callback_query.edit_message_text(desc, reply_markup=btn)
+            return await callback_query.edit_message_caption(
+                caption_text, reply_markup=btn
+            )
+        return await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=desc),
+            reply_markup=btn,
+        )
 
-    text = f"{client.ns.emoji.cross_mark} Paket VVIP tidak ditemukan."
+    table = client.ns.table
+    missing_rows = [["Status", "Paket tidak ditemukan"], ["Aksi", "Kembali ke daftar VVIP"]]
+    text = (
+        f"{client.ns.emoji.md('cross_mark')} **Paket VVIP Tidak Ditemukan**\n\n"
+        f"{table.md(['Info', 'Nilai'], missing_rows)}"
+    )
+    caption_text = (
+        f"{client.ns.emoji.html('cross_mark')} <b>Paket VVIP Tidak Ditemukan</b>\n\n"
+        f"{table.caption(['Info', 'Nilai'], missing_rows)}"
+    )
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
+        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
 
 
 @command(
@@ -243,22 +298,36 @@ async def promo_detail(client, callback_query):
         promo_price_val = item.get("promo_price", 0)
         promo_text = item.get("promo_text", "")
         formatted_promo = f"{promo_price_val:,}"
+        default_rows = [
+            ("Nama Paket", f"`{name}`"),
+            (
+                "Deskripsi",
+                "Jangan lewatkan kesempatan emas ini untuk bergabung dengan harga yang jauh lebih terjangkau!",
+            ),
+            ("Harga Promo", f"`Rp {formatted_promo}`"),
+        ]
+        default_footer = "Segera amankan slot Anda sebelum promo berakhir!"
+        rich_desc, caption_desc = _build_package_detail_table(
+            client,
+            "party_popper",
+            "Penawaran Spesial Terbatas!",
+            default_rows,
+            default_footer,
+        )
 
         desc = (
             promo_text.replace("{name}", name).replace(
                 "{promo_price}", formatted_promo
             )
             if promo_text
-            else (
-                f"╭─ **{client.ns.emoji.party_popper} Penawaran Spesial Terbatas!**\n"
-                f"│\n"
-                f"├─ {client.ns.emoji.open_folder} **Nama Paket:** `{name}`\n"
-                f"├─ {client.ns.emoji.pencil} **Deskripsi:** Jangan lewatkan kesempatan emas ini untuk bergabung dengan harga yang jauh lebih terjangkau!\n"
-                f"│\n"
-                f"├─ {client.ns.emoji.money_bag} **Harga Promo:** `Rp {formatted_promo}`\n"
-                f"│\n"
-                f"╰─ Segera amankan slot Anda sebelum promo berakhir!\n"
+            else rich_desc
+        )
+        caption_text = (
+            promo_text.replace("{name}", name).replace(
+                "{promo_price}", formatted_promo
             )
+            if promo_text
+            else caption_desc
         )
 
         layout = [
@@ -288,16 +357,27 @@ async def promo_detail(client, callback_query):
         btn = client.ns.telegram.button.build_button_grid(layout)
 
         if callback_query.message.photo:
-            return await callback_query.edit_message_caption(desc, reply_markup=btn)
-        return await callback_query.edit_message_text(desc, reply_markup=btn)
+            return await callback_query.edit_message_caption(
+                caption_text, reply_markup=btn
+            )
+        return await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=desc),
+            reply_markup=btn,
+        )
 
-    text = f"{client.ns.emoji.cross_mark} Paket promo tidak ditemukan atau tidak aktif."
+    text = f"{client.ns.emoji.md('cross_mark')} Paket promo tidak ditemukan atau tidak aktif."
+    caption_text = (
+        f"{client.ns.emoji.html('cross_mark')} Paket promo tidak ditemukan atau tidak aktif."
+    )
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
+        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
 
 
 @command(
@@ -330,18 +410,20 @@ async def apply_coupon_callback(client, callback_query):
         )
 
         if not coupon:
-            raise ValueError(f"{client.ns.emoji.cross_mark} Kode kupon tidak valid.")
+            raise ValueError(
+                f"{client.ns.emoji.md('cross_mark')} Kode kupon tidak valid."
+            )
 
         if coupon.get("uses_left", 1) <= 0:
             raise ValueError(
-                f"{client.ns.emoji.cross_mark} Kupon ini sudah habis digunakan."
+                f"{client.ns.emoji.md('cross_mark')} Kupon ini sudah habis digunakan."
             )
 
         expiry_str = coupon.get("expiry_date")
         coupon_expiry = parse_dt(expiry_str)
         if coupon_expiry and coupon_expiry < datetime.now(timezone.utc):
             raise ValueError(
-                f"{client.ns.emoji.cross_mark} Kupon ini sudah kedaluwarsa."
+                f"{client.ns.emoji.md('cross_mark')} Kupon ini sudah kedaluwarsa."
             )
 
         discount_type = coupon["discount_type"]
@@ -354,9 +436,15 @@ async def apply_coupon_callback(client, callback_query):
 
         final_amount = max(1000, int(final_amount))
 
-        await client.send_message(
+        await client.send_rich_message(
             chat_id,
-            f"{client.ns.emoji.white_check_mark} Kupon `{coupon_code}` berhasil digunakan! Harga awal `Rp {original_amount:,}` menjadi `Rp {final_amount:,}`.",
+            pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('white_check_mark')} Kupon `{coupon_code}` "
+                    f"berhasil digunakan! Harga awal `Rp {original_amount:,}` "
+                    f"menjadi `Rp {final_amount:,}`."
+                )
+            ),
         )
         await _create_payment_invoice(
             client,
@@ -368,21 +456,36 @@ async def apply_coupon_callback(client, callback_query):
         )
 
     except listen.UserCancelled:
-        await client.send_message(
+        await client.send_rich_message(
             chat_id,
-            f"{client.ns.emoji.cross_mark} **Proses Dibatalkan**",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**"
+            ),
         )
     except asyncio.TimeoutError:
-        await client.send_message(
+        await client.send_rich_message(
             chat_id,
-            f"{client.ns.emoji.alarm_clock} **Waktu Habis**\nProses telah dibatalkan otomatis.",
+            pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('alarm_clock')} **Waktu Habis**\n"
+                    f"Proses telah dibatalkan otomatis."
+                )
+            ),
         )
     except ValueError as e:
-        await client.send_message(chat_id, str(e))
-    except Exception as e:
-        await client.send_message(
+        await client.send_rich_message(
             chat_id,
-            f"{client.ns.emoji.cross_mark} **Terjadi Kesalahan**\n<pre>{e}</pre>",
+            pyrogram.types.InputRichMessage(markdown=str(e)),
+        )
+    except Exception as e:
+        await client.send_rich_message(
+            chat_id,
+            pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n\n"
+                    f"```\n{e}\n```"
+                )
+            ),
         )
 
 
@@ -400,7 +503,12 @@ async def paynow(client, callback_query):
         await callback_query.message.delete()
     else:
         await callback_query.edit_message_text(
-            f"{client.ns.emoji.hourglass} **Sedang Memproses...**\nMohon tunggu sebentar."
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
+                    f"Mohon tunggu sebentar."
+                )
+            )
         )
 
     await _create_payment_invoice(

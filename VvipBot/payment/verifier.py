@@ -39,9 +39,14 @@ async def verify_user_join(client, user, chat_id, link_msg):
         pass
 
     if not is_joined:
-        await client.send_message(
+        await client.send_rich_message(
             user.id,
-            f"{client.ns.emoji.exclamation} **Peringatan!** Link undangan Anda telah kedaluwarsa karena Anda tidak bergabung dalam 60 menit.",
+            pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('exclamation')} **Peringatan!** "
+                    f"Link undangan Anda telah kedaluwarsa karena Anda tidak bergabung dalam 60 menit."
+                )
+            ),
         )
 
 
@@ -84,14 +89,18 @@ async def verify_user_join_multiple(client, user, invite_payloads, link_msg):
     pending_lines = []
 
     for item in pending_payloads:
-        pending_lines.append(f"• {item.get('name')}: {item.get('link')}")
+        pending_lines.append(f"- {item.get('name')}: {item.get('link')}")
 
     try:
-        await client.send_message(
+        await client.send_rich_message(
             user.id,
-            f"{client.ns.emoji.exclamation} Anda belum join ke semua grup VIP dalam waktu 60 menit.\n\nSilakan join grup berikut:\n"
-            + "\n".join(pending_lines)
-            + "\n",
+            pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('exclamation')} Anda belum join ke semua grup VIP dalam waktu 60 menit.\n\n"
+                    f"Silakan join grup berikut:\n"
+                    + "\n".join(pending_lines)
+                )
+            ),
             protect_content=True,
         )
     except Exception:

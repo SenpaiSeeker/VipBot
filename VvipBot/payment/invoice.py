@@ -1,3 +1,5 @@
+import pyrogram
+
 from helpers.saweria_message_generator import generate_safe_saweria_message
 
 from .. import ctx, is_bot_owner
@@ -12,16 +14,21 @@ async def _create_payment_invoice(
         item = vvip_list[item_index]
         names = item.get("name")
     except IndexError:
-        return await client.send_message(
+        return await client.send_rich_message(
             user.id,
-            f"{client.ns.emoji.cross_mark} Paket VVIP tidak ditemukan.",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} Paket VVIP tidak ditemukan."
+            ),
         )
 
     saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
 
     if not saweria_user_id:
         if await is_bot_owner(client, user.id):
-            text = f"{client.ns.emoji.exclamation} **Layanan Pembayaran Tidak Aktif**\n\nSilakan atur API Key untuk payment gateway terlebih dahulu."
+            text = (
+                f"{client.ns.emoji.md('exclamation')} **Layanan Pembayaran Tidak Aktif**\n\n"
+                f"Silakan atur API Key untuk payment gateway terlebih dahulu."
+            )
             layout = [
                 [
                     {
@@ -33,17 +40,28 @@ async def _create_payment_invoice(
                 ]
             ]
             btn = client.ns.telegram.button.build_button_grid(layout)
-            await client.send_message(user.id, text, reply_markup=btn)
-        else:
-            await client.send_message(
+            await client.send_rich_message(
                 user.id,
-                "Maaf, layanan pembayaran saat ini tidak tersedia.",
+                pyrogram.types.InputRichMessage(markdown=text),
+                reply_markup=btn,
+            )
+        else:
+            await client.send_rich_message(
+                user.id,
+                pyrogram.types.InputRichMessage(
+                    markdown="Maaf, layanan pembayaran saat ini tidak tersedia."
+                ),
             )
         return
 
-    msg = await client.send_message(
+    msg = await client.send_rich_message(
         user.id,
-        f"{client.ns.emoji.hourglass} **Sedang Memproses...**\nMohon tunggu sebentar.",
+        pyrogram.types.InputRichMessage(
+            markdown=(
+                f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
+                f"Mohon tunggu sebentar."
+            )
+        ),
     )
 
     try:
@@ -70,16 +88,16 @@ async def _create_payment_invoice(
 
         formatted_amount = f"{int(amount_raw):,}"
 
+        detail_rows = [
+            [f"{client.ns.emoji.char('shopping_bags')} Produk", f"{names} ({tipe.title()})"],
+            [f"{client.ns.emoji.char('gem')} Jumlah", f"Rp {formatted_amount}"],
+            [f"{client.ns.emoji.char('id_card')} Order ID", f"{transaction_id}"],
+        ]
+
         caption = (
-            f"**{client.ns.emoji.white_check_mark} Pembayaran Siap Dilakukan!**\n\n"
-            f"Silakan scan QRIS di atas untuk membayar. Setelah itu, tekan tombol **Konfirmasi Pembayaran**.\n\n"
-            f"╭─ **Detail Tagihan**\n"
-            f"│\n"
-            f"├─ {client.ns.emoji.shopping_bags} **Produk:** {names} ({tipe.title()})\n"
-            f"├─ {client.ns.emoji.gem} **Jumlah:** `Rp {formatted_amount}`\n"
-            f"├─ {client.ns.emoji.id_card} **Order ID:** [{transaction_id}](https://saweria.co/qris/{transaction_id})\n"
-            f"│\n"
-            f"╰─ {client.ns.emoji.down_pointing} **Jika sudah membayar, silakan klik tombol di bawah ini.**\n"
+            f"{client.ns.emoji.html('white_check_mark')} <b>Pembayaran Siap Dilakukan!</b>\n\n"
+            f"Silakan scan QRIS di atas untuk membayar, lalu tekan tombol Konfirmasi Pembayaran.\n\n"
+            f"{client.ns.table.caption(['Item', 'Keterangan'], detail_rows)}"
         )
 
         layout = [
@@ -104,7 +122,12 @@ async def _create_payment_invoice(
 
     except Exception as e:
         await msg.edit(
-            f"{client.ns.emoji.cross_mark} **Terjadi Kesalahan**\n<pre>{e}</pre>"
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n\n"
+                    f"```\n{e}\n```"
+                )
+            )
         )
 
 
@@ -113,7 +136,10 @@ async def _create_all_vvip_payment_invoice(client, user, selected_items, total_a
 
     if not saweria_user_id:
         if await is_bot_owner(client, user.id):
-            text = f"{client.ns.emoji.exclamation} **Layanan Pembayaran Tidak Aktif**\n\nSilakan atur API Key untuk payment gateway terlebih dahulu."
+            text = (
+                f"{client.ns.emoji.md('exclamation')} **Layanan Pembayaran Tidak Aktif**\n\n"
+                f"Silakan atur API Key untuk payment gateway terlebih dahulu."
+            )
             layout = [
                 [
                     {
@@ -125,17 +151,28 @@ async def _create_all_vvip_payment_invoice(client, user, selected_items, total_a
                 ]
             ]
             btn = client.ns.telegram.button.build_button_grid(layout)
-            await client.send_message(user.id, text, reply_markup=btn)
-        else:
-            await client.send_message(
+            await client.send_rich_message(
                 user.id,
-                "Maaf, layanan pembayaran saat ini tidak tersedia.",
+                pyrogram.types.InputRichMessage(markdown=text),
+                reply_markup=btn,
+            )
+        else:
+            await client.send_rich_message(
+                user.id,
+                pyrogram.types.InputRichMessage(
+                    markdown="Maaf, layanan pembayaran saat ini tidak tersedia."
+                ),
             )
         return
 
-    msg = await client.send_message(
+    msg = await client.send_rich_message(
         user.id,
-        f"{client.ns.emoji.hourglass} **Sedang Memproses...**\nMohon tunggu sebentar.",
+        pyrogram.types.InputRichMessage(
+            markdown=(
+                f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
+                f"Mohon tunggu sebentar."
+            )
+        ),
     )
 
     try:
@@ -164,16 +201,16 @@ async def _create_all_vvip_payment_invoice(client, user, selected_items, total_a
         formatted_amount = f"{int(amount_raw):,}"
         total_len = len(selected_items)
 
+        detail_rows = [
+            [f"{client.ns.emoji.char('shopping_bags')} Produk", f"Semua VIP ({total_len} paket)"],
+            [f"{client.ns.emoji.char('gem')} Jumlah", f"Rp {formatted_amount}"],
+            [f"{client.ns.emoji.char('id_card')} Order ID", f"{transaction_id}"],
+        ]
+
         caption = (
-            f"**{client.ns.emoji.white_check_mark} Pembayaran Siap Dilakukan!**\n\n"
-            f"Silakan scan QRIS di atas untuk membayar. Setelah itu, tekan tombol **Konfirmasi Pembayaran**.\n\n"
-            f"╭─ **Detail Tagihan**\n"
-            f"│\n"
-            f"├─ {client.ns.emoji.shopping_bags} **Produk:** Semua VIP ({total_len} paket)\n"
-            f"├─ {client.ns.emoji.gem} **Jumlah:** `Rp {formatted_amount}`\n"
-            f"├─ {client.ns.emoji.id_card} **Order ID:** [{transaction_id}](https://saweria.co/qris/{transaction_id})\n"
-            f"│\n"
-            f"╰─ {client.ns.emoji.down_pointing} **Jika sudah membayar, silakan klik tombol di bawah ini.**\n"
+            f"{client.ns.emoji.html('white_check_mark')} <b>Pembayaran Siap Dilakukan!</b>\n\n"
+            f"Silakan scan QRIS di atas untuk membayar, lalu tekan tombol Konfirmasi Pembayaran.\n\n"
+            f"{client.ns.table.caption(['Item', 'Keterangan'], detail_rows)}"
         )
 
         layout = [
@@ -198,5 +235,10 @@ async def _create_all_vvip_payment_invoice(client, user, selected_items, total_a
 
     except Exception as e:
         await msg.edit(
-            f"{client.ns.emoji.cross_mark} **Terjadi Kesalahan**\n<pre>{e}</pre>"
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n\n"
+                    f"```\n{e}\n```"
+                )
+            )
         )

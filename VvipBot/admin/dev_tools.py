@@ -164,7 +164,7 @@ def format_output(
     stderr_val: str,
     exc_str: Optional[str],
     exec_time: float,
-) -> Tuple[str, str]:
+) -> Tuple[str, str, str]:
     final_output = ""
     status_header = "Success"
     if exc_str:
@@ -187,27 +187,38 @@ def format_output(
 
     out_len_limit = 777
     short_output = (
+        final_output[:out_len_limit] + "..."
+        if len(final_output) > out_len_limit
+        else final_output
+    )
+    escaped_short_output = (
         escaped_output[:out_len_limit] + "..."
         if len(escaped_output) > out_len_limit
         else escaped_output
     )
 
-    display_text = f"<b>{client.ns.emoji.zap} Input:</b>\n"
-    display_text += (
+    display_text = f"**{client.ns.emoji.md('zap')} Input:**\n"
+    display_text += f"```python\n{code}\n```\n\n"
+    display_text += f"**{client.ns.emoji.md('laptop')} Output ({status_header}):**\n"
+    display_text += f"```\n{short_output}\n```\n\n"
+    display_text += f"**{client.ns.emoji.md('hourglass')} Time:** `{exec_time:.4f}s`"
+
+    caption_text = f"{client.ns.emoji.zap} <b>Input:</b>\n"
+    caption_text += (
         f"<pre><code class='language-python'>{escaped_code}</code></pre>\n\n"
     )
-    display_text += f"<b>{client.ns.emoji.laptop} Output ({status_header}):</b>\n"
-    display_text += f"<pre><code>{short_output}</code></pre>\n\n"
-    display_text += (
-        f"<b>{client.ns.emoji.hourglass} Time: </b><code>{exec_time:.4f}s</code>"
+    caption_text += f"{client.ns.emoji.laptop} <b>Output ({status_header}):</b>\n"
+    caption_text += f"<pre><code>{escaped_short_output}</code></pre>\n\n"
+    caption_text += (
+        f"{client.ns.emoji.hourglass} <b>Time: </b><code>{exec_time:.4f}s</code>"
     )
 
-    return display_text, final_output
+    return display_text, caption_text, final_output
 
 
 async def execute_and_format(
     client: pyrogram.Client, message: Message, code: str, **kwargs
-) -> Tuple[str, Any, Optional[io.BytesIO]]:
+) -> Tuple[str, str, Any, Optional[io.BytesIO]]:
     stdout_capture = io.StringIO()
     stderr_capture = io.StringIO()
     result = None
@@ -245,7 +256,7 @@ async def execute_and_format(
         }
     )
 
-    display_text, raw_output = format_output(
+    display_text, caption_text, raw_output = format_output(
         client,
         code,
         result,
@@ -276,47 +287,57 @@ async def execute_and_format(
     ]
     keyboard = client.ns.telegram.button.build_button_grid(layout)
 
-    return display_text, keyboard, document
+    return display_text, caption_text, keyboard, document
 
 
 @command(lambda ctx: filters.command("eval") & filters.user(ctx.owner_id))
 async def eval_bot_handler(client: pyrogram.Client, message: Message):
     code = get_eval_payload(message)
     if not code:
-        return await message.reply(
-            f"{client.ns.emoji.cross_mark} Berikan kode untuk dievaluasi atau balas ke sebuah pesan."
+        return await message.reply_rich(
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} Berikan kode untuk dievaluasi atau balas ke sebuah pesan."
+            )
         )
 
-    status_msg = await message.reply(
-        f"{client.ns.emoji.repeat} <code>Memproses kode...</code>"
+    status_msg = await message.reply_rich(
+        pyrogram.types.InputRichMessage(
+            markdown=f"{client.ns.emoji.md('repeat')} `Memproses kode...`"
+        )
     )
     try:
-        text, keyboard, document = await execute_and_format(
+        text, caption_text, keyboard, document = await execute_and_format(
             client, message, code, update=message
         )
         if document:
             await status_msg.delete()
             await message.reply_document(
                 document=document,
-                caption=text,
+                caption=caption_text,
                 reply_markup=keyboard,
                 reply_parameters=ReplyParameters(message_id=message.id),
             )
         else:
             await status_msg.edit_text(
-                text,
+                rich_message=pyrogram.types.InputRichMessage(markdown=text),
                 reply_markup=keyboard,
                 link_preview_options=LinkPreviewOptions(is_disabled=True),
             )
     except Exception:
-        error_text = f"<b>Kesalahan Handler:</b>\n<code>{html.escape(str(traceback.format_exc()))}</code>"
+        error_text = f"**Kesalahan Handler:**\n\n```\n{traceback.format_exc()}\n```"
         if status_msg:
             try:
-                await status_msg.edit_text(error_text)
+                await status_msg.edit_text(
+                    rich_message=pyrogram.types.InputRichMessage(markdown=error_text)
+                )
             except Exception:
-                await message.reply(error_text)
+                await message.reply_rich(
+                    pyrogram.types.InputRichMessage(markdown=error_text)
+                )
         else:
-            await message.reply(error_text)
+            await message.reply_rich(
+                pyrogram.types.InputRichMessage(markdown=error_text)
+            )
 
 
 @command(
@@ -351,7 +372,7 @@ async def eval_callback_handler(
 
             await query.answer("Menjalankan kembali kode...")
 
-            text, keyboard, document = await execute_and_format(
+            text, caption_text, keyboard, document = await execute_and_format(
                 client,
                 trigger_message,
                 code,
@@ -367,7 +388,7 @@ async def eval_callback_handler(
                 if is_current_msg_media:
                     await query.edit_message_media(
                         media=pyrogram.types.InputMediaDocument(
-                            media=document, caption=text
+                            media=document, caption=caption_text
                         ),
                         reply_markup=keyboard,
                     )
@@ -376,23 +397,22 @@ async def eval_callback_handler(
                     await client.send_document(
                         chat_id=chat_id,
                         document=document,
-                        caption=text,
+                        caption=caption_text,
                         reply_markup=keyboard,
                         reply_parameters=ReplyParameters(message_id=message_id),
                     )
             else:
                 if is_current_msg_media:
                     await query.message.delete()
-                    await client.send_message(
+                    await client.send_rich_message(
                         chat_id=chat_id,
-                        text=text,
+                        rich_message=pyrogram.types.InputRichMessage(markdown=text),
                         reply_markup=keyboard,
-                        link_preview_options=LinkPreviewOptions(is_disabled=True),
                         reply_parameters=ReplyParameters(message_id=message_id),
                     )
                 else:
                     await query.edit_message_text(
-                        text=text,
+                        rich_message=pyrogram.types.InputRichMessage(markdown=text),
                         reply_markup=keyboard,
                         link_preview_options=LinkPreviewOptions(is_disabled=True),
                     )
@@ -403,16 +423,22 @@ async def eval_callback_handler(
 @command(lambda ctx: filters.command("restore") & filters.user(ctx.owner_id))
 async def restore_database_handler(client, message):
     if not message.reply_to_message or not message.reply_to_message.document:
-        return await message.reply_text(
-            f"{client.ns.emoji.exclamation} **Cara Penggunaan Salah:**\nBalas (reply) ke file backup `.zip` yang dikirim oleh bot dengan perintah ini."
+        return await message.reply_rich(
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('exclamation')} **Cara Penggunaan Salah:**\nBalas (reply) ke file backup `.zip` yang dikirim oleh bot dengan perintah ini."
+            )
         )
     doc = message.reply_to_message.document
     if not doc.file_name.endswith(".zip"):
-        return await message.reply_text(
-            f"{client.ns.emoji.cross_mark} **Format File Salah:**\nHanya file backup dengan format `.zip` yang bisa dipulihkan."
+        return await message.reply_rich(
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Format File Salah:**\nHanya file backup dengan format `.zip` yang bisa dipulihkan."
+            )
         )
-    status_msg = await message.reply_text(
-        f"{client.ns.emoji.hourglass} `Mendownload & mengekstrak file backup...`"
+    status_msg = await message.reply_rich(
+        pyrogram.types.InputRichMessage(
+            markdown=f"{client.ns.emoji.md('hourglass')} `Mendownload & mengekstrak file backup...`"
+        )
     )
     downloaded_zip_path = None
     try:
@@ -449,16 +475,20 @@ async def restore_database_handler(client, message):
         restored_files = await asyncio.to_thread(_do_restore)
         restored_names = ", ".join(restored_files)
         await status_msg.edit_text(
-            f"{client.ns.emoji.white_check_mark} **Pemulihan Berhasil!**\n"
-            f"Database `{restored_names}` telah dipulihkan.\n\n"
-            f"{client.ns.emoji.exclamation} **PENTING:** Mohon **restart** bot agar dapat menggunakan database baru."
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('white_check_mark')} **Pemulihan Berhasil!**\n"
+                f"Database `{restored_names}` telah dipulihkan.\n\n"
+                f"{client.ns.emoji.md('exclamation')} **PENTING:** Mohon **restart** bot agar dapat menggunakan database baru."
+            )
         )
         ctx.log.print(
             f"{ctx.log.GREEN}File-file berikut dipulihkan: {', '.join(restored_files)} oleh admin."
         )
     except Exception as e:
         await status_msg.edit_text(
-            f"{client.ns.emoji.cross_mark} **Pemulihan Gagal!**\n\n**Error:** `{e}`"
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Pemulihan Gagal!**\n\n**Error:** `{e}`"
+            )
         )
         ctx.log.print(f"{ctx.log.RED}Restore failed: {e}")
     finally:
@@ -470,8 +500,10 @@ async def restore_database_handler(client, message):
 async def tfdatabase_command_handler(client, message):
     args = message.command
     if len(args) != 3:
-        return await message.reply_text(
-            "Format salah. Gunakan: `/tfdatabase <source_id>:<source_db> <target_id>:<target_db>`\nContoh: `/tfdatabase 123455:databaseV1 666999:databaseV2`"
+        return await message.reply_rich(
+            pyrogram.types.InputRichMessage(
+                markdown="Format salah. Gunakan: `/tfdatabase <source_id>:<source_db> <target_id>:<target_db>`\nContoh: `/tfdatabase 123455:databaseV1 666999:databaseV2`"
+            )
         )
     source_part = args[1]
     target_part = args[2]
@@ -481,11 +513,15 @@ async def tfdatabase_command_handler(client, message):
         source_id = int(source_id_str)
         target_id = int(target_id_str)
     except Exception:
-        return await message.reply_text(
-            "Format salah. Pastikan menggunakan format `ID:NAMA_DB`. Contoh: `/tfdatabase 123455:databaseV1 666999:databaseV2`"
+        return await message.reply_rich(
+            pyrogram.types.InputRichMessage(
+                markdown="Format salah. Pastikan menggunakan format `ID:NAMA_DB`. Contoh: `/tfdatabase 123455:databaseV1 666999:databaseV2`"
+            )
         )
-    msg = await message.reply_text(
-        f"{client.ns.emoji.repeat} Memproses transfer database..."
+    msg = await message.reply_rich(
+        pyrogram.types.InputRichMessage(
+            markdown=f"{client.ns.emoji.md('repeat')} Memproses transfer database..."
+        )
     )
     try:
         from helpers.database import DataBase
@@ -519,7 +555,9 @@ async def tfdatabase_command_handler(client, message):
             if target_db != ctx.db:
                 await target_db.close_async()
             return await msg.edit_text(
-                f"{client.ns.emoji.cross_mark} Data sumber tidak ditemukan pada database."
+                rich_message=pyrogram.types.InputRichMessage(
+                    markdown=f"{client.ns.emoji.md('cross_mark')} Data sumber tidak ditemukan pada database."
+                )
             )
         await target_db._set_user_vars(target_id, source_data)
         if source_db != ctx.db:
@@ -527,14 +565,18 @@ async def tfdatabase_command_handler(client, message):
         if target_db != ctx.db:
             await target_db.close_async()
         await msg.edit_text(
-            f"{client.ns.emoji.white_check_mark} **Transfer Database Berhasil!**\n\n"
-            f"**Sumber:** `{source_id}` (`{source_db_name}`)\n"
-            f"**Tujuan:** `{target_id}` (`{target_db_name}`)\n\n"
-            f"Semua data berhasil disalin secara lengkap."
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('white_check_mark')} **Transfer Database Berhasil!**\n\n"
+                f"**Sumber:** `{source_id}` (`{source_db_name}`)\n"
+                f"**Tujuan:** `{target_id}` (`{target_db_name}`)\n\n"
+                f"Semua data berhasil disalin secara lengkap."
+            )
         )
     except Exception as e:
         await msg.edit_text(
-            f"{client.ns.emoji.cross_mark} Terjadi kesalahan saat mentransfer database:\n<pre>{e}</pre>"
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} Terjadi kesalahan saat mentransfer database:\n`{e}`"
+            )
         )
 
 
@@ -542,16 +584,24 @@ async def tfdatabase_command_handler(client, message):
 async def tfbot_command_handler(client, message):
     args = message.command
     if len(args) != 4:
-        return await message.reply_text(
-            "Format salah. Gunakan: `/tfbot <id_bot> <source_db> <target_db>`\nContoh: `/tfbot 123456789 vvip_database vvip_databaseV2`"
+        return await message.reply_rich(
+            pyrogram.types.InputRichMessage(
+                markdown="Format salah. Gunakan: `/tfbot <id_bot> <source_db> <target_db>`\nContoh: `/tfbot 123456789 vvip_database vvip_databaseV2`"
+            )
         )
     try:
         bot_id = int(args[1])
     except ValueError:
-        return await message.reply_text("ID Bot harus berupa angka.")
+        return await message.reply_rich(
+            pyrogram.types.InputRichMessage(markdown="ID Bot harus berupa angka.")
+        )
     source_db_name = args[2]
     target_db_name = args[3]
-    msg = await message.reply_text(f"{client.ns.emoji.repeat} Memproses migrasi bot...")
+    msg = await message.reply_rich(
+        pyrogram.types.InputRichMessage(
+            markdown=f"{client.ns.emoji.md('repeat')} Memproses migrasi bot..."
+        )
+    )
     try:
         from helpers.database import DataBase
 
@@ -587,7 +637,9 @@ async def tfbot_command_handler(client, message):
             if target_db != ctx.db:
                 await target_db.close_async()
             return await msg.edit_text(
-                f"{client.ns.emoji.cross_mark} Bot dengan ID `{bot_id}` tidak ditemukan di `{source_db_name}`."
+                rich_message=pyrogram.types.InputRichMessage(
+                    markdown=f"{client.ns.emoji.md('cross_mark')} Bot dengan ID `{bot_id}` tidak ditemukan di `{source_db_name}`."
+                )
             )
         source_vars = await source_db._get_user_vars(bot_id)
         api_id = bot_data.get("api_id")
@@ -611,12 +663,14 @@ async def tfbot_command_handler(client, message):
         if target_db != ctx.db:
             await target_db.close_async()
         await msg.edit_text(
-            f"{client.ns.emoji.white_check_mark} **Migrasi Bot Berhasil!**\n\n"
-            f"**Bot ID:** `{bot_id}`\n"
-            f"**Dari:** `{source_db_name}`\n"
-            f"**Ke:** `{target_db_name}`\n\n"
-            f"Bot beserta seluruh datanya telah dipindahkan dan dihapus dari database lama.\n\n"
-            f"Jangan lupa restart bot tujuan agar bot ini segera menyala."
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('white_check_mark')} **Migrasi Bot Berhasil!**\n\n"
+                f"**Bot ID:** `{bot_id}`\n"
+                f"**Dari:** `{source_db_name}`\n"
+                f"**Ke:** `{target_db_name}`\n\n"
+                f"Bot beserta seluruh datanya telah dipindahkan dan dihapus dari database lama.\n\n"
+                f"Jangan lupa restart bot tujuan agar bot ini segera menyala."
+            )
         )
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED}Error saat tfbot: {e}")

@@ -1,3 +1,5 @@
+import pyrogram
+
 from helpers import parse_dt
 
 from .. import *
@@ -40,7 +42,9 @@ async def allbots_duration_callback(client, callback_query):
         ],
     ]
     await callback_query.edit_message_text(
-        f"**{client.ns.emoji.calendar} Kelola Masa Aktif untuk Bot `{bot_id}`**",
+        rich_message=pyrogram.types.InputRichMessage(
+            markdown=f"**{client.ns.emoji.md('calendar')} Kelola Masa Aktif untuk Bot `{bot_id}`**"
+        ),
         reply_markup=client.ns.telegram.button.build_button_grid(layout),
     )
 
@@ -74,7 +78,9 @@ async def allbots_extend_callback(client, callback_query):
         ],
     ]
     await callback_query.edit_message_text(
-        f"Pilih durasi untuk ditambahkan ke Bot `{bot_id}`:",
+        rich_message=pyrogram.types.InputRichMessage(
+            markdown=f"Pilih durasi untuk ditambahkan ke Bot `{bot_id}`:"
+        ),
         reply_markup=client.ns.telegram.button.build_button_grid(layout),
     )
 
@@ -134,7 +140,9 @@ async def allbots_reduce_callback(client, callback_query):
         ],
     ]
     await callback_query.edit_message_text(
-        f"Pilih durasi untuk dikurangi dari Bot `{bot_id}`:",
+        rich_message=pyrogram.types.InputRichMessage(
+            markdown=f"Pilih durasi untuk dikurangi dari Bot `{bot_id}`:"
+        ),
         reply_markup=client.ns.telegram.button.build_button_grid(layout),
     )
 

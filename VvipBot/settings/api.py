@@ -1,5 +1,6 @@
 import asyncio
 
+import pyrogram
 from pyrogram import filters
 
 from services import initialize_bot_services
@@ -17,9 +18,9 @@ async def api_settings_callback(client, callback_query):
 
     saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
     saweria_status = (
-        f"{client.ns.emoji.white_check_mark} Ativ"
+        f"{client.ns.emoji.md('white_check_mark')} Ativ"
         if saweria_user_id
-        else f"{client.ns.emoji.cross_mark} Belum Diatur"
+        else f"{client.ns.emoji.md('cross_mark')} Belum Diatur"
     )
 
     layout = [
@@ -49,13 +50,33 @@ async def api_settings_callback(client, callback_query):
         ],
     ]
 
-    text = f"**{client.ns.emoji.key} Pengelola Kunci API untuk {client.me.mention}**\n\nAtur koneksi pembayaran Saweria untuk bot Anda.\n\n**Status Layanan:**\n- `Gateway Pembayaran (Saweria)`: **{saweria_status}**\n\nPilih tindakan:"
+    status_rows = [
+        [
+            "`Gateway Pembayaran (Saweria)`",
+            f"**{saweria_status}**" if saweria_user_id else "Belum Diatur",
+        ],
+    ]
+
+    table = client.ns.table
+    text = (
+        f"{client.ns.emoji.md('key')} **Pengelola Kunci API untuk {client.me.mention}**\n\n"
+        f"{table.md(['Layanan', 'Status'], status_rows)}\n\n"
+        f"Pilih tindakan:"
+    )
+    caption_text = (
+        f"{client.ns.emoji.html('key')} <b>Pengelola Kunci API untuk {client.me.mention}</b>\n\n"
+        f"{table.caption(['Layanan', 'Status'], status_rows)}\n\n"
+        f"Pilih tindakan:"
+    )
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
+        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
 
 
 @command(
@@ -96,9 +117,11 @@ async def set_api_key_prompt(client, callback_query):
             if username_msg.text and username_msg.text.lower() == "/batal":
                 raise listen.UserCancelled
 
-            processing_msg = await client.send_message(
+            processing_msg = await client.send_rich_message(
                 chat_id,
-                f"{client.ns.emoji.hourglass} **Sedang Memproses...**\nMohon tunggu sebentar.",
+                pyrogram.types.InputRichMessage(
+                    markdown=f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\nMohon tunggu sebentar."
+                ),
             )
 
             try:
@@ -118,22 +141,34 @@ async def set_api_key_prompt(client, callback_query):
 
                 await processing_msg.delete()
 
-                await client.send_message(
+                await client.send_rich_message(
                     chat_id,
-                    f"{client.ns.emoji.white_check_mark} **Sukses!**\nKunci Saweria berhasil disimpan.",
+                    pyrogram.types.InputRichMessage(
+                        markdown=f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\nKunci Saweria berhasil disimpan."
+                    ),
                     reply_markup=back_btn,
                 )
 
             except Exception as e:
                 await processing_msg.edit_text(
-                    f"{client.ns.emoji.cross_mark} **Gagal!**\n`Error: {e}`",
+                    rich_message=pyrogram.types.InputRichMessage(
+                        markdown=(
+                            f"{client.ns.emoji.md('cross_mark')} **Gagal!**\n\n"
+                            f"{client.ns.table.md(['Info', 'Isi'], [['Status', 'Gagal menyimpan API'], ['Error', f'`{e}`']])}"
+                        )
+                    ),
                     reply_markup=back_btn,
                 )
                 return
         else:
-            await client.send_message(
+            await client.send_rich_message(
                 chat_id,
-                "Fitur tidak didukung.",
+                pyrogram.types.InputRichMessage(
+                    markdown=(
+                        f"{client.ns.emoji.md('cross_mark')} **Fitur Tidak Didukung**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Fitur tidak didukung'], ['Aksi', 'Kembali ke pengaturan']])}"
+                    )
+                ),
                 reply_markup=back_btn,
             )
             return
@@ -141,9 +176,11 @@ async def set_api_key_prompt(client, callback_query):
         await initialize_bot_services(client, ctx.db)
 
     except (listen.UserCancelled, asyncio.TimeoutError):
-        await client.send_message(
+        await client.send_rich_message(
             chat_id,
-            f"{client.ns.emoji.cross_mark} **Proses Dibatalkan**",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**"
+            ),
             reply_markup=back_btn,
         )
 
@@ -156,7 +193,20 @@ async def confirm_delete_api_keys(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
-    text = f"**{client.ns.emoji.exclamation} Konfirmasi**\n\nAnda yakin ingin menghapus **SEMUA** kunci API?"
+    confirm_rows = [
+        ["Tindakan", "Hapus SEMUA kunci API"],
+        ["Target", "Saweria Gateway"],
+    ]
+
+    table = client.ns.table
+    text = (
+        f"{client.ns.emoji.md('exclamation')} **Konfirmasi**\n\n"
+        f"{table.md(['Detail', 'Keterangan'], confirm_rows)}"
+    )
+    caption_text = (
+        f"{client.ns.emoji.html('exclamation')} <b>Konfirmasi</b>\n\n"
+        f"{table.caption(['Detail', 'Keterangan'], confirm_rows)}"
+    )
     layout = [
         [
             {
@@ -176,9 +226,12 @@ async def confirm_delete_api_keys(client, callback_query):
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
+        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
 
 
 @command(

@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime, timedelta, timezone
 
+import pyrogram
 from pyrogram import filters
 
 from helpers import parse_dt
@@ -16,7 +17,20 @@ async def manage_coupons_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
-    text = f"**{client.ns.emoji.ticket_admit} Manajemen Kupon**\nKelola kode diskon untuk VVIP Anda."
+    menu_rows = [
+        ["Buat Kupon Baru", "Tambah kode diskon"],
+        ["Lihat Kupon", "Daftar kupon aktif"],
+    ]
+
+    table = client.ns.table
+    text = (
+        f"{client.ns.emoji.md('ticket_admit')} **Manajemen Kupon**\n\n"
+        f"{table.md(['Menu', 'Fungsi'], menu_rows)}"
+    )
+    caption_text = (
+        f"{client.ns.emoji.html('ticket_admit')} <b>Manajemen Kupon</b>\n\n"
+        f"{table.caption(['Menu', 'Fungsi'], menu_rows)}"
+    )
     layout = [
         [
             {
@@ -46,9 +60,12 @@ async def manage_coupons_callback(client, callback_query):
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
+        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
 
 
 @command(
@@ -110,15 +127,19 @@ async def add_coupon_callback(client, callback_query):
 
         await ctx.db.setListVars(client.me.id, "coupons", coupon_data)
 
-        await client.send_message(
+        await client.send_rich_message(
             chat_id,
-            f"{client.ns.emoji.white_check_mark} Kupon `{code}` berhasil dibuat.",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('white_check_mark')} Kupon `{code}` berhasil dibuat."
+            ),
         )
 
     except (listen.UserCancelled, asyncio.TimeoutError, ValueError):
-        await client.send_message(
+        await client.send_rich_message(
             chat_id,
-            f"{client.ns.emoji.cross_mark} **Proses Dibatalkan**",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**"
+            ),
         )
 
 
@@ -143,9 +164,24 @@ async def list_coupons_callback(client, callback_query):
     ]
 
     if not coupons:
-        text = "Tidak ada kupon yang dibuat."
+        empty_rows = [["Jumlah Kupon", "`0`"], ["Status", "Belum ada kupon"]]
+        table = client.ns.table
+        text = (
+            f"{client.ns.emoji.md('ticket_admit')} **Daftar Kupon**\n\n"
+            f"{table.md(['Info', 'Nilai'], empty_rows)}"
+        )
+        caption_text = (
+            f"{client.ns.emoji.html('ticket_admit')} <b>Daftar Kupon</b>\n\n"
+            f"{table.caption(['Info', 'Nilai'], empty_rows)}"
+        )
         btn = client.ns.telegram.button.build_button_grid([back_row])
-        await callback_query.edit_message_caption(text, reply_markup=btn)
+        if callback_query.message.photo:
+            await callback_query.edit_message_caption(caption_text, reply_markup=btn)
+        else:
+            await callback_query.edit_message_text(
+                rich_message=pyrogram.types.InputRichMessage(markdown=text),
+                reply_markup=btn,
+            )
         return
 
     total_pages = len(coupons)
@@ -157,13 +193,22 @@ async def list_coupons_callback(client, callback_query):
     if coupon_expiry:
         expiry_text = coupon_expiry.strftime("%d %b %Y")
 
+    detail_rows = [
+        ["Kode", f"`{coupon['code']}`"],
+        ["Tipe", f"`{coupon['discount_type']}`"],
+        ["Nilai", f"`{coupon['discount_value']}`"],
+        ["Sisa Penggunaan", f"`{coupon['uses_left']}`"],
+        ["Berlaku hingga", f"`{expiry_text}`"],
+    ]
+
+    table = client.ns.table
     text = (
-        f"**{client.ns.emoji.pencil} Detail Kupon ({page + 1}/{total_pages})**\n"
-        f"- Kode: `{coupon['code']}`\n"
-        f"- Tipe: `{coupon['discount_type']}`\n"
-        f"- Nilai: `{coupon['discount_value']}`\n"
-        f"- Sisa Penggunaan: `{coupon['uses_left']}`\n"
-        f"- Berlaku hingga: `{expiry_text}`"
+        f"{client.ns.emoji.md('pencil')} **Detail Kupon ({page + 1}/{total_pages})**\n\n"
+        f"{table.md(['Info', 'Isi'], detail_rows)}"
+    )
+    caption_text = (
+        f"{client.ns.emoji.html('pencil')} <b>Detail Kupon ({page + 1}/{total_pages})</b>\n\n"
+        f"{table.caption(['Info', 'Isi'], detail_rows)}"
     )
 
     layout = []
@@ -206,7 +251,14 @@ async def list_coupons_callback(client, callback_query):
     layout.append(back_row)
 
     btn = client.ns.telegram.button.build_button_grid(layout)
-    await callback_query.edit_message_caption(text, reply_markup=btn)
+
+    if callback_query.message.photo:
+        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
+    else:
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
 
 
 @command(

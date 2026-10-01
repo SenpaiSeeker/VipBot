@@ -45,7 +45,7 @@ async def start_creation_process_callback(client, callback_query):
                 timeout=600,
             )
 
-        api_id_prompt = f"**{client.ns.emoji.lock} 1/3: Masukkan API ID Anda.**\nDapatkan dari my.telegram.org."
+        api_id_prompt = f"**{client.ns.emoji.md('lock')} 1/3: Masukkan API ID Anda.**\nDapatkan dari my.telegram.org."
         api_id_msg = await ask(api_id_prompt)
 
         if api_id_msg.text.lower() == "/batal":
@@ -53,7 +53,7 @@ async def start_creation_process_callback(client, callback_query):
 
         api_id = api_id_msg.text
 
-        api_hash_prompt = f"**{client.ns.emoji.lock} 2/3: Masukkan API Hash Anda.**\nDapatkan dari my.telegram.org."
+        api_hash_prompt = f"**{client.ns.emoji.md('lock')} 2/3: Masukkan API Hash Anda.**\nDapatkan dari my.telegram.org."
         api_hash_msg = await ask(api_hash_prompt)
 
         if api_hash_msg.text.lower() == "/batal":
@@ -61,7 +61,7 @@ async def start_creation_process_callback(client, callback_query):
 
         api_hash = api_hash_msg.text
 
-        token_prompt = f"**{client.ns.emoji.robot} 3/3: Masukkan Bot Token Anda.**\nDapatkan dari @BotFather."
+        token_prompt = f"**{client.ns.emoji.md('robot')} 3/3: Masukkan Bot Token Anda.**\nDapatkan dari @BotFather."
         token_msg = await ask(token_prompt)
 
         if token_msg.text.lower() == "/batal":
@@ -69,9 +69,11 @@ async def start_creation_process_callback(client, callback_query):
 
         token = token_msg.text
 
-        msg = await client.send_message(
+        msg = await client.send_rich_message(
             user_id,
-            f"{client.ns.emoji.mag} `Memverifikasi data & token...`",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('mag')} `Memverifikasi data & token...`"
+            ),
         )
 
         new_bot_name = await client.ns.telegram.arg.getNamebot(token)
@@ -80,8 +82,12 @@ async def start_creation_process_callback(client, callback_query):
             raise ValueError("Token bot yang Anda masukkan tidak valid.")
 
         await msg.edit(
-            f"{client.ns.emoji.white_check_mark} Bot '{new_bot_name.first_name}' valid dan sedang disimpan. "
-            f"`{client.ns.emoji.rocket} Memulai bot...`"
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('white_check_mark')} Bot *'{new_bot_name.first_name}'* valid dan sedang disimpan.\n"
+                    f"{client.ns.emoji.md('rocket')} `Memulai bot...`"
+                )
+            )
         )
 
         new_bot_id = int(token.split(":", 1)[0])
@@ -105,28 +111,43 @@ async def start_creation_process_callback(client, callback_query):
         await ctx.db.setVars(
             new_bot_id,
             "bot_expiration_date",
-            expiry_date_str,
+            expiry_date.isoformat(),
         )
 
         await ctx.db.setVars(new_bot_id, "owner_id", user_id)
         await ctx.db.removeVars(user_id, "user_expiry_date")
 
         await msg.edit(
-            f"{client.ns.emoji.party_popper} **Selamat!** Bot **{new_bot_name.first_name}** berhasil dibuat dan aktif."
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('party_popper')} **Selamat!** Bot **{new_bot_name.first_name}** berhasil dibuat dan aktif.\n\n"
+                    f"| Info | Detail |\n"
+                    f"| :--- | :---: |\n"
+                    f"| Nama Bot | {new_bot_name.first_name} |\n"
+                    f"| ID | `{new_bot_id}` |\n"
+                    f"| Masa Aktif | s/d `{expiry_date.strftime('%d-%m-%Y')}` |"
+                )
+            )
         )
 
     except listen.UserCancelled:
-        await client.send_message(
+        await client.send_rich_message(
             user_id,
-            f"{client.ns.emoji.cross_mark} **Proses Dibatalkan**",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**"
+            ),
         )
     except asyncio.TimeoutError:
-        await client.send_message(
+        await client.send_rich_message(
             user_id,
-            f"{client.ns.emoji.alarm_clock} **Waktu Habis**\nProses telah dibatalkan otomatis.",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('alarm_clock')} **Waktu Habis**\nProses telah dibatalkan otomatis."
+            ),
         )
     except Exception as e:
-        await client.send_message(
+        await client.send_rich_message(
             user_id,
-            f"{client.ns.emoji.cross_mark} **Error Pembuatan Bot:** `{e}`",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Error Pembuatan Bot:** `{e}`"
+            ),
         )

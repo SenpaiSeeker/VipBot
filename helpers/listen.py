@@ -74,7 +74,11 @@ class Client:
 
     @patchable
     async def ask(self, chat_id, text, timeout=None, **kwargs):
-        request = await self.send_message(chat_id, text, **kwargs)
+        request = await self.send_rich_message(
+            chat_id,
+            pyrogram.types.InputRichMessage(markdown=text),
+            **kwargs,
+        )
         response = await self.listen(chat_id, timeout)
         response.request = request
         return response
@@ -108,7 +112,11 @@ class Chat:
 
     @patchable
     async def ask(self, text, timeout=None, **kwargs):
-        request = await self._client.send_message(self.id, text, **kwargs)
+        request = await self._client.send_rich_message(
+            self.id,
+            pyrogram.types.InputRichMessage(markdown=text),
+            **kwargs,
+        )
         response = await self.listen(timeout=timeout)
         response.request = request
         return response
@@ -126,7 +134,11 @@ class User:
 
     @patchable
     async def ask(self, text, timeout=None, **kwargs):
-        request = await self._client.send_message(self.id, text, **kwargs)
+        request = await self._client.send_rich_message(
+            self.id,
+            pyrogram.types.InputRichMessage(markdown=text),
+            **kwargs,
+        )
         response = await self.listen(timeout=timeout)
         response.request = request
         return response

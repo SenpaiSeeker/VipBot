@@ -1,5 +1,7 @@
 import math
 
+import pyrogram
+
 from helpers import parse_dt
 
 from .. import *
@@ -160,19 +162,32 @@ async def send_allbots_list(
     cached = _page_cache[page]
 
     if cached.get("empty"):
-        text = "Belum ada bot yang dibuat oleh pengguna manapun."
+        table = client.ns.table
+        empty_rows = [
+            ["Jumlah Bot", "`0`"],
+            ["Status", "Belum ada bot dari pengguna lain"],
+        ]
+        text = (
+            f"{client.ns.emoji.md('robot')} **Daftar Bot Pengguna**\n\n"
+            f"{table.md(['Info', 'Nilai'], empty_rows)}"
+        )
         if isinstance(message_or_query, pyrogram.types.Message):
-            return await message_or_query.reply_text(text)
-        return await message_or_query.answer(text, show_alert=True)
+            return await message_or_query.reply_rich(
+                pyrogram.types.InputRichMessage(markdown=text)
+            )
+        return await message_or_query.answer(
+            "Belum ada bot yang dibuat oleh pengguna manapun.", show_alert=True
+        )
 
     btn = client.ns.telegram.button.build_button_grid(cached["layout"])
     if isinstance(message_or_query, pyrogram.types.Message):
-        await message_or_query.reply_text(
-            cached["text"], reply_markup=btn, parse_mode=ParseMode.HTML
+        await message_or_query.reply_rich(
+            pyrogram.types.InputRichMessage(markdown=cached["text"]), reply_markup=btn
         )
     else:
         await message_or_query.edit_message_text(
-            cached["text"], reply_markup=btn, parse_mode=ParseMode.HTML
+            rich_message=pyrogram.types.InputRichMessage(markdown=cached["text"]),
+            reply_markup=btn,
         )
 
 

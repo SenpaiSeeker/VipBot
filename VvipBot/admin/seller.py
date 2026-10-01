@@ -1,5 +1,7 @@
 from helpers import parse_dt
 
+import pyrogram
+
 from .. import *
 
 
@@ -8,9 +10,10 @@ from .. import *
 async def access_command_handler(client, message):
     user_id_target, _ = await client.ns.telegram.arg.getReasonAndId(message)
     if not user_id_target:
-        return await message.reply_text(
-            "**Format Salah.**\nGunakan: `/akses <user_id atau @username>`",
-            parse_mode=ParseMode.MARKDOWN,
+        return await message.reply_rich(
+            pyrogram.types.InputRichMessage(
+                markdown="**Format Salah.**\nGunakan: `/akses <user_id atau @username>`"
+            )
         )
     try:
         target_user = await client.get_users(user_id_target)
@@ -19,15 +22,17 @@ async def access_command_handler(client, message):
         if expiry and expiry > datetime.now(timezone.utc):
             has_access = True
         status_text = (
-            f"{client.ns.emoji.white_check_mark} Memiliki Akses"
+            f"{client.ns.emoji.md('white_check_mark')} Memiliki Akses"
             if has_access
-            else f"{client.ns.emoji.cross_mark} Tidak Memiliki Akses"
+            else f"{client.ns.emoji.md('cross_mark')} Tidak Memiliki Akses"
         )
         text = (
-            f"**{client.ns.emoji.key} Kelola Akses Pembuatan Bot**\n\n"
-            f"**Pengguna:** {client.ns.telegram.arg.getMention(target_user)}\n"
-            f"**ID:** `{target_user.id}`\n"
-            f"**Status:** `{status_text}`\n\n"
+            f"{client.ns.emoji.md('key')} **Kelola Akses Pembuatan Bot**\n\n"
+            f"| Info | Detail |\n"
+            f"| :--- | :--- |\n"
+            f"| Pengguna | {client.ns.telegram.arg.getMention(target_user)} |\n"
+            f"| ID | `{target_user.id}` |\n"
+            f"| Status | {status_text} |\n\n"
             f"Pilih tindakan untuk pengguna ini:"
         )
         layout = [
@@ -47,9 +52,13 @@ async def access_command_handler(client, message):
             ]
         ]
         btn = client.ns.telegram.button.build_button_grid(layout)
-        await message.reply_text(text, reply_markup=btn)
+        await message.reply_rich(
+            pyrogram.types.InputRichMessage(markdown=text), reply_markup=btn
+        )
     except Exception as e:
-        await message.reply_text(f"Gagal memproses. Error: `{e}`")
+        await message.reply_rich(
+            pyrogram.types.InputRichMessage(markdown=f"Gagal memproses. Error: `{e}`")
+        )
 
 
 @command(lambda ctx: filters.regex("^give_access_(\\d+)"), handler_type="callback")
@@ -77,7 +86,10 @@ async def give_access_callback(client, callback_query):
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
     await callback_query.edit_message_text(
-        "Pilih durasi akses yang ingin diberikan:", reply_markup=btn
+        rich_message=pyrogram.types.InputRichMessage(
+            markdown="Pilih durasi akses yang ingin diberikan:"
+        ),
+        reply_markup=btn,
     )
 
 
@@ -100,9 +112,11 @@ async def do_give_access_callback(client, callback_query):
         mention_str = client.ns.telegram.arg.getMention(target_user)
         formatted_jakarta_date = expiry_in_jakarta.strftime("%d %B %Y, %H:%M %Z")
         await callback_query.edit_message_text(
-            f"{client.ns.emoji.white_check_mark} **Akses Diberikan!**\n\n"
-            f"Pengguna {mention_str} sekarang memiliki akses untuk membuat bot selama **{months_to_add} bulan**.\n\n"
-            f"Masa aktif akses hingga: `{formatted_jakarta_date}`"
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('white_check_mark')} **Akses Diberikan!**\n\n"
+                f"Pengguna {mention_str} sekarang memiliki akses untuk membuat bot selama **{months_to_add} bulan**.\n\n"
+                f"Masa aktif akses hingga: `{formatted_jakarta_date}`"
+            )
         )
         await callback_query.answer(
             "<emoji id=6296367896398399651>✅</emoji> Akses berhasil diberikan kepada {target_id}".format(
@@ -127,8 +141,10 @@ async def revoke_access_callback(client, callback_query):
             )
         )
         await callback_query.edit_message_text(
-            f"{client.ns.emoji.cross_mark} **Akses Dicabut!**\n\n"
-            f"Pengguna {mention} tidak lagi memiliki hak untuk membuat bot."
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Akses Dicabut!**\n\n"
+                f"Pengguna {mention} tidak lagi memiliki hak untuk membuat bot."
+            )
         )
     except Exception as e:
         await callback_query.answer(f"Gagal memproses. Error: `{e}`", show_alert=True)
@@ -138,24 +154,32 @@ async def revoke_access_callback(client, callback_query):
 async def add_seller_handler(client, message):
     user_id_target, _ = await client.ns.telegram.arg.getReasonAndId(message)
     if not user_id_target:
-        return await message.reply_text(
-            f"{client.ns.emoji.cross_mark} Pengguna tidak ditemukan. Pastikan ID/Username benar atau balas pesan pengguna."
+        return await message.reply_rich(
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} Pengguna tidak ditemukan. Pastikan ID/Username benar atau balas pesan pengguna."
+            )
         )
     try:
         target_user = await client.get_users(user_id_target)
         seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
         if target_user.id in seller_list:
-            return await message.reply_text(
-                f"{client.ns.emoji.cross_mark} User `{target_user.id}` sudah terdaftar sebagai seller."
+            return await message.reply_rich(
+                pyrogram.types.InputRichMessage(
+                    markdown=f"{client.ns.emoji.md('cross_mark')} User `{target_user.id}` sudah terdaftar sebagai seller."
+                )
             )
         await ctx.db.setListVars(ctx.owner_id, "seller_id_list", target_user.id)
         user_mention = client.ns.telegram.arg.getMention(target_user)
-        await message.reply_text(
-            f"{client.ns.emoji.white_check_mark} Berhasil menambahkan `{user_mention}` sebagai seller."
+        await message.reply_rich(
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('white_check_mark')} Berhasil menambahkan `{user_mention}` sebagai seller."
+            )
         )
     except Exception as e:
-        await message.reply_text(
-            f"{client.ns.emoji.cross_mark} **Terjadi Kesalahan**\n<pre>{e}</pre>"
+        await message.reply_rich(
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n`{e}`"
+            )
         )
 
 
@@ -163,8 +187,23 @@ async def add_seller_handler(client, message):
 async def list_seller_handler(client, message):
     seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
     if not seller_list:
-        return await message.reply_text("Belum ada seller yang terdaftar.")
-    text = f"**{client.ns.emoji.bust_in_silhouette} Daftar Seller Aktif**\n\n"
+        empty_rows = [
+            ["Jumlah Seller", "`0`"],
+            ["Status", "Belum ada seller terdaftar"],
+        ]
+        return await message.reply_rich(
+            pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('bust_in_silhouette')} **Daftar Seller Aktif**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], empty_rows)}"
+                )
+            )
+        )
+    text = (
+        f"**{client.ns.emoji.md('bust_in_silhouette')} Daftar Seller Aktif**\n\n"
+        f"| No | Seller |\n"
+        f"| :---: | :--- |\n"
+    )
     keyboard = []
     for index, user_id in enumerate(seller_list, 1):
         try:
@@ -172,7 +211,7 @@ async def list_seller_handler(client, message):
             mention = client.ns.telegram.arg.getMention(user_obj)
         except Exception:
             mention = f"ID: `{user_id}`"
-        text += f"{index}. {mention}\n"
+        text += f"| {index} | {mention} |\n"
         keyboard.append(
             [
                 {
@@ -184,7 +223,9 @@ async def list_seller_handler(client, message):
             ]
         )
     btn = client.ns.telegram.button.build_button_grid(keyboard)
-    await message.reply_text(text, reply_markup=btn)
+    await message.reply_rich(
+        pyrogram.types.InputRichMessage(markdown=text), reply_markup=btn
+    )
 
 
 @command(lambda ctx: filters.regex("^del_sell_(\\d+)"), handler_type="callback")
@@ -199,9 +240,24 @@ async def delete_seller_callback(client, callback_query):
     )
     seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
     if not seller_list:
-        await callback_query.edit_message_text("Belum ada seller yang terdaftar.")
+        empty_rows = [
+            ["Jumlah Seller", "`0`"],
+            ["Status", "Belum ada seller terdaftar"],
+        ]
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('bust_in_silhouette')} **Daftar Seller Aktif**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], empty_rows)}"
+                )
+            )
+        )
         return
-    text = f"**{client.ns.emoji.bust_in_silhouette} Daftar Seller Aktif**\n\n"
+    text = (
+        f"**{client.ns.emoji.md('bust_in_silhouette')} Daftar Seller Aktif**\n\n"
+        f"| No | Seller |\n"
+        f"| :---: | :--- |\n"
+    )
     keyboard = []
     for index, user_id in enumerate(seller_list, 1):
         try:
@@ -209,7 +265,7 @@ async def delete_seller_callback(client, callback_query):
             mention = client.ns.telegram.arg.getMention(user_obj)
         except Exception:
             mention = f"ID: `{user_id}`"
-        text += f"{index}. {mention}\n"
+        text += f"| {index} | {mention} |\n"
         keyboard.append(
             [
                 {
@@ -221,7 +277,9 @@ async def delete_seller_callback(client, callback_query):
             ]
         )
     btn = client.ns.telegram.button.build_button_grid(keyboard)
-    await callback_query.edit_message_text(text, reply_markup=btn)
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text), reply_markup=btn
+    )
 
 
 @command(lambda ctx: filters.command("listakses") & filters.user(ctx.owner_id))
@@ -234,10 +292,23 @@ async def list_akses_handler(client, message):
         if expiry and expiry > now:
             access_users.append(uid)
     if not access_users:
-        return await message.reply_text(
-            "Tidak ada pengguna yang memiliki akses aktif saat ini."
+        empty_rows = [
+            ["Jumlah Pengguna", "`0`"],
+            ["Status", "Tidak ada pengguna dengan akses aktif"],
+        ]
+        return await message.reply_rich(
+            pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('key')} **Daftar Pengguna Berakses**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], empty_rows)}"
+                )
+            )
         )
-    text = f"**{client.ns.emoji.key} Daftar Pengguna Berakses**\n\n"
+    text = (
+        f"**{client.ns.emoji.md('key')} Daftar Pengguna Berakses**\n\n"
+        f"| No | Pengguna |\n"
+        f"| :---: | :--- |\n"
+    )
     keyboard = []
     for index, uid in enumerate(access_users, 1):
         try:
@@ -245,7 +316,7 @@ async def list_akses_handler(client, message):
             mention = client.ns.telegram.arg.getMention(user_obj)
         except Exception:
             mention = f"ID: `{uid}`"
-        text += f"{index}. {mention}\n"
+        text += f"| {index} | {mention} |\n"
         keyboard.append(
             [
                 {
@@ -257,7 +328,9 @@ async def list_akses_handler(client, message):
             ]
         )
     btn = client.ns.telegram.button.build_button_grid(keyboard)
-    await message.reply_text(text, reply_markup=btn)
+    await message.reply_rich(
+        pyrogram.types.InputRichMessage(markdown=text), reply_markup=btn
+    )
 
 
 @command(lambda ctx: filters.regex("^del_acc_(\\d+)"), handler_type="callback")
@@ -278,11 +351,24 @@ async def delete_access_callback(client, callback_query):
         if expiry and expiry > now:
             access_users.append(uid)
     if not access_users:
+        empty_rows = [
+            ["Jumlah Pengguna", "`0`"],
+            ["Status", "Tidak ada pengguna dengan akses aktif"],
+        ]
         await callback_query.edit_message_text(
-            "Tidak ada pengguna yang memiliki akses aktif saat ini."
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('key')} **Daftar Pengguna Berakses**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], empty_rows)}"
+                )
+            )
         )
         return
-    text = f"**{client.ns.emoji.key} Daftar Pengguna Berakses**\n\n"
+    text = (
+        f"**{client.ns.emoji.md('key')} Daftar Pengguna Berakses**\n\n"
+        f"| No | Pengguna |\n"
+        f"| :---: | :--- |\n"
+    )
     keyboard = []
     for index, uid in enumerate(access_users, 1):
         try:
@@ -290,7 +376,7 @@ async def delete_access_callback(client, callback_query):
             mention = client.ns.telegram.arg.getMention(user_obj)
         except Exception:
             mention = f"ID: `{uid}`"
-        text += f"{index}. {mention}\n"
+        text += f"| {index} | {mention} |\n"
         keyboard.append(
             [
                 {
@@ -302,4 +388,6 @@ async def delete_access_callback(client, callback_query):
             ]
         )
     btn = client.ns.telegram.button.build_button_grid(keyboard)
-    await callback_query.edit_message_text(text, reply_markup=btn)
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text), reply_markup=btn
+    )

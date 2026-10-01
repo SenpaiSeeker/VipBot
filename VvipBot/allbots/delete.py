@@ -1,3 +1,5 @@
+import pyrogram
+
 from .. import *
 from ..admin.cache import _user_cache
 from .helpers import invalidate_page_cache, send_allbots_list
@@ -30,11 +32,11 @@ async def allbots_confirm_delete_callback(client, callback_query):
     ]
 
     text = (
-        f"**{client.ns.emoji.warning} Konfirmasi Penghapusan**\n\n"
+        f"**{client.ns.emoji.md('warning')} Konfirmasi Penghapusan**\n\n"
         f"Anda yakin ingin menghapus bot dengan ID `{bot_id}` secara permanen?"
     )
     await callback_query.edit_message_text(
-        text,
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
         reply_markup=client.ns.telegram.button.build_button_grid(layout),
     )
 
@@ -50,7 +52,9 @@ async def allbots_do_delete_callback(client, callback_query):
     page = int(callback_query.matches[0].group(2))
 
     await callback_query.edit_message_text(
-        f"{client.ns.emoji.hourglass} Menghapus bot..."
+        rich_message=pyrogram.types.InputRichMessage(
+            markdown=f"{client.ns.emoji.md('hourglass')} Menghapus bot..."
+        )
     )
     try:
         owner_id_to_invalidate = await ctx.db.getVars(bot_id, "owner_id")

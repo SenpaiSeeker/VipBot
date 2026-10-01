@@ -12,6 +12,7 @@ from .gradient import Gradient
 from .logger import LoggerHandler
 from .monitor import ServerMonitor
 from .saweria_scraper import SaweriaScraper
+from .table import TableBuilder
 
 
 def parse_dt(value) -> "datetime | None":
@@ -38,6 +39,7 @@ class CleanNamespace:
         self.server = SimpleNamespace(monitor=ServerMonitor())
         self.payment = SimpleNamespace(SaweriaScraper=SaweriaScraper)
         self.emoji = EmojiParse()
+        self.table = TableBuilder()
 
 
 def get_ns(self):

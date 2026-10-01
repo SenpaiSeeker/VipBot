@@ -1,5 +1,6 @@
 import asyncio
 
+import pyrogram
 from pyrogram import filters
 
 from .. import command, ctx, is_bot_owner, listen
@@ -30,7 +31,7 @@ async def set_notif_chat_callback(client, callback_query):
 
     try:
         prompt = (
-            f"**{client.ns.emoji.bell} Atur Tempat Notifikasi**\n\n"
+            f"{client.ns.emoji.md('bell')} **Atur Tempat Notifikasi**\n\n"
             f"Kirim ID chat atau @username tempat notifikasi pembayaran akan dikirim.\n\n"
             f"Ketik `/none` untuk kembali ke default (dikirim ke owner_id).\n\n"
             f"Ketik `/batal` untuk membatalkan."
@@ -38,9 +39,11 @@ async def set_notif_chat_callback(client, callback_query):
         ask_msg = await client.ask(chat_id, prompt, timeout=600)
 
         if not ask_msg.text:
-            return await client.send_message(
+            return await client.send_rich_message(
                 chat_id,
-                f"{client.ns.emoji.cross_mark} **Gagal:** Pesan bukan teks.",
+                pyrogram.types.InputRichMessage(
+                    markdown=f"{client.ns.emoji.md('cross_mark')} **Gagal:** Pesan bukan teks."
+                ),
                 reply_markup=back_btn,
             )
 
@@ -52,9 +55,11 @@ async def set_notif_chat_callback(client, callback_query):
         if raw.lower() == "/none":
             await ctx.db.removeVars(client.me.id, "notif_chat_id")
 
-            return await client.send_message(
+            return await client.send_rich_message(
                 chat_id,
-                f"{client.ns.emoji.white_check_mark} **Sukses!** Notifikasi kembali ke default (owner_id).",
+                pyrogram.types.InputRichMessage(
+                    markdown=f"{client.ns.emoji.md('white_check_mark')} **Sukses!** Notifikasi kembali ke default (owner_id)."
+                ),
                 reply_markup=back_btn,
             )
 
@@ -62,9 +67,11 @@ async def set_notif_chat_callback(client, callback_query):
             chat_target = int(raw)
             await ctx.db.setVars(client.me.id, "notif_chat_id", chat_target)
 
-            return await client.send_message(
+            return await client.send_rich_message(
                 chat_id,
-                f"{client.ns.emoji.white_check_mark} **Sukses!** Tempat notifikasi diatur ke `{chat_target}`.",
+                pyrogram.types.InputRichMessage(
+                    markdown=f"{client.ns.emoji.md('white_check_mark')} **Sukses!** Tempat notifikasi diatur ke `{chat_target}`."
+                ),
                 reply_markup=back_btn,
             )
 
@@ -72,30 +79,38 @@ async def set_notif_chat_callback(client, callback_query):
             try:
                 await client.resolve_peer(raw)
             except Exception:
-                return await client.send_message(
+                return await client.send_rich_message(
                     chat_id,
-                    f"{client.ns.emoji.cross_mark} **Gagal:** Username `{raw}` tidak valid atau bot tidak dapat menjangkau target tersebut.",
+                    pyrogram.types.InputRichMessage(
+                        markdown=f"{client.ns.emoji.md('cross_mark')} **Gagal:** Username `{raw}` tidak valid atau bot tidak dapat menjangkau target tersebut."
+                    ),
                     reply_markup=back_btn,
                 )
 
             await ctx.db.setVars(client.me.id, "notif_chat_id", raw)
 
-            return await client.send_message(
+            return await client.send_rich_message(
                 chat_id,
-                f"{client.ns.emoji.white_check_mark} **Sukses!** Tempat notifikasi diatur ke `{raw}`.",
+                pyrogram.types.InputRichMessage(
+                    markdown=f"{client.ns.emoji.md('white_check_mark')} **Sukses!** Tempat notifikasi diatur ke `{raw}`."
+                ),
                 reply_markup=back_btn,
             )
 
-        await client.send_message(
+        await client.send_rich_message(
             chat_id,
-            f"{client.ns.emoji.cross_mark} **Gagal:** Format tidak valid.\n\n"
-            f"Gunakan **ID chat** (angka), **@username**, atau `/none` untuk kembali ke default.",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Gagal:** Format tidak valid.\n\n"
+                f"Gunakan **ID chat** (angka), **@username**, atau `/none` untuk kembali ke default."
+            ),
             reply_markup=back_btn,
         )
 
     except (listen.UserCancelled, asyncio.TimeoutError):
-        await client.send_message(
+        await client.send_rich_message(
             chat_id,
-            f"{client.ns.emoji.cross_mark} **Proses Dibatalkan**",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**"
+            ),
             reply_markup=back_btn,
         )

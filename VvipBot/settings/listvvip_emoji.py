@@ -56,15 +56,31 @@ async def render_list_vvip_icon_menu(client, callback_query):
 
     layout = []
     if not vvip_list:
-        text = f"{client.ns.emoji.cross_mark} Belum ada paket VVIP. Tambahkan paket terlebih dahulu."
+        table = client.ns.table
+        empty_rows = [
+            ["Jumlah Paket", "`0`"],
+            ["Status", "Belum ada paket VVIP"],
+            ["Saran", "Tambahkan paket terlebih dahulu"],
+        ]
+        text = (
+            f"{client.ns.emoji.md('cross_mark')} **Daftar Paket VVIP**\n\n"
+            f"{table.md(['Info', 'Nilai'], empty_rows)}"
+        )
+        caption_text = (
+            f"{client.ns.emoji.html('cross_mark')} <b>Daftar Paket VVIP</b>\n\n"
+            f"{table.caption(['Info', 'Nilai'], empty_rows)}"
+        )
         back_row = build_back_layout()[0]
         back_row[0]["emoji"] = client.ns.emoji.id(back_row[0]["emoji"])
         layout.append(back_row)
         btn = client.ns.telegram.button.build_button_grid(layout)
 
         if callback_query.message.photo:
-            return await callback_query.edit_message_caption(text, reply_markup=btn)
-        return await callback_query.edit_message_text(text, reply_markup=btn)
+            return await callback_query.edit_message_caption(caption_text, reply_markup=btn)
+        return await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
 
     button_row = []
     for item in vvip_list:
@@ -127,7 +143,7 @@ async def render_list_vvip_icon_menu(client, callback_query):
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     text = (
-        f"{client.ns.emoji.art} **Atur Icon List VVIP**\n\n"
+        f"{client.ns.emoji.html('art')} **Atur Icon List VVIP**\n\n"
         f"Kustomisasi icon tiap paket VVIP secara **individu**.\n"
         f"Pilih paket berdasarkan **nama**, lalu kirim **custom emoji** "
         f"atau **ID custom emoji** untuk paket tersebut.\n\n"
@@ -140,7 +156,10 @@ async def render_list_vvip_icon_menu(client, callback_query):
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
 
 
 @command(
@@ -207,7 +226,7 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
 
     try:
         prompt = (
-            f"**{client.ns.emoji.art} Atur Icon Paket `{display_name}`**\n\n"
+            f"**{client.ns.emoji.md('art')} Atur Icon Paket `{display_name}`**\n\n"
             f"Icon saat ini: {current_display}\n"
             f"ID bawaan: `{default_id}`\n\n"
             f"Kirim **custom emoji** yang ingin digunakan, "
@@ -235,12 +254,14 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
                 emoji_char = None
 
             if not emoji_id:
-                return await client.send_message(
+                return await client.send_rich_message(
                     chat_id,
-                    f"{client.ns.emoji.cross_mark} **Gagal:** "
-                    f"Tidak ada custom emoji yang detected.\n\n"
-                    f"Kirim pesan yang berisi **custom emoji**, "
-                    f"atau tulis **ID custom emoji** berupa angka.",
+                    pyrogram.types.InputRichMessage(
+                        markdown=(
+                            f"{client.ns.emoji.md('cross_mark')} **Gagal: Custom Emoji Tidak Ditemukan**\n\n"
+                            f"{client.ns.table.md(['Info', 'Keterangan'], [['Status', 'Tidak ada custom emoji terdeteksi'], ['Solusi', 'Kirim pesan berisi custom emoji'], ['Alternatif', 'Tulis ID custom emoji berupa angka']])}"
+                        )
+                    ),
                     reply_markup=back_btn,
                 )
 
@@ -265,18 +286,24 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
             f"`{emoji_id}`" if emoji_id else f"`{client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT['normal'])}`"
         )
 
-        await client.send_message(
+        await client.send_rich_message(
             chat_id,
-            f"{client.ns.emoji.white_check_mark} **Sukses!**\n"
-            f"Icon paket **{display_name}** {status}.\n\n"
-            f"ID aktif: {result_display}",
+            pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n"
+                    f"Icon paket **{display_name}** {status}.\n\n"
+                    f"ID aktif: {result_display}"
+                )
+            ),
             reply_markup=back_btn,
         )
 
     except (listen.UserCancelled, asyncio.TimeoutError):
-        await client.send_message(
+        await client.send_rich_message(
             chat_id,
-            f"{client.ns.emoji.cross_mark} **Proses Dibatalkan**",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**"
+            ),
             reply_markup=back_btn,
         )
 

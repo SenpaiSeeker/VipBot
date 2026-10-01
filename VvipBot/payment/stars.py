@@ -17,9 +17,15 @@ async def successful_donation_handler(client, message):
     current_bot_id = client.me.id
     super_admin_id = ctx.owner_id
 
-    await client.send_message(
+    await client.send_rich_message(
         chat_id=user.id,
-        text=f"{client.ns.emoji.party_popper} **Terima Kasih Banyak, {user.first_name}!**\n\nKami telah menerima donasi Anda sebesar **{stars_donated} Stars ({client.ns.emoji.star})**.\nDukungan Anda adalah bahan bakar semangat bagi kami. Semoga hari Anda menyenangkan!",
+        rich_message=pyrogram.types.InputRichMessage(
+            markdown=(
+                f"{client.ns.emoji.md('party_popper')} **Terima Kasih Banyak, {user.first_name}!**\n\n"
+                f"Kami telah menerima donasi Anda sebesar **{stars_donated} Stars ({client.ns.emoji.md('star')})**.\n"
+                f"Dukungan Anda adalah bahan bakar semangat bagi kami. Semoga hari Anda menyenangkan!"
+            )
+        ),
     )
 
     owner_of_this_bot = await get_notification_target(client)
@@ -30,8 +36,8 @@ async def successful_donation_handler(client, message):
         bot_mention_str = client.me.mention
 
         notification_text = (
-            f"{client.ns.emoji.sparkles} **Donasi Baru Diterima!**\n\n"
-            f"**Jumlah:** `{stars_donated}` Stars ({client.ns.emoji.star})\n"
+            f"{client.ns.emoji.md('sparkles')} **Donasi Baru Diterima!**\n\n"
+            f"**Jumlah:** `{stars_donated}` Stars ({client.ns.emoji.md('star')})\n"
             f"**Dari:** {user_mention_str} (`{user.id}`)\n"
             f"**Melalui Bot:** {bot_mention_str}"
         )
@@ -61,9 +67,9 @@ async def successful_donation_handler(client, message):
         ]
         refund_btn = client.ns.telegram.button.build_button_grid(layout)
 
-        await client.send_message(
+        await client.send_rich_message(
             chat_id=owner_of_this_bot,
-            text=notification_text,
+            rich_message=pyrogram.types.InputRichMessage(markdown=notification_text),
             reply_markup=refund_btn,
         )
 
@@ -71,11 +77,14 @@ async def successful_donation_handler(client, message):
         if main_bot_client and owner_of_this_bot != super_admin_id:
             user_mention_str = client.ns.telegram.arg.getMention(user)
 
-            await main_bot_client.send_message(
+            await main_bot_client.send_rich_message(
                 super_admin_id,
-                f"{client.ns.emoji.exclamation} **Notifikasi Gagal Terkirim**\n\n"
-                f"Notifikasi donasi sebesar `{stars_donated}` Stars dari {user_mention_str} "
-                f"gagal dikirim ke owner bot `{client.me.first_name}` karena bot diblokir olehnya.",
+                pyrogram.types.InputRichMessage(
+                    markdown=(
+                        f"{client.ns.emoji.md('exclamation')} **Notifikasi Gagal Terkirim**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Donasi', f'`{stars_donated}` Stars'], ['Dari', user_mention_str], ['Owner Bot', f'`{client.me.first_name}`'], ['Penyebab', 'Bot diblokir oleh owner']])}"
+                    )
+                ),
             )
 
     except Exception as e:

@@ -1,3 +1,4 @@
+import pyrogram
 from pyrogram import filters
 
 from .. import command, ctx
@@ -19,9 +20,9 @@ async def confirm_delete_bot_callback(client, callback_query):
         pass
 
     text = (
-        f"**{client.ns.emoji.exclamation} Konfirmasi Penghapusan**\n\n"
+        f"**{client.ns.emoji.md('exclamation')} Konfirmasi Penghapusan**\n\n"
         f"Anda yakin ingin menghapus bot **{bot_name}** (`{bot_id_to_manage}`) secara permanen?\n\n"
-        f"__Semua data (member, paket, pengaturan) bot ini akan hilang dan tindakan ini tidak dapat diurungkan.__"
+        f"_Semua data (member, paket, pengaturan) bot ini akan hilang dan tindakan ini tidak dapat diurungkan._"
     )
 
     layout = [
@@ -46,7 +47,10 @@ async def confirm_delete_bot_callback(client, callback_query):
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
 
 
 @command(

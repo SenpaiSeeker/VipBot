@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
+import pyrogram
 from pyrogram import filters
 
 from helpers import parse_dt
@@ -30,9 +31,12 @@ async def request_extend_duration_callback(client, callback_query):
                 "Bot utama sedang tidak aktif, tidak dapat mengirim notifikasi."
             )
 
-        requester_mention = main_bot_client.ns.telegram.arg.getMention(requester)
+        requester_name = (
+            requester.full_name or requester.first_name or "Deleted Account"
+        )
+        requester_mention = f"[{requester_name}](tg://user?id={requester.id})"
         txt_owner = (
-            f"**{main_bot_client.ns.emoji.bell} Permintaan Perpanjangan Durasi**\n\n"
+            f"**{main_bot_client.ns.emoji.md('bell')} Permintaan Perpanjangan Durasi**\n\n"
             f"**Pengguna:** {requester_mention} (`{requester.id}`)\n"
             f"**Bot:** **{bot_name}** (`{bot_id_to_request}`)\n\n"
             f"Setujui untuk menambah masa aktif bot ini sebanyak 30 hari."
@@ -56,8 +60,10 @@ async def request_extend_duration_callback(client, callback_query):
         ]
         btn_owner = main_bot_client.ns.telegram.button.build_button_grid(layout_owner)
 
-        await main_bot_client.send_message(
-            ctx.owner_id, txt_owner, reply_markup=btn_owner
+        await main_bot_client.send_rich_message(
+            ctx.owner_id,
+            pyrogram.types.InputRichMessage(markdown=txt_owner),
+            reply_markup=btn_owner,
         )
         await callback_query.answer(
             "✅ Permintaan perpanjangan telah dikirim ke Owner Utama. Anda akan dihubungi jika disetujui.",
@@ -104,8 +110,12 @@ async def owner_approve_extension_callback(client, callback_query):
         )
 
         await callback_query.edit_message_text(
-            f"{client.ns.emoji.white_check_mark} **Persetujuan Berhasil!**\n"
-            f"Durasi untuk bot `{bot_id_to_extend}` telah ditambah **{days_to_add} hari**."
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('white_check_mark')} **Persetujuan Berhasil!**\n"
+                    f"Durasi untuk bot `{bot_id_to_extend}` telah ditambah **{days_to_add} hari**."
+                )
+            )
         )
 
         try:
@@ -116,16 +126,22 @@ async def owner_approve_extension_callback(client, callback_query):
                 else f"ID {bot_id_to_extend}"
             )
 
-            await client.send_message(
+            await client.send_rich_message(
                 requester_id,
-                f"{client.ns.emoji.party_popper} **Kabar Baik!**\n\n"
-                f"Permintaan perpanjangan Anda untuk bot **{bot_name}** telah disetujui dan diperpanjang.",
+                pyrogram.types.InputRichMessage(
+                    markdown=(
+                        f"{client.ns.emoji.md('party_popper')} **Kabar Baik!**\n\n"
+                        f"Permintaan perpanjangan Anda untuk bot **{bot_name}** telah disetujui dan diperpanjang."
+                    )
+                ),
             )
         except Exception as e:
             ctx.log.print(f"Gagal kirim notif persetujuan ke {requester_id}: {e}")
     except Exception as e:
         await callback_query.edit_message_text(
-            f"{client.ns.emoji.cross_mark} Gagal menyetujui permintaan: `{e}`"
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} Gagal menyetujui permintaan: `{e}`"
+            )
         )
 
 
@@ -142,7 +158,9 @@ async def owner_close_request_callback(client, callback_query):
 
     try:
         await callback_query.edit_message_text(
-            f"{client.ns.emoji.cross_mark} Permintaan telah ditolak/ditutup oleh Owner Utama."
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} Permintaan telah ditolak/ditutup oleh Owner Utama."
+            )
         )
     except Exception:
         pass

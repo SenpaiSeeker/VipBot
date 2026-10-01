@@ -1,3 +1,5 @@
+import pyrogram
+
 from helpers import parse_dt
 
 from .. import *
@@ -32,12 +34,14 @@ async def allbots_detail_callback(client, callback_query):
     )
 
     text = (
-        f"**{client.ns.emoji.toolbox} Kelola Bot Spesifik**\n\n"
-        f"• **Nama Bot:** {bot_name}\n"
-        f"• **ID Bot:** `{bot_id}`\n"
-        f"• **Username Bot:** @{bot_username}\n"
-        f"• **Pemilik:** {owner_text}\n"
-        f"• **Sisa Aktif:** `{days_left}` hari"
+        f"**{client.ns.emoji.md('toolbox')} Kelola Bot Spesifik**\n\n"
+        f"| Label | Isi |\n"
+        f"| :--- | :--- |\n"
+        f"| Nama Bot | {bot_name} |\n"
+        f"| ID Bot | `{bot_id}` |\n"
+        f"| Username Bot | @{bot_username} |\n"
+        f"| Pemilik | {owner_text} |\n"
+        f"| Sisa Aktif | `{days_left}` hari |"
     )
 
     layout = [
@@ -67,7 +71,8 @@ async def allbots_detail_callback(client, callback_query):
         ],
     ]
     await callback_query.edit_message_text(
-        text, reply_markup=client.ns.telegram.button.build_button_grid(layout)
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=client.ns.telegram.button.build_button_grid(layout),
     )
 
 

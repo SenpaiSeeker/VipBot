@@ -24,18 +24,38 @@ async def get_bot_purchase_panel(client, user_id, months=1):
     formatted_discount = f"-Rp {discount:,}"
     formatted_final = f"{final_price:,}"
 
+    discount_rows = [
+        ["3+ Bulan", "`10%`"],
+        ["6+ Bulan", "`20%`"],
+    ]
+
+    order_rows = [
+        ["Durasi", f"**{months} bulan**"],
+        ["Harga Normal", f"`Rp {formatted_total}`"],
+        ["Diskon", f"`{formatted_discount}`"],
+        ["Total Bayar", f"**`Rp {formatted_final}`**"],
+    ]
+
+    table = client.ns.table
     text = (
-        f"**{client.ns.emoji.gem} Beli Akses Pembuatan Bot**\n\n"
+        f"{client.ns.emoji.md('gem')} **Beli Akses Pembuatan Bot**\n\n"
         f"Dapatkan akses untuk membuat bot VVIP Anda sendiri dengan berlangganan.\n\n"
-        f"Harga: `Rp {formatted_price}/bulan`\n\n"
-        f"**Diskon:**\n"
-        f"• 3+ Bulan: 10%\n"
-        f"• 6+ Bulan: 20%\n\n"
-        f"**Pilihan Anda:**\n"
-        f"• Durasi: **{months} bulan**\n"
-        f"• Harga Normal: `Rp {formatted_total}`\n"
-        f"• Diskon: `{formatted_discount}`\n"
-        f"• **Total Bayar: `Rp {formatted_final}`**"
+        f"Harga dasar: `Rp {formatted_price}/bulan`\n\n"
+        f"{table.md(['Durasi', 'Diskon'], discount_rows)}\n\n"
+        f"{table.md(['Item', 'Nilai'], order_rows)}"
+    )
+
+    discount_caption = table.caption(['Durasi', 'Diskon'], discount_rows)
+    caption_head = (
+        f"{client.ns.emoji.html('gem')} <b>Beli Akses Pembuatan Bot</b>\n\n"
+        f"Harga dasar: <code>Rp {formatted_price}/bulan</code>\n\n"
+        f"{discount_caption}\n\n"
+    )
+    caption_text = caption_head + table.caption_bundle(
+        ['Item', 'Nilai'],
+        order_rows,
+        max_chars=1024,
+        reserved=len(caption_head) + len("<pre></pre>"),
     )
 
     layout = [
@@ -77,4 +97,4 @@ async def get_bot_purchase_panel(client, user_id, months=1):
     ]
 
     btn = client.ns.telegram.button.build_button_grid(layout)
-    return text, btn
+    return text, caption_text, btn

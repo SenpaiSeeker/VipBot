@@ -9,14 +9,14 @@ async def get_start_keyboard_and_content(client, user):
 
     if is_main_bot:
         _default_text = (
-            f"{client.ns.emoji.waving} **Selamat Datang, {{mention}}!**\n\n"
+            f"{client.ns.emoji.waving} <b>Selamat Datang, {{mention}}!</b>\n\n"
             f"Saya adalah asisten utama untuk membuat dan mengelola "
-            f"{client.ns.emoji.gem} **Bot VVIP** Anda sendiri. "
+            f"{client.ns.emoji.gem} <b>Bot VVIP</b> Anda sendiri. "
             f"Jelajahi semua fitur yang tersedia melalui tombol di bawah ini."
         )
     else:
         _default_text = (
-            f"{client.ns.emoji.waving} **Selamat Datang, {{mention}}!**\n\n"
+            f"{client.ns.emoji.waving} <b>Selamat Datang, {{mention}}!</b>\n\n"
             f"Saya adalah asisten pribadi Anda untuk mengakses konten eksklusif. "
             f"Jelajahi semua fitur yang tersedia melalui tombol di bawah ini."
         )
@@ -102,7 +102,10 @@ async def start_bot(client, message):
     if photo_id:
         await message.reply_photo(photo=photo_id, caption=txt, reply_markup=btn)
     else:
-        await message.reply_text(txt, reply_markup=btn)
+        await message.reply_rich(
+            pyrogram.types.InputRichMessage(markdown=txt),
+            reply_markup=btn,
+        )
     await check_new_user(client, message)
 
 
@@ -127,7 +130,10 @@ async def start_callback(client, callback_query):
                 reply_markup=btn,
             )
         else:
-            await callback_query.edit_message_text(txt, reply_markup=btn)
+            await callback_query.edit_message_text(
+                rich_message=pyrogram.types.InputRichMessage(markdown=txt),
+                reply_markup=btn,
+            )
 
 
 @command(
@@ -136,14 +142,14 @@ async def start_callback(client, callback_query):
 )
 async def about_bot_callback(client, callback_query):
     text = (
-        f"{client.ns.emoji.glowing_star} **Tentang Bot VVIP Ini**\n\n"
+        f"{client.ns.emoji.glowing_star} <b>Tentang Bot VVIP Ini</b>\n\n"
         f"Selamat datang! Saya adalah asisten otomatis yang dirancang untuk memberikan Anda kemudahan dalam mengakses grup VVIP.\n\n"
-        f"{client.ns.emoji.robot} **Fungsi Utama Saya:**\n"
+        f"{client.ns.emoji.robot} <b>Fungsi Utama Saya:</b>\n"
         f"Saya menyediakan sistem pembayaran otomatis yang aman via QRIS, memastikan Anda mendapatkan akses instan ke konten premium setelah transaksi berhasil.\n\n"
-        f"{client.ns.emoji.rocket} **Alur Penggunaan:**\n"
-        f"1. **Pilih Paket:** Jelajahi daftar VVIP yang tersedia.\n"
-        f"2. **Lakukan Pembayaran:** Scan QRIS yang saya berikan.\n"
-        f"3. **Akses Instan:** Link undangan akan otomatis terkirim setelah pembayaran terkonfirmasi.\n\n"
+        f"{client.ns.emoji.rocket} <b>Alur Penggunaan:</b>\n\n"
+        f"**1. Pilih Paket** — Jelajahi daftar VVIP yang tersedia.\n"
+        f"**2. Lakukan Pembayaran** — Scan QRIS yang saya berikan.\n"
+        f"**3. Akses Instan** — Link undangan akan otomatis terkirim setelah pembayaran terkonfirmasi.\n\n"
         f"Semua proses dirancang agar cepat, aman, dan tanpa perlu menunggu konfirmasi manual!"
     )
 
@@ -162,7 +168,10 @@ async def about_bot_callback(client, callback_query):
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
 
 
 @command(
@@ -188,7 +197,20 @@ async def list_vvip_bot(client, callback_query):
     layout = []
 
     if not vvip_list:
-        text = f"{client.ns.emoji.card_index_dividers} Saat ini belum ada paket VVIP yang tersedia."
+        table = client.ns.table
+        empty_rows = [
+            ["Jumlah Paket", "`0`"],
+            ["Status", "Belum ada paket VVIP tersedia"],
+            ["Aksi", "Tambahkan paket melalui pengaturan"],
+        ]
+        text = (
+            f"{client.ns.emoji.md('card_index_dividers')} **Daftar Paket VVIP**\n\n"
+            f"{table.md(['Info', 'Nilai'], empty_rows)}"
+        )
+        caption_text = (
+            f"{client.ns.emoji.html('card_index_dividers')} <b>Daftar Paket VVIP</b>\n\n"
+            f"{table.caption(['Info', 'Nilai'], empty_rows)}"
+        )
         layout.append(
             [
                 {
@@ -202,8 +224,11 @@ async def list_vvip_bot(client, callback_query):
         btn = client.ns.telegram.button.build_button_grid(layout)
 
         if callback_query.message.photo:
-            return await callback_query.edit_message_caption(text, reply_markup=btn)
-        return await callback_query.edit_message_text(text, reply_markup=btn)
+            return await callback_query.edit_message_caption(caption_text, reply_markup=btn)
+        return await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
 
     for index, item in enumerate(vvip_list):
         name = item.get("name", "N/A")
@@ -263,14 +288,17 @@ async def list_vvip_bot(client, callback_query):
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     text = (
-        f"{client.ns.emoji.books} **Daftar VVIP Bot: {client.me.mention}**\n\n"
+        f"{client.ns.emoji.html('books')} <b>Daftar VVIP Bot: {client.me.mention}</b>\n\n"
         f"Berikut adalah daftar paket eksklusif yang kami tawarkan. Klik pada salah satu paket untuk melihat detail lengkap dan penawaran spesial."
     )
 
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
 
 
 @command(
@@ -279,11 +307,21 @@ async def list_vvip_bot(client, callback_query):
 )
 async def donate_callback(client, callback_query):
     photo_url = "https://files.catbox.moe/1f9j10.jpg"
+    donate_rows = [
+        ["25 ⭐", "Paling ringan"],
+        ["50 ⭐", "Dukungan dasar"],
+        ["75 ⭐", "Dukungan sedang"],
+        ["100 ⭐", "Dukungan maksimal"],
+    ]
+    table = client.ns.table
+    donate_caption = (
+        f"{client.ns.emoji.html('red_heart')} <b>Dukung Kami dengan Telegram Stars</b>\n\n"
+        f"{table.caption(['Jumlah', 'Keterangan'], donate_rows, ['c', 'l'])}"
+    )
     text = (
-        f"{client.ns.emoji.red_heart} **Dukung Kami dengan Telegram Stars!**\n\n"
-        f"Donasi Anda sangat berarti untuk membantu kami terus mengembangkan dan memelihara bot ini.\n\n"
-        f"Setiap Star yang Anda berikan memberikan kami semangat untuk terus berinovasi. Pilih jumlah donasi di bawah ini untuk memulai.\n\n"
-        f"Terima kasih atas dukungan Anda!"
+        f"{client.ns.emoji.md('red_heart')} **Dukung Kami dengan Telegram Stars**\n\n"
+        f"{table.md(['Jumlah', 'Keterangan'], donate_rows, ['c', 'l'])}\n\n"
+        f"Setiap Star yang Anda berikan memberi kami semangat untuk terus berinovasi."
     )
 
     layout = [
@@ -326,23 +364,23 @@ async def donate_callback(client, callback_query):
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
 
+    if callback_query.message.photo:
+        return await callback_query.edit_message_caption(
+            caption=donate_caption, reply_markup=btn
+        )
+
+    await callback_query.message.delete()
     try:
-        if callback_query.message.photo:
-            await callback_query.edit_message_caption(caption=text, reply_markup=btn)
-        else:
-            await callback_query.message.delete()
-            await client.send_photo(
-                callback_query.from_user.id,
-                photo=photo_url,
-                caption=text,
-                reply_markup=btn,
-            )
-    except Exception:
-        await callback_query.message.delete()
         await client.send_photo(
             callback_query.from_user.id,
             photo=photo_url,
-            caption=text,
+            caption=donate_caption,
+            reply_markup=btn,
+        )
+    except Exception:
+        await client.send_rich_message(
+            callback_query.from_user.id,
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
             reply_markup=btn,
         )
 

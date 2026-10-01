@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
+import pyrogram
 from pyrogram import filters
 
 from config import BACKUP_BOT
@@ -20,7 +21,7 @@ async def create_bot_callback(client, callback_query):
         backup_text = f" melalui @{BACKUP_BOT}" if BACKUP_BOT else ""
 
         text_warning = (
-            f"{client.ns.emoji.cross_mark} **Kapasitas Bot Penuh!**\n\n"
+            f"{client.ns.emoji.md('cross_mark')} **Kapasitas Bot Penuh!**\n\n"
             f"Maaf, server saat ini sudah mencapai batas maksimal pembuatan bot (25 Bot). Silakan buat bot baru{backup_text}."
         )
 
@@ -40,14 +41,17 @@ async def create_bot_callback(client, callback_query):
             return await callback_query.edit_message_caption(
                 text_warning, reply_markup=btn
             )
-        return await callback_query.edit_message_text(text_warning, reply_markup=btn)
+        return await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text_warning),
+            reply_markup=btn,
+        )
 
     user_id = callback_query.from_user.id
     user_expiry = parse_dt(await ctx.db.getVars(user_id, "user_expiry_date"))
 
     if user_expiry and user_expiry > datetime.now(timezone.utc):
             text = (
-                f"{client.ns.emoji.white_check_mark} **Anda Sudah Berlangganan!**\n\n"
+                f"{client.ns.emoji.md('white_check_mark')} **Anda Sudah Berlangganan!**\n\n"
                 f"Anda sudah memiliki akses untuk membuat bot. Tekan tombol di bawah untuk memulai proses pembuatan."
             )
 
@@ -73,10 +77,21 @@ async def create_bot_callback(client, callback_query):
 
             if callback_query.message.photo:
                 return await callback_query.edit_message_caption(text, reply_markup=btn)
-            return await callback_query.edit_message_text(text, reply_markup=btn)
+            return await callback_query.edit_message_text(
+                rich_message=pyrogram.types.InputRichMessage(markdown=text),
+                reply_markup=btn,
+            )
 
-    text, btn = await get_bot_purchase_panel(client, user_id, 1)
-    await callback_query.edit_message_caption(text, reply_markup=btn)
+    text, caption_text, btn = await get_bot_purchase_panel(client, user_id, 1)
+
+    if callback_query.message.photo:
+        return await callback_query.edit_message_caption(
+            caption_text, reply_markup=btn
+        )
+    return await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
 
 
 @command(
@@ -87,10 +102,17 @@ async def adjust_bot_month_callback(client, callback_query):
     months = int(callback_query.data.split("_")[-1])
 
     if 1 <= months <= 12:
-        text, btn = await get_bot_purchase_panel(
+        text, caption_text, btn = await get_bot_purchase_panel(
             client, callback_query.from_user.id, months
         )
-        await callback_query.edit_message_caption(text, reply_markup=btn)
+        if callback_query.message.photo:
+            return await callback_query.edit_message_caption(
+                caption_text, reply_markup=btn
+            )
+        return await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
     else:
         await callback_query.answer(
             "Durasi minimal 1 bulan dan maksimal 12 bulan.",
@@ -106,15 +128,31 @@ async def proceed_bot_payment_callback(client, callback_query):
     user_id = callback_query.from_user.id
     months = int(callback_query.data.split("_")[-1])
 
-    await callback_query.edit_message_caption(
-        f"{client.ns.emoji.hourglass} **Sedang Memproses...**\nMohon tunggu sebentar."
-    )
+    if callback_query.message.photo:
+        await callback_query.edit_message_caption(
+            f"{client.ns.emoji.hourglass} **Sedang Memproses...**\nMohon tunggu sebentar."
+        )
+    else:
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
+                    f"Mohon tunggu sebentar."
+                )
+            )
+        )
 
     saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
 
     if not saweria_user_id:
-        return await callback_query.edit_message_caption(
-            "Maaf, layanan pembayaran saat ini tidak tersedia."
+        if callback_query.message.photo:
+            return await callback_query.edit_message_caption(
+                "Maaf, layanan pembayaran saat ini tidak tersedia."
+            )
+        return await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown="Maaf, layanan pembayaran saat ini tidak tersedia."
+            )
         )
 
     _, _, amount = calculate_bot_price(months)
@@ -138,16 +176,19 @@ async def proceed_bot_payment_callback(client, callback_query):
         order_data = f"{months}|{amount_raw}|{user_id}"
         await ctx.db.setVars(client.me.id, transaction_id, order_data)
 
+        caption_rows = [
+            [
+                f"{client.ns.emoji.char('shopping_bags')} Produk",
+                f"Akses Buat Bot {months} Bulan",
+            ],
+            [f"{client.ns.emoji.char('gem')} Jumlah", f"Rp {amount_raw:,}"],
+            [f"{client.ns.emoji.char('id_card')} Order ID", f"{transaction_id}"],
+        ]
+
         caption = (
-            f"**{client.ns.emoji.white_check_mark} Pembayaran Siap Dilakukan!**\n\n"
-            f"Silakan scan QRIS di atas untuk membayar. Setelah itu, tekan tombol **Konfirmasi Pembayaran**.\n\n"
-            f"╭─ **Detail Tagihan**\n"
-            f"│\n"
-            f"├─ {client.ns.emoji.shopping_bags} **Produk:** Akses Buat Bot {months} Bulan (Langganan)\n"
-            f"├─ {client.ns.emoji.gem} **Jumlah:** `Rp {amount_raw:,}`\n"
-            f"├─ {client.ns.emoji.id_card} **Order ID:** [{transaction_id}](https://saweria.co/qris/{transaction_id})\n"
-            f"│\n"
-            f"╰─ {client.ns.emoji.down_pointing} **Jika sudah membayar, silakan klik tombol di bawah ini.**\n"
+            f"{client.ns.emoji.html('white_check_mark')} <b>Pembayaran Siap Dilakukan!</b>\n\n"
+            f"Silakan scan QRIS di atas untuk membayar, lalu tekan tombol Konfirmasi Pembayaran.\n\n"
+            f"{client.ns.table.caption(['Item', 'Keterangan'], caption_rows)}"
         )
 
         layout = [
@@ -172,9 +213,11 @@ async def proceed_bot_payment_callback(client, callback_query):
         )
 
     except Exception as e:
-        await client.send_message(
+        await client.send_rich_message(
             user_id,
-            f"{client.ns.emoji.cross_mark} **Terjadi Kesalahan**\n<pre>{e}</pre>",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n`{e}`"
+            ),
         )
 
 
@@ -226,7 +269,7 @@ async def confirm_bot_payment_callback(client, callback_query):
             await callback_query.message.delete()
 
             success_text = (
-                f"{client.ns.emoji.white_check_mark} **Pembayaran Berhasil!**\n\n"
+                f"{client.ns.emoji.md('white_check_mark')} **Pembayaran Berhasil!**\n\n"
                 f"Terima kasih! Langganan Anda untuk membuat bot selama **{months} bulan** telah diaktifkan."
             )
 
@@ -241,18 +284,28 @@ async def confirm_bot_payment_callback(client, callback_query):
                 ]
             ]
             btn = client.ns.telegram.button.build_button_grid(layout)
-            await client.send_message(user.id, success_text, reply_markup=btn)
+            await client.send_rich_message(
+                user.id,
+                pyrogram.types.InputRichMessage(markdown=success_text),
+                reply_markup=btn,
+            )
 
-            owner_mention = client.ns.telegram.arg.getMention(user)
+            owner_name = user.full_name or user.first_name or "Deleted Account"
+            owner_mention = f"[{owner_name}](tg://user?id={user.id})"
             formatted_amount = f"{amount_raw:,}"
 
             owner_notif = (
-                f"{client.ns.emoji.money_bag} **Langganan Akses Baru!**\n\n"
-                f"**Pengguna:** {owner_mention}\n"
-                f"**Durasi:** {months} bulan\n"
-                f"**Jumlah:** `Rp {formatted_amount}`"
+                f"**{client.ns.emoji.md('money_bag')} Langganan Akses Baru!**\n\n"
+                f"| Info | Detail |\n"
+                f"| :--- | :---: |\n"
+                f"| Pengguna | {owner_mention} |\n"
+                f"| Durasi | {months} bulan |\n"
+                f"| Jumlah | `Rp {formatted_amount}` |"
             )
-            await client.send_message(ctx.owner_id, owner_notif)
+            await client.send_rich_message(
+                ctx.owner_id,
+                pyrogram.types.InputRichMessage(markdown=owner_notif),
+            )
         else:
             await callback_query.answer(
                 "❌ Pembayaran belum terdeteksi. Silakan coba lagi setelah beberapa saat.",

@@ -1,3 +1,5 @@
+import pyrogram
+
 from .. import *
 from .helpers import invalidate_page_cache, send_allbots_list
 
@@ -5,8 +7,10 @@ from .helpers import invalidate_page_cache, send_allbots_list
 @command(lambda ctx: filters.command("allbots") & filters.user(ctx.owner_id))
 async def allbots_command_handler(client, message):
     invalidate_page_cache()
-    msg_process = await message.reply(
-        f"{client.ns.emoji.repeat} Sedang memproses mengumpulkan bot"
+    msg_process = await message.reply_rich(
+        pyrogram.types.InputRichMessage(
+            markdown=f"{client.ns.emoji.md('repeat')} Sedang memproses mengumpulkan bot"
+        )
     )
     await send_allbots_list(client, message, 0, force_refresh=True)
     await msg_process.delete()

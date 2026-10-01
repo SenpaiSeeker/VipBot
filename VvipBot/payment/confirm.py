@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime, timedelta, timezone
 
+import pyrogram
 from pyrogram import filters
 
 from .. import command, ctx, get_notification_target, is_bot_owner
@@ -145,16 +146,20 @@ async def manual_check_payment_callback(client, callback_query):
 
                 link_text = "\n".join(
                     [
-                        f"• {item.get('name')}: {item.get('link')}"
+                        f"- {item.get('name')}: {item.get('link')}"
                         for item in invite_payloads
                     ]
                 )
 
-                link_msg = await client.send_message(
+                link_msg = await client.send_rich_message(
                     user.id,
-                    f"{client.ns.emoji.party_popper} **Pembayaran Paket Semua VIP Berhasil!**\n\n"
-                    f"Berikut semua link akses VIP Anda:\n\n{link_text}\n\n"
-                    f"{client.ns.emoji.exclamation} Setiap link hanya berlaku 1 kali klik dan kedaluwarsa dalam 60 menit.\n",
+                    pyrogram.types.InputRichMessage(
+                        markdown=(
+                            f"{client.ns.emoji.md('party_popper')} **Pembayaran Paket Semua VIP Berhasil!**\n\n"
+                            f"Berikut semua link akses VIP Anda:\n\n{link_text}\n\n"
+                            f"{client.ns.emoji.md('exclamation')} Setiap link hanya berlaku 1 kali klik dan kedaluwarsa dalam 60 menit."
+                        )
+                    ),
                     protect_content=True,
                 )
 
@@ -182,12 +187,16 @@ async def manual_check_payment_callback(client, callback_query):
                     bot_mention_str = client.me.mention
                     user_mention_str = client.ns.telegram.arg.getMention(user)
 
-                    await client.send_message(
+                    await client.send_rich_message(
                         owner_bot_id,
-                        f"{client.ns.emoji.money_bag} **Pemasukan Baru!**\n\n"
-                        f"**Pengguna:** {user_mention_str}\n"
-                        f"**Bot:** {bot_mention_str}\n"
-                        f"**Kategori:** `Semua VIP` (Bundle)",
+                        pyrogram.types.InputRichMessage(
+                            markdown=(
+                                f"{client.ns.emoji.md('money_bag')} **Pemasukan Baru!**\n\n"
+                                f"**Pengguna:** {user_mention_str}\n"
+                                f"**Bot:** {bot_mention_str}\n"
+                                f"**Kategori:** `Semua VIP` (Bundle)"
+                            )
+                        ),
                     )
                 except Exception as e:
                     ctx.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
@@ -273,11 +282,15 @@ async def manual_check_payment_callback(client, callback_query):
                 revenue_data,
             )
 
-            link_msg = await client.send_message(
+            link_msg = await client.send_rich_message(
                 user.id,
-                f"{client.ns.emoji.party_popper} **Pembayaran Dikonfirmasi!**\n\n"
-                f"Terima kasih, berikut adalah link akses Anda untuk paket **{name}**:\n\n{link}\n\n"
-                f"{client.ns.emoji.exclamation} Link ini hanya berlaku untuk 1 kali klik dan akan kedaluwarsa dalam 60 menit jika tidak digunakan.\n",
+                pyrogram.types.InputRichMessage(
+                    markdown=(
+                        f"{client.ns.emoji.md('party_popper')} **Pembayaran Dikonfirmasi!**\n\n"
+                        f"Terima kasih, berikut adalah link akses Anda untuk paket **{name}**:\n\n{link}\n\n"
+                        f"{client.ns.emoji.md('exclamation')} Link ini hanya berlaku untuk 1 kali klik dan akan kedaluwarsa dalam 60 menit jika tidak digunakan."
+                    )
+                ),
                 protect_content=True,
             )
 
@@ -300,12 +313,16 @@ async def manual_check_payment_callback(client, callback_query):
                 user_mention_str = client.ns.telegram.arg.getMention(user)
                 bot_mention_str = client.me.mention
 
-                await client.send_message(
+                await client.send_rich_message(
                     owner_bot_id,
-                    f"{client.ns.emoji.money_bag} **Pemasukan Baru!**\n\n"
-                    f"**Pengguna:** {user_mention_str}\n"
-                    f"**Bot:** {bot_mention_str}\n"
-                    f"**Kategori:** `{name}` ({tipe.title()})",
+                    pyrogram.types.InputRichMessage(
+                        markdown=(
+                            f"{client.ns.emoji.md('money_bag')} **Pemasukan Baru!**\n\n"
+                            f"**Pengguna:** {user_mention_str}\n"
+                            f"**Bot:** {bot_mention_str}\n"
+                            f"**Kategori:** `{name}` ({tipe.title()})"
+                        )
+                    ),
                 )
             except Exception as e:
                 ctx.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")

@@ -53,11 +53,16 @@ def seller_only(func):
         if user_id == ctx.owner_id or user_id in seller_list:
             return await func(client, update, *args, **kwargs)
         else:
-            error_message = f"{client.ns.emoji.cross_mark} **Akses Ditolak!**\nAnda tidak memiliki izin untuk menggunakan perintah ini."
+            error_message = (
+                f"{client.ns.emoji.md('cross_mark')} **Akses Ditolak!**\n"
+                f"Anda tidak memiliki izin untuk menggunakan perintah ini."
+            )
             if isinstance(update, pyrogram.types.CallbackQuery):
                 return await update.answer(error_message, show_alert=True)
             elif isinstance(update, pyrogram.types.Message):
-                return await update.reply_text(error_message, quote=True)
+                return await update.reply_rich(
+                    pyrogram.types.InputRichMessage(markdown=error_message)
+                )
 
     return wrapper
 
@@ -124,7 +129,7 @@ async def get_list_vvip_icons(client):
 def render_list_vvip_icon_html(client, icons, name, kind="normal"):
     entry = icons.get(name)
     if entry and entry.get("char"):
-        return f'<emoji id="{entry["id"]}">{entry["char"]}</emoji>'
+        return f'<tg-emoji emoji-id="{entry["id"]}">{entry["char"]}</tg-emoji>'
 
     default_name = LIST_VVIP_ICON_DEFAULT.get(kind, LIST_VVIP_ICON_DEFAULT["normal"])
     return getattr(client.ns.emoji, default_name)
@@ -148,12 +153,15 @@ async def check_new_user(client, update):
         try:
             mention_user = client.ns.telegram.arg.getMention(update.from_user)
             notification_text = (
-                f"**{client.ns.emoji.bust_in_silhouette} Pengguna Baru Telah Memulai Bot Anda!**\n\n"
+                f"**{client.ns.emoji.md('bust_in_silhouette')} Pengguna Baru Telah Memulai Bot Anda!**\n\n"
                 f"**Bot:** {client.me.mention}\n"
                 f"**Pengguna:** {mention_user}\n"
                 f"**ID:** `{update.from_user.id}`"
             )
-            await client.send_message(owner_of_this_bot, notification_text)
+            await client.send_rich_message(
+                owner_of_this_bot,
+                pyrogram.types.InputRichMessage(markdown=notification_text),
+            )
         except Exception:
             pass
 

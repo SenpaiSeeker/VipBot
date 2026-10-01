@@ -1,3 +1,5 @@
+import pyrogram
+
 from .. import *
 
 
@@ -18,11 +20,26 @@ async def list_members_callback(client, callback_query):
         }
     ]
     if not members_list:
-        text = f"{client.ns.emoji.white_check_mark} Tidak ada member VVIP yang tercatat di database."
+        table = client.ns.table
+        empty_rows = [
+            ["Total Member", "`0`"],
+            ["Status", "Belum ada member VVIP tercatat"],
+        ]
+        text = (
+            f"{client.ns.emoji.html('busts_in_silhouette')} <b>Daftar Member VVIP</b>\n\n"
+            f"{table.caption(['Info', 'Nilai'], empty_rows)}"
+        )
+        rich_text = (
+            f"{client.ns.emoji.md('busts_in_silhouette')} **Daftar Member VVIP**\n\n"
+            f"{table.md(['Info', 'Nilai'], empty_rows)}"
+        )
         btn = client.ns.telegram.button.build_button_grid([back_row])
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
-        return await callback_query.edit_message_text(text, reply_markup=btn)
+        return await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=rich_text),
+            reply_markup=btn,
+        )
     total_pages = len(members_list)
     try:
         page = int(callback_query.data.split("_")[-1])
@@ -44,7 +61,10 @@ async def list_members_callback(client, callback_query):
         KeyError,
         pyrogram.errors.UserNotParticipant,
     ) as e:
-        text_error = f"Data member ini tampaknya rusak atau pengguna tidak dapat diakses lagi.\n`Error: {e}`\n\nEntri ini telah dihapus dari daftar untuk menjaga kebersihan data."
+        text_error = (
+            f"<b>Data Member Bermasalah</b>\n\n"
+            f"{client.ns.table.caption(['Info', 'Isi'], [['Status', 'Pengguna tidak dapat diakses'], ['Error', f'{e}'], ['Tindakan', 'Entri dihapus dari daftar']])}"
+        )
         btn_back = client.ns.telegram.button.build_button_grid([back_row])
         await callback_query.edit_message_caption(text_error, reply_markup=btn_back)
         await ctx.db.removeListVars(client.me.id, "vvip_members", member_data)
@@ -58,13 +78,22 @@ async def list_members_callback(client, callback_query):
 
     mention_str = client.ns.telegram.arg.getMention(user)
     formatted_join_date = join_dt_utc.strftime("%d %b %Y, %H:%M %Z")
+    rows = [
+        ["Nama", mention_str],
+        ["ID", f"`{user.id}`"],
+        ["Kategori", f"`{vvip_name}` ({pay_type.title()})"],
+        ["Bergabung", f"`{formatted_join_date}`"],
+        ["Kedaluwarsa", f"`{expiry_date_str}`"],
+    ]
+
+    table = client.ns.table
     text = (
-        f"**{client.ns.emoji.busts_in_silhouette} Daftar Member VVIP ({page + 1}/{total_pages})**\n\n"
-        f"**Nama:** {mention_str}\n"
-        f"**ID:** `{user.id}`\n"
-        f"**Kategori:** `{vvip_name}` ({pay_type.title()})\n"
-        f"**Bergabung:** `{formatted_join_date}`\n"
-        f"**Kedaluwarsa:** `{expiry_date_str}`"
+        f"{client.ns.emoji.html('busts_in_silhouette')} <b>Daftar Member VVIP ({page + 1}/{total_pages})</b>\n\n"
+        f"{table.caption(['Label', 'Isi'], rows)}"
+    )
+    rich_text = (
+        f"{client.ns.emoji.md('busts_in_silhouette')} **Daftar Member VVIP ({page + 1}/{total_pages})**\n\n"
+        f"{table.md(['Label', 'Isi'], rows)}"
     )
     button_name = (user.first_name or str(user.id))[:15]
     layout = []
@@ -107,7 +136,10 @@ async def list_members_callback(client, callback_query):
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=rich_text),
+            reply_markup=btn,
+        )
 
 
 @command(
@@ -125,6 +157,11 @@ async def confirm_kick_member_callback(client, callback_query):
     mention_str = client.ns.telegram.arg.getMention(user)
     text = (
         f"**{client.ns.emoji.exclamation} Konfirmasi Penendangan**\n\n"
+        f"Anda yakin ingin menendang **{mention_str}** dari grup VVIP **{vvip_name}**?\n\n"
+        f"Pengguna akan dikeluarkan dari grup dan data keanggotaannya akan dihapus."
+    )
+    rich_text = (
+        f"{client.ns.emoji.md('exclamation')} **Konfirmasi Penendangan**\n\n"
         f"Anda yakin ingin menendang **{mention_str}** dari grup VVIP **{vvip_name}**?\n\n"
         f"Pengguna akan dikeluarkan dari grup dan data keanggotaannya akan dihapus."
     )
@@ -148,7 +185,10 @@ async def confirm_kick_member_callback(client, callback_query):
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=rich_text),
+            reply_markup=btn,
+        )
 
 
 @command(
@@ -264,22 +304,45 @@ async def check_active_menu_callback(client, callback_query):
         }
     ]
     if not layout:
-        text = "Tidak ada VVIP dengan Chat ID valid yang terkonfigurasi. Silakan atur terlebih dahulu."
+        table = client.ns.table
+        empty_rows = [
+            ["Jumlah VVIP", "`0`"],
+            ["Status", "Tidak ada Chat ID valid"],
+            ["Saran", "Atur Chat ID terlebih dahulu"],
+        ]
+        text = (
+            f"{client.ns.emoji.html('busts_in_silhouette')} <b>Daftar Member VVIP</b>\n\n"
+            f"{table.caption(['Info', 'Nilai'], empty_rows)}"
+        )
+        rich_text = (
+            f"{client.ns.emoji.md('busts_in_silhouette')} **Daftar Member VVIP**\n\n"
+            f"{table.md(['Info', 'Nilai'], empty_rows)}"
+        )
         btn = client.ns.telegram.button.build_button_grid([back_row])
         if callback_query.message.photo:
             return await callback_query.edit_message_caption(text, reply_markup=btn)
-        return await callback_query.edit_message_text(text, reply_markup=btn)
+        return await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=rich_text),
+            reply_markup=btn,
+        )
     layout.append(back_row)
 
     text = (
         f"**{client.ns.emoji.mag} Cek Member Aktif Real-time**\n\n"
         f"Pilih grup yang ingin Anda periksa untuk melihat daftar anggotanya saat ini."
     )
+    rich_text = (
+        f"{client.ns.emoji.md('mag')} **Cek Member Aktif Real-time**\n\n"
+        f"Pilih grup yang ingin Anda periksa untuk melihat daftar anggotanya saat ini."
+    )
     btn = client.ns.telegram.button.build_button_grid(layout)
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=rich_text),
+            reply_markup=btn,
+        )
 
 
 @command(
@@ -312,8 +375,13 @@ async def list_active_members_callback(client, callback_query):
             return
     all_members = ctx.ACTIVE_MEMBERS_CACHE.get(chat_id, [])
     if not all_members:
+        empty_rows = [
+            ["Jumlah Anggota", "`0`"],
+            ["Status", "Tidak ada anggota non-bot di grup ini"],
+        ]
         await callback_query.edit_message_caption(
-            "Tidak ada anggota (non-bot) yang ditemukan di dalam grup ini."
+            f"<b>Daftar Member Grup</b>\n\n"
+            f"{client.ns.table.caption(['Info', 'Nilai'], empty_rows)}"
         )
         return
     total_members = len(all_members)
@@ -329,6 +397,14 @@ async def list_active_members_callback(client, callback_query):
         f"**Nama:** {mention_str}\n"
         f"**ID:** `{user.id}`\n"
         f"**Status:** `{member.status.name.title()}`"
+    )
+    rich_text = (
+        f"{client.ns.emoji.md('mag')} **Member Aktif ({page + 1}/{total_members})**\n\n"
+        f"| Label | Isi |\n"
+        f"| :--- | :--- |\n"
+        f"| Nama | {mention_str} |\n"
+        f"| ID | `{user.id}` |\n"
+        f"| Status | `{member.status.name.title()}` |"
     )
     button_name = (user.first_name or str(user.id))[:15]
     layout = []
@@ -380,7 +456,10 @@ async def list_active_members_callback(client, callback_query):
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=rich_text),
+            reply_markup=btn,
+        )
 
 
 @command(
@@ -396,6 +475,10 @@ async def confirm_kick_active_callback(client, callback_query):
     mention_str = client.ns.telegram.arg.getMention(user)
     text = (
         f"**{client.ns.emoji.exclamation} Konfirmasi**\n\n"
+        f"Anda yakin ingin menendang **{mention_str}** dari grup?"
+    )
+    rich_text = (
+        f"{client.ns.emoji.md('exclamation')} **Konfirmasi**\n\n"
         f"Anda yakin ingin menendang **{mention_str}** dari grup?"
     )
     layout = [
@@ -418,7 +501,10 @@ async def confirm_kick_active_callback(client, callback_query):
     if callback_query.message.photo:
         await callback_query.edit_message_caption(text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=rich_text),
+            reply_markup=btn,
+        )
 
 
 @command(
@@ -465,6 +551,10 @@ async def do_kick_active_callback(client, callback_query):
             f"{client.ns.emoji.white_check_mark} **Sukses!**\n"
             f"Pengguna **{mention_str}** telah ditendang dari grup."
         )
+        rich_text = (
+            f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n"
+            f"Pengguna **{mention_str}** telah ditendang dari grup."
+        )
         layout = [
             [
                 {
@@ -479,7 +569,10 @@ async def do_kick_active_callback(client, callback_query):
         if callback_query.message.photo:
             await callback_query.edit_message_caption(text, reply_markup=btn)
         else:
-            await callback_query.edit_message_text(text, reply_markup=btn)
+            await callback_query.edit_message_text(
+                rich_message=pyrogram.types.InputRichMessage(markdown=rich_text),
+                reply_markup=btn,
+            )
     except Exception as e:
         await callback_query.edit_message_caption(
             f"{client.ns.emoji.cross_mark} **Gagal Menendang:** `{e}`"

@@ -31,7 +31,7 @@ async def set_broadcast_price_callback(client, callback_query):
 
     try:
         prompt = (
-            f"**{client.ns.emoji.glowing_star} Atur Harga Broadcast Paid**\n\n"
+            f"{client.ns.emoji.md('glowing_star')} **Atur Harga Broadcast Paid**\n\n"
             f"Masukkan jumlah Bintang (Stars) yang harus dibayar pengguna.\n\n"
             f"Ketik `0` atau `/empty` untuk menonaktifkan.\n\n"
             f"Ketik `/batal` untuk membatalkan."
@@ -44,9 +44,11 @@ async def set_broadcast_price_callback(client, callback_query):
             if ask_msg.text.lower() in ["/empty", "0"]:
                 await ctx.db.removeVars(client.me.id, "broadcast_price")
 
-                return await client.send_message(
+                return await client.send_rich_message(
                     chat_id,
-                    f"{client.ns.emoji.white_check_mark} **Sukses!** Fitur Paid Broadcast dinonaktifkan.",
+                    pyrogram.types.InputRichMessage(
+                        markdown=f"{client.ns.emoji.md('white_check_mark')} **Sukses!** Fitur Paid Broadcast dinonaktifkan."
+                    ),
                     reply_markup=back_btn,
                 )
 
@@ -56,16 +58,20 @@ async def set_broadcast_price_callback(client, callback_query):
         stars_amount = int(ask_msg.text)
         await ctx.db.setVars(client.me.id, "broadcast_price", stars_amount)
 
-        await client.send_message(
+        await client.send_rich_message(
             chat_id,
-            f"{client.ns.emoji.white_check_mark} **Sukses!** Harga broadcast telah diatur menjadi `{stars_amount}` Stars.",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('white_check_mark')} **Sukses!** Harga broadcast telah diatur menjadi `{stars_amount}` Stars."
+            ),
             reply_markup=back_btn,
         )
 
     except (listen.UserCancelled, asyncio.TimeoutError, ValueError) as e:
-        await client.send_message(
+        await client.send_rich_message(
             chat_id,
-            f"{client.ns.emoji.cross_mark} **Proses Dibatalkan**\n{e}",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n{e}"
+            ),
             reply_markup=back_btn,
         )
 
@@ -116,9 +122,9 @@ async def _send_broadcast_message(
             reply_markup=final_markup,
         )
     elif source_message.text:
-        await client.send_message(
-            chat_id=target_user_id,
-            text=cleaned_text,
+        await client.send_rich_message(
+            target_user_id,
+            pyrogram.types.InputRichMessage(markdown=cleaned_text),
             reply_markup=final_markup,
         )
     else:
@@ -146,7 +152,7 @@ async def broadcast_callback(client, callback_query):
     try:
         await callback_query.message.delete()
         prompt = (
-            f"**{client.ns.emoji.loudspeaker} Kirim Pesan Broadcast**\n\n"
+            f"{client.ns.emoji.md('loudspeaker')} **Kirim Pesan Broadcast**\n\n"
             f"Silakan teruskan (forward) atau kirim pesan yang ingin disiarkan.\n\n"
             f"Ketik `/batal` untuk membatalkan."
         )
@@ -160,19 +166,31 @@ async def broadcast_callback(client, callback_query):
 
         if broadcast_price > 0 and (not (ask_message.photo or ask_message.video)):
             raise ValueError(
-                f"{client.ns.emoji.cross_mark} **Gagal:** Paid Broadcast memerlukan media foto/video!"
+                f"{client.ns.emoji.md('cross_mark')} **Gagal:** Paid Broadcast memerlukan media foto/video!"
             )
 
         user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
         if not user_ids:
-            return await client.send_message(
+            empty_rows = [
+                ["Jumlah Pengguna", "`0`"],
+                ["Status", "Tidak ada pengguna terdaftar"],
+                ["Saran", "Tambahkan pengguna terlebih dahulu"],
+            ]
+            return await client.send_rich_message(
                 chat_id,
-                f"{client.ns.emoji.cross_mark} **Gagal:** Tidak ada pengguna.",
+                pyrogram.types.InputRichMessage(
+                    markdown=(
+                        f"{client.ns.emoji.md('cross_mark')} **Siaran Gagal**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], empty_rows)}"
+                    )
+                ),
             )
 
-        progress_msg = await client.send_message(
+        progress_msg = await client.send_rich_message(
             chat_id,
-            f"{client.ns.emoji.white_check_mark} Memulai siaran ke `{len(user_ids)}` pengguna...",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('white_check_mark')} Memulai siaran ke `{len(user_ids)}` pengguna..."
+            ),
         )
         success_count, fail_count = 0, 0
 
@@ -200,17 +218,21 @@ async def broadcast_callback(client, callback_query):
 
         await progress_msg.delete()
 
-        await client.send_message(
+        await client.send_rich_message(
             chat_id,
-            f"**{client.ns.emoji.loudspeaker} Siaran Selesai!**\n"
-            f"{client.ns.emoji.white_check_mark} **Terkirim:** `{success_count}`\n"
-            f"{client.ns.emoji.cross_mark} **Gagal:** `{fail_count}`",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('loudspeaker')} **Siaran Selesai!**\n"
+                f"{client.ns.emoji.md('white_check_mark')} **Terkirim:** `{success_count}`\n"
+                f"{client.ns.emoji.md('cross_mark')} **Gagal:** `{fail_count}`"
+            ),
         )
 
     except (listen.UserCancelled, asyncio.TimeoutError, ValueError) as e:
-        await client.send_message(
+        await client.send_rich_message(
             chat_id,
-            f"{client.ns.emoji.cross_mark} **Gagal/Batal**\n{e}",
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Gagal/Batal**\n{e}"
+            ),
         )
 
 

@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
+import pyrogram
 from pyrogram import filters
 
 from .. import command, ctx, is_bot_owner
@@ -14,7 +15,22 @@ async def vip_revenue_menu_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
-    text = f"**{client.ns.emoji.money_bag} Cek Pendapatan VIP**\n\nPilih periode waktu untuk melihat total pendapatan dari penjualan paket VIP."
+    period_rows = [
+        ["Harian", "Hari ini"],
+        ["Mingguan", "7 hari terakhir"],
+        ["Bulanan", "Bulan berjalan"],
+    ]
+
+    table = client.ns.table
+    text = (
+        f"{client.ns.emoji.md('money_bag')} **Cek Pendapatan VIP**\n\n"
+        f"{table.md(['Periode', 'Rentang Waktu'], period_rows)}\n\n"
+        f"Pilih periode di bawah untuk melihat rekap pendapatan."
+    )
+    caption_text = (
+        f"{client.ns.emoji.html('money_bag')} <b>Cek Pendapatan VIP</b>\n\n"
+        f"{table.caption(['Periode', 'Rentang Waktu'], period_rows)}"
+    )
     layout = [
         [
             {
@@ -50,9 +66,12 @@ async def vip_revenue_menu_callback(client, callback_query):
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
+        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
 
 
 @command(
@@ -101,11 +120,20 @@ async def show_vip_revenue_callback(client, callback_query):
         "monthly": "Bulanan",
     }.get(period, "Harian")
 
+    table = client.ns.table
+    report_rows = [
+        ["Periode", period_text],
+        [f"{client.ns.emoji.md('money_bag')} Total Pendapatan", f"`Rp {total_amount:,}`"],
+        [f"{client.ns.emoji.md('repeat')} Jumlah Transaksi", f"`{transaction_count}`"],
+    ]
+
     text = (
-        f"**{client.ns.emoji.chart_bar} Laporan Pendapatan VIP**\n\n"
-        f"**Periode:** {period_text}\n\n"
-        f"{client.ns.emoji.money_bag} **Total Pendapatan:** `Rp {total_amount:,}`\n"
-        f"{client.ns.emoji.repeat} **Jumlah Transaksi:** `{transaction_count}`"
+        f"{client.ns.emoji.md('chart_bar')} **Laporan Pendapatan VIP**\n\n"
+        f"{table.md(['Info', 'Nilai'], report_rows, ['l', 'r'])}"
+    )
+    caption_text = (
+        f"{client.ns.emoji.html('chart_bar')} <b>Laporan Pendapatan VIP</b>\n\n"
+        f"{table.caption(['Info', 'Nilai'], report_rows, ['l', 'r'])}"
     )
 
     layout = [
@@ -121,6 +149,9 @@ async def show_vip_revenue_callback(client, callback_query):
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
+        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )

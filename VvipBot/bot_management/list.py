@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+import pyrogram
 from pyrogram import filters
 
 from helpers import parse_dt
@@ -53,12 +54,22 @@ async def list_my_bots_callback(client, callback_query):
         (exp_date - datetime.now(timezone.utc)).days if exp_date else "N/A"
     )
 
+    bot_rows = [
+        ["Nama Bot", bot_name],
+        ["ID Bot", f"`{bot_id}`"],
+        ["Username", f"@{bot_username}"],
+        ["Sisa Masa Aktif", f"`{days_left}` hari"],
+    ]
+
+    table = client.ns.table
     text = (
-        f"**{client.ns.emoji.folder} Daftar Bot Saya ({page + 1}/{total_pages})**\n\n"
-        f"• **Nama Bot:** {bot_name}\n"
-        f"• **ID Bot:** `{bot_id}`\n"
-        f"• **Username Bot:** @{bot_username}\n"
-        f"• **Sisa Masa Aktif:** `{days_left}` hari"
+        f"**{client.ns.emoji.md('folder')} Daftar Bot Saya ({page + 1}/{total_pages})**\n\n"
+        f"{table.md(['Info', 'Detail'], bot_rows)}"
+    )
+
+    caption_text = (
+        f"{client.ns.emoji.html('folder')} <b>Daftar Bot Saya ({page + 1}/{total_pages})</b>\n\n"
+        f"{table.caption(['Info', 'Detail'], bot_rows)}"
     )
 
     layout = []
@@ -112,9 +123,12 @@ async def list_my_bots_callback(client, callback_query):
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
+        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
 
 
 @command(
@@ -172,16 +186,30 @@ async def manage_bot_callback(client, callback_query):
         ],
     ]
 
+    manage_rows = [
+        ["ID Bot", f"`{bot_id_to_manage}`"],
+        ["Sisa Masa Aktif", f"`{days_left_text}`"],
+    ]
+
+    table = client.ns.table
     text = (
-        f"**{client.ns.emoji.toolbox} Kelola Bot: {bot_name}**\n\n"
-        f"**ID Bot:** `{bot_id_to_manage}`\n"
-        f"**Sisa Masa Aktif:** `{days_left_text}`\n\n"
+        f"**{client.ns.emoji.md('toolbox')} Kelola Bot: {bot_name}**\n\n"
+        f"{table.md(['Info', 'Detail'], manage_rows)}\n\n"
+        f"Pilih tindakan yang ingin Anda lakukan:"
+    )
+
+    caption_text = (
+        f"{client.ns.emoji.html('toolbox')} <b>Kelola Bot: {bot_name}</b>\n\n"
+        f"{table.caption(['Info', 'Detail'], manage_rows)}\n\n"
         f"Pilih tindakan yang ingin Anda lakukan:"
     )
 
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
+        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
     else:
-        await callback_query.edit_message_text(text, reply_markup=btn)
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )

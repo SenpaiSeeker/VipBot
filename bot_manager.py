@@ -2,6 +2,7 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 
 import pyrogram
+from pyrogram.types import InputRichMessage
 
 import VvipBot as handlers
 from database import schedule
@@ -120,9 +121,15 @@ async def expiration_checker_method():
                         else f"ID {bot_id}"
                     )
                     expired_message = f"Masa aktif bot Anda **{bot_name}** sudah habis."
-                    await main_client.send_message(owner_id, expired_message)
+                    await main_client.send_rich_message(
+                        owner_id,
+                        InputRichMessage(markdown=expired_message),
+                    )
                 except Exception:
-                    await bot_instance.send_message(owner_id, expired_message)
+                    await bot_instance.send_rich_message(
+                        owner_id,
+                        InputRichMessage(markdown=expired_message),
+                    )
 
                 await manager.stop_bot(bot_id)
                 await manager.db.removeBot(bot_id)
@@ -152,15 +159,21 @@ async def expiration_checker_method():
                         )
 
                         warning_message = (
-                            f"{main_client.ns.emoji.bell} **Notifikasi Masa Aktif** {main_client.ns.emoji.bell}\n\n"
+                            f"{main_client.ns.emoji.md('bell')} **Notifikasi Masa Aktif** {main_client.ns.emoji.md('bell')}\n\n"
                             f"Halo {mention_owner},\n"
                             f"Masa aktif bot Anda (**{bot_name}**) tinggal **{days_left} hari** lagi.\n\n"
                             "Silakan hubungi @NorSodikin jika mau diperpanjang."
                         )
                         try:
-                            await main_client.send_message(owner_id, warning_message)
+                            await main_client.send_rich_message(
+                                owner_id,
+                                InputRichMessage(markdown=warning_message),
+                            )
                         except Exception:
-                            await bot_instance.send_message(owner_id, warning_message)
+                            await bot_instance.send_rich_message(
+                                owner_id,
+                                InputRichMessage(markdown=warning_message),
+                            )
                         await manager.db.setVars(
                             bot_id,
                             last_notif_date_key,
@@ -223,10 +236,16 @@ async def subscription_checker_method():
 
                     vvip_name_val = member["vvip_name"]
                     expired_message_text = (
-                        f"{bot_client.ns.emoji.hourglass_done} **Langganan Berakhir**\n\n"
-                        f"Langganan Anda untuk paket **{vvip_name_val}** telah berakhir. Anda telah dikeluarkan dari grup."
+                        f"{bot_client.ns.emoji.md('hourglass_done')} **Langganan Berakhir**\n\n"
+                        f"| Info | Detail |\n"
+                        f"| :--- | :--- |\n"
+                        f"| Paket | **{vvip_name_val}** |\n"
+                        f"| Status | Berakhir - dikeluarkan dari grup |"
                     )
-                    await bot_client.send_message(user_id, expired_message_text)
+                    await bot_client.send_rich_message(
+                        user_id,
+                        InputRichMessage(markdown=expired_message_text),
+                    )
                     log.debug(
                         f"Langganan {user_id} di bot {bot_id} habis. Dikeluarkan dari grup."
                     )
@@ -255,8 +274,12 @@ async def subscription_checker_method():
                             vvip_name_val = member["vvip_name"]
                             days_left_val = time_left.days
                             text = (
-                                f"{bot_client.ns.emoji.bell} **Pengingat Langganan**\n\n"
-                                f"Langganan Anda untuk paket **{vvip_name_val}** akan berakhir dalam **{days_left_val} hari** lagi. Perpanjang sekarang agar tidak kehilangan akses!"
+                                f"{bot_client.ns.emoji.md('bell')} **Pengingat Langganan**\n\n"
+                                f"| Info | Detail |\n"
+                                f"| :--- | :---: |\n"
+                                f"| Paket | **{vvip_name_val}** |\n"
+                                f"| Sisa Waktu | **{days_left_val} hari** |\n\n"
+                                f"Perpanjang sekarang agar tidak kehilangan akses!"
                             )
                             layout = [
                                 [
@@ -271,9 +294,9 @@ async def subscription_checker_method():
                             btn = bot_client.ns.telegram.button.build_button_grid(
                                 layout
                             )
-                            await bot_client.send_message(
+                            await bot_client.send_rich_message(
                                 user_id,
-                                text,
+                                InputRichMessage(markdown=text),
                                 reply_markup=btn,
                             )
                             await manager.db.setVars(
