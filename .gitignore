@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+
+env/
+envpath/
+
+src/
+
+*.json
+!package.json
+!package-lock.json
+
+unknown_errors.txt
+
+*.log
+.env
