@@ -184,7 +184,7 @@ async def proceed_bot_payment_callback(client, callback_query):
 
         await client.send_rich_message(
             user_id,
-            client.ns.rich.photo(
+            client.ns.table.rich_photo(
                 photo=qr_image_stream,
                 markdown=markdown,
                 alias=f"qris_{transaction_id}",

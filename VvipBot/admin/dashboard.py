@@ -74,7 +74,7 @@ async def dashboard_command_handler(client, message):
     try:
         photo_stream = await client.ns.utils.dashboard.generate_dashboard(stats_data)
         await message.reply_rich(
-            client.ns.rich.photo(
+            client.ns.table.rich_photo(
                 photo=photo_stream, markdown=dashboard_text, alias="dashboard"
             )
         )

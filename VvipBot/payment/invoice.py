@@ -114,7 +114,7 @@ async def _create_payment_invoice(
 
         await client.send_rich_message(
             user.id,
-            client.ns.rich.photo(
+            client.ns.table.rich_photo(
                 photo=qr_image_stream, markdown=markdown, alias="qris"
             ),
             reply_markup=btn,
@@ -228,7 +228,7 @@ async def _create_all_vvip_payment_invoice(client, user, selected_items, total_a
 
         await client.send_rich_message(
             user.id,
-            client.ns.rich.photo(
+            client.ns.table.rich_photo(
                 photo=qr_image_stream, markdown=markdown, alias="qris"
             ),
             reply_markup=btn,

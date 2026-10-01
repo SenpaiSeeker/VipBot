@@ -117,7 +117,7 @@ async def _send_broadcast_message(
     if source_message.photo:
         await client.send_rich_message(
             target_user_id,
-            client.ns.rich.photo(
+            client.ns.table.rich_photo(
                 photo=source_message.photo.sizes[-1].file_id,
                 markdown=cleaned_text,
                 alias=f"bc_{source_message.id}",

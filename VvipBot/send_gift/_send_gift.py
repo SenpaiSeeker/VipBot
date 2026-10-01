@@ -160,7 +160,7 @@ async def list_gift_handler(client, message):
                         file_path = await client.download_media(thumb.file_id)
                         await client.send_rich_message(
                             message.chat.id,
-                            client.ns.rich.photo(
+                            client.ns.table.rich_photo(
                                 photo=file_path,
                                 markdown=rich_text,
                                 alias=f"gift_{gift.id}",

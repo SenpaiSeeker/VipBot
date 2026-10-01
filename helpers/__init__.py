@@ -40,7 +40,6 @@ class CleanNamespace:
         self.payment = SimpleNamespace(SaweriaScraper=SaweriaScraper)
         self.emoji = EmojiParse()
         self.table = TableBuilder()
-        self.rich = SimpleNamespace(photo=self.table.rich_photo)
 
 
 def get_ns(self):

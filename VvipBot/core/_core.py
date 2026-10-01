@@ -100,7 +100,9 @@ async def get_start_keyboard_and_content(client, user):
 async def start_bot(client, message):
     btn, txt, photo_id = await get_start_keyboard_and_content(client, message.from_user)
     await message.reply_rich(
-        client.ns.rich.photo(photo=photo_id, markdown=txt, alias="start_photo"),
+        client.ns.table.rich_photo(
+            photo=photo_id, markdown=txt, alias="start_photo"
+        ),
         reply_markup=btn,
     )
     await check_new_user(client, message)
@@ -119,7 +121,7 @@ async def start_callback(client, callback_query):
         await callback_query.message.delete()
         await client.send_rich_message(
             callback_query.from_user.id,
-            client.ns.rich.photo(
+            client.ns.table.rich_photo(
                 photo=photo_id, markdown=txt, alias="start_photo"
             ),
             reply_markup=btn,
@@ -349,7 +351,7 @@ async def donate_callback(client, callback_query):
     try:
         await client.send_rich_message(
             callback_query.from_user.id,
-            client.ns.rich.photo(
+            client.ns.table.rich_photo(
                 photo=photo_url, markdown=text, alias="donate_photo"
             ),
             reply_markup=btn,
