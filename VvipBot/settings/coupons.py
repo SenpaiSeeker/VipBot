@@ -27,10 +27,6 @@ async def manage_coupons_callback(client, callback_query):
         f"{client.ns.emoji.md('ticket_admit')} **Manajemen Kupon**\n\n"
         f"{table.md(['Menu', 'Fungsi'], menu_rows)}"
     )
-    caption_text = (
-        f"{client.ns.emoji.html('ticket_admit')} <b>Manajemen Kupon</b>\n\n"
-        f"{table.caption(['Menu', 'Fungsi'], menu_rows)}"
-    )
     layout = [
         [
             {
@@ -59,13 +55,10 @@ async def manage_coupons_callback(client, callback_query):
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
 
 
 @command(
@@ -170,18 +163,11 @@ async def list_coupons_callback(client, callback_query):
             f"{client.ns.emoji.md('ticket_admit')} **Daftar Kupon**\n\n"
             f"{table.md(['Info', 'Nilai'], empty_rows)}"
         )
-        caption_text = (
-            f"{client.ns.emoji.html('ticket_admit')} <b>Daftar Kupon</b>\n\n"
-            f"{table.caption(['Info', 'Nilai'], empty_rows)}"
-        )
         btn = client.ns.telegram.button.build_button_grid([back_row])
-        if callback_query.message.photo:
-            await callback_query.edit_message_caption(caption_text, reply_markup=btn)
-        else:
-            await callback_query.edit_message_text(
-                rich_message=pyrogram.types.InputRichMessage(markdown=text),
-                reply_markup=btn,
-            )
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
         return
 
     total_pages = len(coupons)
@@ -205,10 +191,6 @@ async def list_coupons_callback(client, callback_query):
     text = (
         f"{client.ns.emoji.md('pencil')} **Detail Kupon ({page + 1}/{total_pages})**\n\n"
         f"{table.md(['Info', 'Isi'], detail_rows)}"
-    )
-    caption_text = (
-        f"{client.ns.emoji.html('pencil')} <b>Detail Kupon ({page + 1}/{total_pages})</b>\n\n"
-        f"{table.caption(['Info', 'Isi'], detail_rows)}"
     )
 
     layout = []
@@ -252,13 +234,10 @@ async def list_coupons_callback(client, callback_query):
 
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
 
 
 @command(

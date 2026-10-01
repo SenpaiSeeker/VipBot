@@ -130,11 +130,7 @@ async def list_gift_handler(client, message):
                     [f"{client.ns.emoji.char('performing_arts')} Emoji", emoji.strip()],
                 ]
 
-                caption = (
-                    f"<b>{client.ns.emoji.gift} Info Hadiah</b>\n\n"
-                    f"{client.ns.table.caption(['Label', 'Isi'], gift_rows)}"
-                )
-                rich_caption = (
+                rich_text = (
                     f"{client.ns.emoji.md('gift')} **Info Hadiah**\n\n"
                     f"{client.ns.table.md(['Label', 'Isi'], gift_rows)}"
                 )
@@ -162,16 +158,19 @@ async def list_gift_handler(client, message):
                     file_path = None
                     try:
                         file_path = await client.download_media(thumb.file_id)
-                        await client.send_photo(
+                        await client.send_rich_message(
                             message.chat.id,
-                            photo=file_path,
-                            caption=caption,
+                            client.ns.rich.photo(
+                                photo=file_path,
+                                markdown=rich_text,
+                                alias=f"gift_{gift.id}",
+                            ),
                             reply_markup=markup,
                         )
                     except Exception:
                         await client.send_rich_message(
                             message.chat.id,
-                            pyrogram.types.InputRichMessage(markdown=rich_caption),
+                            pyrogram.types.InputRichMessage(markdown=rich_text),
                             reply_markup=markup,
                         )
                     finally:
@@ -180,7 +179,7 @@ async def list_gift_handler(client, message):
                 else:
                     await client.send_rich_message(
                         message.chat.id,
-                        pyrogram.types.InputRichMessage(markdown=rich_caption),
+                        pyrogram.types.InputRichMessage(markdown=rich_text),
                         reply_markup=markup,
                     )
                 await asyncio.sleep(1.5)
@@ -208,8 +207,13 @@ async def claim_self_gift_callback(client, callback_query):
     try:
         await callback_query.edit_message_reply_markup(None)
         await send_star_gift_raw(client, user_id, gift_id)
-        await callback_query.edit_message_caption(
-            f"{client.ns.emoji.white_check_mark} Berhasil mengklaim hadiah (ID: {gift_id}) untuk diri sendiri!"
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('white_check_mark')} **Hadiah Berhasil Diklaim**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Gift ID', f'`{gift_id}`'], ['Penerima', 'Diri sendiri']])}"
+                )
+            )
         )
     except Exception as e:
         await callback_query.answer(

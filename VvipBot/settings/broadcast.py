@@ -115,10 +115,13 @@ async def _send_broadcast_message(
         return
 
     if source_message.photo:
-        await client.send_photo(
-            chat_id=target_user_id,
-            photo=source_message.photo.sizes[-1].file_id,
-            caption=cleaned_text,
+        await client.send_rich_message(
+            target_user_id,
+            client.ns.rich.photo(
+                photo=source_message.photo.sizes[-1].file_id,
+                markdown=cleaned_text,
+                alias=f"bc_{source_message.id}",
+            ),
             reply_markup=final_markup,
         )
     elif source_message.text:

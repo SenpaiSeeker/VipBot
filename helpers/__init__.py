@@ -12,6 +12,7 @@ from .gradient import Gradient
 from .logger import LoggerHandler
 from .monitor import ServerMonitor
 from .saweria_scraper import SaweriaScraper
+from .rich_photo import rich
 from .table import TableBuilder
 
 
@@ -40,6 +41,7 @@ class CleanNamespace:
         self.payment = SimpleNamespace(SaweriaScraper=SaweriaScraper)
         self.emoji = EmojiParse()
         self.table = TableBuilder()
+        self.rich = SimpleNamespace(photo=rich)
 
 
 def get_ns(self):

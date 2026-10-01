@@ -27,10 +27,6 @@ async def vip_revenue_menu_callback(client, callback_query):
         f"{table.md(['Periode', 'Rentang Waktu'], period_rows)}\n\n"
         f"Pilih periode di bawah untuk melihat rekap pendapatan."
     )
-    caption_text = (
-        f"{client.ns.emoji.html('money_bag')} <b>Cek Pendapatan VIP</b>\n\n"
-        f"{table.caption(['Periode', 'Rentang Waktu'], period_rows)}"
-    )
     layout = [
         [
             {
@@ -65,13 +61,10 @@ async def vip_revenue_menu_callback(client, callback_query):
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
 
 
 @command(
@@ -131,10 +124,6 @@ async def show_vip_revenue_callback(client, callback_query):
         f"{client.ns.emoji.md('chart_bar')} **Laporan Pendapatan VIP**\n\n"
         f"{table.md(['Info', 'Nilai'], report_rows, ['l', 'r'])}"
     )
-    caption_text = (
-        f"{client.ns.emoji.html('chart_bar')} <b>Laporan Pendapatan VIP</b>\n\n"
-        f"{table.caption(['Info', 'Nilai'], report_rows, ['l', 'r'])}"
-    )
 
     layout = [
         [
@@ -148,10 +137,7 @@ async def show_vip_revenue_callback(client, callback_query):
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )

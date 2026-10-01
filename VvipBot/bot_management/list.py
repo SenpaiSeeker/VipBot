@@ -67,10 +67,6 @@ async def list_my_bots_callback(client, callback_query):
         f"{table.md(['Info', 'Detail'], bot_rows)}"
     )
 
-    caption_text = (
-        f"{client.ns.emoji.html('folder')} <b>Daftar Bot Saya ({page + 1}/{total_pages})</b>\n\n"
-        f"{table.caption(['Info', 'Detail'], bot_rows)}"
-    )
 
     layout = []
     pagination_row = []
@@ -122,13 +118,10 @@ async def list_my_bots_callback(client, callback_query):
 
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
 
 
 @command(
@@ -198,18 +191,10 @@ async def manage_bot_callback(client, callback_query):
         f"Pilih tindakan yang ingin Anda lakukan:"
     )
 
-    caption_text = (
-        f"{client.ns.emoji.html('toolbox')} <b>Kelola Bot: {bot_name}</b>\n\n"
-        f"{table.caption(['Info', 'Detail'], manage_rows)}\n\n"
-        f"Pilih tindakan yang ingin Anda lakukan:"
-    )
 
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )

@@ -618,16 +618,8 @@ async def delete_listvvip(client, callback_query):
             f"{client.ns.emoji.md('minus')} **Hapus Paket VVIP**\n\n"
             f"{table.md(['Info', 'Nilai'], empty_rows)}"
         )
-        caption_text = (
-            f"{client.ns.emoji.html('minus')} <b>Hapus Paket VVIP</b>\n\n"
-            f"{table.caption(['Info', 'Nilai'], empty_rows)}"
-        )
         btn = client.ns.telegram.button.build_button_grid([back_row])
 
-        if callback_query.message.photo:
-            return await callback_query.edit_message_caption(
-                caption_text, reply_markup=btn
-            )
         return await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(markdown=text),
             reply_markup=btn,
@@ -672,20 +664,12 @@ async def delete_listvvip(client, callback_query):
         f"{table.md(['Info', 'Nilai'], menu_rows)}\n\n"
         f"Pilih paket VVIP yang ingin Anda hapus."
     )
-    caption_text = (
-        f"{client.ns.emoji.html('minus')} <b>Hapus Paket VVIP</b>\n\n"
-        f"{table.caption(['Info', 'Nilai'], menu_rows)}\n\n"
-        f"Pilih paket VVIP yang ingin Anda hapus."
-    )
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
 
 
 @command(
@@ -739,16 +723,8 @@ async def edit_price_listvvip_callback(client, callback_query):
             f"{client.ns.emoji.md('pencil')} **Edit Harga VVIP**\n\n"
             f"{table.md(['Info', 'Nilai'], empty_rows)}"
         )
-        caption_text = (
-            f"{client.ns.emoji.html('pencil')} <b>Edit Harga VVIP</b>\n\n"
-            f"{table.caption(['Info', 'Nilai'], empty_rows)}"
-        )
         btn = client.ns.telegram.button.build_button_grid([back_row])
 
-        if callback_query.message.photo:
-            return await callback_query.edit_message_caption(
-                caption_text, reply_markup=btn
-            )
         return await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(markdown=text),
             reply_markup=btn,
@@ -793,20 +769,12 @@ async def edit_price_listvvip_callback(client, callback_query):
         f"{table.md(['Info', 'Nilai'], menu_rows)}\n\n"
         f"Pilih paket VVIP yang ingin Anda ubah harganya."
     )
-    caption_text = (
-        f"{client.ns.emoji.html('pencil')} <b>Edit Harga VVIP</b>\n\n"
-        f"{table.caption(['Info', 'Nilai'], menu_rows)}\n\n"
-        f"Pilih paket VVIP yang ingin Anda ubah harganya."
-    )
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
 
 
 @command(

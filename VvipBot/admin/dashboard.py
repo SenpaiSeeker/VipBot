@@ -44,45 +44,40 @@ async def dashboard_command_handler(client, message):
         ram_pct = stats.ram["percent"]
         disk_bar = stats.disk["bar"]
         disk_pct = stats.disk["percent"]
-        server_stats_text = (
-            f"| Komponen | Penggunaan |\n"
-            f"| :--- | ---: |\n"
-            f"| CPU | `[{cpu_bar}] {cpu_pct}%` |\n"
-            f"| RAM | `[{ram_bar}] {ram_pct}%` |\n"
-            f"| Disk | `[{disk_bar}] {disk_pct}%` |"
-        )
-        server_stats_caption = (
-            f"- CPU: <code>[{cpu_bar}] {cpu_pct}%</code><br>"
-            f"- RAM: <code>[{ram_bar}] {ram_pct}%</code><br>"
-            f"- Disk: <code>[{disk_bar}] {disk_pct}%</code>"
+        server_rows = [
+            ["CPU", f"`[{cpu_bar}] {cpu_pct}%`"],
+            ["RAM", f"`[{ram_bar}] {ram_pct}%`"],
+            ["Disk", f"`[{disk_bar}] {disk_pct}%`"],
+        ]
+        server_stats_text = client.ns.table.md(
+            ["Komponen", "Penggunaan"], server_rows, ["l", "r"]
         )
     except Exception as e:
         stats_data = {"cpu": 0, "ram": 0, "disk": 0}
-        server_stats_text = f"Gagal mengambil statistik server: `{e}`"
-        server_stats_caption = f"Gagal mengambil statistik server: <code>{e}</code>"
+        server_stats_text = (
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal mengambil statistik server'], ['Error', f'`{e}`']])}"
+        )
+
+    platform_rows = [
+        ["Total Bot Aktif", f"`{total_bots}`"],
+        ["Total Pengguna Unik", f"`{total_users}`"],
+        [f"{client.ns.emoji.md('trophy')} Bot Terpopuler", f"`{top_bot_info}`"],
+    ]
 
     dashboard_text = (
         f"{client.ns.emoji.md('chart_bar')} **Dashboard Platform**\n\n"
         f"**Statistik Platform**\n\n"
-        f"| Komponen | Isi |\n"
-        f"| :--- | ---: |\n"
-        f"| Total Bot Aktif | {total_bots} |\n"
-        f"| Total Pengguna Unik | {total_users} |\n\n"
-        f"**{client.ns.emoji.md('trophy')} Bot Terpopuler:** `{top_bot_info}`\n\n"
+        f"{client.ns.table.md(['Komponen', 'Isi'], platform_rows, ['l', 'r'])}\n\n"
         f"**Kesehatan Server**\n\n"
         f"{server_stats_text}"
     )
-    dashboard_caption = (
-        f"{client.ns.emoji.chart_bar} <b>Dashboard Platform</b><br><br>"
-        f"<b>Statistik Platform:</b><br>"
-        f"- Total Bot Aktif: <code>{total_bots}</code><br>"
-        f"- Total Pengguna Unik: <code>{total_users}</code><br>"
-        f"- Bot Terpopuler: <code>{top_bot_info}</code><br><br>"
-        f"<b>Kesehatan Server:</b><br>{server_stats_caption}"
-    )
     try:
         photo_stream = await client.ns.utils.dashboard.generate_dashboard(stats_data)
-        await message.reply_photo(photo=photo_stream, caption=dashboard_caption)
+        await message.reply_rich(
+            client.ns.rich.photo(
+                photo=photo_stream, markdown=dashboard_text, alias="dashboard"
+            )
+        )
         await msg.delete()
     except Exception as e:
         await msg.edit_text(
@@ -179,13 +174,6 @@ async def show_stars_stats(client, callback_query):
                 f"{client.ns.emoji.md('chart_bar')} **Statistik Pendapatan Stars**\n\n"
                 f"{table.md(['Info', 'Nilai'], empty_rows)}"
             )
-            if callback_query.message.photo:
-                await callback_query.edit_message_caption(
-                    f"{client.ns.emoji.html('chart_bar')} <b>Statistik Pendapatan Stars</b>\n\n"
-                    f"{table.caption(['Info', 'Nilai'], empty_rows)}",
-                    reply_markup=btn,
-                )
-                return
             await callback_query.edit_message_text(
                 rich_message=pyrogram.types.InputRichMessage(markdown=text),
                 reply_markup=btn,
@@ -228,31 +216,18 @@ async def show_stars_stats(client, callback_query):
                 [f"`{formatted_date}`", f"**{amount_str}{client.ns.emoji.md('star')}**", peer_mention]
             )
 
-        table = client.ns.table
         summary_rows = [
             [f"{client.ns.emoji.md('money_bag')} Saldo Saat Ini", f"`{total_balance}` {client.ns.emoji.md('star')}"],
             [f"{client.ns.emoji.md('chart_up')} Total Pemasukan", f"`{total_income}` {client.ns.emoji.md('star')}"],
             [f"{client.ns.emoji.md('chart_down')} Total Pengembalian", f"`{total_refunds}` {client.ns.emoji.md('star')}"],
             [f"{client.ns.emoji.md('repeat')} Total Transaksi (Tampil)", f"`{total_transactions_count}`"],
         ]
+        summary_text = table.md(['Aspek', 'Nilai'], summary_rows, ['l', 'r'])
         text = (
-            f"**{client.ns.emoji.md('chart_bar')} Statistik Pendapatan Stars**\n\n"
-            f"{table.md(['Aspek', 'Nilai'], summary_rows, ['l', 'r'])}\n\n"
+            f"{client.ns.emoji.md('chart_bar')} **Statistik Pendapatan Stars**\n\n"
+            f"{summary_text}\n\n"
             f"**{client.ns.emoji.md('open_book')} Transaksi Terakhir ({page + 1}/{total_pages})**\n\n"
             f"{table.md(['Tanggal', 'Jumlah', 'Sumber'], transactions_rows, ['l', 'r', 'l'])}"
-        )
-        summary_caption = table.caption(['Aspek', 'Nilai'], summary_rows, ['l', 'r'])
-        history_head = (
-            f"{client.ns.emoji.chart_bar} <b>Statistik Pendapatan Stars</b>\n\n"
-            f"{summary_caption}\n\n"
-            f"<b>{client.ns.emoji.open_book} Transaksi Terakhir ({page + 1}/{total_pages})</b>\n\n"
-        )
-        caption_text = history_head + table.caption_bundle(
-            ['Tanggal', 'Jumlah', 'Sumber'],
-            transactions_rows,
-            ['l', 'r', 'l'],
-            max_chars=1024,
-            reserved=len(history_head) + len("<pre></pre>"),
         )
         layout = []
         if total_pages > 1:
@@ -285,13 +260,10 @@ async def show_stars_stats(client, callback_query):
             ]
         )
         btn = client.ns.telegram.button.build_button_grid(layout)
-        if callback_query.message.photo:
-            await callback_query.edit_message_caption(caption_text, reply_markup=btn)
-        else:
-            await callback_query.edit_message_text(
-                rich_message=pyrogram.types.InputRichMessage(markdown=text),
-                reply_markup=btn,
-            )
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
     except Exception as e:
         ctx.log.print(
             f"{ctx.log.RED} Error fetching stars stats: {e}\n{traceback.format_exc()}"
@@ -308,15 +280,9 @@ async def total_users_count_callback(client, callback_query):
     user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
     total_count = len(user_ids)
     text = (
-        f"**{client.ns.emoji.md('busts_in_silhouette')} Total Pengguna Bot**\n\n"
-        f"| Aspek | Nilai |\n"
-        f"| :--- | ---: |\n"
-        f"| Jumlah Pengguna | {total_count} |\n\n"
-        f"Jumlah keseluruhan pengguna yang pernah memulai bot ini adalah: **{total_count} pengguna**."
-    )
-    caption_text = (
-        f"{client.ns.emoji.busts_in_silhouette} <b>Total Pengguna Bot</b>\n\n"
-        f"Jumlah keseluruhan pengguna yang pernah memulai bot ini adalah: <b>{total_count} pengguna</b>."
+        f"{client.ns.emoji.md('busts_in_silhouette')} **Total Pengguna Bot**\n\n"
+        f"{client.ns.table.md(['Aspek', 'Nilai'], [['Jumlah Pengguna', f'`{total_count}`']])}\n\n"
+        f"Jumlah keseluruhan pengguna yang pernah memulai bot ini adalah **{total_count} pengguna**."
     )
     markup = client.ns.telegram.button.build_button_grid(
         [
@@ -331,13 +297,10 @@ async def total_users_count_callback(client, callback_query):
         ]
     )
     try:
-        if callback_query.message.photo:
-            await callback_query.edit_message_caption(caption_text, reply_markup=markup)
-        else:
-            await callback_query.edit_message_text(
-                rich_message=pyrogram.types.InputRichMessage(markdown=text),
-                reply_markup=markup,
-            )
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=markup,
+        )
     except pyrogram.errors.MessageNotModified:
         await callback_query.answer()
     except Exception:

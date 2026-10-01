@@ -41,7 +41,6 @@ async def pay_all_vvip_callback(client, callback_query):
         )
 
     total_amount = sum((item.get("price", 0) for item in selected_items))
-    icons = await get_list_vvip_icons(client)
 
     table = client.ns.table
     rows = _build_pay_all_rows(selected_items)
@@ -51,12 +50,6 @@ async def pay_all_vvip_callback(client, callback_query):
         f"{client.ns.emoji.md('money_bag')} **Total: Rp {int(total_amount):,}** ({len(selected_items)} paket)"
     )
 
-    caption_text = (
-        f"{render_list_vvip_icon_html(client, icons, LIST_VVIP_ICON_BUY_ALL_KEY, kind='buy_all')}"
-        f" <b>Ringkasan Ambil Semua VIP</b>\n\n"
-        f"{table.caption(['Paket', 'Harga'], rows, ['l', 'r'])}"
-        f"\n\n<b>Total:</b> <code>Rp {int(total_amount):,}</code> ({len(selected_items)} paket)"
-    )
 
     layout = [
         [
@@ -78,13 +71,10 @@ async def pay_all_vvip_callback(client, callback_query):
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
 
 
 @command(
@@ -129,11 +119,7 @@ def _build_package_detail_table(client, emoji_name, title, rows, footer):
         f"{client.ns.emoji.md(emoji_name)} **{title}**\n\n"
         f"{table.md(['Info', 'Rincian'], rows)}\n\n{footer}"
     )
-    caption = (
-        f"{client.ns.emoji.html(emoji_name)} <b>{title}</b>\n\n"
-        f"{table.caption(['Info', 'Rincian'], rows)}\n\n{footer}"
-    )
-    return rich, caption
+    return rich
 
 
 @command(
@@ -187,7 +173,7 @@ async def notes_data(client, callback_query):
         default_footer = (
             "Silakan klik tombol **Bayar** di bawah untuk melanjutkan!"
         )
-        rich_desc, caption_desc = _build_package_detail_table(
+        rich_desc = _build_package_detail_table(
             client, "sparkles", "Detail Paket VVIP", default_rows, default_footer
         )
 
@@ -195,11 +181,6 @@ async def notes_data(client, callback_query):
             normal_text.replace("{name}", name).replace("{price}", formatted_price)
             if normal_text
             else rich_desc
-        )
-        caption_text = (
-            normal_text.replace("{name}", name).replace("{price}", formatted_price)
-            if normal_text
-            else caption_desc
         )
 
         layout = [
@@ -228,10 +209,6 @@ async def notes_data(client, callback_query):
         ]
         btn = client.ns.telegram.button.build_button_grid(layout)
 
-        if callback_query.message.photo:
-            return await callback_query.edit_message_caption(
-                caption_text, reply_markup=btn
-            )
         return await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(markdown=desc),
             reply_markup=btn,
@@ -243,19 +220,12 @@ async def notes_data(client, callback_query):
         f"{client.ns.emoji.md('cross_mark')} **Paket VVIP Tidak Ditemukan**\n\n"
         f"{table.md(['Info', 'Nilai'], missing_rows)}"
     )
-    caption_text = (
-        f"{client.ns.emoji.html('cross_mark')} <b>Paket VVIP Tidak Ditemukan</b>\n\n"
-        f"{table.caption(['Info', 'Nilai'], missing_rows)}"
-    )
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
 
 
 @command(
@@ -307,7 +277,7 @@ async def promo_detail(client, callback_query):
             ("Harga Promo", f"`Rp {formatted_promo}`"),
         ]
         default_footer = "Segera amankan slot Anda sebelum promo berakhir!"
-        rich_desc, caption_desc = _build_package_detail_table(
+        rich_desc = _build_package_detail_table(
             client,
             "party_popper",
             "Penawaran Spesial Terbatas!",
@@ -321,13 +291,6 @@ async def promo_detail(client, callback_query):
             )
             if promo_text
             else rich_desc
-        )
-        caption_text = (
-            promo_text.replace("{name}", name).replace(
-                "{promo_price}", formatted_promo
-            )
-            if promo_text
-            else caption_desc
         )
 
         layout = [
@@ -356,28 +319,18 @@ async def promo_detail(client, callback_query):
         ]
         btn = client.ns.telegram.button.build_button_grid(layout)
 
-        if callback_query.message.photo:
-            return await callback_query.edit_message_caption(
-                caption_text, reply_markup=btn
-            )
         return await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(markdown=desc),
             reply_markup=btn,
         )
 
     text = f"{client.ns.emoji.md('cross_mark')} Paket promo tidak ditemukan atau tidak aktif."
-    caption_text = (
-        f"{client.ns.emoji.html('cross_mark')} Paket promo tidak ditemukan atau tidak aktif."
-    )
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
 
 
 @command(

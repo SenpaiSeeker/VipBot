@@ -99,13 +99,10 @@ async def get_start_keyboard_and_content(client, user):
 @command(lambda ctx: filters.command("start") & filters.private)
 async def start_bot(client, message):
     btn, txt, photo_id = await get_start_keyboard_and_content(client, message.from_user)
-    if photo_id:
-        await message.reply_photo(photo=photo_id, caption=txt, reply_markup=btn)
-    else:
-        await message.reply_rich(
-            pyrogram.types.InputRichMessage(markdown=txt),
-            reply_markup=btn,
-        )
+    await message.reply_rich(
+        client.ns.rich.photo(photo=photo_id, markdown=txt, alias="start_photo"),
+        reply_markup=btn,
+    )
     await check_new_user(client, message)
 
 
@@ -118,22 +115,20 @@ async def start_callback(client, callback_query):
         client, callback_query.from_user
     )
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(txt, reply_markup=btn)
+    if photo_id:
+        await callback_query.message.delete()
+        await client.send_rich_message(
+            callback_query.from_user.id,
+            client.ns.rich.photo(
+                photo=photo_id, markdown=txt, alias="start_photo"
+            ),
+            reply_markup=btn,
+        )
     else:
-        if photo_id:
-            await callback_query.message.delete()
-            await client.send_photo(
-                callback_query.from_user.id,
-                photo=photo_id,
-                caption=txt,
-                reply_markup=btn,
-            )
-        else:
-            await callback_query.edit_message_text(
-                rich_message=pyrogram.types.InputRichMessage(markdown=txt),
-                reply_markup=btn,
-            )
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=txt),
+            reply_markup=btn,
+        )
 
 
 @command(
@@ -165,13 +160,10 @@ async def about_bot_callback(client, callback_query):
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
 
 
 @command(
@@ -207,10 +199,6 @@ async def list_vvip_bot(client, callback_query):
             f"{client.ns.emoji.md('card_index_dividers')} **Daftar Paket VVIP**\n\n"
             f"{table.md(['Info', 'Nilai'], empty_rows)}"
         )
-        caption_text = (
-            f"{client.ns.emoji.html('card_index_dividers')} <b>Daftar Paket VVIP</b>\n\n"
-            f"{table.caption(['Info', 'Nilai'], empty_rows)}"
-        )
         layout.append(
             [
                 {
@@ -223,8 +211,6 @@ async def list_vvip_bot(client, callback_query):
         )
         btn = client.ns.telegram.button.build_button_grid(layout)
 
-        if callback_query.message.photo:
-            return await callback_query.edit_message_caption(caption_text, reply_markup=btn)
         return await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(markdown=text),
             reply_markup=btn,
@@ -292,13 +278,10 @@ async def list_vvip_bot(client, callback_query):
         f"Berikut adalah daftar paket eksklusif yang kami tawarkan. Klik pada salah satu paket untuk melihat detail lengkap dan penawaran spesial."
     )
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
 
 
 @command(
@@ -314,10 +297,6 @@ async def donate_callback(client, callback_query):
         ["100 ⭐", "Dukungan maksimal"],
     ]
     table = client.ns.table
-    donate_caption = (
-        f"{client.ns.emoji.html('red_heart')} <b>Dukung Kami dengan Telegram Stars</b>\n\n"
-        f"{table.caption(['Jumlah', 'Keterangan'], donate_rows, ['c', 'l'])}"
-    )
     text = (
         f"{client.ns.emoji.md('red_heart')} **Dukung Kami dengan Telegram Stars**\n\n"
         f"{table.md(['Jumlah', 'Keterangan'], donate_rows, ['c', 'l'])}\n\n"
@@ -365,16 +344,14 @@ async def donate_callback(client, callback_query):
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     if callback_query.message.photo:
-        return await callback_query.edit_message_caption(
-            caption=donate_caption, reply_markup=btn
-        )
+        await callback_query.message.delete()
 
-    await callback_query.message.delete()
     try:
-        await client.send_photo(
+        await client.send_rich_message(
             callback_query.from_user.id,
-            photo=photo_url,
-            caption=donate_caption,
+            client.ns.rich.photo(
+                photo=photo_url, markdown=text, alias="donate_photo"
+            ),
             reply_markup=btn,
         )
     except Exception:

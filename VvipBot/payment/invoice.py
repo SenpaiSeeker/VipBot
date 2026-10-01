@@ -89,15 +89,15 @@ async def _create_payment_invoice(
         formatted_amount = f"{int(amount_raw):,}"
 
         detail_rows = [
-            [f"{client.ns.emoji.char('shopping_bags')} Produk", f"{names} ({tipe.title()})"],
-            [f"{client.ns.emoji.char('gem')} Jumlah", f"Rp {formatted_amount}"],
-            [f"{client.ns.emoji.char('id_card')} Order ID", f"{transaction_id}"],
+            [f"{client.ns.emoji.md('shopping_bags')} Produk", f"{names} ({tipe.title()})"],
+            [f"{client.ns.emoji.md('gem')} Jumlah", f"`Rp {formatted_amount}`"],
+            [f"{client.ns.emoji.md('id_card')} Order ID", f"`{transaction_id}`"],
         ]
 
-        caption = (
-            f"{client.ns.emoji.html('white_check_mark')} <b>Pembayaran Siap Dilakukan!</b>\n\n"
+        markdown = (
+            f"{client.ns.emoji.md('white_check_mark')} **Pembayaran Siap Dilakukan**\n\n"
             f"Silakan scan QRIS di atas untuk membayar, lalu tekan tombol Konfirmasi Pembayaran.\n\n"
-            f"{client.ns.table.caption(['Item', 'Keterangan'], detail_rows)}"
+            f"{client.ns.table.md(['Item', 'Keterangan'], detail_rows)}"
         )
 
         layout = [
@@ -112,10 +112,11 @@ async def _create_payment_invoice(
         ]
         btn = client.ns.telegram.button.build_button_grid(layout)
 
-        await client.send_photo(
+        await client.send_rich_message(
             user.id,
-            photo=qr_image_stream,
-            caption=caption,
+            client.ns.rich.photo(
+                photo=qr_image_stream, markdown=markdown, alias="qris"
+            ),
             reply_markup=btn,
         )
         await msg.delete()
@@ -202,15 +203,15 @@ async def _create_all_vvip_payment_invoice(client, user, selected_items, total_a
         total_len = len(selected_items)
 
         detail_rows = [
-            [f"{client.ns.emoji.char('shopping_bags')} Produk", f"Semua VIP ({total_len} paket)"],
-            [f"{client.ns.emoji.char('gem')} Jumlah", f"Rp {formatted_amount}"],
-            [f"{client.ns.emoji.char('id_card')} Order ID", f"{transaction_id}"],
+            [f"{client.ns.emoji.md('shopping_bags')} Produk", f"Semua VIP ({total_len} paket)"],
+            [f"{client.ns.emoji.md('gem')} Jumlah", f"`Rp {formatted_amount}`"],
+            [f"{client.ns.emoji.md('id_card')} Order ID", f"`{transaction_id}`"],
         ]
 
-        caption = (
-            f"{client.ns.emoji.html('white_check_mark')} <b>Pembayaran Siap Dilakukan!</b>\n\n"
+        markdown = (
+            f"{client.ns.emoji.md('white_check_mark')} **Pembayaran Siap Dilakukan**\n\n"
             f"Silakan scan QRIS di atas untuk membayar, lalu tekan tombol Konfirmasi Pembayaran.\n\n"
-            f"{client.ns.table.caption(['Item', 'Keterangan'], detail_rows)}"
+            f"{client.ns.table.md(['Item', 'Keterangan'], detail_rows)}"
         )
 
         layout = [
@@ -225,10 +226,11 @@ async def _create_all_vvip_payment_invoice(client, user, selected_items, total_a
         ]
         btn = client.ns.telegram.button.build_button_grid(layout)
 
-        await client.send_photo(
+        await client.send_rich_message(
             user.id,
-            photo=qr_image_stream,
-            caption=caption,
+            client.ns.rich.photo(
+                photo=qr_image_stream, markdown=markdown, alias="qris"
+            ),
             reply_markup=btn,
         )
         await msg.delete()

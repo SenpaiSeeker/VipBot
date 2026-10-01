@@ -63,20 +63,12 @@ async def api_settings_callback(client, callback_query):
         f"{table.md(['Layanan', 'Status'], status_rows)}\n\n"
         f"Pilih tindakan:"
     )
-    caption_text = (
-        f"{client.ns.emoji.html('key')} <b>Pengelola Kunci API untuk {client.me.mention}</b>\n\n"
-        f"{table.caption(['Layanan', 'Status'], status_rows)}\n\n"
-        f"Pilih tindakan:"
-    )
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
 
 
 @command(
@@ -203,10 +195,6 @@ async def confirm_delete_api_keys(client, callback_query):
         f"{client.ns.emoji.md('exclamation')} **Konfirmasi**\n\n"
         f"{table.md(['Detail', 'Keterangan'], confirm_rows)}"
     )
-    caption_text = (
-        f"{client.ns.emoji.html('exclamation')} <b>Konfirmasi</b>\n\n"
-        f"{table.caption(['Detail', 'Keterangan'], confirm_rows)}"
-    )
     layout = [
         [
             {
@@ -225,13 +213,10 @@ async def confirm_delete_api_keys(client, callback_query):
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
 
 
 @command(

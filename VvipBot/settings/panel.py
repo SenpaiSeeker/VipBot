@@ -171,23 +171,9 @@ async def settings(client, callback_query):
         f"{table.md(['Bagian', 'Keterangan'], info_rows)}\n\n"
         f"{table.md(['Menu', 'Fungsi'], menu_rows)}"
     )
-    info_caption = table.caption(['Bagian', 'Keterangan'], info_rows)
-    caption_head = (
-        f"{client.ns.emoji.html('toolbox')} <b>Panel Pengaturan Owner</b>\n\n"
-        f"{info_caption}\n\n"
-    )
-    caption_text = caption_head + table.caption_bundle(
-        ['Menu', 'Fungsi'],
-        menu_rows,
-        max_chars=1024,
-        reserved=len(caption_head) + len("<pre></pre>"),
-    )
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(caption_text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=txt_content),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=txt_content),
+        reply_markup=btn,
+    )

@@ -37,10 +37,6 @@ async def create_bot_callback(client, callback_query):
         ]
         btn = client.ns.telegram.button.build_button_grid(layout)
 
-        if callback_query.message.photo:
-            return await callback_query.edit_message_caption(
-                text_warning, reply_markup=btn
-            )
         return await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(markdown=text_warning),
             reply_markup=btn,
@@ -75,19 +71,13 @@ async def create_bot_callback(client, callback_query):
             ]
             btn = client.ns.telegram.button.build_button_grid(layout)
 
-            if callback_query.message.photo:
-                return await callback_query.edit_message_caption(text, reply_markup=btn)
             return await callback_query.edit_message_text(
                 rich_message=pyrogram.types.InputRichMessage(markdown=text),
                 reply_markup=btn,
             )
 
-    text, caption_text, btn = await get_bot_purchase_panel(client, user_id, 1)
+    text, btn = await get_bot_purchase_panel(client, user_id, 1)
 
-    if callback_query.message.photo:
-        return await callback_query.edit_message_caption(
-            caption_text, reply_markup=btn
-        )
     return await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(markdown=text),
         reply_markup=btn,
@@ -102,13 +92,9 @@ async def adjust_bot_month_callback(client, callback_query):
     months = int(callback_query.data.split("_")[-1])
 
     if 1 <= months <= 12:
-        text, caption_text, btn = await get_bot_purchase_panel(
+        text, btn = await get_bot_purchase_panel(
             client, callback_query.from_user.id, months
         )
-        if callback_query.message.photo:
-            return await callback_query.edit_message_caption(
-                caption_text, reply_markup=btn
-            )
         return await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(markdown=text),
             reply_markup=btn,
@@ -128,27 +114,18 @@ async def proceed_bot_payment_callback(client, callback_query):
     user_id = callback_query.from_user.id
     months = int(callback_query.data.split("_")[-1])
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(
-            f"{client.ns.emoji.hourglass} **Sedang Memproses...**\nMohon tunggu sebentar."
-        )
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(
-                markdown=(
-                    f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
-                    f"Mohon tunggu sebentar."
-                )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(
+            markdown=(
+                f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
+                f"Mohon tunggu sebentar."
             )
         )
+    )
 
     saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
 
     if not saweria_user_id:
-        if callback_query.message.photo:
-            return await callback_query.edit_message_caption(
-                "Maaf, layanan pembayaran saat ini tidak tersedia."
-            )
         return await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown="Maaf, layanan pembayaran saat ini tidak tersedia."
@@ -176,7 +153,7 @@ async def proceed_bot_payment_callback(client, callback_query):
         order_data = f"{months}|{amount_raw}|{user_id}"
         await ctx.db.setVars(client.me.id, transaction_id, order_data)
 
-        caption_rows = [
+        detail_rows = [
             [
                 f"{client.ns.emoji.char('shopping_bags')} Produk",
                 f"Akses Buat Bot {months} Bulan",
@@ -185,10 +162,10 @@ async def proceed_bot_payment_callback(client, callback_query):
             [f"{client.ns.emoji.char('id_card')} Order ID", f"{transaction_id}"],
         ]
 
-        caption = (
-            f"{client.ns.emoji.html('white_check_mark')} <b>Pembayaran Siap Dilakukan!</b>\n\n"
+        markdown = (
+            f"{client.ns.emoji.md('white_check_mark')} **Pembayaran Siap Dilakukan**\n\n"
             f"Silakan scan QRIS di atas untuk membayar, lalu tekan tombol Konfirmasi Pembayaran.\n\n"
-            f"{client.ns.table.caption(['Item', 'Keterangan'], caption_rows)}"
+            f"{client.ns.table.md(['Item', 'Keterangan'], detail_rows)}"
         )
 
         layout = [
@@ -205,10 +182,13 @@ async def proceed_bot_payment_callback(client, callback_query):
 
         await callback_query.message.delete()
 
-        await client.send_photo(
+        await client.send_rich_message(
             user_id,
-            qr_image_stream,
-            caption=caption,
+            client.ns.rich.photo(
+                photo=qr_image_stream,
+                markdown=markdown,
+                alias=f"qris_{transaction_id}",
+            ),
             reply_markup=btn,
         )
 

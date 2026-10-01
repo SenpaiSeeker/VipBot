@@ -44,13 +44,10 @@ async def confirm_delete_bot_callback(client, callback_query):
 
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
 
 
 @command(
@@ -68,8 +65,13 @@ async def do_delete_bot_callback(client, callback_query):
             show_alert=True,
         )
 
-    await callback_query.edit_message_caption(
-        f"{client.ns.emoji.hourglass} Sedang menghentikan dan menghapus bot `{bot_id_to_manage}`..."
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(
+            markdown=(
+                f"{client.ns.emoji.md('hourglass')} **Menghapus Bot**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Bot ID', f'`{bot_id_to_manage}`'], ['Status', 'Sedang dihentikan dan dihapus']])}"
+            )
+        )
     )
 
     try:
@@ -89,13 +91,22 @@ async def do_delete_bot_callback(client, callback_query):
         ]
         btn = client.ns.telegram.button.build_button_grid(layout)
 
-        await callback_query.edit_message_caption(
-            f"{client.ns.emoji.white_check_mark} **Penghapusan Berhasil!**\n"
-            f"Bot `{bot_id_to_manage}` beserta datanya telah dihapus dari sistem.",
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('white_check_mark')} **Penghapusan Berhasil**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Bot ID', f'`{bot_id_to_manage}`'], ['Data', 'Bot dan seluruh datanya telah dihapus dari sistem']])}"
+                )
+            ),
             reply_markup=btn,
         )
 
     except Exception as e:
-        await callback_query.edit_message_caption(
-            f"{client.ns.emoji.cross_mark} Terjadi kesalahan saat menghapus bot: `{e}`"
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Gagal Menghapus Bot**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Terjadi kesalahan'], ['Error', f'`{e}`']])}"
+                )
+            )
         )

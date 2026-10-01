@@ -45,19 +45,6 @@ async def get_bot_purchase_panel(client, user_id, months=1):
         f"{table.md(['Item', 'Nilai'], order_rows)}"
     )
 
-    discount_caption = table.caption(['Durasi', 'Diskon'], discount_rows)
-    caption_head = (
-        f"{client.ns.emoji.html('gem')} <b>Beli Akses Pembuatan Bot</b>\n\n"
-        f"Harga dasar: <code>Rp {formatted_price}/bulan</code>\n\n"
-        f"{discount_caption}\n\n"
-    )
-    caption_text = caption_head + table.caption_bundle(
-        ['Item', 'Nilai'],
-        order_rows,
-        max_chars=1024,
-        reserved=len(caption_head) + len("<pre></pre>"),
-    )
-
     layout = [
         [
             {
@@ -97,4 +84,4 @@ async def get_bot_purchase_panel(client, user_id, months=1):
     ]
 
     btn = client.ns.telegram.button.build_button_grid(layout)
-    return text, caption_text, btn
+    return text, btn

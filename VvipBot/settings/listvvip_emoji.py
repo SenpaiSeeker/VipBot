@@ -66,17 +66,11 @@ async def render_list_vvip_icon_menu(client, callback_query):
             f"{client.ns.emoji.md('cross_mark')} **Daftar Paket VVIP**\n\n"
             f"{table.md(['Info', 'Nilai'], empty_rows)}"
         )
-        caption_text = (
-            f"{client.ns.emoji.html('cross_mark')} <b>Daftar Paket VVIP</b>\n\n"
-            f"{table.caption(['Info', 'Nilai'], empty_rows)}"
-        )
         back_row = build_back_layout()[0]
         back_row[0]["emoji"] = client.ns.emoji.id(back_row[0]["emoji"])
         layout.append(back_row)
         btn = client.ns.telegram.button.build_button_grid(layout)
 
-        if callback_query.message.photo:
-            return await callback_query.edit_message_caption(caption_text, reply_markup=btn)
         return await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(markdown=text),
             reply_markup=btn,
@@ -153,13 +147,10 @@ async def render_list_vvip_icon_menu(client, callback_query):
         f"Tombol **Ambil Semua VIP** juga bisa diubah iconnya."
     )
 
-    if callback_query.message.photo:
-        await callback_query.edit_message_caption(text, reply_markup=btn)
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
 
 
 @command(
