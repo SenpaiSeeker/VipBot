@@ -13,7 +13,6 @@ from .logger import LoggerHandler
 from .monitor import ServerMonitor
 from .saweria_scraper import SaweriaScraper
 from .table import TableBuilder
-from .table import TableBuilder
 
 
 def parse_dt(value) -> "datetime | None":
