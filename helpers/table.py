@@ -11,9 +11,17 @@ _BUTTON_ENTRY_RE = re.compile(r"\[\[(.+?)\]\]")
 
 _BUTTON_TYPES = {"url": "url", "callback_data": "data"}
 
-_BUTTON_STYLES = ("primary", "success", "danger", "link")
+_BUTTON_STYLES = {
+    "primary": "primary",
+    "success": "success",
+    "danger": "danger",
+    "link": "link",
+    "red": "danger",
+    "blue": "primary",
+    "green": "success",
+}
 
-_DEFAULT_STYLE = "primary"
+_DEFAULT_STYLE = "blue"
 
 
 class TableBuilder:
@@ -64,8 +72,8 @@ class TableBuilder:
 
             if not value:
                 continue
-            if key == "style" and value in _BUTTON_STYLES:
-                style = value
+            if key == "style":
+                style = _BUTTON_STYLES.get(value, _DEFAULT_STYLE)
             elif key in _BUTTON_TYPES:
                 btn_type, payload = key, value
 
@@ -75,7 +83,7 @@ class TableBuilder:
         attr = _BUTTON_TYPES[btn_type]
         return (
             f'<tg-button type="{btn_type}" {attr}="{html.escape(payload, quote=True)}"'
-            f' style="{style}">{html.escape(label, quote=False)}</tg-button>'
+            f' style="{_BUTTON_STYLES[style]}">{html.escape(label, quote=False)}</tg-button>'
         )
 
     def buttons(self, text, align: str = "center") -> str:
