@@ -115,10 +115,8 @@ async def _build_income_notification(
     h_ket = f"{emoji.md('open_book')} KETERANGAN"
     h_kirim = f"{emoji.md('down_pointing')}"
 
-    filler = "\uFE0E" * 20
-    chat_button = (
-        f"[[{filler} CHAT PEMBELI | url=tg://user?id={user.id} | style=green]]"
-    )
+    filler = "\uFE0E" * 9
+    chat_button = f"[[{filler} CHAT PEMBELI | url=tg://user?id={user.id} | style=green]]"
 
     return (
         f"{section(f'{emoji.md('money_bag')} PEMASUKAN BARU')}\n\n"
