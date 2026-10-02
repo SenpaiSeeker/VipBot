@@ -18,7 +18,7 @@ _BUTTON_STYLES = {
     "green": "success",
 }
 
-_DEFAULT_STYLE = "blue"
+_DEFAULT_STYLE = "primary"
 
 
 class TableBuilder:
@@ -79,7 +79,7 @@ class TableBuilder:
         attr = _BUTTON_TYPES[btn_type]
         return (
             f'<tg-button type="{btn_type}" {attr}="{html.escape(payload, quote=True)}"'
-            f' style="{_BUTTON_STYLES[style]}">{html.escape(label, quote=False)}</tg-button>'
+            f' style="{style}">{html.escape(label, quote=False)}</tg-button>'
         )
 
     def buttons(self, text, align: str = "center") -> str:
