@@ -115,12 +115,9 @@ async def _build_income_notification(
     h_ket = f"{emoji.md('open_book')} KETERANGAN"
     h_kirim = f"{emoji.md('down_pointing')}"
 
-    filler = "\uFE0E" * 9
+    filler = "\uFE0E" * 20
     chat_button = (
-        f"[[{filler} CHAT PEMBELI | url=tg://user?id={user.id} | style=success]]"
-    )
-    bot_button = (
-        f"[[{filler} {client.me.first_name} | url=https://t.me/{client.me.username}]]"
+        f"[[{filler} CHAT PEMBELI | url=tg://user?id={user.id} | style=green]]"
     )
 
     return (
@@ -135,8 +132,8 @@ async def _build_income_notification(
         f"{table.md([h_info, h_ket], pembayaran_rows)}\n\n"
         f"{section(f'{emoji.md('robot')} INFO BOT')}\n\n"
         f"{table.md([h_info, h_ket], bot_rows)}\n\n"
-        f"{section(f'{emoji.md('speech_bubble')} YANG MAU CHAT: KLIK TOMBOL DIBAWAH {h_kirim}')}\n\n"
-        f"{table.buttons(f'{chat_button} {bot_button}')}"
+        f"{section(f'{emoji.md('speech_bubble')} CONTACT CHAT {h_kirim}')}\n\n"
+        f"{table.buttons(f'{chat_button}')}"
     )
 
 
