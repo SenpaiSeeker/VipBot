@@ -138,7 +138,7 @@ async def render_list_vvip_icon_menu(client, callback_query):
 
     text = (
         f"{client.ns.emoji.md('art')} **Atur Icon List VVIP**\n\n"
-        f"{client.ns.table.md(['Info', 'Nilai'], [['Tujuan', 'Kustomisasi icon tiap paket VVIP secara individu'], ['Cara', 'Pilih paket berdasarkan nama, lalu kirim custom emoji atau ID custom emoji'], ['Icon Bawaan', f"{client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT['normal'])} normal / {client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT['promo'])} promo"], ['Penerapan', 'Icon kustom dipakai di tombol paket pada menu daftar VVIP'], ['Tambahan', 'Tombol Ambil Semua VIP juga bisa diubah iconnya']])}"
+        f"{client.ns.table.md(['Info', 'Nilai'], [['Tujuan', 'Kustomisasi icon tiap paket VVIP secara individu'], ['Cara', 'Pilih paket berdasarkan nama, lalu kirim custom emoji atau ID custom emoji'], ['Icon Bawaan', f"{client.ns.emoji.md(LIST_VVIP_ICON_DEFAULT['normal'])} normal / {client.ns.emoji.md(LIST_VVIP_ICON_DEFAULT['promo'])} promo"], ['Penerapan', 'Icon kustom dipakai di tombol paket pada menu daftar VVIP'], ['Tambahan', 'Tombol Ambil Semua VIP juga bisa diubah iconnya']])}"
     )
 
     await callback_query.edit_message_text(
@@ -268,8 +268,8 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
 
         status = "diubah" if emoji_id else "dikembalikan ke ID bawaan"
         result_display = (
-            f"`{emoji_id}`" if emoji_id else f"`{client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT['normal'])}`"
-        )
+            client.ns.emoji.md(emoji_char) if emoji_char else f"`{emoji_id}`"
+        ) if emoji_id else client.ns.emoji.md(LIST_VVIP_ICON_DEFAULT["normal"])
 
         await client.send_rich_message(
             chat_id,
