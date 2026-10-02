@@ -35,13 +35,14 @@ def _format_waktu(value=None) -> str:
     return dt.astimezone(_TZ).strftime("%d-%m-%Y %H:%M:%S WIB")
 
 
-def _build_income_notification(
+async def _build_income_notification(
     client,
     user,
     orders,
     amount_raw,
     transaction_id,
     tipe,
+    owner_chat_id,
     coupon_code=None,
 ):
     emoji = client.ns.emoji
@@ -58,75 +59,88 @@ def _build_income_notification(
         "bundle": "Bundle (Semua VIP)",
     }.get(tipe, str(tipe or "-").title())
 
-    def icon(name, label):
-        return f"{emoji.md(name)} {label}"
-
-    def row(name, label, value):
-        return [f"{emoji.md(name)} **{label}** : {value}"]
-
-    greeting = table.md([f"{emoji.md('waving')} TRANSAKSI BARU DITERIMA"], [])
+    try:
+        owner_user = await client.get_users(owner_chat_id)
+        greeting = (
+            f"{emoji.md('waving')} HAI "
+            f"{client.ns.telegram.arg.getMention(owner_user, md=True)}"
+        )
+    except Exception:
+        greeting = f"{emoji.md('waving')} HAI PENGELOLA!"
 
     ringkasan_rows = [
-        row("key", "Order ID", f"`{transaction_id}`"),
-        row("white_check_mark", "Status", "Lunas"),
-        row("pencil", "Tipe", tipe_label),
-        row("toolbox", "Jumlah Paket", f"`{len(orders)}`"),
-        row("gem", "Total Bayar", f"**{_format_rupiah(total)}**"),
+        [f"{emoji.md('notes')} **ORDER ID**", f"`{transaction_id}`"],
+        [f"{emoji.md('white_check_mark')} **STATUS**", "Lunas"],
+        [f"{emoji.md('pencil')} **TIPE**", tipe_label],
+        [f"{emoji.md('toolbox')} **JUMLAH PAKET**", f"`{len(orders)}`"],
     ]
 
     pembeli_rows = [
-        row("bust_in_silhouette", "Nama", user_mention),
-        row("id_card", "User ID", f"`{user.id}`"),
-        row(
-            "alien",
-            "Username",
+        [f"{emoji.md('bust_in_silhouette')} **NAMA**", user_mention],
+        [f"{emoji.md('id_card')} **USER ID**", f"`{user.id}`"],
+        [
+            f"{emoji.md('alien')} **USERNAME**",
             f"`@{user.username}`" if user.username else "Tidak ada",
-        ),
+        ],
     ]
 
     paket_rows = [
         [
-            f"{i}. **{order.get('name', '-')}** : **{_format_rupiah(order.get('price', 0))}** "
-            f"{emoji.md('hourglass')} {_format_duration(order.get('duration', 0))} "
-            f"{emoji.md('id_card')} `{order.get('chat_id', '-')}`"
+            f"**{order.get('name', '-')}**",
+            _format_rupiah(order.get("price", 0)),
+            _format_duration(order.get("duration", 0)),
+            f"`{order.get('chat_id', '-')}`",
         ]
-        for i, order in enumerate(orders, start=1)
+        for order in orders
     ]
 
     pembayaran_rows = [
-        row("money_bag", "Subtotal", _format_rupiah(subtotal)),
+        [f"{emoji.md('money_bag')} **SUBTOTAL**", _format_rupiah(subtotal)],
     ]
     if diskon > 0:
         pembayaran_rows.append(
-            row(
-                "ticket",
-                "Diskon Kupon",
-                f"`{coupon_code or 'Tanpa Kupon'}` → **{_format_rupiah(diskon)}**",
-            )
+            [
+                f"{emoji.md('ticket')} **DISKON KUPON**",
+                f"`{coupon_code or 'Tanpa Kupon'}` → {_format_rupiah(diskon)}",
+            ]
         )
     pembayaran_rows.extend(
         [
-            row("gem", "Total Bayar", f"**{_format_rupiah(total)}**"),
-            row("shopping_cart", "Metode", "QRIS (Saweria)"),
-            row("hourglass", "Waktu", _format_waktu()),
+            [f"{emoji.md('gem')} **TOTAL BAYAR**", f"**{_format_rupiah(total)}**"],
+            [f"{emoji.md('shopping_cart')} **METODE**", "QRIS (Saweria)"],
+            [f"{emoji.md('hourglass')} **WAKTU**", _format_waktu()],
         ]
     )
 
     bot_rows = [
-        row("robot", "Bot", bot_mention),
-        row("link", "Username", f"`@{client.me.username}`"),
-        row("chart_up", "Item Terjual", f"`{len(orders)}`"),
+        [f"{emoji.md('robot')} **BOT**", bot_mention],
+        [f"{emoji.md('link')} **USERNAME**", f"`@{client.me.username}`"],
+        [f"{emoji.md('chart_up')} **ITEM TERJUAL**", f"`{len(orders)}`"],
     ]
 
+    h_info = f"{emoji.md('open_folder')} INFO"
+    h_ket = f"{emoji.md('open_book')} KETERANGAN"
+    h_kirim = f"{emoji.md('down_pointing')}"
+
     return (
-        f"{greeting}\n\n"
-        f"# {emoji.md('money_bag')} PEMASUKAN BARU! {emoji.md('party_popper')}\n\n"
-        f"{table.md([icon('bell', 'Ringkasan Transaksi')], ringkasan_rows)}\n\n"
-        f"{table.md([icon('bust_in_silhouette', 'Data Pembeli')], pembeli_rows)}\n\n"
-        f"{table.md([icon('gem', 'Detail Paket VIP')], paket_rows)}\n\n"
-        f"{table.md([icon('money_bag', 'Rincian Pembayaran')], pembayaran_rows)}\n\n"
-        f"{table.md([icon('robot', 'Info Bot')], bot_rows)}\n\n"
-        f"### {emoji.md('exclamation')} INI NOTIFIKASI OTOMATIS DARI {bot_mention}"
+        f"{table.md([greeting], [])}\n\n"
+        f"# {emoji.md('money_bag')} PEMASUKAN BARU\n\n"
+        f"{table.md([h_info, h_ket], ringkasan_rows)}\n\n"
+        f"# {emoji.md('bust_in_silhouette')} DATA PEMBELI\n\n"
+        f"{table.md([h_info, h_ket], pembeli_rows)}\n\n"
+        f"# {emoji.md('gem')} DETAIL PAKET VIP\n\n"
+        f"{table.md([f'{emoji.md('gem')} NAMA VIP', f'{emoji.md('money_bag')} HARGA', f'{emoji.md('hourglass')} DURASI', f'{emoji.md('link')} CHAT ID'], paket_rows)}\n\n"
+        f"# {emoji.md('money_bag')} RINCIAN PEMBAYARAN\n\n"
+        f"{table.md([h_info, h_ket], pembayaran_rows)}\n\n"
+        f"# {emoji.md('robot')} INFO BOT\n\n"
+        f"{table.md([h_info, h_ket], bot_rows)}\n\n"
+        f"# {emoji.md('speech_bubble')} YANG MAU CHAT: KLIK TOMBOL DIBAWAH {h_kirim}\n\n"
+        f'<tg-button-row align="center">\n'
+        f'  <tg-button type="url" url="tg://user?id={user.id}" style="success">'
+        f"\uFE0E\uFE0E\uFE0E\uFE0E\uFE0E\uFE0E\uFE0E\uFE0E CHAT PEMBELI</tg-button>\n"
+        f'  <tg-button type="url" url="https://t.me/{client.me.username}" style="primary">'
+        f"\uFE0E\uFE0E\uFE0E\uFE0E\uFE0E\uFE0E\uFE0E\uFE0E {client.me.first_name}</tg-button>\n"
+        f"</tg-button-row>"
     )
 
 
@@ -319,13 +333,14 @@ async def manual_check_payment_callback(client, callback_query):
                     await client.send_rich_message(
                         owner_bot_id,
                         pyrogram.types.InputRichMessage(
-                            markdown=_build_income_notification(
+                            markdown=await _build_income_notification(
                                 client=client,
                                 user=user,
                                 orders=bundle_orders,
                                 amount_raw=amount_raw,
                                 transaction_id=transaction_id,
                                 tipe="bundle",
+                                owner_chat_id=owner_bot_id,
                                 coupon_code=coupon_code,
                             )
                         ),
@@ -455,13 +470,14 @@ async def manual_check_payment_callback(client, callback_query):
                 await client.send_rich_message(
                     owner_bot_id,
                     pyrogram.types.InputRichMessage(
-                        markdown=_build_income_notification(
+                        markdown=await _build_income_notification(
                             client=client,
                             user=user,
                             orders=[single_order],
                             amount_raw=amount_raw,
                             transaction_id=transaction_id,
                             tipe=tipe,
+                            owner_chat_id=owner_bot_id,
                             coupon_code=coupon_code,
                         )
                     ),
