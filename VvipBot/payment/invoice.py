@@ -5,8 +5,24 @@ from helpers.saweria_message_generator import generate_safe_saweria_message
 from .. import ctx, is_bot_owner
 
 
+def _processing_text(client) -> str:
+    return (
+        f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
+        f"Mohon tunggu sebentar."
+    )
+
+
+async def _resolve_processing_msg(client, user_id, processing_msg=None):
+    if processing_msg is not None:
+        return processing_msg
+    return await client.send_rich_message(
+        user_id,
+        pyrogram.types.InputRichMessage(markdown=_processing_text(client)),
+    )
+
+
 async def _create_payment_invoice(
-    client, user, item_index, tipe, amount, coupon_code=None
+    client, user, item_index, tipe, amount, coupon_code=None, processing_msg=None
 ):
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
@@ -57,15 +73,7 @@ async def _create_payment_invoice(
             )
         return
 
-    msg = await client.send_rich_message(
-        user.id,
-        pyrogram.types.InputRichMessage(
-            markdown=(
-                f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
-                f"Mohon tunggu sebentar."
-            )
-        ),
-    )
+    msg = await _resolve_processing_msg(client, user.id, processing_msg)
 
     try:
         fakeinfo = client.ns.utils.faker.generate()
@@ -135,7 +143,9 @@ async def _create_payment_invoice(
         )
 
 
-async def _create_all_vvip_payment_invoice(client, user, selected_items, total_amount):
+async def _create_all_vvip_payment_invoice(
+    client, user, selected_items, total_amount, processing_msg=None
+):
     saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
 
     if not saweria_user_id:
@@ -172,15 +182,7 @@ async def _create_all_vvip_payment_invoice(client, user, selected_items, total_a
             )
         return
 
-    msg = await client.send_rich_message(
-        user.id,
-        pyrogram.types.InputRichMessage(
-            markdown=(
-                f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
-                f"Mohon tunggu sebentar."
-            )
-        ),
-    )
+    msg = await _resolve_processing_msg(client, user.id, processing_msg)
 
     try:
         fakeinfo = client.ns.utils.faker.generate()

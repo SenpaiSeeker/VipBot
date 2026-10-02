@@ -153,7 +153,7 @@ async def show_stars_stats(client, callback_query):
     items_per_page = 5
     try:
         await callback_query.answer(
-            "<emoji id=5451732530048802485>⏳</emoji> **Sedang Memproses...**\nMohon tunggu sebentar."
+            "⏳ **Sedang Memproses...**\nMohon tunggu sebentar."
         )
         peer = await client.resolve_peer(client.me.id)
         raw_result = await client.invoke(

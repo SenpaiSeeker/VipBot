@@ -91,17 +91,16 @@ async def pay_all_vvip_confirm_callback(client, callback_query):
             show_alert=True,
         )
 
+    processing_msg = None
     if callback_query.message.photo:
         await callback_query.message.delete()
     else:
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=(
-                    f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
-                    f"Mohon tunggu sebentar."
-                )
+                markdown=_processing_text(client)
             )
         )
+        processing_msg = callback_query.message
 
     total_amount = sum((item.get("price", 0) for item in selected_items))
 
@@ -110,6 +109,14 @@ async def pay_all_vvip_confirm_callback(client, callback_query):
         callback_query.from_user,
         selected_items,
         total_amount,
+        processing_msg=processing_msg,
+    )
+
+
+def _processing_text(client) -> str:
+    return (
+        f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
+        f"Mohon tunggu sebentar."
     )
 
 
@@ -457,17 +464,16 @@ async def paynow(client, callback_query):
     tipe = match.group(2)
     amount = int(match.group(3))
 
+    processing_msg = None
     if callback_query.message.photo:
         await callback_query.message.delete()
     else:
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=(
-                    f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
-                    f"Mohon tunggu sebentar."
-                )
+                markdown=_processing_text(client)
             )
         )
+        processing_msg = callback_query.message
 
     await _create_payment_invoice(
         client,
@@ -475,6 +481,7 @@ async def paynow(client, callback_query):
         item_index,
         tipe,
         amount,
+        processing_msg=processing_msg,
     )
 
 
