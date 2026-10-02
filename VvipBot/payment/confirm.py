@@ -117,7 +117,7 @@ async def _build_income_notification(
 
     filler = "\uFE0E" * 9
     chat_button = (
-        f"[[{filler} CHAT PEMBELI | url=tg://user?id={user.id} | style=green]]"
+        f"[[{filler} CHAT PEMBELI | url=tg://user?id={user.id} | style=success]]"
     )
     bot_button = (
         f"[[{filler} {client.me.first_name} | url=https://t.me/{client.me.username}]]"

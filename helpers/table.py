@@ -7,26 +7,17 @@ import pyrogram
 
 _ALIAS_COUNTER = 0
 
-_BUTTON_RE = re.compile(r"\[\[(.+?)\]\]")
+_BUTTON_ENTRY_RE = re.compile(r"\[\[(.+?)\]\]")
 
-# style yang dipakai -> style yang dikirim ke Telegram
-_BUTTON_STYLES = {
-    "blue": "primary",
-    "green": "success",
-    "red": "danger",
-    "link": "link",
-}
+_BUTTON_TYPES = {"url": "url", "callback_data": "data"}
 
-# tipe tombol -> (atribut, tipe Telegram)
-_BUTTON_TYPES = {
-    "url": ("url", "url"),
-    "callback_data": ("data", "callback_data"),
-    "user": ("url", "url"),
-}
+_BUTTON_STYLES = ("primary", "success", "danger", "link")
+
+_DEFAULT_STYLE = "primary"
 
 
 class TableBuilder:
-    def md(self, headers, rows, aligns=None):
+    def md(self, headers, rows) -> str:
         headers = list(headers)
         lines = [
             "| " + " | ".join(str(header) for header in headers) + " |",
@@ -61,59 +52,46 @@ class TableBuilder:
         )
 
     def parse_button(self, entry: str) -> str | None:
-        parts = [part.strip() for part in entry.split("|")]
+        """[[Label | url=... | style=primary]] -> <tg-button>"""
+        parts = [part.strip() for part in str(entry).split("|")]
         label = parts[0]
-        if not label:
-            return None
-
         btn_type = payload = None
-        style = "blue"
-        unknown = False
+        style = _DEFAULT_STYLE
 
         for part in parts[1:]:
             key, _, value = part.partition("=")
             key, value = key.strip().lower(), value.strip()
+
             if not value:
                 continue
-            if key == "style":
-                style = value.lower()
-            elif key == "type":
-                if value.lower() not in _BUTTON_TYPES:
-                    return None
-                btn_type = value.lower()
+            if key == "style" and value in _BUTTON_STYLES:
+                style = value
             elif key in _BUTTON_TYPES:
-                btn_type = key
-                payload = f"tg://user?id={value}" if key == "user" else value
-            else:
-                unknown = True
+                btn_type, payload = key, value
 
-        if unknown:
+        if not label or not payload:
             return None
 
-        btn_type = btn_type or "callback_data"
-        if payload is None:
-            if btn_type != "callback_data":
-                return None
-            payload = label
-
-        attr, tg_type = _BUTTON_TYPES[btn_type]
+        attr = _BUTTON_TYPES[btn_type]
         return (
-            f'<tg-button type="{tg_type}" {attr}="{html.escape(payload, quote=True)}" '
-            f'style="{_BUTTON_STYLES.get(style, "primary")}">'
-            f"{html.escape(label, quote=False)}</tg-button>"
+            f'<tg-button type="{btn_type}" {attr}="{html.escape(payload, quote=True)}"'
+            f' style="{style}">{html.escape(label, quote=False)}</tg-button>'
         )
 
     def buttons(self, text, align: str = "center") -> str:
-        rows = [
-            [button for button in map(self.parse_button, _BUTTON_RE.findall(line)) if button]
-            for line in str(text).strip().splitlines()
-        ]
-        rows = [row for row in rows if row]
+        """Satu baris = satu row, `[[Label | url=...]] [[Label | url=...]]`."""
+        rows = []
+        for line in str(text).strip().splitlines():
+            row = [
+                button
+                for button in map(self.parse_button, _BUTTON_ENTRY_RE.findall(line))
+                if button
+            ]
+            if row:
+                rows.append(row)
+
         if not rows:
             return ""
 
-        return "\n".join(
-            [f'<tg-button-row align="{align}">']
-            + [button for row in rows for button in row]
-            + ["</tg-button-row>"]
-        )
+        body = "\n".join("\n".join(row) for row in rows)
+        return f'<tg-button-row align="{align}">\n{body}\n</tg-button-row>'
