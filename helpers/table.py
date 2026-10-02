@@ -12,9 +12,6 @@ _BUTTON_ENTRY_RE = re.compile(r"\[\[(.+?)\]\]")
 _BUTTON_TYPES = {"url": "url", "callback_data": "data"}
 
 _BUTTON_STYLES = {
-    "primary": "primary",
-    "success": "success",
-    "danger": "danger",
     "link": "link",
     "red": "danger",
     "blue": "primary",
@@ -60,7 +57,6 @@ class TableBuilder:
         )
 
     def parse_button(self, entry: str) -> str | None:
-        """[[Label | url=... | style=primary]] -> <tg-button>"""
         parts = [part.strip() for part in str(entry).split("|")]
         label = parts[0]
         btn_type = payload = None
@@ -87,7 +83,6 @@ class TableBuilder:
         )
 
     def buttons(self, text, align: str = "center") -> str:
-        """Satu baris = satu row, `[[Label | url=...]] [[Label | url=...]]`."""
         rows = []
         for line in str(text).strip().splitlines():
             row = [
