@@ -1,11 +1,131 @@
 import asyncio
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import pyrogram
 from pyrogram import filters
 
 from .. import command, ctx, get_notification_target, is_bot_owner
 from .verifier import verify_user_join, verify_user_join_multiple
+
+_TZ = ZoneInfo("Asia/Jakarta")
+
+
+def _format_rupiah(value) -> str:
+    try:
+        return f"Rp {int(value):,}".replace(",", ".")
+    except (TypeError, ValueError):
+        return "Rp 0"
+
+
+def _format_duration(days) -> str:
+    try:
+        days = int(days or 0)
+    except (TypeError, ValueError):
+        days = 0
+    if days <= 0:
+        return "Permanen"
+    return f"{days} hari"
+
+
+def _format_waktu(value=None) -> str:
+    dt = value or datetime.now(timezone.utc)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(_TZ).strftime("%d-%m-%Y %H:%M:%S WIB")
+
+
+def _build_income_notification(
+    client,
+    user,
+    orders,
+    amount_raw,
+    transaction_id,
+    tipe,
+    coupon_code=None,
+):
+    emoji = client.ns.emoji
+    table = client.ns.table
+    user_mention = client.ns.telegram.arg.getMention(user, md=True)
+    bot_mention = client.ns.telegram.arg.getMention(client.me, md=True)
+
+    subtotal = sum(int(o.get("price", 0) or 0) for o in orders)
+    total = int(amount_raw or 0)
+    diskon = max(subtotal - total, 0)
+    tipe_label = {
+        "normal": "Normal",
+        "promo": "Promo",
+        "bundle": "Bundle (Semua VIP)",
+    }.get(tipe, str(tipe or "-").title())
+
+    ringkasan_rows = [
+        [f"{emoji.md('notes')} **Order ID**", f"`{transaction_id}`"],
+        [f"{emoji.md('white_check_mark')} **Status**", "Lunas"],
+        [f"{emoji.md('pencil')} **Tipe**", tipe_label],
+        [f"{emoji.md('toolbox')} **Jumlah Paket**", f"`{len(orders)}`"],
+    ]
+
+    pembeli_rows = [
+        [f"{emoji.md('bust_in_silhouette')} **Nama**", user_mention],
+        [f"{emoji.md('id_card')} **User ID**", f"`{user.id}`"],
+        [
+            f"{emoji.md('alien')} **Username**",
+            f"`@{user.username}`" if user.username else "Tidak ada",
+        ],
+    ]
+
+    paket_rows = []
+    for i, order in enumerate(orders, start=1):
+        paket_rows.append(
+            [
+                f"{i}",
+                f"**{order.get('name', '-')}**",
+                f"`{_format_rupiah(order.get('price', 0))}`",
+                _format_duration(order.get("duration", 0)),
+                f"`{order.get('chat_id', '-')}`",
+            ]
+        )
+
+    pembayaran_rows = [
+        [f"{emoji.md('money_bag')} **Subtotal**", _format_rupiah(subtotal)],
+    ]
+    if diskon > 0:
+        pembayaran_rows.append(
+            [
+                f"{emoji.md('ticket')} **Diskon Kupon**",
+                f"`{coupon_code or 'Tanpa Kupon'}` → **- {_format_rupiah(diskon)}**",
+            ]
+        )
+    pembayaran_rows.extend(
+        [
+            [
+                f"{emoji.md('gem')} **Total Bayar**",
+                f"**{_format_rupiah(total)}**",
+            ],
+            [f"{emoji.md('shopping_cart')} **Metode**", "QRIS (Saweria)"],
+            [f"{emoji.md('hourglass')} **Waktu**", _format_waktu()],
+        ]
+    )
+
+    bot_rows = [
+        [f"{emoji.md('robot')} **Bot**", bot_mention],
+        [f"{emoji.md('link')} **Username**", f"`@{client.me.username}`"],
+        [f"{emoji.md('chart_up')} **Item Terjual**", f"`{len(orders)}`"],
+    ]
+
+    return (
+        f"{emoji.md('money_bag')} **PEMASUKAN BARU!** {emoji.md('party_popper')}\n\n"
+        f"{emoji.md('bell')} **Ringkasan Transaksi**\n\n"
+        f"{table.md(['Info', 'Nilai'], ringkasan_rows)}\n\n"
+        f"{emoji.md('bust_in_silhouette')} **Data Pembeli**\n\n"
+        f"{table.md(['Info', 'Nilai'], pembeli_rows)}\n\n"
+        f"{emoji.md('toolbox')} **Detail Paket**\n\n"
+        f"{table.md(['#', 'Nama VIP', 'Harga VIP', 'Durasi', 'Chat ID'], paket_rows)}\n\n"
+        f"{emoji.md('gem')} **Rincian Pembayaran**\n\n"
+        f"{table.md(['Info', 'Nilai'], pembayaran_rows)}\n\n"
+        f"{emoji.md('robot')} **Info Bot**\n\n"
+        f"{table.md(['Info', 'Nilai'], bot_rows)}"
+    )
 
 
 @command(
@@ -65,6 +185,7 @@ async def manual_check_payment_callback(client, callback_query):
             if is_bundle_order:
                 invite_payloads = []
                 purchased_names = []
+                bundle_orders = []
 
                 for idx in bundle_indexes:
                     try:
@@ -121,6 +242,15 @@ async def manual_check_payment_callback(client, callback_query):
                             "name": name,
                             "chat_id": target_chat_id,
                             "link": link,
+                        }
+                    )
+
+                    bundle_orders.append(
+                        {
+                            "name": name,
+                            "price": item_found.get("price", 0),
+                            "duration": item_found.get("duration", 0),
+                            "chat_id": target_chat_id,
                         }
                     )
 
@@ -184,17 +314,17 @@ async def manual_check_payment_callback(client, callback_query):
                 try:
                     owner_bot_id = await get_notification_target(client)
 
-                    bot_mention_str = client.ns.telegram.arg.getMention(client.me, md=True)
-                    user_mention_str = client.ns.telegram.arg.getMention(user, md=True)
-
                     await client.send_rich_message(
                         owner_bot_id,
                         pyrogram.types.InputRichMessage(
-                            markdown=(
-                                f"{client.ns.emoji.md('money_bag')} **Pemasukan Baru!**\n\n"
-                                f"**Pengguna:** {user_mention_str}\n"
-                                f"**Bot:** {bot_mention_str}\n"
-                                f"**Kategori:** `Semua VIP` (Bundle)"
+                            markdown=_build_income_notification(
+                                client=client,
+                                user=user,
+                                orders=bundle_orders,
+                                amount_raw=amount_raw,
+                                transaction_id=transaction_id,
+                                tipe="bundle",
+                                coupon_code=coupon_code,
                             )
                         ),
                     )
@@ -310,17 +440,27 @@ async def manual_check_payment_callback(client, callback_query):
             try:
                 owner_bot_id = await get_notification_target(client)
 
-                user_mention_str = client.ns.telegram.arg.getMention(user, md=True)
-                bot_mention_str = client.ns.telegram.arg.getMention(client.me, md=True)
+                unit_price = item_found.get(
+                    "promo_price" if is_promo else "price", 0
+                )
+                single_order = {
+                    "name": name,
+                    "price": unit_price or amount_raw,
+                    "duration": item_found.get("duration", 0),
+                    "chat_id": target_chat_id,
+                }
 
                 await client.send_rich_message(
                     owner_bot_id,
                     pyrogram.types.InputRichMessage(
-                        markdown=(
-                            f"{client.ns.emoji.md('money_bag')} **Pemasukan Baru!**\n\n"
-                            f"**Pengguna:** {user_mention_str}\n"
-                            f"**Bot:** {bot_mention_str}\n"
-                            f"**Kategori:** `{name}` ({tipe.title()})"
+                        markdown=_build_income_notification(
+                            client=client,
+                            user=user,
+                            orders=[single_order],
+                            amount_raw=amount_raw,
+                            transaction_id=transaction_id,
+                            tipe=tipe,
+                            coupon_code=coupon_code,
                         )
                     ),
                 )
