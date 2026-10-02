@@ -58,88 +58,64 @@ def _build_income_notification(
         "bundle": "Bundle (Semua VIP)",
     }.get(tipe, str(tipe or "-").title())
 
-    greeting = table.md([f"{emoji.md('waving')} TRANSAKSI BARU DITERIMA"], [])
+    greeting = f"{emoji.md('waving')} TRANSAKSI BARU DITERIMA"
 
     def icon(name, label):
         return f"{emoji.md(name)} {label}"
 
-    paket_headers = [
-        "#",
-        icon("gem", "NAMA VIP"),
-        icon("money_bag", "HARGA VIP"),
-        icon("hourglass", "DURASI"),
-        icon("id_card", "CHAT ID"),
-    ]
-    ringkasan_headers = [icon("bulb", "INFO"), icon("chart_up", "NILAI")]
-    pembeli_headers = [icon("bust_in_silhouette", "DATA"), icon("paperclip", "KETERANGAN")]
-    pembayaran_headers = [icon("paperclip", "RINCIAN"), icon("money_bag", "NILAI")]
-    bot_headers = [icon("robot", "INFO"), icon("chart_up", "NILAI")]
+    def section(name, label):
+        return [f"{emoji.md(name)} **{label}**", ""]
 
-    ringkasan_rows = [
+    rows = [
+        section("money_bag", "PEMASUKAN BARU!"),
+        section("bell", "Ringkasan Transaksi"),
         [f"{emoji.md('key')} **Order ID**", f"`{transaction_id}`"],
         [f"{emoji.md('white_check_mark')} **Status**", "Lunas"],
         [f"{emoji.md('pencil')} **Tipe**", tipe_label],
         [f"{emoji.md('toolbox')} **Jumlah Paket**", f"`{len(orders)}`"],
-        [f"{emoji.md('gem')} **Total Bayar**", f"**{_format_rupiah(total)}**"],
-    ]
-
-    pembeli_rows = [
+        section("bust_in_silhouette", "Data Pembeli"),
         [f"{emoji.md('bust_in_silhouette')} **Nama**", user_mention],
         [f"{emoji.md('id_card')} **User ID**", f"`{user.id}`"],
         [
             f"{emoji.md('alien')} **Username**",
             f"`@{user.username}`" if user.username else "Tidak ada",
         ],
+        section("gem", "Detail Paket VIP"),
     ]
 
-    paket_rows = [
-        [
-            f"{i}",
-            f"**{order.get('name', '-')}**",
-            f"**{_format_rupiah(order.get('price', 0))}**",
-            _format_duration(order.get("duration", 0)),
-            f"`{order.get('chat_id', '-')}`",
-        ]
-        for i, order in enumerate(orders, start=1)
-    ]
+    for i, order in enumerate(orders, start=1):
+        rows.append(
+            [
+                f"`{i}.` **{order.get('name', '-')}**",
+                f"**{_format_rupiah(order.get('price', 0))}**"
+                f" · {_format_duration(order.get('duration', 0))}"
+                f" · `{order.get('chat_id', '-')}`",
+            ]
+        )
 
-    pembayaran_rows = [
-        [f"{emoji.md('money_bag')} **Subtotal**", _format_rupiah(subtotal)],
-    ]
+    rows.append(section("money_bag", "Rincian Pembayaran"))
+    rows.append([f"{emoji.md('money_bag')} **Subtotal**", _format_rupiah(subtotal)])
     if diskon > 0:
-        pembayaran_rows.append(
+        rows.append(
             [
                 f"{emoji.md('ticket')} **Diskon Kupon**",
                 f"`{coupon_code or 'Tanpa Kupon'}` → **{_format_rupiah(diskon)}**",
             ]
         )
-    pembayaran_rows.extend(
+    rows.extend(
         [
             [f"{emoji.md('gem')} **Total Bayar**", f"**{_format_rupiah(total)}**"],
             [f"{emoji.md('shopping_cart')} **Metode**", "QRIS (Saweria)"],
             [f"{emoji.md('hourglass')} **Waktu**", _format_waktu()],
+            section("robot", "Info Bot"),
+            [f"{emoji.md('robot')} **Bot**", bot_mention],
+            [f"{emoji.md('link')} **Username**", f"`@{client.me.username}`"],
+            [f"{emoji.md('chart_up')} **Item Terjual**", f"`{len(orders)}`"],
         ]
     )
 
-    bot_rows = [
-        [f"{emoji.md('robot')} **Bot**", bot_mention],
-        [f"{emoji.md('link')} **Username**", f"`@{client.me.username}`"],
-        [f"{emoji.md('chart_up')} **Item Terjual**", f"`{len(orders)}`"],
-    ]
-
     return (
-        f"{greeting}\n\n"
-        f"# {emoji.md('money_bag')} PEMASUKAN BARU! {emoji.md('party_popper')}\n\n"
-        f"# {emoji.md('bell')} RINGKASAN TRANSAKSI\n\n"
-        f"{table.md(ringkasan_headers, ringkasan_rows)}\n\n"
-        f"# {emoji.md('bust_in_silhouette')} DATA PEMBELI\n\n"
-        f"{table.md(pembeli_headers, pembeli_rows)}\n\n"
-        f"# {emoji.md('gem')} DETAIL PAKET VIP\n\n"
-        f"{table.md(paket_headers, paket_rows)}\n\n"
-        f"# {emoji.md('money_bag')} RINCIAN PEMBAYARAN\n\n"
-        f"{table.md(pembayaran_headers, pembayaran_rows)}\n\n"
-        f"# {emoji.md('robot')} INFO BOT\n\n"
-        f"{table.md(bot_headers, bot_rows)}\n\n"
+        f"{table.md([greeting], rows)}\n\n"
         f"### {emoji.md('exclamation')} INI NOTIFIKASI OTOMATIS DARI {bot_mention}"
     )
 
