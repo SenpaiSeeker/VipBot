@@ -15,11 +15,11 @@ async def _resolve_owner_text(client, owner_id: int) -> str:
         return "Tidak diketahui"
     cached = _user_cache.get(owner_id)
     if cached is not None:
-        return client.ns.telegram.arg.getMention(cached)
+        return client.ns.telegram.arg.getMention(cached, md=True)
     try:
         owner_user = await client.get_users(owner_id)
         _user_cache.set(owner_id, owner_user)
-        return client.ns.telegram.arg.getMention(owner_user)
+        return client.ns.telegram.arg.getMention(owner_user, md=True)
     except Exception:
         return f"`{owner_id}`"
 

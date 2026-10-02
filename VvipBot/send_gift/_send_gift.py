@@ -74,7 +74,7 @@ async def send_gift_handler(client, message):
                 )
             )
         target_user = await client.get_users(user_id_target)
-        mention = client.ns.telegram.arg.getMention(target_user)
+        mention = client.ns.telegram.arg.getMention(target_user, md=True)
         await status_msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=f"{client.ns.emoji.md('gift')} Mengirim hadiah **Star** "

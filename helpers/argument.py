@@ -13,6 +13,7 @@ class Argument:
         logs: bool = False,
         no_tag: bool = False,
         tag_and_id: bool = False,
+        md: bool = False,
     ) -> str:
         name = user.first_name
         if user.last_name:
@@ -24,9 +25,9 @@ class Argument:
             return name
 
         link = f"tg://user?id={user.id}"
-        mention = f'<a href="{link}">{name}</a>'
+        mention = f"[{name}]({link})" if md else f'<a href="{link}">{name}</a>'
         if tag_and_id:
-            mention += f" (<code>{user.id}</code>)"
+            mention += f" (`{user.id}`)" if md else f" (<code>{user.id}</code>)"
 
         return mention
 

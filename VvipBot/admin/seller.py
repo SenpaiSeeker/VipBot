@@ -33,7 +33,7 @@ async def access_command_handler(client, message):
             f"{client.ns.emoji.md('key')} **Kelola Akses Pembuatan Bot**\n\n"
             f"| Info | Detail |\n"
             f"| :--- | :--- |\n"
-            f"| Pengguna | {client.ns.telegram.arg.getMention(target_user)} |\n"
+            f"| Pengguna | {client.ns.telegram.arg.getMention(target_user, md=True)} |\n"
             f"| ID | `{target_user.id}` |\n"
             f"| Status | {status_text} |\n\n"
             f"Pilih tindakan untuk pengguna ini:"
@@ -120,7 +120,7 @@ async def do_give_access_callback(client, callback_query):
         await ctx.db.setVars(target_id, "user_expiry_date", new_expiry_date.isoformat())
         expiry_in_jakarta = new_expiry_date.astimezone(ZoneInfo("Asia/Jakarta"))
 
-        mention_str = client.ns.telegram.arg.getMention(target_user)
+        mention_str = client.ns.telegram.arg.getMention(target_user, md=True)
         formatted_jakarta_date = expiry_in_jakarta.strftime("%d %B %Y, %H:%M %Z")
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
@@ -144,7 +144,7 @@ async def revoke_access_callback(client, callback_query):
     target_id = int(callback_query.data.split("_")[-1])
     try:
         target_user = await client.get_users(target_id)
-        mention = client.ns.telegram.arg.getMention(target_user)
+        mention = client.ns.telegram.arg.getMention(target_user, md=True)
         await ctx.db.removeVars(target_id, "user_expiry_date")
         await callback_query.answer(
             "<emoji id=6298671811345254603>❌</emoji> Akses berhasil dicabut dari {target_id}".format(
@@ -180,7 +180,7 @@ async def add_seller_handler(client, message):
                 )
             )
         await ctx.db.setListVars(ctx.owner_id, "seller_id_list", target_user.id)
-        user_mention = client.ns.telegram.arg.getMention(target_user)
+        user_mention = client.ns.telegram.arg.getMention(target_user, md=True)
         await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=f"{client.ns.emoji.md('white_check_mark')} Berhasil menambahkan `{user_mention}` sebagai seller."
@@ -219,7 +219,7 @@ async def list_seller_handler(client, message):
     for index, user_id in enumerate(seller_list, 1):
         try:
             user_obj = await client.get_users(user_id)
-            mention = client.ns.telegram.arg.getMention(user_obj)
+            mention = client.ns.telegram.arg.getMention(user_obj, md=True)
         except Exception:
             mention = f"ID: `{user_id}`"
         text += f"| {index} | {mention} |\n"
@@ -273,7 +273,7 @@ async def delete_seller_callback(client, callback_query):
     for index, user_id in enumerate(seller_list, 1):
         try:
             user_obj = await client.get_users(user_id)
-            mention = client.ns.telegram.arg.getMention(user_obj)
+            mention = client.ns.telegram.arg.getMention(user_obj, md=True)
         except Exception:
             mention = f"ID: `{user_id}`"
         text += f"| {index} | {mention} |\n"
@@ -324,7 +324,7 @@ async def list_akses_handler(client, message):
     for index, uid in enumerate(access_users, 1):
         try:
             user_obj = await client.get_users(uid)
-            mention = client.ns.telegram.arg.getMention(user_obj)
+            mention = client.ns.telegram.arg.getMention(user_obj, md=True)
         except Exception:
             mention = f"ID: `{uid}`"
         text += f"| {index} | {mention} |\n"
@@ -384,7 +384,7 @@ async def delete_access_callback(client, callback_query):
     for index, uid in enumerate(access_users, 1):
         try:
             user_obj = await client.get_users(uid)
-            mention = client.ns.telegram.arg.getMention(user_obj)
+            mention = client.ns.telegram.arg.getMention(user_obj, md=True)
         except Exception:
             mention = f"ID: `{uid}`"
         text += f"| {index} | {mention} |\n"

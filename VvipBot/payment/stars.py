@@ -32,8 +32,8 @@ async def successful_donation_handler(client, message):
     main_bot_client = ctx.manager.main_bot_client
 
     try:
-        user_mention_str = client.ns.telegram.arg.getMention(user)
-        bot_mention_str = client.me.mention
+        user_mention_str = client.ns.telegram.arg.getMention(user, md=True)
+        bot_mention_str = client.ns.telegram.arg.getMention(client.me, md=True)
 
         notification_text = (
             f"{client.ns.emoji.md('sparkles')} **Donasi Baru Diterima!**\n\n"
@@ -75,7 +75,7 @@ async def successful_donation_handler(client, message):
 
     except pyrogram.errors.UserIsBlocked:
         if main_bot_client and owner_of_this_bot != super_admin_id:
-            user_mention_str = client.ns.telegram.arg.getMention(user)
+            user_mention_str = client.ns.telegram.arg.getMention(user, md=True)
 
             await main_bot_client.send_rich_message(
                 super_admin_id,

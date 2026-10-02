@@ -73,7 +73,7 @@ async def list_members_callback(client, callback_query):
         expiry_date_obj = datetime.fromisoformat(expiry_date_obj_str)
         expiry_date_str = expiry_date_obj.strftime("%d %b %Y, %H:%M %Z")
 
-    mention_str = client.ns.telegram.arg.getMention(user)
+    mention_str = client.ns.telegram.arg.getMention(user, md=True)
     formatted_join_date = join_dt_utc.strftime("%d %b %Y, %H:%M %Z")
     rows = [
         ["Nama", mention_str],
@@ -144,7 +144,7 @@ async def confirm_kick_member_callback(client, callback_query):
     vvip_name = match.group(2)
     user = await client.get_users(int(user_id_str))
 
-    mention_str = client.ns.telegram.arg.getMention(user)
+    mention_str = client.ns.telegram.arg.getMention(user, md=True)
     rich_text = (
         f"{client.ns.emoji.md('exclamation')} **Konfirmasi Penendangan**\n\n"
         f"Anda yakin ingin menendang **{mention_str}** dari grup VVIP **{vvip_name}**?\n\n"
@@ -236,7 +236,7 @@ async def do_kick_member_callback(client, callback_query):
         ]
         btn_back = client.ns.telegram.button.build_button_grid(layout)
 
-        mention_str = client.ns.telegram.arg.getMention(user_to_kick)
+        mention_str = client.ns.telegram.arg.getMention(user_to_kick, md=True)
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
@@ -390,7 +390,7 @@ async def list_active_members_callback(client, callback_query):
         all_members[page].user,
     )
 
-    mention_str = client.ns.telegram.arg.getMention(user)
+    mention_str = client.ns.telegram.arg.getMention(user, md=True)
     rich_text = (
         f"{client.ns.emoji.md('mag')} **Member Aktif ({page + 1}/{total_members})**\n\n"
         f"| Label | Isi |\n"
@@ -462,7 +462,7 @@ async def confirm_kick_active_callback(client, callback_query):
     _, _, chat_id_str, user_id_str, page_str = callback_query.data.split("_", 4)
     user = await client.get_users(int(user_id_str))
 
-    mention_str = client.ns.telegram.arg.getMention(user)
+    mention_str = client.ns.telegram.arg.getMention(user, md=True)
     rich_text = (
         f"{client.ns.emoji.md('exclamation')} **Konfirmasi**\n\n"
         f"Anda yakin ingin menendang **{mention_str}** dari grup?"
@@ -531,7 +531,7 @@ async def do_kick_active_callback(client, callback_query):
             ]
         user = await client.get_users(user_id)
 
-        mention_str = client.ns.telegram.arg.getMention(user)
+        mention_str = client.ns.telegram.arg.getMention(user, md=True)
         rich_text = (
             f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n"
             f"Pengguna **{mention_str}** telah ditendang dari grup."

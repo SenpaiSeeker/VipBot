@@ -27,7 +27,7 @@ async def get_start_keyboard_and_content(client, user):
     photo_id = db_photo_id if db_photo_id is not None else None
 
     welcome_text = main_text_template.replace(
-        "{mention}", client.ns.telegram.arg.getMention(user)
+        "{mention}", client.ns.telegram.arg.getMention(user, md=True)
     )
 
     layout = []
@@ -270,7 +270,7 @@ async def list_vvip_bot(client, callback_query):
 
     text = (
         f"{client.ns.emoji.md('books')} **Daftar VVIP Bot**\n\n"
-        f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', client.me.mention], ['Keterangan', 'Daftar paket eksklusif. Klik paket untuk detail lengkap dan penawaran spesial.']])}"
+        f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', client.ns.telegram.arg.getMention(client.me, md=True)], ['Keterangan', 'Daftar paket eksklusif. Klik paket untuk detail lengkap dan penawaran spesial.']])}"
     )
 
     await callback_query.edit_message_text(

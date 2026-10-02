@@ -184,8 +184,8 @@ async def manual_check_payment_callback(client, callback_query):
                 try:
                     owner_bot_id = await get_notification_target(client)
 
-                    bot_mention_str = client.me.mention
-                    user_mention_str = client.ns.telegram.arg.getMention(user)
+                    bot_mention_str = client.ns.telegram.arg.getMention(client.me, md=True)
+                    user_mention_str = client.ns.telegram.arg.getMention(user, md=True)
 
                     await client.send_rich_message(
                         owner_bot_id,
@@ -310,8 +310,8 @@ async def manual_check_payment_callback(client, callback_query):
             try:
                 owner_bot_id = await get_notification_target(client)
 
-                user_mention_str = client.ns.telegram.arg.getMention(user)
-                bot_mention_str = client.me.mention
+                user_mention_str = client.ns.telegram.arg.getMention(user, md=True)
+                bot_mention_str = client.ns.telegram.arg.getMention(client.me, md=True)
 
                 await client.send_rich_message(
                     owner_bot_id,

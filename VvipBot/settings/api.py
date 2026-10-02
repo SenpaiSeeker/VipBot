@@ -59,7 +59,7 @@ async def api_settings_callback(client, callback_query):
 
     table = client.ns.table
     text = (
-        f"{client.ns.emoji.md('key')} **Pengelola Kunci API untuk {client.me.mention}**\n\n"
+        f"{client.ns.emoji.md('key')} **Pengelola Kunci API untuk {client.ns.telegram.arg.getMention(client.me, md=True)}**\n\n"
         f"{table.md(['Layanan', 'Status'], status_rows)}\n\n"
         f"Pilih tindakan:"
     )

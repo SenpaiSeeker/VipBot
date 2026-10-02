@@ -151,10 +151,10 @@ async def check_new_user(client, update):
         )
 
         try:
-            mention_user = client.ns.telegram.arg.getMention(update.from_user)
+            mention_user = client.ns.telegram.arg.getMention(update.from_user, md=True)
             notification_text = (
                 f"{client.ns.emoji.md('bust_in_silhouette')} **Pengguna Baru Telah Memulai Bot Anda**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', client.me.mention], ['Pengguna', mention_user], ['ID', f'`{update.from_user.id}`']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', client.ns.telegram.arg.getMention(client.me, md=True)], ['Pengguna', mention_user], ['ID', f'`{update.from_user.id}`']])}"
             )
             await client.send_rich_message(
                 owner_of_this_bot,
