@@ -115,6 +115,14 @@ async def _build_income_notification(
     h_ket = f"{emoji.md('open_book')} KETERANGAN"
     h_kirim = f"{emoji.md('down_pointing')}"
 
+    filler = "\uFE0E" * 9
+    chat_button = (
+        f"[[{filler} CHAT PEMBELI | url=tg://user?id={user.id} | style=green]]"
+    )
+    bot_button = (
+        f"[[{filler} {client.me.first_name} | url=https://t.me/{client.me.username}]]"
+    )
+
     return (
         f"{section(f'{emoji.md('money_bag')} PEMASUKAN BARU')}\n\n"
         f"{section(f'{emoji.md('bell')} RINGKASAN TRANSAKSI')}\n\n"
@@ -128,12 +136,7 @@ async def _build_income_notification(
         f"{section(f'{emoji.md('robot')} INFO BOT')}\n\n"
         f"{table.md([h_info, h_ket], bot_rows)}\n\n"
         f"{section(f'{emoji.md('speech_bubble')} YANG MAU CHAT: KLIK TOMBOL DIBAWAH {h_kirim}')}\n\n"
-        f'<tg-button-row align="center">\n'
-        f'  <tg-button type="url" url="tg://user?id={user.id}" style="success">'
-        f"\uFE0E\uFE0E\uFE0E\uFE0E\uFE0E\uFE0E\uFE0E\uFE0E CHAT PEMBELI</tg-button>\n"
-        f'  <tg-button type="url" url="https://t.me/{client.me.username}" style="primary">'
-        f"\uFE0E\uFE0E\uFE0E\uFE0E\uFE0E\uFE0E\uFE0E\uFE0E {client.me.first_name}</tg-button>\n"
-        f"</tg-button-row>"
+        f"{table.buttons(f'{chat_button} {bot_button}')}"
     )
 
 
