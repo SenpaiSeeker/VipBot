@@ -22,7 +22,7 @@ _DEFAULT_STYLE = "primary"
 
 
 class TableBuilder:
-    def md(self, headers, rows) -> str:
+    def md(self, headers, rows, aligns=None) -> str:
         headers = list(headers)
         lines = [
             "| " + " | ".join(str(header) for header in headers) + " |",
