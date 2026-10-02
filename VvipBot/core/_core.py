@@ -294,7 +294,7 @@ async def donate_callback(client, callback_query):
     table = client.ns.table
     text = (
         f"{client.ns.emoji.md('red_heart')} **Dukung Kami dengan Telegram Stars**\n\n"
-        f"{table.md(['Jumlah', 'Keterangan'], donate_rows, ['c', 'l'])}\n\n"
+        f"{table.md(['Jumlah', 'Keterangan'], donate_rows)}\n\n"
         f"Setiap Star yang Anda berikan memberi kami semangat untuk terus berinovasi."
     )
 

@@ -46,7 +46,7 @@ async def pay_all_vvip_callback(client, callback_query):
     rows = _build_pay_all_rows(selected_items)
     text = (
         f"{client.ns.emoji.md('shopping_cart')} **Ringkasan Ambil Semua VIP**\n\n"
-        f"{table.md(['Paket', 'Harga'], rows, ['l', 'r'])}\n\n"
+        f"{table.md(['Paket', 'Harga'], rows)}\n\n"
         f"{client.ns.emoji.md('money_bag')} **Total: Rp {int(total_amount):,}** ({len(selected_items)} paket)"
     )
 

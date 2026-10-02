@@ -122,7 +122,7 @@ async def show_vip_revenue_callback(client, callback_query):
 
     text = (
         f"{client.ns.emoji.md('chart_bar')} **Laporan Pendapatan VIP**\n\n"
-        f"{table.md(['Info', 'Nilai'], report_rows, ['l', 'r'])}"
+        f"{table.md(['Info', 'Nilai'], report_rows)}"
     )
 
     layout = [

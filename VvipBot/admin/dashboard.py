@@ -50,7 +50,7 @@ async def dashboard_command_handler(client, message):
             ["Disk", f"`[{disk_bar}] {disk_pct}%`"],
         ]
         server_stats_text = client.ns.table.md(
-            ["Komponen", "Penggunaan"], server_rows, ["l", "r"]
+            ["Komponen", "Penggunaan"], server_rows
         )
     except Exception as e:
         stats_data = {"cpu": 0, "ram": 0, "disk": 0}
@@ -67,7 +67,7 @@ async def dashboard_command_handler(client, message):
     dashboard_text = (
         f"{client.ns.emoji.md('chart_bar')} **Dashboard Platform**\n\n"
         f"**Statistik Platform**\n\n"
-        f"{client.ns.table.md(['Komponen', 'Isi'], platform_rows, ['l', 'r'])}\n\n"
+        f"{client.ns.table.md(['Komponen', 'Isi'], platform_rows)}\n\n"
         f"**Kesehatan Server**\n\n"
         f"{server_stats_text}"
     )
@@ -233,12 +233,12 @@ async def show_stars_stats(client, callback_query):
             [f"{client.ns.emoji.md('chart_down')} Total Pengembalian", f"`{total_refunds}` {client.ns.emoji.md('star')}"],
             [f"{client.ns.emoji.md('repeat')} Total Transaksi (Tampil)", f"`{total_transactions_count}`"],
         ]
-        summary_text = table.md(['Aspek', 'Nilai'], summary_rows, ['l', 'r'])
+        summary_text = table.md(['Aspek', 'Nilai'], summary_rows)
         text = (
             f"{client.ns.emoji.md('chart_bar')} **Statistik Pendapatan Stars**\n\n"
             f"{summary_text}\n\n"
             f"**{client.ns.emoji.md('open_book')} Transaksi Terakhir ({page + 1}/{total_pages})**\n\n"
-            f"{table.md(['Tanggal', 'Jumlah', 'Sumber'], transactions_rows, ['l', 'r', 'l'])}"
+            f"{table.md(['Tanggal', 'Jumlah', 'Sumber'], transactions_rows)}"
         )
         layout = []
         if total_pages > 1:
