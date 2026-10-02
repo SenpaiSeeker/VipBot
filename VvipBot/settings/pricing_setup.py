@@ -207,7 +207,7 @@ async def ask_start_photo_callback(client, callback_query):
                 reply_markup=back_btn,
             )
 
-        photo_id = ask_msg.photo.sizes[-1].file_id
+        photo_id = ask_msg.photo.file_id
         await ctx.db.setVars(client.me.id, "start_photo_id", photo_id)
 
         await client.send_rich_message(
