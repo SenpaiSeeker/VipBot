@@ -58,64 +58,74 @@ def _build_income_notification(
         "bundle": "Bundle (Semua VIP)",
     }.get(tipe, str(tipe or "-").title())
 
-    greeting = f"{emoji.md('waving')} TRANSAKSI BARU DITERIMA"
-
     def icon(name, label):
         return f"{emoji.md(name)} {label}"
 
-    def section(name, label):
-        return [f"{emoji.md(name)} **{label}**", ""]
+    def row(name, label, value):
+        return [f"{emoji.md(name)} **{label}** : {value}"]
 
-    rows = [
-        section("money_bag", "PEMASUKAN BARU!"),
-        section("bell", "Ringkasan Transaksi"),
-        [f"{emoji.md('key')} **Order ID**", f"`{transaction_id}`"],
-        [f"{emoji.md('white_check_mark')} **Status**", "Lunas"],
-        [f"{emoji.md('pencil')} **Tipe**", tipe_label],
-        [f"{emoji.md('toolbox')} **Jumlah Paket**", f"`{len(orders)}`"],
-        section("bust_in_silhouette", "Data Pembeli"),
-        [f"{emoji.md('bust_in_silhouette')} **Nama**", user_mention],
-        [f"{emoji.md('id_card')} **User ID**", f"`{user.id}`"],
-        [
-            f"{emoji.md('alien')} **Username**",
-            f"`@{user.username}`" if user.username else "Tidak ada",
-        ],
-        section("gem", "Detail Paket VIP"),
+    greeting = table.md([f"{emoji.md('waving')} TRANSAKSI BARU DITERIMA"], [])
+
+    ringkasan_rows = [
+        row("key", "Order ID", f"`{transaction_id}`"),
+        row("white_check_mark", "Status", "Lunas"),
+        row("pencil", "Tipe", tipe_label),
+        row("toolbox", "Jumlah Paket", f"`{len(orders)}`"),
+        row("gem", "Total Bayar", f"**{_format_rupiah(total)}**"),
     ]
 
-    for i, order in enumerate(orders, start=1):
-        rows.append(
-            [
-                f"`{i}.` **{order.get('name', '-')}**",
-                f"**{_format_rupiah(order.get('price', 0))}**"
-                f" · {_format_duration(order.get('duration', 0))}"
-                f" · `{order.get('chat_id', '-')}`",
-            ]
-        )
+    pembeli_rows = [
+        row("bust_in_silhouette", "Nama", user_mention),
+        row("id_card", "User ID", f"`{user.id}`"),
+        row(
+            "alien",
+            "Username",
+            f"`@{user.username}`" if user.username else "Tidak ada",
+        ),
+    ]
 
-    rows.append(section("money_bag", "Rincian Pembayaran"))
-    rows.append([f"{emoji.md('money_bag')} **Subtotal**", _format_rupiah(subtotal)])
-    if diskon > 0:
-        rows.append(
-            [
-                f"{emoji.md('ticket')} **Diskon Kupon**",
-                f"`{coupon_code or 'Tanpa Kupon'}` → **{_format_rupiah(diskon)}**",
-            ]
-        )
-    rows.extend(
+    paket_rows = [
         [
-            [f"{emoji.md('gem')} **Total Bayar**", f"**{_format_rupiah(total)}**"],
-            [f"{emoji.md('shopping_cart')} **Metode**", "QRIS (Saweria)"],
-            [f"{emoji.md('hourglass')} **Waktu**", _format_waktu()],
-            section("robot", "Info Bot"),
-            [f"{emoji.md('robot')} **Bot**", bot_mention],
-            [f"{emoji.md('link')} **Username**", f"`@{client.me.username}`"],
-            [f"{emoji.md('chart_up')} **Item Terjual**", f"`{len(orders)}`"],
+            f"{i}. **{order.get('name', '-')}** : **{_format_rupiah(order.get('price', 0))}** "
+            f"{emoji.md('hourglass')} {_format_duration(order.get('duration', 0))} "
+            f"{emoji.md('id_card')} `{order.get('chat_id', '-')}`"
+        ]
+        for i, order in enumerate(orders, start=1)
+    ]
+
+    pembayaran_rows = [
+        row("money_bag", "Subtotal", _format_rupiah(subtotal)),
+    ]
+    if diskon > 0:
+        pembayaran_rows.append(
+            row(
+                "ticket",
+                "Diskon Kupon",
+                f"`{coupon_code or 'Tanpa Kupon'}` → **{_format_rupiah(diskon)}**",
+            )
+        )
+    pembayaran_rows.extend(
+        [
+            row("gem", "Total Bayar", f"**{_format_rupiah(total)}**"),
+            row("shopping_cart", "Metode", "QRIS (Saweria)"),
+            row("hourglass", "Waktu", _format_waktu()),
         ]
     )
 
+    bot_rows = [
+        row("robot", "Bot", bot_mention),
+        row("link", "Username", f"`@{client.me.username}`"),
+        row("chart_up", "Item Terjual", f"`{len(orders)}`"),
+    ]
+
     return (
-        f"{table.md([greeting], rows)}\n\n"
+        f"{greeting}\n\n"
+        f"# {emoji.md('money_bag')} PEMASUKAN BARU! {emoji.md('party_popper')}\n\n"
+        f"{table.md([icon('bell', 'Ringkasan Transaksi')], ringkasan_rows)}\n\n"
+        f"{table.md([icon('bust_in_silhouette', 'Data Pembeli')], pembeli_rows)}\n\n"
+        f"{table.md([icon('gem', 'Detail Paket VIP')], paket_rows)}\n\n"
+        f"{table.md([icon('money_bag', 'Rincian Pembayaran')], pembayaran_rows)}\n\n"
+        f"{table.md([icon('robot', 'Info Bot')], bot_rows)}\n\n"
         f"### {emoji.md('exclamation')} INI NOTIFIKASI OTOMATIS DARI {bot_mention}"
     )
 
