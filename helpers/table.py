@@ -7,31 +7,22 @@ import pyrogram
 
 _ALIAS_COUNTER = 0
 
-_BUTTON_ENTRY_RE = re.compile(r"\[\[(.+?)\]\]")
+_BUTTON_RE = re.compile(r"\[\[(.+?)\]\]")
 
-_BUTTON_STYLE_MAP = {
+# style yang dipakai -> style yang dikirim ke Telegram
+_BUTTON_STYLES = {
     "blue": "primary",
-    "primary": "primary",
     "green": "success",
-    "success": "success",
     "red": "danger",
-    "danger": "danger",
     "link": "link",
 }
 
-_BUTTON_TYPE_MAP = {
-    "url": "url",
-    "link": "url",
-    "query": "callback_data",
-    "callback": "callback_data",
-    "callback_data": "callback_data",
-    "data": "callback_data",
-    "user": "url",
-    "user_id": "url",
-    "mention": "url",
+# tipe tombol -> (atribut, tipe Telegram)
+_BUTTON_TYPES = {
+    "url": ("url", "url"),
+    "callback_data": ("data", "callback_data"),
+    "user": ("url", "url"),
 }
-
-_DEFAULT_BUTTON_STYLE = "blue"
 
 
 class TableBuilder:
@@ -69,73 +60,60 @@ class TableBuilder:
             markdown=f"{link}\n\n{markdown}", media=media
         )
 
-    def parse_button(self, entry: str):
-        parts = [part.strip() for part in str(entry).split("|")]
-        label = html.escape(parts[0], quote=False)
+    def parse_button(self, entry: str) -> str | None:
+        parts = [part.strip() for part in entry.split("|")]
+        label = parts[0]
         if not label:
             return None
 
-        btn_type = None
-        payload = None
-        style = _DEFAULT_BUTTON_STYLE
-        has_unknown = False
+        btn_type = payload = None
+        style = "blue"
+        unknown = False
 
         for part in parts[1:]:
-            if "=" not in part:
-                continue
-            key, value = part.split("=", 1)
-            key = key.strip().lower()
-            value = value.strip()
-
+            key, _, value = part.partition("=")
+            key, value = key.strip().lower(), value.strip()
             if not value:
                 continue
             if key == "style":
-                style = value
+                style = value.lower()
             elif key == "type":
-                btn_type = _BUTTON_TYPE_MAP.get(value.lower())
-            elif key in ("url", "link"):
-                btn_type, payload = "url", value
-            elif key in ("query", "callback", "callback_data", "data"):
-                btn_type, payload = "callback_data", value
-            elif key in ("user", "user_id", "mention"):
-                btn_type, payload = "url", f"tg://user?id={value}"
+                if value.lower() not in _BUTTON_TYPES:
+                    return None
+                btn_type = value.lower()
+            elif key in _BUTTON_TYPES:
+                btn_type = key
+                payload = f"tg://user?id={value}" if key == "user" else value
             else:
-                has_unknown = True
+                unknown = True
 
+        if unknown:
+            return None
+
+        btn_type = btn_type or "callback_data"
         if payload is None:
-            if has_unknown or btn_type not in (None, "callback_data"):
+            if btn_type != "callback_data":
                 return None
-            btn_type = "callback_data"
             payload = label
 
-        style_name = _BUTTON_STYLE_MAP.get(style.lower(), "primary")
-        attr = "data" if btn_type == "callback_data" else "url"
-        payload = html.escape(payload, quote=True)
-
+        attr, tg_type = _BUTTON_TYPES[btn_type]
         return (
-            f'<tg-button type="{btn_type}" {attr}="{payload}" '
-            f'style="{style_name}">{label}</tg-button>'
+            f'<tg-button type="{tg_type}" {attr}="{html.escape(payload, quote=True)}" '
+            f'style="{_BUTTON_STYLES.get(style, "primary")}">'
+            f"{html.escape(label, quote=False)}</tg-button>"
         )
 
-    def buttons(self, text, align: str = "center"):
-        rows = []
-        for line in str(text).strip().splitlines():
-            row = [
-                button
-                for button in (
-                    self.parse_button(entry)
-                    for entry in _BUTTON_ENTRY_RE.findall(line)
-                )
-                if button
-            ]
-            if row:
-                rows.append(row)
-
+    def buttons(self, text, align: str = "center") -> str:
+        rows = [
+            [button for button in map(self.parse_button, _BUTTON_RE.findall(line)) if button]
+            for line in str(text).strip().splitlines()
+        ]
+        rows = [row for row in rows if row]
         if not rows:
             return ""
 
-        lines = [f'<tg-button-row align="{align}">']
-        for row in rows:
-            lines.extend(row)
-        lines.append("</tg-button-row>")
-        return "\n".join(lines)
+        return "\n".join(
+            [f'<tg-button-row align="{align}">']
+            + [button for row in rows for button in row]
+            + ["</tg-button-row>"]
+        )
