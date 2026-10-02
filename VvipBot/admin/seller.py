@@ -12,7 +12,10 @@ async def access_command_handler(client, message):
     if not user_id_target:
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
-                markdown="**Format Salah.**\nGunakan: `/akses <user_id atau @username>`"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Gunakan', '`/akses <user_id atau @username>`']])}"
+                )
             )
         )
     try:
@@ -57,7 +60,12 @@ async def access_command_handler(client, message):
         )
     except Exception as e:
         await message.reply_rich(
-            pyrogram.types.InputRichMessage(markdown=f"Gagal memproses. Error: `{e}`")
+            pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Gagal Memproses**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Error', f'`{e}`']])}"
+                )
+            )
         )
 
 
@@ -87,7 +95,10 @@ async def give_access_callback(client, callback_query):
     btn = client.ns.telegram.button.build_button_grid(layout)
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(
-            markdown="Pilih durasi akses yang ingin diberikan:"
+            markdown=(
+                f"{client.ns.emoji.md('hourglass')} **Pilih Durasi Akses**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Tujuan', 'Berikan akses premium ke pengguna'], ['Opsi', 'Pilih salah satu durasi di bawah ini']])}"
+            )
         ),
         reply_markup=btn,
     )

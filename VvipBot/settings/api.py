@@ -105,7 +105,7 @@ async def set_api_key_prompt(client, callback_query):
             )
 
         if key_name == "SAWERIA":
-            username_msg = await ask(f"**2/2:** Kirim **Username Saweria** Anda.")
+            username_msg = await ask("**2/2:** Kirim **Username Saweria** Anda.")
             if username_msg.text and username_msg.text.lower() == "/batal":
                 raise listen.UserCancelled
 

@@ -358,11 +358,11 @@ async def check_vvip_status_callback(client, callback_query):
         )
 
     report_header = f"{client.ns.emoji.md('mag')} **Laporan Status Grup VVIP**\n\n"
-    report_table_header = (
-        f"| Nama | Grup | Status | Keterangan |\n"
-        f"| :--- | :--- | :--- | :--- |\n"
-    )
+    report_headers = ["Nama", "Grup", "Status", "Keterangan"]
     report_rows = []
+
+    def build_report(rows):
+        return report_header + client.ns.table.md(report_headers, rows)
 
     for item in vvip_list:
         chat_id_target = item.get("chat_id_normal")
@@ -374,39 +374,32 @@ async def check_vvip_status_callback(client, callback_query):
             if hasattr(chat, "restrictions") and chat.restrictions:
                 restriction = chat.restrictions[0]
                 reason_text = f"{restriction.reason}: {restriction.text}"
-
-                report_rows.append(
-                    f"| {name} | {chat.title} | BANNED/DIBATASI | {reason_text} |"
-                )
+                report_rows.append([name, chat.title, "BANNED/DIBATASI", reason_text])
             else:
                 link = chat.invite_link or "N/A"
                 link_cell = f"[Buka Grup]({link})" if link != "N/A" else link
-
-                report_rows.append(f"| {name} | {chat.title} | Aman | {link_cell} |")
+                report_rows.append([name, chat.title, "Aman", link_cell])
         except Exception:
             report_rows.append(
-                f"| {name} | {chat_id_target} | Error | "
-                f"Tidak dapat mengakses grup. Pastikan bot adalah admin. |"
+                [
+                    name,
+                    chat_id_target,
+                    "Error",
+                    "Tidak dapat mengakses grup. Pastikan bot adalah admin.",
+                ]
             )
 
-        if len("\n".join(report_rows)) > 3500:
+        if len(build_report(report_rows)) > 3500:
             await client.send_rich_message(
                 chat_id,
-                pyrogram.types.InputRichMessage(
-                    markdown=report_header
-                    + report_table_header
-                    + "\n".join(report_rows)
-                    + "\n\n"
-                ),
+                pyrogram.types.InputRichMessage(markdown=build_report(report_rows)),
             )
             report_rows = []
 
     if report_rows:
         await client.send_rich_message(
             chat_id,
-            pyrogram.types.InputRichMessage(
-                markdown=report_header + report_table_header + "\n".join(report_rows)
-            ),
+            pyrogram.types.InputRichMessage(markdown=build_report(report_rows)),
         )
 
     layout = [
@@ -588,7 +581,10 @@ async def setup_listvvip(client, callback_query):
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"**Input Tidak Valid / Timeout**\nProses dibatalkan.\n`{e}`"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Input Tidak Valid / Timeout**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Input tidak valid atau timeout'], ['Tindakan', 'Proses dibatalkan'], ['Error', f'`{e}`']])}"
+                )
             ),
         )
 
@@ -866,6 +862,9 @@ async def edit_vvip_price_callback(client, callback_query):
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"**Input Tidak Valid / Timeout**\nProses dibatalkan.\n`{e}`"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Input Tidak Valid / Timeout**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Input tidak valid atau timeout'], ['Tindakan', 'Proses dibatalkan'], ['Error', f'`{e}`']])}"
+                )
             ),
         )

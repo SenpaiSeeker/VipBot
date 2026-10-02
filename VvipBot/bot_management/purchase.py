@@ -128,7 +128,10 @@ async def proceed_bot_payment_callback(client, callback_query):
     if not saweria_user_id:
         return await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown="Maaf, layanan pembayaran saat ini tidak tersedia."
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Layanan Pembayaran Tidak Tersedia**\n\n"
+                    f"{client.ns.table.md(['Status', 'Keterangan'], [['Tidak Tersedia', 'Layanan pembayaran sedang dinonaktifkan sementara'], ['Tindakan', 'Silakan coba lagi beberapa saat lagi']])}"
+                )
             )
         )
 

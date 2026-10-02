@@ -4,16 +4,13 @@ import pyrogram
 
 _ALIAS_COUNTER = 0
 
-_ALIGN = {"l": "---", "c": ":---:", "r": "---:"}
-
 
 class TableBuilder:
     def md(self, headers, rows, aligns=None):
-        aligns = aligns or ["l"] * len(headers)
-        separator = [_ALIGN.get(align, "---") for align in aligns]
+        headers = list(headers)
         lines = [
             "| " + " | ".join(str(header) for header in headers) + " |",
-            "| " + " | ".join(separator) + " |",
+            "| " + " | ".join("---" for _ in headers) + " |",
         ]
         for row in rows:
             lines.append("| " + " | ".join(str(cell) for cell in row) + " |")

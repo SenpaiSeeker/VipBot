@@ -49,7 +49,10 @@ async def _create_payment_invoice(
             await client.send_rich_message(
                 user.id,
                 pyrogram.types.InputRichMessage(
-                    markdown="Maaf, layanan pembayaran saat ini tidak tersedia."
+                    markdown=(
+                        f"{client.ns.emoji.md('cross_mark')} **Layanan Pembayaran Tidak Tersedia**\n\n"
+                        f"{client.ns.table.md(['Status', 'Keterangan'], [['Tidak Tersedia', 'Layanan pembayaran sedang dinonaktifkan sementara'], ['Tindakan', 'Silakan coba lagi beberapa saat lagi']])}"
+                    )
                 ),
             )
         return
@@ -161,7 +164,10 @@ async def _create_all_vvip_payment_invoice(client, user, selected_items, total_a
             await client.send_rich_message(
                 user.id,
                 pyrogram.types.InputRichMessage(
-                    markdown="Maaf, layanan pembayaran saat ini tidak tersedia."
+                    markdown=(
+                        f"{client.ns.emoji.md('cross_mark')} **Layanan Pembayaran Tidak Tersedia**\n\n"
+                        f"{client.ns.table.md(['Status', 'Keterangan'], [['Tidak Tersedia', 'Layanan pembayaran sedang dinonaktifkan sementara'], ['Tindakan', 'Silakan coba lagi beberapa saat lagi']])}"
+                    )
                 ),
             )
         return

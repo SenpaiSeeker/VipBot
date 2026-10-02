@@ -21,7 +21,7 @@ async def _resolve_owner_text(client, owner_id: int) -> str:
         _user_cache.set(owner_id, owner_user)
         return client.ns.telegram.arg.getMention(owner_user)
     except Exception:
-        return f"ID <code>{owner_id}</code>"
+        return f"`{owner_id}`"
 
 
 async def _build_page(client, page: int) -> dict:
@@ -51,9 +51,7 @@ async def _build_page(client, page: int) -> dict:
             if not isinstance(result, Exception):
                 _user_cache.set(oid, result)
 
-    text_lines = [
-        f"<b>{client.ns.emoji.open_folder} Daftar Semua Bot ({page + 1}/{total_pages})</b>\n"
-    ]
+    table_rows = []
     layout = []
     button_row = []
     bot_rows: list[dict] = []
@@ -84,10 +82,14 @@ async def _build_page(client, page: int) -> dict:
         except (TypeError, ValueError):
             days_left = "N/A"
 
-        text_lines.append(
-            f"<b>{index:2}:</b> {bot_username} (<code>{bot_id}</code>)\n"
-            f" ├ {client.ns.emoji.bust_in_silhouette} Owner: {owner_text}\n"
-            f" ├ {client.ns.emoji.hourglass} Aktif: <code>{days_left}</code> hari lagi"
+        table_rows.append(
+            [
+                f"`{index}.`",
+                bot_username,
+                f"`{bot_id}`",
+                owner_text,
+                f"`{days_left}` hari lagi",
+            ]
         )
 
         bot_rows.append(
@@ -140,11 +142,16 @@ async def _build_page(client, page: int) -> dict:
         ]
     )
 
+    page_text = (
+        f"{client.ns.emoji.md('open_folder')} **Daftar Semua Bot ({page + 1}/{total_pages})**\n\n"
+        f"{client.ns.table.md(['#', 'Bot', 'Bot ID', 'Owner', 'Aktif'], table_rows)}"
+    )
+
     return {
         "empty": False,
         "page": page,
         "total_pages": total_pages,
-        "text": "\n".join(text_lines),
+        "text": page_text,
         "layout": layout,
         "bot_rows": bot_rows,
     }

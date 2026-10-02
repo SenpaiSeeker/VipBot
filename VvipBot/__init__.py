@@ -54,8 +54,8 @@ def seller_only(func):
             return await func(client, update, *args, **kwargs)
         else:
             error_message = (
-                f"{client.ns.emoji.md('cross_mark')} **Akses Ditolak!**\n"
-                f"Anda tidak memiliki izin untuk menggunakan perintah ini."
+                f"{client.ns.emoji.md('cross_mark')} **Akses Ditolak**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Ditolak'], ['Keterangan', 'Anda tidak memiliki izin untuk menggunakan perintah ini']])}"
             )
             if isinstance(update, pyrogram.types.CallbackQuery):
                 return await update.answer(error_message, show_alert=True)
@@ -153,10 +153,8 @@ async def check_new_user(client, update):
         try:
             mention_user = client.ns.telegram.arg.getMention(update.from_user)
             notification_text = (
-                f"**{client.ns.emoji.md('bust_in_silhouette')} Pengguna Baru Telah Memulai Bot Anda!**\n\n"
-                f"**Bot:** {client.me.mention}\n"
-                f"**Pengguna:** {mention_user}\n"
-                f"**ID:** `{update.from_user.id}`"
+                f"{client.ns.emoji.md('bust_in_silhouette')} **Pengguna Baru Telah Memulai Bot Anda**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', client.me.mention], ['Pengguna', mention_user], ['ID', f'`{update.from_user.id}`']])}"
             )
             await client.send_rich_message(
                 owner_of_this_bot,

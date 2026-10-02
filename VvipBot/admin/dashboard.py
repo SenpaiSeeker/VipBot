@@ -82,8 +82,10 @@ async def dashboard_command_handler(client, message):
     except Exception as e:
         await msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=dashboard_text
-                + f"\n\n**Error Visualisasi:** {e}"
+                markdown=(
+                    f"{dashboard_text}\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Error Visualisasi'], ['Detail', f'`{e}`']])}"
+                )
             )
         )
 
@@ -102,7 +104,10 @@ async def refund_stars_callback(client, callback_query):
         if not refund_data:
             await callback_query.edit_message_text(
                 rich_message=pyrogram.types.InputRichMessage(
-                    markdown=f"{callback_query.message.text}\n\n{client.ns.emoji.md('exclamation')} **Gagal: Transaksi tidak ditemukan atau sudah di-refund.**"
+                    markdown=(
+                    f"{callback_query.message.text}\n\n"
+                    f"{client.ns.table.md(['Status', 'Keterangan'], [['Gagal', 'Transaksi tidak ditemukan atau sudah di-refund']])}"
+                )
                 )
             )
             return
@@ -113,13 +118,19 @@ async def refund_stars_callback(client, callback_query):
         )
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{callback_query.message.text}\n\n{client.ns.emoji.md('white_check_mark')} Donasi berhasil dikembalikan."
+                markdown=(
+                    f"{callback_query.message.text}\n\n"
+                    f"{client.ns.table.md(['Status', 'Keterangan'], [['Berhasil', 'Donasi Stars telah dikembalikan']])}"
+                )
             ),
         )
         await client.send_rich_message(
             user_id_to_refund,
             pyrogram.types.InputRichMessage(
-                markdown="ℹ️ **Informasi Donasi**\n\nDonasi Stars Anda telah dikembalikan oleh admin. Terima kasih atas pengertiannya."
+                markdown=(
+                    f"{client.ns.emoji.md('information_source')} **Informasi Donasi**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Donasi Stars Anda telah dikembalikan oleh admin'], ['Catatan', 'Terima kasih atas pengertian Anda']])}"
+                )
             ),
         )
     except Exception as e:
@@ -305,8 +316,6 @@ async def total_users_count_callback(client, callback_query):
         await callback_query.answer()
     except Exception:
         await callback_query.answer(
-            "<emoji id=6298671811345254603>❌</emoji> **Terjadi Kesalahan**\n<pre>{e}</pre>".format(
-                e=e
-            ),
+            "❌ **Terjadi Kesalahan**\n\n`{e}`".format(e=e),
             show_alert=True,
         )

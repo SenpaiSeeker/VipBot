@@ -324,7 +324,10 @@ async def eval_bot_handler(client: pyrogram.Client, message: Message):
                 link_preview_options=LinkPreviewOptions(is_disabled=True),
             )
     except Exception:
-        error_text = f"**Kesalahan Handler:**\n\n```\n{traceback.format_exc()}\n```"
+        error_text = (
+            f"{client.ns.emoji.md('cross_mark')} **Kesalahan Handler**\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Traceback', f'```\n{traceback.format_exc()}\n```']])}"
+        )
         if status_msg:
             try:
                 await status_msg.edit_text(
@@ -502,7 +505,10 @@ async def tfdatabase_command_handler(client, message):
     if len(args) != 3:
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
-                markdown="Format salah. Gunakan: `/tfdatabase <source_id>:<source_db> <target_id>:<target_db>`\nContoh: `/tfdatabase 123455:databaseV1 666999:databaseV2`"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Gunakan', '`/tfdatabase <source_id>:<source_db> <target_id>:<target_db>`'], ['Contoh', '`/tfdatabase 123455:databaseV1 666999:databaseV2`']])}"
+                )
             )
         )
     source_part = args[1]
@@ -515,7 +521,10 @@ async def tfdatabase_command_handler(client, message):
     except Exception:
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
-                markdown="Format salah. Pastikan menggunakan format `ID:NAMA_DB`. Contoh: `/tfdatabase 123455:databaseV1 666999:databaseV2`"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Format', '`ID:NAMA_DB`'], ['Contoh', '`/tfdatabase 123455:databaseV1 666999:databaseV2`']])}"
+                )
             )
         )
     msg = await message.reply_rich(
@@ -586,14 +595,22 @@ async def tfbot_command_handler(client, message):
     if len(args) != 4:
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
-                markdown="Format salah. Gunakan: `/tfbot <id_bot> <source_db> <target_db>`\nContoh: `/tfbot 123456789 vvip_database vvip_databaseV2`"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Gunakan', '`/tfbot <id_bot> <source_db> <target_db>`'], ['Contoh', '`/tfbot 123456789 vvip_database vvip_databaseV2`']])}"
+                )
             )
         )
     try:
         bot_id = int(args[1])
     except ValueError:
         return await message.reply_rich(
-            pyrogram.types.InputRichMessage(markdown="ID Bot harus berupa angka.")
+            pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Detail', 'ID Bot harus berupa angka']])}"
+                )
+            )
         )
     source_db_name = args[2]
     target_db_name = args[3]

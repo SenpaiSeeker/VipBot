@@ -9,16 +9,13 @@ async def get_start_keyboard_and_content(client, user):
 
     if is_main_bot:
         _default_text = (
-            f"{client.ns.emoji.waving} <b>Selamat Datang, {{mention}}!</b>\n\n"
-            f"Saya adalah asisten utama untuk membuat dan mengelola "
-            f"{client.ns.emoji.gem} <b>Bot VVIP</b> Anda sendiri. "
-            f"Jelajahi semua fitur yang tersedia melalui tombol di bawah ini."
+            f"{client.ns.emoji.md('waving')} **Selamat Datang, {{mention}}!**\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Peran', 'Asisten utama pembuatan dan pengelolaan Bot VVIP'], ['Navigasi', 'Jelajahi semua fitur melalui tombol di bawah ini']])}"
         )
     else:
         _default_text = (
-            f"{client.ns.emoji.waving} <b>Selamat Datang, {{mention}}!</b>\n\n"
-            f"Saya adalah asisten pribadi Anda untuk mengakses konten eksklusif. "
-            f"Jelajahi semua fitur yang tersedia melalui tombol di bawah ini."
+            f"{client.ns.emoji.md('waving')} **Selamat Datang, {{mention}}!**\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Peran', 'Asisten pribadi akses konten eksklusif'], ['Navigasi', 'Jelajahi semua fitur melalui tombol di bawah ini']])}"
         )
 
     db_text_template = await ctx.db.getVars(client.me.id, "start_text_template")
@@ -100,9 +97,7 @@ async def get_start_keyboard_and_content(client, user):
 async def start_bot(client, message):
     btn, txt, photo_id = await get_start_keyboard_and_content(client, message.from_user)
     await message.reply_rich(
-        client.ns.table.rich_photo(
-            photo=photo_id, markdown=txt, alias="start_photo"
-        ),
+        client.ns.table.rich_photo(photo=photo_id, markdown=txt, alias="start_photo"),
         reply_markup=btn,
     )
     await check_new_user(client, message)
@@ -138,16 +133,14 @@ async def start_callback(client, callback_query):
     handler_type="callback",
 )
 async def about_bot_callback(client, callback_query):
+    table = client.ns.table
     text = (
-        f"{client.ns.emoji.glowing_star} <b>Tentang Bot VVIP Ini</b>\n\n"
-        f"Selamat datang! Saya adalah asisten otomatis yang dirancang untuk memberikan Anda kemudahan dalam mengakses grup VVIP.\n\n"
-        f"{client.ns.emoji.robot} <b>Fungsi Utama Saya:</b>\n"
-        f"Saya menyediakan sistem pembayaran otomatis yang aman via QRIS, memastikan Anda mendapatkan akses instan ke konten premium setelah transaksi berhasil.\n\n"
-        f"{client.ns.emoji.rocket} <b>Alur Penggunaan:</b>\n\n"
-        f"**1. Pilih Paket** — Jelajahi daftar VVIP yang tersedia.\n"
-        f"**2. Lakukan Pembayaran** — Scan QRIS yang saya berikan.\n"
-        f"**3. Akses Instan** — Link undangan akan otomatis terkirim setelah pembayaran terkonfirmasi.\n\n"
-        f"Semua proses dirancang agar cepat, aman, dan tanpa perlu menunggu konfirmasi manual!"
+        f"{client.ns.emoji.md('glowing_star')} **Tentang Bot VVIP Ini**\n\n"
+        f"Selamat datang! Saya adalah asisten otomatis yang dirancang untuk memberikan Anda kemudahan dalam accessing grup VVIP.\n\n"
+        f"{client.ns.emoji.md('robot')} **Fungsi Utama Saya**\n\n"
+        f"{table.md(['Fitur', 'Keterangan'], [['Pembayaran', 'Otomatis dan aman via QRIS'], ['Akses', 'Instan setelah transaksi berhasil'], ['Konfirmasi', 'Tanpa menunggu konfirmasi manual']])}\n\n"
+        f"{client.ns.emoji.md('rocket')} **Alur Penggunaan**\n\n"
+        f"{table.md(['Langkah', 'Tindakan'], [['1', 'Pilih paket — jelajahi daftar VVIP yang tersedia'], ['2', 'Lakukan pembayaran — scan QRIS yang saya berikan'], ['3', 'Akses instan — link undangan terkirim otomatis setelah pembayaran terkonfirmasi']])}"
     )
 
     layout = [
@@ -276,8 +269,8 @@ async def list_vvip_bot(client, callback_query):
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     text = (
-        f"{client.ns.emoji.html('books')} <b>Daftar VVIP Bot: {client.me.mention}</b>\n\n"
-        f"Berikut adalah daftar paket eksklusif yang kami tawarkan. Klik pada salah satu paket untuk melihat detail lengkap dan penawaran spesial."
+        f"{client.ns.emoji.md('books')} **Daftar VVIP Bot**\n\n"
+        f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', client.me.mention], ['Keterangan', 'Daftar paket eksklusif. Klik paket untuk detail lengkap dan penawaran spesial.']])}"
     )
 
     await callback_query.edit_message_text(

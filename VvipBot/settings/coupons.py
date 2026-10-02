@@ -82,7 +82,7 @@ async def add_coupon_callback(client, callback_query):
             )
 
         code = (
-            await ask(f"**1/4:** Masukkan kode kupon unik (misal: `DISKONBARU`).")
+            await ask("**1/4:** Masukkan kode kupon unik (misal: `DISKONBARU`).")
         ).text.upper()
 
         type_msg = await ask(

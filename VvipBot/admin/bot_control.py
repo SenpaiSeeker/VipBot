@@ -11,7 +11,10 @@ async def extend_command_handler(client, message):
     if not bot_id or not days_str:
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
-                markdown="**Format salah.**\nGunakan: `/extend <bot_id/@username> <jumlah_hari>` atau reply ke pesan bot.\nContoh: `/extend 12345678 30` atau `/extend @namabot 30`"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Gunakan', '`/extend <bot_id/@username> <jumlah_hari>` atau reply ke pesan bot'], ['Contoh', '`/extend 12345678 30` atau `/extend @namabot 30`']])}"
+                )
             )
         )
     try:
@@ -19,7 +22,10 @@ async def extend_command_handler(client, message):
     except ValueError:
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
-                markdown="**Format salah.** `jumlah_hari` harus berupa angka bulat.\nContoh: `/extend 12345678 30`"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Detail', '`jumlah_hari` harus berupa angka bulat'], ['Contoh', '`/extend 12345678 30`']])}"
+                )
             )
         )
     exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
@@ -58,7 +64,10 @@ async def broadcast_owners_handler(client, message):
     if not broadcast_msg:
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
-                markdown="Gunakan: `/broadcast_owners <pesan>` atau balas ke sebuah pesan."
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Gunakan', '`/broadcast_owners <pesan>` atau balas ke sebuah pesan']])}"
+                )
             )
         )
     all_bots_data = await ctx.db.getBots(is_token=True)

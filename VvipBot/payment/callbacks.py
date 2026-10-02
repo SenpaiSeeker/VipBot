@@ -428,7 +428,12 @@ async def apply_coupon_callback(client, callback_query):
     except ValueError as e:
         await client.send_rich_message(
             chat_id,
-            pyrogram.types.InputRichMessage(markdown=str(e)),
+            pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Kode Promo Tidak Valid**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Error', f'`{e}`']])}"
+                )
+            ),
         )
     except Exception as e:
         await client.send_rich_message(

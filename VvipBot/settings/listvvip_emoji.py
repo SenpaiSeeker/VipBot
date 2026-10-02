@@ -137,14 +137,8 @@ async def render_list_vvip_icon_menu(client, callback_query):
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     text = (
-        f"{client.ns.emoji.html('art')} **Atur Icon List VVIP**\n\n"
-        f"Kustomisasi icon tiap paket VVIP secara **individu**.\n"
-        f"Pilih paket berdasarkan **nama**, lalu kirim **custom emoji** "
-        f"atau **ID custom emoji** untuk paket tersebut.\n\n"
-        f"Icon bawaan: `{client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT['normal'])}` "
-        f"normal / `{client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT['promo'])}` promo.\n"
-        f"Icon kustom akan dipakai di tombol paket pada menu daftar VVIP.\n"
-        f"Tombol **Ambil Semua VIP** juga bisa diubah iconnya."
+        f"{client.ns.emoji.md('art')} **Atur Icon List VVIP**\n\n"
+        f"{client.ns.table.md(['Info', 'Nilai'], [['Tujuan', 'Kustomisasi icon tiap paket VVIP secara individu'], ['Cara', 'Pilih paket berdasarkan nama, lalu kirim custom emoji atau ID custom emoji'], ['Icon Bawaan', f"{client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT['normal'])} normal / {client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT['promo'])} promo"], ['Penerapan', 'Icon kustom dipakai di tombol paket pada menu daftar VVIP'], ['Tambahan', 'Tombol Ambil Semua VIP juga bisa diubah iconnya']])}"
     )
 
     await callback_query.edit_message_text(
