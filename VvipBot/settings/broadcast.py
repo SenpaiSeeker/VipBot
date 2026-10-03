@@ -135,6 +135,10 @@ async def broadcast_callback(client, callback_query):
     chat_id = callback_query.message.chat.id
     bot_id = client.me.id
 
+    if not hasattr(ctx, "broadcast_stop"):
+        ctx.broadcast_stop = {}
+    ctx.broadcast_stop[bot_id] = False
+
     try:
         await callback_query.message.delete()
         prompt = (
