@@ -85,7 +85,7 @@ class TableBuilder:
         )
 
     def buttons(self, text, align: str = "center") -> str:
-        rows = []
+        blocks = []
         for line in str(text).strip().splitlines():
             row = [
                 button
@@ -93,10 +93,9 @@ class TableBuilder:
                 if button
             ]
             if row:
-                rows.append(row)
+                body = "\n".join(row)
+                blocks.append(
+                    f'<tg-button-row align="{align}">\n{body}\n</tg-button-row>'
+                )
 
-        if not rows:
-            return ""
-
-        body = "\n".join("\n".join(row) for row in rows)
-        return f'<tg-button-row align="{align}">\n{body}\n</tg-button-row>'
+        return "\n".join(blocks)
