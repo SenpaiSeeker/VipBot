@@ -311,7 +311,8 @@ async def eval_bot_handler(client: pyrogram.Client, message: Message):
         )
         if document:
             await status_msg.delete()
-            await message.reply_document(
+            await client.send_document(
+                chat_id=message.chat.id,
                 document=document,
                 caption=caption_text,
                 reply_markup=keyboard,
