@@ -7,6 +7,7 @@ from pyrogram import filters
 
 from .. import command, ctx, get_notification_target, is_bot_owner
 from .verifier import verify_user_join, verify_user_join_multiple
+from helpers.income_template import render_income_template
 
 _TZ = ZoneInfo("Asia/Jakarta")
 
@@ -113,6 +114,63 @@ async def _build_income_notification(
 
     h_info = f"{emoji.md('open_folder')} INFO"
     h_ket = f"{emoji.md('open_book')} KETERANGAN"
+
+    first_order = orders[0] if orders else {}
+    item_names = " + ".join(str(o.get("name", "-")) for o in orders) or "-"
+    item_list = (
+        "\n".join(
+            f"{emoji.md('gem')} **{o.get('name', '-')}** — "
+            f"{_format_rupiah(o.get('price', 0))} — "
+            f"{_format_duration(o.get('duration', 0))} "
+            f"(Chat ID: `{o.get('chat_id', '-')}`)"
+            for o in orders
+        )
+        or "-"
+    )
+    item_table = (
+        table.md(
+            [
+                f"{emoji.md('gem')} NAMA VIP",
+                f"{emoji.md('money_bag')} HARGA",
+                f"{emoji.md('hourglass')} DURASI",
+                f"{emoji.md('link')} CHAT ID",
+            ],
+            paket_rows,
+        )
+        if paket_rows
+        else "-"
+    )
+
+    values = {
+        "mention": user_mention,
+        "buyer_name": f"{user.first_name or ''} {user.last_name or ''}".strip() or "-",
+        "buyer_id": user.id,
+        "buyer_username": f"@{user.username}" if user.username else "Tidak ada",
+        "order_id": transaction_id,
+        "status": "Lunas",
+        "type": tipe_label,
+        "quantity": len(orders),
+        "item_name": item_names,
+        "item_price": _format_rupiah(first_order.get("price", 0)),
+        "item_duration": _format_duration(first_order.get("duration", 0)),
+        "item_chat_id": first_order.get("chat_id", "-"),
+        "item_list": item_list,
+        "item_table": item_table,
+        "subtotal": _format_rupiah(subtotal),
+        "discount": _format_rupiah(diskon),
+        "coupon": coupon_code or "Tanpa Kupon",
+        "total": _format_rupiah(total),
+        "method": "QRIS (Saweria)",
+        "time": _format_waktu(),
+        "bot_name": client.me.first_name or "-",
+        "bot_username": f"@{client.me.username}" if client.me.username else "-",
+        "bot_mention": bot_mention,
+        "sold_count": len(orders),
+    }
+
+    custom_template = await ctx.db.getVars(client.me.id, "income_text_template")
+    if custom_template:
+        return render_income_template(custom_template, values)
 
     return (
         f"{section(f'{emoji.md('money_bag')} PEMASUKAN BARU')}\n\n"

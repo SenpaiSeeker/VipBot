@@ -32,6 +32,14 @@ async def settings(client, callback_query):
         ],
         [
             {
+                "text": "🧾 Atur Notifikasi Pemasukan",
+                "callback_data": "set_income_text",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("pencil"),
+            }
+        ],
+        [
+            {
                 "text": "➕ Tambah VVIP",
                 "callback_data": "setup_listvvip",
                 "style": "green",
