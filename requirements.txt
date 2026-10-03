@@ -1,14 +1,11 @@
 pyrotgfork[fast]
 pyyaml
 python-dotenv
-requests
 faker
 setproctitle
 beautifulsoup4
-lxml
 qrcode[pil]
 matplotlib
-pyzbar
 psutil
 aiofiles
 aiocron
@@ -16,4 +13,4 @@ cloudscraper25
 playwright
 pyfiglet
 aiohttp
-tornado 
+uvloop
