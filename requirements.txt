@@ -1,4 +1,4 @@
-pyrotgfork[fast]
+kurigram[fast]
 pyyaml
 python-dotenv
 faker
