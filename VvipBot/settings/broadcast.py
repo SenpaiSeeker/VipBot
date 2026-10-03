@@ -175,15 +175,24 @@ async def broadcast_callback(client, callback_query):
         progress_msg = await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('white_check_mark')} Memulai siaran ke `{len(user_ids)}` pengguna..."
+                markdown=f"{client.ns.emoji.md('white_check_mark')} Memulai siaran ke `{len(user_ids)}` pengguna...\n{client.ns.emoji.md('stop_sign')} Tekan tombol dibawah untuk berhenti."
+            ),
+            reply_markup=client.ns.telegram.button.build_button_grid(
+                [[{"text": "BATALKAN", "callback_data": f"broadcast_cancel_{bot_id}", "style": "red"}]]
             ),
         )
         success_count, fail_count = 0, 0
+        should_stop = False
 
         async def send_to_user(target_user_id):
             nonlocal success_count, fail_count
+            from .. import ctx
+            if getattr(ctx, "broadcast_stop", {}).get(client.me.id):
+                nonlocal should_stop
+                should_stop = True
+                return
             try:
-                await _send_broadcast_message_internal(
+                await _send_broadcast_message(
                     client,
                     target_user_id,
                     ask_message,
@@ -199,15 +208,22 @@ async def broadcast_callback(client, callback_query):
             await asyncio.sleep(0.1)
 
         for user_id in user_ids:
+            if should_stop:
+                break
             if user_id != ctx.owner_id:
                 await send_to_user(user_id)
 
         await progress_msg.delete()
 
+        status_msg = (
+            f"{client.ns.emoji.md('cross_mark')} **Siaran Dibatalkan!**\n"
+            if should_stop
+            else f"{client.ns.emoji.md('loudspeaker')} **Siaran Selesai!**\n"
+        )
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('loudspeaker')} **Siaran Selesai!**\n"
+                markdown=f"{status_msg}"
                 f"{client.ns.emoji.md('white_check_mark')} **Terkirim:** `{success_count}`\n"
                 f"{client.ns.emoji.md('cross_mark')} **Gagal:** `{fail_count}`"
             ),
@@ -222,9 +238,17 @@ async def broadcast_callback(client, callback_query):
         )
 
 
-async def _send_broadcast_message_internal(
-    client, target_user_id, source_message, broadcast_price
-):
-    await _send_broadcast_message(
-        client, target_user_id, source_message, broadcast_price
-    )
+@command(
+    lambda ctx: filters.regex("^broadcast_cancel_"),
+    handler_type="callback",
+)
+async def broadcast_cancel_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return await callback_query.answer("🚫 Akses ditolak", show_alert=True)
+
+    await callback_query.answer("Siaran akan dihentikan setelah pengiriman saat ini...", show_alert=False)
+    from .. import ctx
+
+    if not hasattr(ctx, "broadcast_stop"):
+        ctx.broadcast_stop = {}
+    ctx.broadcast_stop[client.me.id] = True
