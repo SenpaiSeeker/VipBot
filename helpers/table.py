@@ -20,6 +20,8 @@ _BUTTON_STYLES = {
 
 _DEFAULT_STYLE = "primary"
 
+_BUTTON_PAD = "\u2800" * 8
+
 
 class TableBuilder:
     def md(self, headers, rows) -> str:
@@ -79,7 +81,7 @@ class TableBuilder:
         attr = _BUTTON_TYPES[btn_type]
         return (
             f'<tg-button type="{btn_type}" {attr}="{html.escape(payload, quote=True)}"'
-            f' style="{style}">{html.escape(label, quote=False)}</tg-button>'
+            f' style="{style}">{_BUTTON_PAD}{html.escape(label, quote=False)}{_BUTTON_PAD}</tg-button>'
         )
 
     def buttons(self, text, align: str = "center") -> str:
