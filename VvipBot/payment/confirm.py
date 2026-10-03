@@ -116,6 +116,8 @@ async def _build_income_notification(
 
     return (
         f"{section(f'{emoji.md('money_bag')} PEMASUKAN BARU')}\n\n"
+        f"<details>\n"
+        f"<summary><strong>DETAIL PEMASUKAN</strong></summary>\n\n"
         f"{section(f'{emoji.md('bell')} RINGKASAN TRANSAKSI')}\n\n"
         f"{table.md([h_info, h_ket], ringkasan_rows)}\n\n"
         f"{section(f'{emoji.md('bust_in_silhouette')} DATA PEMBELI')}\n\n"
@@ -125,7 +127,8 @@ async def _build_income_notification(
         f"{section(f'{emoji.md('money_bag')} RINCIAN PEMBAYARAN')}\n\n"
         f"{table.md([h_info, h_ket], pembayaran_rows)}\n\n"
         f"{section(f'{emoji.md('robot')} INFO BOT')}\n\n"
-        f"{table.md([h_info, h_ket], bot_rows)}"
+        f"{table.md([h_info, h_ket], bot_rows)}\n\n"
+        f"</details>"
     )
 
 
