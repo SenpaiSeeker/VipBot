@@ -114,28 +114,11 @@ async def _send_broadcast_message(
         )
         return
 
-    if source_message.photo:
-        await client.send_rich_message(
-            target_user_id,
-            client.ns.table.rich_photo(
-                photo=source_message.photo.sizes[-1].file_id,
-                markdown=cleaned_text,
-                alias=f"bc_{source_message.id}",
-            ),
-            reply_markup=final_markup,
-        )
-    elif source_message.text:
-        await client.send_rich_message(
-            target_user_id,
-            pyrogram.types.InputRichMessage(markdown=cleaned_text),
-            reply_markup=final_markup,
-        )
-    else:
-        await source_message.copy(
-            chat_id=target_user_id,
-            caption=cleaned_text,
-            reply_markup=final_markup,
-        )
+    await source_message.copy(
+        chat_id=target_user_id,
+        caption=cleaned_text,
+        reply_markup=final_markup,
+    )
 
 
 @command(
