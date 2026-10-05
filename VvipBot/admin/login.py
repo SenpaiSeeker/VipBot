@@ -1,11 +1,19 @@
 from helpers import parse_dt
 
+import random
+
 import pyrogram
 
 from .. import *
 
-TELEGRAM_API_ID = 6
-TELEGRAM_API_HASH = "eb06d4abfb49dc3eeb1aeb98ae0f581e"
+TELEGRAM_API_CREDENTIALS = [
+    ("Android", 6, "eb06d4abfb49dc3eeb1aeb98ae0f581e"),
+    ("AndroidX", 21724, "3e0cb5efcd52300aec5994fdfc5bdc16"),
+    ("Desktop", 2040, "b18441a1ff607e10a989891a5462e627"),
+    ("iOS", 10840, "33c45224029d59cb3ad0c16134215aeb"),
+    ("macOS", 2834, "68875f756c9b437a8b916ca3de215815"),
+    ("Web", 2496, "8da85b0d5bfe62527e5b244c209159c3"),
+]
 
 
 @command(lambda ctx: filters.command("login") & filters.user(ctx.owner_id))
@@ -86,8 +94,7 @@ async def login_command_handler(client, message):
 
     expiry_date_str = (datetime.now(timezone.utc) + timedelta(days=31)).isoformat()
 
-    api_id = TELEGRAM_API_ID
-    api_hash = TELEGRAM_API_HASH
+    _, api_id, api_hash = random.choice(TELEGRAM_API_CREDENTIALS)
 
     bot_data = {
         "name": str(new_bot_id),
