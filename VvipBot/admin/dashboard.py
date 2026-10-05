@@ -154,6 +154,7 @@ async def show_stars_stats(client, callback_query):
         return
     page = int(callback_query.data.split("_")[1])
     items_per_page = 5
+    table = client.ns.table
     try:
         await callback_query.answer(
             "⏳ **Sedang Memproses...**\nMohon tunggu sebentar."
@@ -183,7 +184,6 @@ async def show_stars_stats(client, callback_query):
                 ["Total Transaksi", "`0`"],
                 ["Status", "Belum ada transaksi Stars"],
             ]
-            table = client.ns.table
             text = (
                 f"{client.ns.emoji.md('chart_bar')} **Statistik Pendapatan Stars**\n\n"
                 f"{table.md(['Info', 'Nilai'], empty_rows)}"
