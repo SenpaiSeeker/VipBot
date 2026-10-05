@@ -2,9 +2,10 @@ from helpers import parse_dt
 
 import pyrogram
 
-from config import API_HASH, API_ID
-
 from .. import *
+
+TELEGRAM_API_ID = 6
+TELEGRAM_API_HASH = "eb06d4abfb49dc3eeb1aeb98ae0f581e"
 
 
 @command(lambda ctx: filters.command("login") & filters.user(ctx.owner_id))
@@ -85,10 +86,13 @@ async def login_command_handler(client, message):
 
     expiry_date_str = (datetime.now(timezone.utc) + timedelta(days=31)).isoformat()
 
+    api_id = TELEGRAM_API_ID
+    api_hash = TELEGRAM_API_HASH
+
     bot_data = {
         "name": str(new_bot_id),
-        "api_id": API_ID,
-        "api_hash": API_HASH,
+        "api_id": api_id,
+        "api_hash": api_hash,
         "bot_token": bot_token,
     }
 
@@ -102,7 +106,7 @@ async def login_command_handler(client, message):
             )
         )
 
-    await ctx.db.saveBot(new_bot_id, API_ID, API_HASH, bot_token, is_token=True)
+    await ctx.db.saveBot(new_bot_id, api_id, api_hash, bot_token, is_token=True)
     await ctx.db.setVars(new_bot_id, "owner_id", resolved_owner)
     await ctx.db.setVars(new_bot_id, "bot_expiration_date", expiry_date_str)
 
