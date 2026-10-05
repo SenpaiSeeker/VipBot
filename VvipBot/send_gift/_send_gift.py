@@ -139,9 +139,9 @@ async def list_gift_handler(client, message):
                     emoji = f"{gift.sticker.emoji} "
 
                 gift_rows = [
-                    [f"{client.ns.emoji.char('id_card')} ID", f"{gift.id}"],
-                    [f"{client.ns.emoji.char('money_bag')} Harga", f"{price} Stars"],
-                    [f"{client.ns.emoji.char('performing_arts')} Emoji", emoji.strip()],
+                    [f"{client.ns.emoji.md('id_card')} ID", f"{gift.id}"],
+                    [f"{client.ns.emoji.md('money_bag')} Harga", f"{price} Stars"],
+                    [f"{client.ns.emoji.md('performing_arts')} Emoji", emoji.strip()],
                 ]
 
                 rich_text = (
