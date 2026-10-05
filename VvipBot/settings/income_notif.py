@@ -63,7 +63,10 @@ async def set_income_text_callback(client, callback_query):
             return await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
-                    markdown=f"{client.ns.emoji.md('cross_mark')} **Gagal:** Pesan bukan teks."
+                    markdown=(
+                        f"{client.ns.emoji.md('cross_mark')} **Gagal**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Keterangan', 'Pesan bukan teks']])}"
+                    )
                 ),
                 reply_markup=back_btn,
             )
@@ -78,8 +81,8 @@ async def set_income_text_callback(client, callback_query):
                 chat_id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
-                        f"{client.ns.emoji.md('white_check_mark')} **Sukses!** "
-                        f"Teks notifikasi pemasukan kembali ke default."
+                        f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Teks notifikasi pemasukan kembali ke default']])}"
                     )
                 ),
                 reply_markup=back_btn,
@@ -95,8 +98,8 @@ async def set_income_text_callback(client, callback_query):
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('white_check_mark')} **Sukses!** "
-                    f"Teks notifikasi pemasukan berhasil diperbarui."
+                    f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Teks notifikasi pemasukan berhasil diperbarui']])}"
                 )
             ),
             reply_markup=back_btn,
@@ -106,7 +109,10 @@ async def set_income_text_callback(client, callback_query):
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan']])}"
+                )
             ),
             reply_markup=back_btn,
         )

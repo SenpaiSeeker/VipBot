@@ -212,12 +212,7 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
     try:
         prompt = (
             f"**{client.ns.emoji.md('art')} Atur Icon Paket `{display_name}`**\n\n"
-            f"Icon saat ini: {current_display}\n"
-            f"ID bawaan: `{default_id}`\n\n"
-            f"Kirim **custom emoji** yang ingin digunakan, "
-            f"atau tulis **ID custom emoji** secara langsung.\n\n"
-            f"Ketik `/default` untuk kembali ke ID bawaan.\n"
-            f"Ketik `/batal` untuk membatalkan."
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Icon Saat Ini', f'{current_display}'], ['ID Bawaan', f'`{default_id}`'], ['Instruksi', 'Kirim **custom emoji** yang ingin digunakan, atau tulis **ID custom emoji** secara langsung'], ['Default', 'Ketik `/default` untuk kembali ke ID bawaan'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
         )
         ask_msg = await client.ask(chat_id, prompt, timeout=600)
 
@@ -275,9 +270,8 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n"
-                    f"Icon paket **{display_name}** {status}.\n\n"
-                    f"ID aktif: {result_display}"
+                    f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Paket', f'**{display_name}**'], ['Status', f'Icon {status}'], ['ID Aktif', f'{result_display}']])}"
                 )
             ),
             reply_markup=back_btn,
@@ -287,7 +281,10 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan']])}"
+                )
             ),
             reply_markup=back_btn,
         )

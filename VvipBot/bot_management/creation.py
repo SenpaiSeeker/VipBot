@@ -47,7 +47,10 @@ async def start_creation_process_callback(client, callback_query):
                 timeout=600,
             )
 
-        token_prompt = f"**{client.ns.emoji.md('robot')} Masukkan Bot Token Anda.**\nDapatkan dari @BotFather."
+        token_prompt = (
+            f"**{client.ns.emoji.md('robot')} Masukkan Bot Token**\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Isi', 'Masukkan Bot Token Anda'], ['Sumber', 'Dapatkan dari @BotFather']])}"
+        )
         token_msg = await ask(token_prompt)
 
         if token_msg.text.lower() == "/batal":
@@ -58,7 +61,10 @@ async def start_creation_process_callback(client, callback_query):
         msg = await client.send_rich_message(
             user_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('mag')} `Memverifikasi data & token...`"
+                markdown=(
+                    f"{client.ns.emoji.md('mag')} **Memverifikasi Data**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Memverifikasi data & token']])}"
+                )
             ),
         )
 
@@ -70,8 +76,8 @@ async def start_creation_process_callback(client, callback_query):
         await msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('white_check_mark')} Bot *'{new_bot_name.first_name}'* valid dan sedang disimpan.\n"
-                    f"{client.ns.emoji.md('rocket')} `Memulai bot...`"
+                    f"{client.ns.emoji.md('white_check_mark')} **Token Valid**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f"'{new_bot_name.first_name}'"], ['Status', 'Valid dan sedang disimpan'], ['Aksi', 'Memulai bot']])}"
                 )
             )
         )
@@ -121,20 +127,29 @@ async def start_creation_process_callback(client, callback_query):
         await client.send_rich_message(
             user_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan']])}"
+                )
             ),
         )
     except asyncio.TimeoutError:
         await client.send_rich_message(
             user_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('alarm_clock')} **Waktu Habis**\nProses telah dibatalkan otomatis."
+                markdown=(
+                    f"{client.ns.emoji.md('alarm_clock')} **Waktu Habis**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Waktu habis'], ['Keterangan', 'Proses telah dibatalkan otomatis']])}"
+                )
             ),
         )
     except Exception as e:
         await client.send_rich_message(
             user_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} **Error Pembuatan Bot:** `{e}`"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Error Pembuatan Bot**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Error pembuatan bot'], ['Error', f'`{e}`']])}"
+                )
             ),
         )

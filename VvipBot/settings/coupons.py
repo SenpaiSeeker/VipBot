@@ -82,26 +82,37 @@ async def add_coupon_callback(client, callback_query):
             )
 
         code = (
-            await ask("**1/4:** Masukkan kode kupon unik (misal: `DISKONBARU`).")
+            await ask(
+                f"**1/4: Masukkan Kode Kupon**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', 'Kode kupon unik (misal: `DISKONBARU`)']])}"
+            )
         ).text.upper()
 
         type_msg = await ask(
-            "**2/4:** Pilih tipe diskon:\n1. Persentase (%)\n2. Potongan Harga Tetap"
+            f"**2/4: Pilih Tipe Diskon**\n\n"
+            f"{client.ns.table.md(['Opsi', 'Keterangan'], [['1', 'Persentase (%)'], ['2', 'Potongan Harga Tetap']])}"
         )
         discount_type = "percentage" if "1" in type_msg.text else "fixed"
 
         value_prompt = (
-            "**3/4:** Masukkan nilai persentase."
-            if discount_type == "percentage"
-            else "**3/4:** Masukkan jumlah potongan harga."
+            f"**3/4: Nilai Diskon**\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Isi', 'Masukkan nilai persentase' if discount_type == 'percentage' else 'Masukkan jumlah potongan harga']])}"
         )
         discount_value = int((await ask(value_prompt)).text)
 
         uses_left = int(
-            (await ask("**4/4:** Berapa kali kupon ini bisa digunakan?")).text
+            (
+                await ask(
+                    f"**4/4: Batas Penggunaan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Isi', 'Berapa kali kupon ini bisa digunakan?']])}"
+                )
+            ).text
         )
 
-        expiry_days_msg = await ask("**5/5:** Berapa hari kupon ini akan berlaku?")
+        expiry_days_msg = await ask(
+            f"**5/5: Masa Berlaku**\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Isi', 'Berapa hari kupon ini akan berlaku?']])}"
+        )
         expiry_days = int(expiry_days_msg.text)
 
         expiry_date = (
@@ -123,7 +134,10 @@ async def add_coupon_callback(client, callback_query):
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('white_check_mark')} Kupon `{code}` berhasil dibuat."
+                markdown=(
+                    f"{client.ns.emoji.md('white_check_mark')} **Kupon Berhasil Dibuat!**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Kode', f'`{code}`'], ['Status', 'Aktif']])}"
+                )
             ),
         )
 
@@ -131,7 +145,10 @@ async def add_coupon_callback(client, callback_query):
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan'], ['Keterangan', 'Pembuatan kupon dibatalkan']])}"
+                )
             ),
         )
 

@@ -147,8 +147,7 @@ async def confirm_kick_member_callback(client, callback_query):
     mention_str = client.ns.telegram.arg.getMention(user, md=True)
     rich_text = (
         f"{client.ns.emoji.md('exclamation')} **Konfirmasi Penendangan**\n\n"
-        f"Anda yakin ingin menendang **{mention_str}** dari grup VVIP **{vvip_name}**?\n\n"
-        f"Pengguna akan dikeluarkan dari grup dan data keanggotaannya akan dihapus."
+        f"{client.ns.table.md(['Info', 'Nilai'], [['Pengguna', f'**{mention_str}**'], ['Grup', f'Grup VVIP **{vvip_name}**'], ['Aksi', 'Anda yakin ingin menendang pengguna ini?'], ['Efek', 'Pengguna akan dikeluarkan dari grup dan data keanggotaannya akan dihapus']])}"
     )
     layout = [
         [
@@ -465,7 +464,7 @@ async def confirm_kick_active_callback(client, callback_query):
     mention_str = client.ns.telegram.arg.getMention(user, md=True)
     rich_text = (
         f"{client.ns.emoji.md('exclamation')} **Konfirmasi**\n\n"
-        f"Anda yakin ingin menendang **{mention_str}** dari grup?"
+        f"{client.ns.table.md(['Info', 'Nilai'], [['Pengguna', f'**{mention_str}**'], ['Aksi', 'Anda yakin ingin menendang pengguna ini dari grup?']])}"
     )
     layout = [
         [
@@ -505,7 +504,10 @@ async def do_kick_active_callback(client, callback_query):
     try:
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('hourglass')} **Memproses penendangan pengguna...**"
+                markdown=(
+                    f"{client.ns.emoji.md('hourglass')} **Memproses Penendangan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Memproses penendangan pengguna']])}"
+                )
             )
         )
         await client.ban_chat_member(chat_id, user_id)
@@ -533,8 +535,8 @@ async def do_kick_active_callback(client, callback_query):
 
         mention_str = client.ns.telegram.arg.getMention(user, md=True)
         rich_text = (
-            f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n"
-            f"Pengguna **{mention_str}** telah ditendang dari grup."
+            f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Pengguna', f'**{mention_str}**'], ['Status', 'Telah ditendang dari grup']])}"
         )
         layout = [
             [

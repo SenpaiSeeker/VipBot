@@ -348,8 +348,9 @@ async def manual_check_payment_callback(client, callback_query):
                     pyrogram.types.InputRichMessage(
                         markdown=(
                             f"{client.ns.emoji.md('party_popper')} **Pembayaran Paket Semua VIP Berhasil!**\n\n"
-                            f"Berikut semua link akses VIP Anda:\n\n{link_text}\n\n"
-                            f"{client.ns.emoji.md('exclamation')} Setiap link hanya berlaku 1 kali klik dan kedaluwarsa dalam 60 menit."
+                            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Pembayaran berhasil'], ['Akses', 'Berikut semua link akses VIP Anda']])}\n\n"
+                            f"{link_text}\n\n"
+                            f"{client.ns.table.md(['Info', 'Nilai'], [['Perhatian', 'Setiap link hanya berlaku 1 kali klik dan kedaluwarsa dalam 60 menit']])}"
                         )
                     ),
                     protect_content=True,
@@ -479,8 +480,9 @@ async def manual_check_payment_callback(client, callback_query):
                 pyrogram.types.InputRichMessage(
                     markdown=(
                         f"{client.ns.emoji.md('party_popper')} **Pembayaran Dikonfirmasi!**\n\n"
-                        f"Terima kasih, berikut adalah link akses Anda untuk paket **{name}**:\n\n{link}\n\n"
-                        f"{client.ns.emoji.md('exclamation')} Link ini hanya berlaku untuk 1 kali klik dan akan kedaluwarsa dalam 60 menit jika tidak digunakan."
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Pembayaran dikonfirmasi'], ['Paket', f'**{name}**'], ['Akses', 'Berikut adalah link akses Anda']])}\n\n"
+                        f"{link}\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Perhatian', 'Link ini hanya berlaku untuk 1 kali klik dan akan kedaluwarsa dalam 60 menit jika tidak digunakan']])}"
                     )
                 ),
                 protect_content=True,

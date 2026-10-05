@@ -47,7 +47,10 @@ async def set_broadcast_price_callback(client, callback_query):
                 return await client.send_rich_message(
                     chat_id,
                     pyrogram.types.InputRichMessage(
-                        markdown=f"{client.ns.emoji.md('white_check_mark')} **Sukses!** Fitur Paid Broadcast dinonaktifkan."
+                        markdown=(
+                            f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
+                            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Fitur Paid Broadcast dinonaktifkan']])}"
+                        )
                     ),
                     reply_markup=back_btn,
                 )
@@ -61,7 +64,10 @@ async def set_broadcast_price_callback(client, callback_query):
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('white_check_mark')} **Sukses!** Harga broadcast telah diatur menjadi `{stars_amount}` Stars."
+                markdown=(
+                    f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Harga broadcast diperbarui'], ['Harga', f'`{stars_amount}` Stars']])}"
+                )
             ),
             reply_markup=back_btn,
         )
@@ -70,7 +76,10 @@ async def set_broadcast_price_callback(client, callback_query):
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n{e}"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan'], ['Keterangan', f'{e}']])}"
+                )
             ),
             reply_markup=back_btn,
         )
@@ -143,8 +152,7 @@ async def broadcast_callback(client, callback_query):
         await callback_query.message.delete()
         prompt = (
             f"{client.ns.emoji.md('loudspeaker')} **Kirim Pesan Broadcast**\n\n"
-            f"Silakan teruskan (forward) atau kirim pesan yang ingin disiarkan.\n\n"
-            f"Ketik `/batal` untuk membatalkan."
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Instruksi', 'Teruskan (forward) atau kirim pesan yang ingin disiarkan'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
         )
         ask_message = await client.ask(chat_id, text=prompt, timeout=600)
 
@@ -179,7 +187,10 @@ async def broadcast_callback(client, callback_query):
         progress_msg = await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('white_check_mark')} Memulai siaran ke `{len(user_ids)}` pengguna...\n{client.ns.emoji.md('stop_sign')} Tekan tombol dibawah untuk berhenti."
+                markdown=(
+                    f"{client.ns.emoji.md('white_check_mark')} **Memulai Siaran**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Siaran dimulai'], ['Jumlah', f'`{len(user_ids)}` pengguna'], ['Berhenti', 'Tekan tombol dibawah untuk berhenti']])}"
+                )
             ),
             reply_markup=client.ns.telegram.button.build_button_grid(
                 [[{"text": "BATALKAN", "callback_data": f"broadcast_cancel_{bot_id}", "style": "red"}]]
@@ -219,17 +230,16 @@ async def broadcast_callback(client, callback_query):
 
         await progress_msg.delete()
 
-        status_msg = (
-            f"{client.ns.emoji.md('cross_mark')} **Siaran Dibatalkan!**\n"
+        status_title = (
+            f"{client.ns.emoji.md('cross_mark')} **Siaran Dibatalkan!**"
             if should_stop
-            else f"{client.ns.emoji.md('loudspeaker')} **Siaran Selesai!**\n"
+            else f"{client.ns.emoji.md('loudspeaker')} **Siaran Selesai!**"
         )
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{status_msg}"
-                f"{client.ns.emoji.md('white_check_mark')} **Terkirim:** `{success_count}`\n"
-                f"{client.ns.emoji.md('cross_mark')} **Gagal:** `{fail_count}`"
+                markdown=f"{status_title}\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan' if should_stop else 'Selesai'], ['Terkirim', f'`{success_count}`'], ['Gagal', f'`{fail_count}`']])}"
             ),
         )
 
@@ -237,7 +247,10 @@ async def broadcast_callback(client, callback_query):
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} **Gagal/Batal**\n{e}"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Gagal/Batal**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal/Batal'], ['Keterangan', f'{e}']])}"
+                )
             ),
         )
 

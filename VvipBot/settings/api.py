@@ -105,14 +105,20 @@ async def set_api_key_prompt(client, callback_query):
             )
 
         if key_name == "SAWERIA":
-            username_msg = await ask("**2/2:** Kirim **Username Saweria** Anda.")
+            username_msg = await ask(
+                f"**2/2: Username Saweria**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Isi', 'Kirim **Username Saweria** Anda']])}"
+            )
             if username_msg.text and username_msg.text.lower() == "/batal":
                 raise listen.UserCancelled
 
             processing_msg = await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
-                    markdown=f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\nMohon tunggu sebentar."
+                    markdown=(
+                        f"{client.ns.emoji.md('hourglass')} **Sedang Memproses**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Sedang memproses'], ['Keterangan', 'Mohon tunggu sebentar']])}"
+                    )
                 ),
             )
 
@@ -136,7 +142,10 @@ async def set_api_key_prompt(client, callback_query):
                 await client.send_rich_message(
                     chat_id,
                     pyrogram.types.InputRichMessage(
-                        markdown=f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\nKunci Saweria berhasil disimpan."
+                        markdown=(
+                            f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
+                            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Kunci Saweria berhasil disimpan']])}"
+                        )
                     ),
                     reply_markup=back_btn,
                 )
@@ -171,7 +180,10 @@ async def set_api_key_prompt(client, callback_query):
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan']])}"
+                )
             ),
             reply_markup=back_btn,
         )

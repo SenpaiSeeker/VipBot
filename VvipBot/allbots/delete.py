@@ -33,7 +33,7 @@ async def allbots_confirm_delete_callback(client, callback_query):
 
     text = (
         f"**{client.ns.emoji.md('warning')} Konfirmasi Penghapusan**\n\n"
-        f"Anda yakin ingin menghapus bot dengan ID `{bot_id}` secara permanen?"
+        f"{client.ns.table.md(['Info', 'Nilai'], [['Bot ID', f'`{bot_id}`'], ['Aksi', 'Anda yakin ingin menghapus bot ini secara permanen?']])}"
     )
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(markdown=text),
@@ -53,7 +53,10 @@ async def allbots_do_delete_callback(client, callback_query):
 
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(
-            markdown=f"{client.ns.emoji.md('hourglass')} Menghapus bot..."
+            markdown=(
+                f"{client.ns.emoji.md('hourglass')} **Menghapus Bot**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Menghapus bot']])}"
+            )
         )
     )
     try:

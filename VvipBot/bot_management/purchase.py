@@ -22,7 +22,7 @@ async def create_bot_callback(client, callback_query):
 
         text_warning = (
             f"{client.ns.emoji.md('cross_mark')} **Kapasitas Bot Penuh!**\n\n"
-            f"Maaf, server saat ini sudah mencapai batas maksimal pembuatan bot (25 Bot). Silakan buat bot baru{backup_text}."
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Server sudah mencapai batas maksimal pembuatan bot (25 Bot)'], ['Saran', f'Silakan buat bot baru{backup_text}']])}"
         )
 
         layout = [
@@ -48,7 +48,7 @@ async def create_bot_callback(client, callback_query):
     if user_expiry and user_expiry > datetime.now(timezone.utc):
             text = (
                 f"{client.ns.emoji.md('white_check_mark')} **Anda Sudah Berlangganan!**\n\n"
-                f"Anda sudah memiliki akses untuk membuat bot. Tekan tombol di bawah untuk memulai proses pembuatan."
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Anda sudah memiliki akses untuk membuat bot'], ['Aksi', 'Tekan tombol di bawah untuk memulai proses pembuatan']])}"
             )
 
             layout = [
@@ -117,8 +117,8 @@ async def proceed_bot_payment_callback(client, callback_query):
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(
             markdown=(
-                f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
-                f"Mohon tunggu sebentar."
+                f"{client.ns.emoji.md('hourglass')} **Sedang Memproses**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Sedang memproses'], ['Keterangan', 'Mohon tunggu sebentar']])}"
             )
         )
     )
@@ -199,7 +199,10 @@ async def proceed_bot_payment_callback(client, callback_query):
         await client.send_rich_message(
             user_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n`{e}`"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Terjadi kesalahan'], ['Error', f'`{e}`']])}"
+                )
             ),
         )
 
@@ -253,7 +256,7 @@ async def confirm_bot_payment_callback(client, callback_query):
 
             success_text = (
                 f"{client.ns.emoji.md('white_check_mark')} **Pembayaran Berhasil!**\n\n"
-                f"Terima kasih! Langganan Anda untuk membuat bot selama **{months} bulan** telah diaktifkan."
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', f'Langganan Anda untuk membuat bot selama **{months} bulan** telah diaktifkan'], ['Ucapan', 'Terima kasih']])}"
             )
 
             layout = [

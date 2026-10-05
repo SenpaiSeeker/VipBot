@@ -42,21 +42,28 @@ async def send_gift_handler(client, message):
         if not user_id_target:
             return await message.reply_rich(
                 pyrogram.types.InputRichMessage(
-                    markdown=f"{client.ns.emoji.md('cross_mark')} **Target tidak ditemukan.**\n"
-                    f"Balas pesan pengguna atau gunakan format:\n`/gift [username] [gift_id]`"
+                    markdown=(
+                        f"{client.ns.emoji.md('cross_mark')} **Target Tidak Ditemukan**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Target tidak ditemukan'], ['Cara', 'Balas pesan pengguna atau gunakan format'], ['Format', '`/gift [username] [gift_id]`']])}"
+                    )
                 )
             )
         if not gift_id_arg or not gift_id_arg.isdigit():
             return await message.reply_rich(
                 pyrogram.types.InputRichMessage(
-                    markdown=f"{client.ns.emoji.md('cross_mark')} **ID Hadiah tidak valid.**\n"
-                    f"Gunakan `/listgift` untuk melihat ID."
+                    markdown=(
+                        f"{client.ns.emoji.md('cross_mark')} **ID Hadiah Tidak Valid**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'ID hadiah tidak valid'], ['Saran', 'Gunakan `/listgift` untuk melihat ID']])}"
+                    )
                 )
             )
         gift_id = int(gift_id_arg)
         status_msg = await message.reply_rich(
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('repeat')} Memproses pengiriman hadiah..."
+                markdown=(
+                    f"{client.ns.emoji.md('repeat')} **Memproses Pengiriman**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Memproses pengiriman hadiah']])}"
+                )
             )
         )
         available_gifts = await client.get_available_gifts()
@@ -77,21 +84,28 @@ async def send_gift_handler(client, message):
         mention = client.ns.telegram.arg.getMention(target_user, md=True)
         await status_msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('gift')} Mengirim hadiah **Star** "
-                f"(ID: `{gift_id}`) ke **{mention}**..."
+                markdown=(
+                    f"{client.ns.emoji.md('gift')} **Mengirim Hadiah**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Hadiah', f'Hadiah **Star** (ID: `{gift_id}`)'], ['Tujuan', f'**{mention}**'], ['Status', 'Mengirim']])}"
+                )
             )
         )
         await send_star_gift_raw(client, target_user.id, gift_id)
         await status_msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('white_check_mark')} Berhasil mengirim "
-                f"hadiah ke **{mention}**!"
+                markdown=(
+                    f"{client.ns.emoji.md('white_check_mark')} **Berhasil!**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Berhasil mengirim hadiah'], ['Penerima', f'**{mention}**']])}"
+                )
             )
         )
     except Exception as e:
         await message.reply_rich(
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} Gagal mengirim hadiah: `{e}`"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Gagal Mengirim**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal mengirim hadiah'], ['Error', f'`{e}`']])}"
+                )
             )
         )
 
@@ -238,15 +252,17 @@ async def ask_send_gift_callback(client, callback_query):
         await callback_query.edit_message_reply_markup(None)
         prompt = (
             f"**{client.ns.emoji.md('bust_in_silhouette')} Kirim Hadiah**\n\n"
-            f"Silakan kirim **User ID** atau **Username** (@username) tujuan penerima hadiah.\n\n"
-            f"Ketik `/batal` untuk membatalkan."
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Instruksi', 'Silakan kirim **User ID** atau **Username** (@username) tujuan penerima hadiah'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
         )
         ask_msg = await client.ask(chat_id, prompt, timeout=60)
         if ask_msg.text.lower() == "/batal":
             await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
-                    markdown=f"{client.ns.emoji.md('cross_mark')} Pengiriman dibatalkan."
+                    markdown=(
+                        f"{client.ns.emoji.md('cross_mark')} **Dibatalkan**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Pengiriman dibatalkan']])}"
+                    )
                 ),
             )
             return
@@ -254,7 +270,10 @@ async def ask_send_gift_callback(client, callback_query):
         processing_msg = await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('repeat')} Mencari pengguna `{target_input}`..."
+                markdown=(
+                    f"{client.ns.emoji.md('repeat')} **Mencari Pengguna**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', f'Mencari pengguna `{target_input}`']])}"
+                )
             ),
         )
         try:
@@ -271,29 +290,38 @@ async def ask_send_gift_callback(client, callback_query):
             return
         await processing_msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('gift')} Mengirim hadiah **Star** "
-                f"(ID: `{gift_id}`) ke **{target_user.first_name}**..."
+                markdown=(
+                    f"{client.ns.emoji.md('gift')} **Mengirim Hadiah**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Hadiah', f'Hadiah **Star** (ID: `{gift_id}`)'], ['Tujuan', f'**{target_user.first_name}**'], ['Status', 'Mengirim']])}"
+                )
             )
         )
         await send_star_gift_raw(client, target_user.id, gift_id)
         await processing_msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('white_check_mark')} Berhasil mengirim hadiah "
-                f"ke **{target_user.first_name}**!"
+                markdown=(
+                    f"{client.ns.emoji.md('white_check_mark')} **Berhasil!**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Berhasil mengirim hadiah'], ['Penerima', f'**{target_user.first_name}**']])}"
+                )
             )
         )
     except asyncio.TimeoutError:
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('alarm_clock')} Waktu habis. "
-                f"Silakan ulangi proses."
+                markdown=(
+                    f"{client.ns.emoji.md('alarm_clock')} **Waktu Habis**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Waktu habis'], ['Aksi', 'Silakan ulangi proses']])}"
+                )
             ),
         )
     except Exception as e:
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} Gagal mengirim hadiah: `{e}`"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Gagal Mengirim**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal mengirim hadiah'], ['Error', f'`{e}`']])}"
+                )
             ),
         )

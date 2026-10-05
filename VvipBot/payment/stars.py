@@ -22,8 +22,7 @@ async def successful_donation_handler(client, message):
         rich_message=pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('party_popper')} **Terima Kasih Banyak, {user.first_name}!**\n\n"
-                f"Kami telah menerima donasi Anda sebesar **{stars_donated} Stars ({client.ns.emoji.md('star')})**.\n"
-                f"Dukungan Anda adalah bahan bakar semangat bagi kami. Semoga hari Anda menyenangkan!"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Donasi', f"**{stars_donated} Stars ({client.ns.emoji.md('star')})**"], ['Status', 'Kami telah menerima donasi Anda'], ['Catatan', 'Dukungan Anda adalah bahan bakar semangat bagi kami. Semoga hari Anda menyenangkan!']])}"
             )
         ),
     )
@@ -37,9 +36,7 @@ async def successful_donation_handler(client, message):
 
         notification_text = (
             f"{client.ns.emoji.md('sparkles')} **Donasi Baru Diterima!**\n\n"
-            f"**Jumlah:** `{stars_donated}` Stars ({client.ns.emoji.md('star')})\n"
-            f"**Dari:** {user_mention_str} (`{user.id}`)\n"
-            f"**Melalui Bot:** {bot_mention_str}"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Jumlah', f'`{stars_donated}` Stars ({client.ns.emoji.md('star')})'], ['Dari', f'{user_mention_str} (`{user.id}`)'], ['Melalui Bot', f'{bot_mention_str}']])}"
         )
 
         refund_key = uuid.uuid4().hex[:16]

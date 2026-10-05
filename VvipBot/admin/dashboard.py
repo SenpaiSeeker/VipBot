@@ -137,7 +137,10 @@ async def refund_stars_callback(client, callback_query):
         ctx.log.print(f"{ctx.log.RED}Gagal merefund donasi: {e}")
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{callback_query.message.text}\n\n{client.ns.emoji.md('cross_mark')} **Gagal mengembalikan donasi:**\n`{e}`"
+                markdown=(
+                    f"{callback_query.message.text}\n\n"
+                    f"{client.ns.table.md(['Status', 'Keterangan'], [['Gagal', 'Gagal mengembalikan donasi'], ['Error', f'`{e}`']])}"
+                )
             )
         )
     finally:

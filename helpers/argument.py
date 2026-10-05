@@ -32,12 +32,10 @@ class Argument:
         return mention
 
     async def getNamebot(self, bot_token: str) -> dict:
-        from config import API_HASH, API_ID
-
         temp_bot_client = pyrogram.Client(
             name="temp_bot_name_fetcher",
-            api_id=API_ID,
-            api_hash=API_HASH,
+            api_id=self.client.api_id,
+            api_hash=self.client.api_hash,
             bot_token=bot_token,
             in_memory=True,
         )

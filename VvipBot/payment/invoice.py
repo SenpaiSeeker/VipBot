@@ -7,8 +7,8 @@ from .. import ctx, is_bot_owner
 
 def _processing_text(client) -> str:
     return (
-        f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
-        f"Mohon tunggu sebentar."
+        f"{client.ns.emoji.md('hourglass')} **Sedang Memproses**\n\n"
+        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Sedang memproses'], ['Keterangan', 'Mohon tunggu sebentar']])}"
     )
 
 
@@ -33,7 +33,10 @@ async def _create_payment_invoice(
         return await client.send_rich_message(
             user.id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} Paket VVIP tidak ditemukan."
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Paket Tidak Ditemukan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Paket VVIP tidak ditemukan']])}"
+                )
             ),
         )
 
@@ -137,7 +140,7 @@ async def _create_payment_invoice(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n\n"
-                    f"```\n{e}\n```"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Terjadi kesalahan'], ['Error', f'`{e}`']])}"
                 )
             )
         )
@@ -248,7 +251,7 @@ async def _create_all_vvip_payment_invoice(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n\n"
-                    f"```\n{e}\n```"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Terjadi kesalahan'], ['Error', f'`{e}`']])}"
                 )
             )
         )

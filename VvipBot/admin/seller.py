@@ -125,8 +125,7 @@ async def do_give_access_callback(client, callback_query):
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=f"{client.ns.emoji.md('white_check_mark')} **Akses Diberikan!**\n\n"
-                f"Pengguna {mention_str} sekarang memiliki akses untuk membuat bot selama **{months_to_add} bulan**.\n\n"
-                f"Masa aktif akses hingga: `{formatted_jakarta_date}`"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Pengguna', f'{mention_str}'], ['Akses', f'Membuat bot selama **{months_to_add} bulan**'], ['Berlaku hingga', f'`{formatted_jakarta_date}`']])}"
             )
         )
         await callback_query.answer(
@@ -154,7 +153,7 @@ async def revoke_access_callback(client, callback_query):
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=f"{client.ns.emoji.md('cross_mark')} **Akses Dicabut!**\n\n"
-                f"Pengguna {mention} tidak lagi memiliki hak untuk membuat bot."
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Pengguna', f'{mention}'], ['Status', 'Tidak lagi memiliki hak untuk membuat bot']])}"
             )
         )
     except Exception as e:
@@ -167,7 +166,10 @@ async def add_seller_handler(client, message):
     if not user_id_target:
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} Pengguna tidak ditemukan. Pastikan ID/Username benar atau balas pesan pengguna."
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Pengguna Tidak Ditemukan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Pengguna tidak ditemukan'], ['Saran', 'Pastikan ID/Username benar atau balas pesan pengguna']])}"
+                )
             )
         )
     try:
@@ -176,20 +178,29 @@ async def add_seller_handler(client, message):
         if target_user.id in seller_list:
             return await message.reply_rich(
                 pyrogram.types.InputRichMessage(
-                    markdown=f"{client.ns.emoji.md('cross_mark')} User `{target_user.id}` sudah terdaftar sebagai seller."
+                    markdown=(
+                        f"{client.ns.emoji.md('cross_mark')} **Sudah Terdaftar**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['User', f'`{target_user.id}`'], ['Status', 'Sudah terdaftar sebagai seller']])}"
+                    )
                 )
             )
         await ctx.db.setListVars(ctx.owner_id, "seller_id_list", target_user.id)
         user_mention = client.ns.telegram.arg.getMention(target_user, md=True)
         await message.reply_rich(
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('white_check_mark')} Berhasil menambahkan `{user_mention}` sebagai seller."
+                markdown=(
+                    f"{client.ns.emoji.md('white_check_mark')} **Seller Ditambahkan!**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Seller', f'{user_mention}'], ['Status', 'Berhasil ditambahkan sebagai seller']])}"
+                )
             )
         )
     except Exception as e:
         await message.reply_rich(
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n`{e}`"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Error', f'`{e}`']])}"
+                )
             )
         )
 

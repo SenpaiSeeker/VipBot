@@ -115,8 +115,8 @@ async def pay_all_vvip_confirm_callback(client, callback_query):
 
 def _processing_text(client) -> str:
     return (
-        f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
-        f"Mohon tunggu sebentar."
+        f"{client.ns.emoji.md('hourglass')} **Sedang Memproses**\n\n"
+        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Sedang memproses'], ['Keterangan', 'Mohon tunggu sebentar']])}"
     )
 
 
@@ -331,7 +331,10 @@ async def promo_detail(client, callback_query):
             reply_markup=btn,
         )
 
-    text = f"{client.ns.emoji.md('cross_mark')} Paket promo tidak ditemukan atau tidak aktif."
+    text = (
+        f"{client.ns.emoji.md('cross_mark')} **Paket Tidak Ditemukan**\n\n"
+        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Paket promo tidak ditemukan atau tidak aktif']])}"
+    )
     btn = client.ns.telegram.button.build_button_grid(layout)
 
     await callback_query.edit_message_text(
@@ -355,7 +358,8 @@ async def apply_coupon_callback(client, callback_query):
     try:
         ask_msg = await client.ask(
             chat_id,
-            "Silakan masukkan kode kupon Anda.\n\nKetik `/batal` untuk membatalkan.",
+            f"**Masukkan Kode Kupon**\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Instruksi', 'Silakan masukkan kode kupon Anda'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}",
             timeout=300,
         )
 
@@ -448,7 +452,7 @@ async def apply_coupon_callback(client, callback_query):
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n\n"
-                    f"```\n{e}\n```"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Terjadi kesalahan'], ['Error', f'`{e}`']])}"
                 )
             ),
         )

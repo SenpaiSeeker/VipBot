@@ -93,7 +93,10 @@ async def broadcast_owners_handler(client, message):
     total_owners = len(owner_ids)
     progress_msg = await message.reply_rich(
         pyrogram.types.InputRichMessage(
-            markdown=f"{client.ns.emoji.md('white_check_mark')} Memulai siaran ke `{total_owners}` pengguna..."
+            markdown=(
+                f"{client.ns.emoji.md('white_check_mark')} **Memulai Siaran**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Siaran dimulai'], ['Jumlah', f'`{total_owners}` pengguna']])}"
+            )
         )
     )
     success_count = 0
@@ -109,8 +112,7 @@ async def broadcast_owners_handler(client, message):
 
     await progress_msg.edit(
         rich_message=pyrogram.types.InputRichMessage(
-            markdown=f"**{client.ns.emoji.md('loudspeaker')} Siaran Selesai!**\n"
-            f"{client.ns.emoji.md('white_check_mark')} **Terkirim:** `{success_count}`\n"
-            f"{client.ns.emoji.md('cross_mark')} **Gagal:** `{fail_count}`"
+            markdown=f"**{client.ns.emoji.md('loudspeaker')} Siaran Selesai!**\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Selesai'], ['Terkirim', f'`{success_count}`'], ['Gagal', f'`{fail_count}`']])}"
         )
     )

@@ -32,9 +32,7 @@ async def set_notif_chat_callback(client, callback_query):
     try:
         prompt = (
             f"{client.ns.emoji.md('bell')} **Atur Tempat Notifikasi**\n\n"
-            f"Kirim ID chat atau @username tempat notifikasi pembayaran akan dikirim.\n\n"
-            f"Ketik `/none` untuk kembali ke default (dikirim ke owner_id).\n\n"
-            f"Ketik `/batal` untuk membatalkan."
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Instruksi', 'Kirim ID chat atau @username tempat notifikasi pembayaran akan dikirim'], ['Default', 'Ketik `/none` untuk kembali ke default (dikirim ke owner_id)'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
         )
         ask_msg = await client.ask(chat_id, prompt, timeout=600)
 
@@ -42,7 +40,10 @@ async def set_notif_chat_callback(client, callback_query):
             return await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
-                    markdown=f"{client.ns.emoji.md('cross_mark')} **Gagal:** Pesan bukan teks."
+                    markdown=(
+                        f"{client.ns.emoji.md('cross_mark')} **Gagal**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Keterangan', 'Pesan bukan teks']])}"
+                    )
                 ),
                 reply_markup=back_btn,
             )
@@ -58,7 +59,10 @@ async def set_notif_chat_callback(client, callback_query):
             return await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
-                    markdown=f"{client.ns.emoji.md('white_check_mark')} **Sukses!** Notifikasi kembali ke default (owner_id)."
+                    markdown=(
+                        f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Notifikasi kembali ke default'], ['Tujuan', 'owner_id']])}"
+                    )
                 ),
                 reply_markup=back_btn,
             )
@@ -70,7 +74,10 @@ async def set_notif_chat_callback(client, callback_query):
             return await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
-                    markdown=f"{client.ns.emoji.md('white_check_mark')} **Sukses!** Tempat notifikasi diatur ke `{chat_target}`."
+                    markdown=(
+                        f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Tempat notifikasi diperbarui'], ['Tujuan', f'`{chat_target}`']])}"
+                    )
                 ),
                 reply_markup=back_btn,
             )
@@ -82,7 +89,10 @@ async def set_notif_chat_callback(client, callback_query):
                 return await client.send_rich_message(
                     chat_id,
                     pyrogram.types.InputRichMessage(
-                        markdown=f"{client.ns.emoji.md('cross_mark')} **Gagal:** Username `{raw}` tidak valid atau bot tidak dapat menjangkau target tersebut."
+                        markdown=(
+                            f"{client.ns.emoji.md('cross_mark')} **Gagal**\n\n"
+                            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Keterangan', f'Username `{raw}` tidak valid atau bot tidak dapat menjangkau target tersebut']])}"
+                        )
                     ),
                     reply_markup=back_btn,
                 )
@@ -92,7 +102,10 @@ async def set_notif_chat_callback(client, callback_query):
             return await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
-                    markdown=f"{client.ns.emoji.md('white_check_mark')} **Sukses!** Tempat notifikasi diatur ke `{raw}`."
+                    markdown=(
+                        f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Tempat notifikasi diperbarui'], ['Tujuan', f'`{raw}`']])}"
+                    )
                 ),
                 reply_markup=back_btn,
             )
@@ -100,8 +113,10 @@ async def set_notif_chat_callback(client, callback_query):
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} **Gagal:** Format tidak valid.\n\n"
-                f"Gunakan **ID chat** (angka), **@username**, atau `/none` untuk kembali ke default."
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Gagal**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Keterangan', 'Format tidak valid'], ['Format', 'Gunakan **ID chat** (angka), **@username**, atau `/none` untuk kembali ke default']])}"
+                )
             ),
             reply_markup=back_btn,
         )
@@ -110,7 +125,10 @@ async def set_notif_chat_callback(client, callback_query):
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan']])}"
+                )
             ),
             reply_markup=back_btn,
         )

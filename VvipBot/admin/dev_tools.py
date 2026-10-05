@@ -197,11 +197,15 @@ def format_output(
         else escaped_output
     )
 
-    display_text = f"**{client.ns.emoji.md('zap')} Input:**\n"
+    display_text = f"{client.ns.emoji.md('zap')} **Eval Result**\n\n"
+    display_text += client.ns.table.md(
+        ["Info", "Nilai"],
+        [["Status", status_header], ["Waktu", f"`{exec_time:.4f}s`"]],
+    )
+    display_text += f"\n\n**{client.ns.emoji.md('zap')} Input:**\n"
     display_text += f"```python\n{code}\n```\n\n"
-    display_text += f"**{client.ns.emoji.md('laptop')} Output ({status_header}):**\n"
-    display_text += f"```\n{short_output}\n```\n\n"
-    display_text += f"**{client.ns.emoji.md('hourglass')} Time:** `{exec_time:.4f}s`"
+    display_text += f"**{client.ns.emoji.md('laptop')} Output:**\n"
+    display_text += f"```\n{short_output}\n```"
 
     caption_text = f"{client.ns.emoji.zap} <b>Input:</b>\n"
     caption_text += (
@@ -429,19 +433,28 @@ async def restore_database_handler(client, message):
     if not message.reply_to_message or not message.reply_to_message.document:
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('exclamation')} **Cara Penggunaan Salah:**\nBalas (reply) ke file backup `.zip` yang dikirim oleh bot dengan perintah ini."
+                markdown=(
+                    f"{client.ns.emoji.md('exclamation')} **Cara Penggunaan Salah**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Cara penggunaan salah'], ['Cara', 'Balas (reply) ke file backup `.zip` yang dikirim oleh bot dengan perintah ini']])}"
+                )
             )
         )
     doc = message.reply_to_message.document
     if not doc.file_name.endswith(".zip"):
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} **Format File Salah:**\nHanya file backup dengan format `.zip` yang bisa dipulihkan."
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Format File Salah**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Format file salah'], ['Syarat', 'Hanya file backup dengan format `.zip` yang bisa dipulihkan']])}"
+                )
             )
         )
     status_msg = await message.reply_rich(
         pyrogram.types.InputRichMessage(
-            markdown=f"{client.ns.emoji.md('hourglass')} `Mendownload & mengekstrak file backup...`"
+            markdown=(
+                f"{client.ns.emoji.md('hourglass')} **Memproses Backup**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Mendownload & mengekstrak file backup']])}"
+            )
         )
     )
     downloaded_zip_path = None
@@ -480,9 +493,8 @@ async def restore_database_handler(client, message):
         restored_names = ", ".join(restored_files)
         await status_msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('white_check_mark')} **Pemulihan Berhasil!**\n"
-                f"Database `{restored_names}` telah dipulihkan.\n\n"
-                f"{client.ns.emoji.md('exclamation')} **PENTING:** Mohon **restart** bot agar dapat menggunakan database baru."
+                markdown=f"{client.ns.emoji.md('white_check_mark')} **Pemulihan Berhasil!**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Database', f'`{restored_names}`'], ['Status', 'Telah dipulihkan'], ['Penting', 'Mohon **restart** bot agar dapat menggunakan database baru']])}"
             )
         )
         ctx.log.print(
@@ -491,7 +503,8 @@ async def restore_database_handler(client, message):
     except Exception as e:
         await status_msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} **Pemulihan Gagal!**\n\n**Error:** `{e}`"
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Pemulihan Gagal!**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Pemulihan gagal'], ['Error', f'`{e}`']])}"
             )
         )
         ctx.log.print(f"{ctx.log.RED}Restore failed: {e}")
@@ -530,7 +543,10 @@ async def tfdatabase_command_handler(client, message):
         )
     msg = await message.reply_rich(
         pyrogram.types.InputRichMessage(
-            markdown=f"{client.ns.emoji.md('repeat')} Memproses transfer database..."
+            markdown=(
+                f"{client.ns.emoji.md('repeat')} **Memproses Transfer**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Memproses transfer database']])}"
+            )
         )
     )
     try:
@@ -585,7 +601,10 @@ async def tfdatabase_command_handler(client, message):
     except Exception as e:
         await msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} Terjadi kesalahan saat mentransfer database:\n`{e}`"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Transfer Gagal**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Terjadi kesalahan saat mentransfer database'], ['Error', f'`{e}`']])}"
+                )
             )
         )
 
@@ -617,7 +636,10 @@ async def tfbot_command_handler(client, message):
     target_db_name = args[3]
     msg = await message.reply_rich(
         pyrogram.types.InputRichMessage(
-            markdown=f"{client.ns.emoji.md('repeat')} Memproses migrasi bot..."
+            markdown=(
+                f"{client.ns.emoji.md('repeat')} **Memproses Migrasi**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Memproses migrasi bot']])}"
+            )
         )
     )
     try:
@@ -656,7 +678,10 @@ async def tfbot_command_handler(client, message):
                 await target_db.close_async()
             return await msg.edit_text(
                 rich_message=pyrogram.types.InputRichMessage(
-                    markdown=f"{client.ns.emoji.md('cross_mark')} Bot dengan ID `{bot_id}` tidak ditemukan di `{source_db_name}`."
+                    markdown=(
+                        f"{client.ns.emoji.md('cross_mark')} **Bot Tidak Ditemukan**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Bot ID', f'`{bot_id}`'], ['Status', 'Tidak ditemukan'], ['Database', f'`{source_db_name}`']])}"
+                    )
                 )
             )
         source_vars = await source_db._get_user_vars(bot_id)
@@ -683,11 +708,7 @@ async def tfbot_command_handler(client, message):
         await msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=f"{client.ns.emoji.md('white_check_mark')} **Migrasi Bot Berhasil!**\n\n"
-                f"**Bot ID:** `{bot_id}`\n"
-                f"**Dari:** `{source_db_name}`\n"
-                f"**Ke:** `{target_db_name}`\n\n"
-                f"Bot beserta seluruh datanya telah dipindahkan dan dihapus dari database lama.\n\n"
-                f"Jangan lupa restart bot tujuan agar bot ini segera menyala."
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Bot ID', f'`{bot_id}`'], ['Dari', f'`{source_db_name}`'], ['Ke', f'`{target_db_name}`'], ['Status', 'Bot beserta seluruh datanya telah dipindahkan dan dihapus dari database lama'], ['Penting', 'Jangan lupa restart bot tujuan agar bot ini segera menyala']])}"
             )
         )
     except Exception as e:

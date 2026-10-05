@@ -9,7 +9,10 @@ async def allbots_command_handler(client, message):
     invalidate_page_cache()
     msg_process = await message.reply_rich(
         pyrogram.types.InputRichMessage(
-            markdown=f"{client.ns.emoji.md('repeat')} Sedang memproses mengumpulkan bot"
+            markdown=(
+                f"{client.ns.emoji.md('repeat')} **Memproses**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Sedang memproses mengumpulkan bot']])}"
+            )
         )
     )
     await send_allbots_list(client, message, 0, force_refresh=True)
