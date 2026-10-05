@@ -4,16 +4,9 @@ import random
 
 import pyrogram
 
-from .. import *
+from config import TELEGRAM_API_CREDENTIALS
 
-TELEGRAM_API_CREDENTIALS = [
-    ("Android", 6, "eb06d4abfb49dc3eeb1aeb98ae0f581e"),
-    ("AndroidX", 21724, "3e0cb5efcd52300aec5994fdfc5bdc16"),
-    ("Desktop", 2040, "b18441a1ff607e10a989891a5462e627"),
-    ("iOS", 10840, "33c45224029d59cb3ad0c16134215aeb"),
-    ("macOS", 2834, "68875f756c9b437a8b916ca3de215815"),
-    ("Web", 2496, "8da85b0d5bfe62527e5b244c209159c3"),
-]
+from .. import *
 
 
 @command(lambda ctx: filters.command("login") & filters.user(ctx.owner_id))

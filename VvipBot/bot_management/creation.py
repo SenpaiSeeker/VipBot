@@ -1,4 +1,5 @@
 import asyncio
+import random
 from datetime import datetime, timezone
 
 import pyrogram
@@ -7,6 +8,7 @@ from pyrogram import filters
 from helpers import listen, parse_dt
 
 from .. import command, ctx
+from config import TELEGRAM_API_CREDENTIALS
 
 
 @command(
@@ -45,23 +47,7 @@ async def start_creation_process_callback(client, callback_query):
                 timeout=600,
             )
 
-        api_id_prompt = f"**{client.ns.emoji.md('lock')} 1/3: Masukkan API ID Anda.**\nDapatkan dari my.telegram.org."
-        api_id_msg = await ask(api_id_prompt)
-
-        if api_id_msg.text.lower() == "/batal":
-            raise listen.UserCancelled
-
-        api_id = api_id_msg.text
-
-        api_hash_prompt = f"**{client.ns.emoji.md('lock')} 2/3: Masukkan API Hash Anda.**\nDapatkan dari my.telegram.org."
-        api_hash_msg = await ask(api_hash_prompt)
-
-        if api_hash_msg.text.lower() == "/batal":
-            raise listen.UserCancelled
-
-        api_hash = api_hash_msg.text
-
-        token_prompt = f"**{client.ns.emoji.md('robot')} 3/3: Masukkan Bot Token Anda.**\nDapatkan dari @BotFather."
+        token_prompt = f"**{client.ns.emoji.md('robot')} Masukkan Bot Token Anda.**\nDapatkan dari @BotFather."
         token_msg = await ask(token_prompt)
 
         if token_msg.text.lower() == "/batal":
@@ -91,6 +77,7 @@ async def start_creation_process_callback(client, callback_query):
         )
 
         new_bot_id = int(token.split(":", 1)[0])
+        _, api_id, api_hash = random.choice(TELEGRAM_API_CREDENTIALS)
         bot_data = {
             "name": str(new_bot_id),
             "api_id": api_id,
