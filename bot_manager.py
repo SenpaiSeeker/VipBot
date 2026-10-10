@@ -1,4 +1,5 @@
 import asyncio
+import time
 from datetime import datetime, timedelta, timezone
 
 import pyrogram
@@ -21,11 +22,26 @@ class BotManager:
         self.running_bots = {}
         self.main_bot_client = None
         self.main_bot_id = None
+        self._flood_until = {}
+
+    def flood_remaining(self, bot_id):
+        try:
+            bot_id = int(bot_id)
+        except (TypeError, ValueError):
+            return 0
+        return max(0, int(self._flood_until.get(bot_id, 0) - time.time()))
 
     async def start_bot(self, bot_data):
         bot_id = int(bot_data["name"])
         if bot_id in self.running_bots:
             log.warning(f"Bot {bot_id} sudah berjalan.")
+            return
+
+        remaining = self.flood_remaining(bot_id)
+        if remaining > 0:
+            log.warning(
+                f"Bot {bot_id} masih FloodWait ({remaining}s), lewati percobaan start."
+            )
             return
 
         try:
@@ -56,6 +72,13 @@ class BotManager:
             ]
 
             log.print(f"{log.RED}Gagal memulai bot {bot_id}: {e}")
+            if isinstance(e, pyrogram.errors.FloodWait):
+                wait = int(getattr(e, "value", 0) or 0)
+                self._flood_until[bot_id] = time.time() + wait
+                log.print(
+                    f"{log.RED}Bot {bot_id} kena FloodWait {wait}s, start dijeda."
+                )
+                return
             if any(err in error_str for err in common_errors):
                 await self.db.removeBot(bot_id)
                 log.debug(

@@ -105,6 +105,17 @@ async def login_command_handler(client, message):
     await ctx.manager.start_bot(bot_data)
 
     if new_bot_id not in ctx.manager.running_bots:
+        remaining = ctx.manager.flood_remaining(new_bot_id)
+        if remaining > 0:
+            mins = max(1, remaining // 60)
+            return await msg.edit_text(
+                rich_message=pyrogram.types.InputRichMessage(
+                    markdown=(
+                        f"{client.ns.emoji.md('hourglass')} **Kena FloodWait**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'`{new_bot_id}`'], ['Tunggu', f'±{mins} menit'], ['Penting', 'Jangan spam /login karena memperpanjang masa tunggu']])}"
+                    )
+                )
+            )
         return await msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
