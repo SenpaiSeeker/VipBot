@@ -241,7 +241,7 @@ async def manual_check_payment_callback(client, callback_query):
 
         if is_paid:
             block_mode = bool(
-                await ctx.db.getVars(ctx.owner_id, "purchase_block") or False
+                await ctx.db.getVars(client.me.id, "purchase_block") or False
             )
             await callback_query.edit_message_reply_markup(None)
             await ctx.db.removeVars(client.me.id, transaction_id)

@@ -720,11 +720,14 @@ async def block_purchase_handler(client, message):
     args_text = client.ns.telegram.arg.getMessage(message, is_arg=True)
     arg = (args_text or "").strip().lower()
 
-    current = bool(await ctx.db.getVars(ctx.owner_id, "purchase_block") or False)
+    bot_id = client.me.id
+    bot_mention = client.ns.telegram.arg.getMention(client.me, md=True)
+    current = bool(await ctx.db.getVars(bot_id, "purchase_block") or False)
 
     def _status_rows(value):
         state = "ON" if value else "OFF"
         return [
+            ["Bot", f"{bot_mention}"],
             ["Status", f"`{state}`"],
             [
                 "Efek ON",
@@ -745,16 +748,17 @@ async def block_purchase_handler(client, message):
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Gunakan', '`/block on` atau `/block off`'], ['Status Saat Ini', f"`{'ON' if current else 'OFF'}`"]])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'{bot_mention}'], ['Gunakan', '`/block on` atau `/block off`'], ['Status Saat Ini', f"`{'ON' if current else 'OFF'}`"]])}"
             )
         )
 
     value = arg == "on"
-    await ctx.db.setVars(ctx.owner_id, "purchase_block", value)
+    await ctx.db.setVars(bot_id, "purchase_block", value)
 
     if value:
         title = f"{client.ns.emoji.md('lock')} **Block Mode Diaktifkan**"
         rows = [
+            ["Bot", f"{bot_mention}"],
             ["Status", "`ON`"],
             ["Notifikasi", "Dialihkan ke owner utama"],
             ["Pencatatan", "Dilewati"],
@@ -763,6 +767,7 @@ async def block_purchase_handler(client, message):
     else:
         title = f"{client.ns.emoji.md('white_check_mark')} **Block Mode Dinonaktifkan**"
         rows = [
+            ["Bot", f"{bot_mention}"],
             ["Status", "`OFF`"],
             ["Notifikasi", "Normal"],
             ["Pencatatan", "Normal"],
