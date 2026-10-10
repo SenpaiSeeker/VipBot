@@ -713,3 +713,65 @@ async def tfbot_command_handler(client, message):
         )
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED}Error saat tfbot: {e}")
+
+
+@command(lambda ctx: filters.command("block") & filters.user(ctx.owner_id))
+async def block_purchase_handler(client, message):
+    args_text = client.ns.telegram.arg.getMessage(message, is_arg=True)
+    arg = (args_text or "").strip().lower()
+
+    current = bool(await ctx.db.getVars(ctx.owner_id, "purchase_block") or False)
+
+    def _status_rows(value):
+        state = "ON" if value else "OFF"
+        return [
+            ["Status", f"`{state}`"],
+            [
+                "Efek ON",
+                "Notifikasi + pencatatan dilewati; link pembeli tetap dikirim",
+            ],
+            ["Ubah", "`/block on` atau `/block off`"],
+        ]
+
+    if not arg:
+        return await message.reply_rich(
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('lock')} **Mode Block Pembelian**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], _status_rows(current))}"
+            )
+        )
+
+    if arg not in ("on", "off"):
+        return await message.reply_rich(
+            pyrogram.types.InputRichMessage(
+                markdown=f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Gunakan', '`/block on` atau `/block off`'], ['Status Saat Ini', f"`{'ON' if current else 'OFF'}`"]])}"
+            )
+        )
+
+    value = arg == "on"
+    await ctx.db.setVars(ctx.owner_id, "purchase_block", value)
+
+    if value:
+        title = f"{client.ns.emoji.md('lock')} **Block Mode Diaktifkan**"
+        rows = [
+            ["Status", "`ON`"],
+            ["Notifikasi", "Dilewati"],
+            ["Pencatatan", "Dilewati"],
+            ["Link Pembeli", "Tetap dikirim"],
+        ]
+    else:
+        title = f"{client.ns.emoji.md('white_check_mark')} **Block Mode Dinonaktifkan**"
+        rows = [
+            ["Status", "`OFF`"],
+            ["Notifikasi", "Normal"],
+            ["Pencatatan", "Normal"],
+            ["Link Pembeli", "Tetap dikirim"],
+        ]
+
+    await message.reply_rich(
+        pyrogram.types.InputRichMessage(
+            markdown=f"{title}\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
+        )
+    )

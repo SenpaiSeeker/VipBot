@@ -244,6 +244,9 @@ async def confirm_bot_payment_callback(client, callback_query):
         is_paid = await client.services.saweria.check_paid_status(transaction_id)
 
         if is_paid:
+            block_mode = bool(
+                await ctx.db.getVars(ctx.owner_id, "purchase_block") or False
+            )
             await ctx.db.removeVars(client.me.id, transaction_id)
             expiry_date = datetime.now(timezone.utc) + timedelta(days=30 * months)
 
@@ -280,18 +283,19 @@ async def confirm_bot_payment_callback(client, callback_query):
             owner_mention = f"[{owner_name}](tg://user?id={user.id})"
             formatted_amount = f"{amount_raw:,}"
 
-            owner_notif = (
-                f"**{client.ns.emoji.md('money_bag')} Langganan Akses Baru!**\n\n"
-                f"| Info | Detail |\n"
-                f"| :--- | :---: |\n"
-                f"| Pengguna | {owner_mention} |\n"
-                f"| Durasi | {months} bulan |\n"
-                f"| Jumlah | `Rp {formatted_amount}` |"
-            )
-            await client.send_rich_message(
-                ctx.owner_id,
-                pyrogram.types.InputRichMessage(markdown=owner_notif),
-            )
+            if not block_mode:
+                owner_notif = (
+                    f"**{client.ns.emoji.md('money_bag')} Langganan Akses Baru!**\n\n"
+                    f"| Info | Detail |\n"
+                    f"| :--- | :---: |\n"
+                    f"| Pengguna | {owner_mention} |\n"
+                    f"| Durasi | {months} bulan |\n"
+                    f"| Jumlah | `Rp {formatted_amount}` |"
+                )
+                await client.send_rich_message(
+                    ctx.owner_id,
+                    pyrogram.types.InputRichMessage(markdown=owner_notif),
+                )
         else:
             await callback_query.answer(
                 "❌ Pembayaran belum terdeteksi. Silakan coba lagi setelah beberapa saat.",

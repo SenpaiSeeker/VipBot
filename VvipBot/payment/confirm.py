@@ -240,6 +240,9 @@ async def manual_check_payment_callback(client, callback_query):
         )
 
         if is_paid:
+            block_mode = bool(
+                await ctx.db.getVars(ctx.owner_id, "purchase_block") or False
+            )
             await callback_query.edit_message_reply_markup(None)
             await ctx.db.removeVars(client.me.id, transaction_id)
             vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
@@ -321,20 +324,21 @@ async def manual_check_payment_callback(client, callback_query):
                         "Tidak ada paket VIP valid untuk pembelian semua VIP."
                     )
 
-                revenue_data = {
-                    "user_id": user.id,
-                    "username": user.username or user.first_name,
-                    "amount": amount_raw,
-                    "date": datetime.now(timezone.utc).isoformat(),
-                    "item_name": " + ".join(purchased_names),
-                    "type": "bundle",
-                }
+                if not block_mode:
+                    revenue_data = {
+                        "user_id": user.id,
+                        "username": user.username or user.first_name,
+                        "amount": amount_raw,
+                        "date": datetime.now(timezone.utc).isoformat(),
+                        "item_name": " + ".join(purchased_names),
+                        "type": "bundle",
+                    }
 
-                await ctx.db.setListVars(
-                    client.me.id,
-                    "vip_revenue_history",
-                    revenue_data,
-                )
+                    await ctx.db.setListVars(
+                        client.me.id,
+                        "vip_revenue_history",
+                        revenue_data,
+                    )
 
                 link_text = "\n".join(
                     [
@@ -374,25 +378,26 @@ async def manual_check_payment_callback(client, callback_query):
                     "✅ Pembayaran berhasil dikonfirmasi!", show_alert=False
                 )
 
-                try:
-                    owner_bot_id = await get_notification_target(client)
+                if not block_mode:
+                    try:
+                        owner_bot_id = await get_notification_target(client)
 
-                    await client.send_rich_message(
-                        owner_bot_id,
-                        pyrogram.types.InputRichMessage(
-                            markdown=await _build_income_notification(
-                                client=client,
-                                user=user,
-                                orders=bundle_orders,
-                                amount_raw=amount_raw,
-                                transaction_id=transaction_id,
-                                tipe="bundle",
-                                coupon_code=coupon_code,
-                            )
-                        ),
-                    )
-                except Exception as e:
-                    ctx.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
+                        await client.send_rich_message(
+                            owner_bot_id,
+                            pyrogram.types.InputRichMessage(
+                                markdown=await _build_income_notification(
+                                    client=client,
+                                    user=user,
+                                    orders=bundle_orders,
+                                    amount_raw=amount_raw,
+                                    transaction_id=transaction_id,
+                                    tipe="bundle",
+                                    coupon_code=coupon_code,
+                                )
+                            ),
+                        )
+                    except Exception as e:
+                        ctx.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
 
                 return
 
@@ -460,20 +465,21 @@ async def manual_check_payment_callback(client, callback_query):
 
             await ctx.db.setListVars(client.me.id, "vvip_members", member_data)
 
-            revenue_data = {
-                "user_id": user.id,
-                "username": user.username or user.first_name,
-                "amount": amount_raw,
-                "date": datetime.now(timezone.utc).isoformat(),
-                "item_name": name,
-                "type": tipe,
-            }
+            if not block_mode:
+                revenue_data = {
+                    "user_id": user.id,
+                    "username": user.username or user.first_name,
+                    "amount": amount_raw,
+                    "date": datetime.now(timezone.utc).isoformat(),
+                    "item_name": name,
+                    "type": tipe,
+                }
 
-            await ctx.db.setListVars(
-                client.me.id,
-                "vip_revenue_history",
-                revenue_data,
-            )
+                await ctx.db.setListVars(
+                    client.me.id,
+                    "vip_revenue_history",
+                    revenue_data,
+                )
 
             link_msg = await client.send_rich_message(
                 user.id,
@@ -501,35 +507,36 @@ async def manual_check_payment_callback(client, callback_query):
                 "✅ Pembayaran berhasil dikonfirmasi!", show_alert=False
             )
 
-            try:
-                owner_bot_id = await get_notification_target(client)
+            if not block_mode:
+                try:
+                    owner_bot_id = await get_notification_target(client)
 
-                unit_price = item_found.get(
-                    "promo_price" if is_promo else "price", 0
-                )
-                single_order = {
-                    "name": name,
-                    "price": unit_price or amount_raw,
-                    "duration": item_found.get("duration", 0),
-                    "chat_id": target_chat_id,
-                }
+                    unit_price = item_found.get(
+                        "promo_price" if is_promo else "price", 0
+                    )
+                    single_order = {
+                        "name": name,
+                        "price": unit_price or amount_raw,
+                        "duration": item_found.get("duration", 0),
+                        "chat_id": target_chat_id,
+                    }
 
-                await client.send_rich_message(
-                    owner_bot_id,
-                    pyrogram.types.InputRichMessage(
-                        markdown=await _build_income_notification(
-                            client=client,
-                            user=user,
-                            orders=[single_order],
-                            amount_raw=amount_raw,
-                            transaction_id=transaction_id,
-                            tipe=tipe,
-                            coupon_code=coupon_code,
-                        )
-                    ),
-                )
-            except Exception as e:
-                ctx.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
+                    await client.send_rich_message(
+                        owner_bot_id,
+                        pyrogram.types.InputRichMessage(
+                            markdown=await _build_income_notification(
+                                client=client,
+                                user=user,
+                                orders=[single_order],
+                                amount_raw=amount_raw,
+                                transaction_id=transaction_id,
+                                tipe=tipe,
+                                coupon_code=coupon_code,
+                            )
+                        ),
+                    )
+                except Exception as e:
+                    ctx.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
         else:
             await callback_query.answer(
                 "❌ Pembayaran belum terdeteksi. Silakan coba lagi setelah beberapa saat.",
