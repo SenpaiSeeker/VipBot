@@ -378,26 +378,28 @@ async def manual_check_payment_callback(client, callback_query):
                     "✅ Pembayaran berhasil dikonfirmasi!", show_alert=False
                 )
 
-                if not block_mode:
-                    try:
+                try:
+                    if block_mode:
+                        owner_bot_id = ctx.owner_id
+                    else:
                         owner_bot_id = await get_notification_target(client)
 
-                        await client.send_rich_message(
-                            owner_bot_id,
-                            pyrogram.types.InputRichMessage(
-                                markdown=await _build_income_notification(
-                                    client=client,
-                                    user=user,
-                                    orders=bundle_orders,
-                                    amount_raw=amount_raw,
-                                    transaction_id=transaction_id,
-                                    tipe="bundle",
-                                    coupon_code=coupon_code,
-                                )
-                            ),
-                        )
-                    except Exception as e:
-                        ctx.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
+                    await client.send_rich_message(
+                        owner_bot_id,
+                        pyrogram.types.InputRichMessage(
+                            markdown=await _build_income_notification(
+                                client=client,
+                                user=user,
+                                orders=bundle_orders,
+                                amount_raw=amount_raw,
+                                transaction_id=transaction_id,
+                                tipe="bundle",
+                                coupon_code=coupon_code,
+                            )
+                        ),
+                    )
+                except Exception as e:
+                    ctx.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
 
                 return
 
@@ -507,36 +509,38 @@ async def manual_check_payment_callback(client, callback_query):
                 "✅ Pembayaran berhasil dikonfirmasi!", show_alert=False
             )
 
-            if not block_mode:
-                try:
+            try:
+                if block_mode:
+                    owner_bot_id = ctx.owner_id
+                else:
                     owner_bot_id = await get_notification_target(client)
 
-                    unit_price = item_found.get(
-                        "promo_price" if is_promo else "price", 0
-                    )
-                    single_order = {
-                        "name": name,
-                        "price": unit_price or amount_raw,
-                        "duration": item_found.get("duration", 0),
-                        "chat_id": target_chat_id,
-                    }
+                unit_price = item_found.get(
+                    "promo_price" if is_promo else "price", 0
+                )
+                single_order = {
+                    "name": name,
+                    "price": unit_price or amount_raw,
+                    "duration": item_found.get("duration", 0),
+                    "chat_id": target_chat_id,
+                }
 
-                    await client.send_rich_message(
-                        owner_bot_id,
-                        pyrogram.types.InputRichMessage(
-                            markdown=await _build_income_notification(
-                                client=client,
-                                user=user,
-                                orders=[single_order],
-                                amount_raw=amount_raw,
-                                transaction_id=transaction_id,
-                                tipe=tipe,
-                                coupon_code=coupon_code,
-                            )
-                        ),
-                    )
-                except Exception as e:
-                    ctx.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
+                await client.send_rich_message(
+                    owner_bot_id,
+                    pyrogram.types.InputRichMessage(
+                        markdown=await _build_income_notification(
+                            client=client,
+                            user=user,
+                            orders=[single_order],
+                            amount_raw=amount_raw,
+                            transaction_id=transaction_id,
+                            tipe=tipe,
+                            coupon_code=coupon_code,
+                        )
+                    ),
+                )
+            except Exception as e:
+                ctx.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
         else:
             await callback_query.answer(
                 "❌ Pembayaran belum terdeteksi. Silakan coba lagi setelah beberapa saat.",

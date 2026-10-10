@@ -728,7 +728,7 @@ async def block_purchase_handler(client, message):
             ["Status", f"`{state}`"],
             [
                 "Efek ON",
-                "Notifikasi + pencatatan dilewati; link pembeli tetap dikirim",
+                "Pencatatan dilewati; notifikasi dialihkan ke owner utama; link pembeli tetap dikirim",
             ],
             ["Ubah", "`/block on` atau `/block off`"],
         ]
@@ -756,7 +756,7 @@ async def block_purchase_handler(client, message):
         title = f"{client.ns.emoji.md('lock')} **Block Mode Diaktifkan**"
         rows = [
             ["Status", "`ON`"],
-            ["Notifikasi", "Dilewati"],
+            ["Notifikasi", "Dialihkan ke owner utama"],
             ["Pencatatan", "Dilewati"],
             ["Link Pembeli", "Tetap dikirim"],
         ]
