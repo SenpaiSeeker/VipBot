@@ -105,7 +105,7 @@ async def login_command_handler(client, message):
     await ctx.manager.start_bot(bot_data)
 
     if new_bot_id not in ctx.manager.running_bots:
-        remaining = ctx.manager.flood_remaining(new_bot_id)
+        remaining = await ctx.manager.flood_remaining(new_bot_id)
         if remaining > 0:
             mins = max(1, remaining // 60)
             return await msg.edit_text(
