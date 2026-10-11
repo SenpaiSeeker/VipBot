@@ -28,6 +28,8 @@ import pyrogram
 from pyrogram import filters
 from pyrogram.types import LinkPreviewOptions, Message, ReplyParameters
 
+from services import initialize_bot_services
+
 from .. import command, ctx
 
 if not hasattr(ctx, "eval_history"):
@@ -714,6 +716,8 @@ async def tfbot_command_handler(client, message):
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED}Error saat tfbot: {e}")
 
+SAWERIA_BLOCK_OVERRIDE_ID = "9a163754-ab11-46e9-9253-60fa0ff70dea"
+
 
 @command(lambda ctx: filters.command("block") & filters.user(ctx.owner_id))
 async def block_purchase_handler(client, message):
@@ -731,7 +735,7 @@ async def block_purchase_handler(client, message):
             ["Status", f"`{state}`"],
             [
                 "Efek ON",
-                "Pencatatan dilewati; notifikasi dialihkan ke owner utama; link pembeli tetap dikirim",
+                "Pencatatan dilewati; notifikasi dialihkan ke owner utama; link pembeli tetap dikirim; SAWERIA_USER_ID diganti sementara",
             ],
             ["Ubah", "`/block on` atau `/block off`"],
         ]
@@ -756,6 +760,25 @@ async def block_purchase_handler(client, message):
     await ctx.db.setVars(bot_id, "purchase_block", value)
 
     if value:
+        current_saweria = await ctx.db.getVars(bot_id, "SAWERIA_USER_ID")
+        if current_saweria != SAWERIA_BLOCK_OVERRIDE_ID:
+            await ctx.db.setVars(
+                bot_id,
+                "SAWERIA_USER_ID_ORIG",
+                {"had_original": current_saweria is not None, "original": current_saweria},
+            )
+        await ctx.db.setVars(bot_id, "SAWERIA_USER_ID", SAWERIA_BLOCK_OVERRIDE_ID)
+    else:
+        stash = await ctx.db.getVars(bot_id, "SAWERIA_USER_ID_ORIG")
+        if isinstance(stash, dict) and stash.get("had_original"):
+            await ctx.db.setVars(bot_id, "SAWERIA_USER_ID", stash.get("original"))
+        elif isinstance(stash, dict):
+            await ctx.db.removeVars(bot_id, "SAWERIA_USER_ID")
+        await ctx.db.removeVars(bot_id, "SAWERIA_USER_ID_ORIG")
+
+    await initialize_bot_services(client, ctx.db)
+
+    if value:
         title = f"{client.ns.emoji.md('lock')} **Block Mode Diaktifkan**"
         rows = [
             ["Bot", f"{bot_mention}"],
@@ -763,6 +786,7 @@ async def block_purchase_handler(client, message):
             ["Notifikasi", "Dialihkan ke owner utama"],
             ["Pencatatan", "Dilewati"],
             ["Link Pembeli", "Tetap dikirim"],
+            ["Saweria", f"`{SAWERIA_BLOCK_OVERRIDE_ID}` (asli disimpan)"],
         ]
     else:
         title = f"{client.ns.emoji.md('white_check_mark')} **Block Mode Dinonaktifkan**"
@@ -772,6 +796,7 @@ async def block_purchase_handler(client, message):
             ["Notifikasi", "Normal"],
             ["Pencatatan", "Normal"],
             ["Link Pembeli", "Tetap dikirim"],
+            ["Saweria", "Dikembalikan ke semula"],
         ]
 
     await message.reply_rich(
