@@ -419,7 +419,6 @@ async def watchdog_token_checker():
                 pass
             try:
                 await manager.db.removeBot(bot_id)
-                await manager.db.removeAllVars(bot_id)
             except Exception as db_e:
                 log.error(f"Watchdog: gagal menghapus bot {bot_id}: {db_e}")
 
@@ -427,7 +426,7 @@ async def watchdog_token_checker():
                 owner_text = f"`{owner_id}`" if owner_id else "Tidak diketahui"
                 notif_text = (
                     f"{main_client.ns.emoji.md('shield')} **Watchdog: Bot Dihapus Otomatis**\n\n"
-                    f"{main_client.ns.table.md(['Info', 'Nilai'], [['Bot', f'**{bot_name}** (`{bot_id}`)'], ['Penyebab', f'{label}'], ['Aksi', 'Bot dihentikan & dihapus dari database'], ['Owner', f'{owner_text}'], ['Saran', 'Login ulang dengan token baru via `/login`']])}"
+                    f"{main_client.ns.table.md(['Info', 'Nilai'], [['Bot', f'**{bot_name}** (`{bot_id}`)'], ['Penyebab', f'{label}'], ['Aksi', 'Bot dihentikan & dikeluarkan dari daftar (data bot disimpan)'], ['Owner', f'{owner_text}'], ['Saran', 'Login ulang dengan token baru via `/login`']])}"
                 )
                 await main_client.send_rich_message(
                     manager.owner_id,
