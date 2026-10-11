@@ -7,36 +7,12 @@ from .. import *
 
 @command(lambda ctx: filters.command("extend") & filters.user(ctx.owner_id))
 async def extend_command_handler(client, message):
-    bot_id, days_str = await client.ns.telegram.arg.getReasonAndId(message)
-    if not bot_id:
-        bot_id = client.me.id
-    if not days_str:
-        text, btn = await build_extend_panel(client, bot_id)
-        return await message.reply_rich(
-            pyrogram.types.InputRichMessage(markdown=text),
-            reply_markup=btn,
-        )
-    try:
-        days_to_add = int(days_str.strip())
-    except ValueError:
-        return await message.reply_rich(
-            pyrogram.types.InputRichMessage(
-                markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Detail', '`jumlah_hari` harus berupa angka bulat'], ['Contoh', '`/extend 12345678 30`']])}"
-                )
-            )
-        )
-    formatted_new_date = await apply_extend_duration(client, bot_id, days_to_add)
-    await message.reply_rich(
-        pyrogram.types.InputRichMessage(
-            markdown=(
-                f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'`{bot_id}`'], ['Tambahan', f'`{days_to_add}` hari'], ['Masa Aktif Baru', f'`{formatted_new_date}`']])}"
-            )
-        )
+    bot_id = client.me.id
+    text, btn = await build_extend_panel(client, bot_id)
+    return await message.reply_rich(
+        pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
     )
-    await notify_extend_owner(client, bot_id)
 
 
 async def build_extend_panel(client, bot_id):
