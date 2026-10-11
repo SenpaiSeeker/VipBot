@@ -1,5 +1,4 @@
 import asyncio
-import random
 from datetime import datetime, timezone
 
 import pyrogram
@@ -8,7 +7,6 @@ from pyrogram import filters
 from helpers import listen, parse_dt
 
 from .. import command, ctx
-from config import TELEGRAM_API_CREDENTIALS
 
 
 @command(
@@ -83,7 +81,8 @@ async def start_creation_process_callback(client, callback_query):
         )
 
         new_bot_id = int(token.split(":", 1)[0])
-        _, api_id, api_hash = random.choice(TELEGRAM_API_CREDENTIALS)
+        api_id = client.api_id
+        api_hash = client.api_hash
         bot_data = {
             "name": str(new_bot_id),
             "api_id": api_id,

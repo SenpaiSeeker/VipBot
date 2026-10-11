@@ -1,10 +1,6 @@
 from helpers import parse_dt
 
-import random
-
 import pyrogram
-
-from config import TELEGRAM_API_CREDENTIALS
 
 from .. import *
 
@@ -93,7 +89,8 @@ async def login_command_handler(client, message):
 
     expiry_date_str = (datetime.now(timezone.utc) + timedelta(days=31)).isoformat()
 
-    _, api_id, api_hash = random.choice(TELEGRAM_API_CREDENTIALS)
+    api_id = client.api_id
+    api_hash = client.api_hash
 
     bot_data = {
         "name": str(new_bot_id),
