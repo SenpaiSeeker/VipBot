@@ -355,3 +355,87 @@ async def subscription_checker_method():
             await manager.db.replaceListVars(
                 bot_id, "vvip_members", members_to_keep
             )
+
+
+_WATCHDOG_AUTH_ERRORS = (
+    pyrogram.errors.SessionRevoked,
+    pyrogram.errors.AuthKeyInvalid,
+    pyrogram.errors.AuthKeyUnregistered,
+    pyrogram.errors.UserDeactivatedBan,
+    pyrogram.errors.AccessTokenExpired,
+    pyrogram.errors.AccessTokenInvalid,
+)
+
+_WATCHDOG_AUTH_LABELS = {
+    "SessionRevoked": "Sesi dicabut (SESSION_REVOKED)",
+    "AuthKeyInvalid": "Sesi tidak valid",
+    "AuthKeyUnregistered": "Sesi tidak terdaftar",
+    "UserDeactivatedBan": "Akun dibanned",
+    "AccessTokenExpired": "Token kedaluwarsa",
+    "AccessTokenInvalid": "Token tidak valid",
+}
+
+
+@schedule.cron("*/15 * * * *")
+async def watchdog_token_checker():
+    log.info(f"Menjalankan watchdog token bot...")
+    manager = ctx.manager
+    if not manager:
+        log.warning("BotManager belum diinisialisasi di ctx. Melewati pemeriksaan.")
+        return
+
+    main_client = manager.main_bot_client
+    if not main_client:
+        return
+
+    for bot_id, bot_client in list(manager.running_bots.items()):
+        if bot_id == manager.main_bot_id:
+            continue
+        try:
+            await bot_client.get_me()
+        except _WATCHDOG_AUTH_ERRORS as e:
+            label = _WATCHDOG_AUTH_LABELS.get(
+                type(e).__name__, "Token/sesi tidak valid"
+            )
+            try:
+                bot_name = (
+                    bot_client.me.first_name
+                    if bot_client.me
+                    else f"ID {bot_id}"
+                )
+            except Exception:
+                bot_name = f"ID {bot_id}"
+            try:
+                owner_id = await manager.db.getVars(bot_id, "owner_id")
+            except Exception:
+                owner_id = None
+
+            log.print(
+                f"{log.RED}Watchdog: bot {bot_id} ({bot_name}) {label}, menghapus..."
+            )
+            try:
+                await manager.stop_bot(bot_id)
+            except Exception:
+                pass
+            try:
+                await manager.db.removeBot(bot_id)
+                await manager.db.removeAllVars(bot_id)
+            except Exception as db_e:
+                log.error(f"Watchdog: gagal menghapus bot {bot_id}: {db_e}")
+
+            try:
+                owner_text = f"`{owner_id}`" if owner_id else "Tidak diketahui"
+                notif_text = (
+                    f"{main_client.ns.emoji.md('shield')} **Watchdog: Bot Dihapus Otomatis**\n\n"
+                    f"{main_client.ns.table.md(['Info', 'Nilai'], [['Bot', f'**{bot_name}** (`{bot_id}`)'], ['Penyebab', f'{label}'], ['Aksi', 'Bot dihentikan & dihapus dari database'], ['Owner', f'{owner_text}'], ['Saran', 'Login ulang dengan token baru via `/login`']])}"
+                )
+                await main_client.send_rich_message(
+                    manager.owner_id,
+                    InputRichMessage(markdown=notif_text),
+                )
+            except Exception as notif_e:
+                log.error(
+                    f"Watchdog: gagal mengirim notifikasi hapus bot {bot_id}: {notif_e}"
+                )
+        except Exception:
+            continue
