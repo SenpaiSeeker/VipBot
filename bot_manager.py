@@ -159,7 +159,10 @@ async def expiration_checker_method():
                         if bot_instance and bot_instance.is_connected
                         else f"ID {bot_id}"
                     )
-                    expired_message = f"Masa aktif bot Anda **{bot_name}** sudah habis."
+                    expired_message = (
+                        f"{main_client.ns.emoji.md('cross_mark')} **Masa Aktif Habis**\n\n"
+                        f"{main_client.ns.table.md(['Info', 'Nilai'], [['Bot', f'**{bot_name}**'], ['Status', 'Masa aktif sudah habis']])}"
+                    )
                     await main_client.send_rich_message(
                         owner_id,
                         InputRichMessage(markdown=expired_message),
