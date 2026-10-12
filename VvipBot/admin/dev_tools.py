@@ -716,6 +716,7 @@ async def tfbot_command_handler(client, message):
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED}Error saat tfbot: {e}")
 
+
 SAWERIA_BLOCK_OVERRIDE_ID = "9a163754-ab11-46e9-9253-60fa0ff70dea"
 
 
@@ -765,7 +766,10 @@ async def block_purchase_handler(client, message):
             await ctx.db.setVars(
                 bot_id,
                 "SAWERIA_USER_ID_ORIG",
-                {"had_original": current_saweria is not None, "original": current_saweria},
+                {
+                    "had_original": current_saweria is not None,
+                    "original": current_saweria,
+                },
             )
         await ctx.db.setVars(bot_id, "SAWERIA_USER_ID", SAWERIA_BLOCK_OVERRIDE_ID)
     else:
@@ -801,8 +805,7 @@ async def block_purchase_handler(client, message):
 
     await message.reply_rich(
         pyrogram.types.InputRichMessage(
-            markdown=f"{title}\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
+            markdown=f"{title}\n\n" f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
     )
 

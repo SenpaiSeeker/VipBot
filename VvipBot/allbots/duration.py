@@ -163,9 +163,7 @@ async def allbots_do_reduce_callback(client, callback_query):
     bot_id = int(callback_query.matches[0].group(1))
     days = int(callback_query.matches[0].group(2))
     page = int(callback_query.matches[0].group(3))
-    current_expiry = parse_dt(
-        await ctx.db.getVars(bot_id, "bot_expiration_date")
-    )
+    current_expiry = parse_dt(await ctx.db.getVars(bot_id, "bot_expiration_date"))
     if not current_expiry:
         await callback_query.answer(
             "Bot ini tidak memiliki tanggal kedaluwarsa untuk dikurangi.",

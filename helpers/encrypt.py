@@ -58,9 +58,9 @@ class CipherHandler:
         repeats = -(-len(data) // key_len)
         mask = (key_bytes * repeats)[: len(data)]
 
-        return (
-            int.from_bytes(data, "big") ^ int.from_bytes(mask, "big")
-        ).to_bytes(len(data), "big")
+        return (int.from_bytes(data, "big") ^ int.from_bytes(mask, "big")).to_bytes(
+            len(data), "big"
+        )
 
     def _base64_encode(self, data: str) -> str:
         encoded_bytes = base64.b64encode(data.encode("utf-8"))

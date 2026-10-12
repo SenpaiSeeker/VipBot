@@ -7,8 +7,8 @@ from pyrogram.types import InputRichMessage
 
 import VvipBot as handlers
 from database import schedule
-from helpers.logger import LoggerHandler
 from helpers import parse_dt
+from helpers.logger import LoggerHandler
 from services import initialize_bot_services
 from VvipBot import ctx
 
@@ -351,9 +351,7 @@ async def subscription_checker_method():
             members_to_keep.append(member)
 
         if len(members_to_keep) != len(members):
-            await manager.db.replaceListVars(
-                bot_id, "vvip_members", members_to_keep
-            )
+            await manager.db.replaceListVars(bot_id, "vvip_members", members_to_keep)
 
 
 _WATCHDOG_AUTH_ERRORS = (
@@ -397,11 +395,7 @@ async def watchdog_token_checker():
                 type(e).__name__, "Token/sesi tidak valid"
             )
             try:
-                bot_name = (
-                    bot_client.me.first_name
-                    if bot_client.me
-                    else f"ID {bot_id}"
-                )
+                bot_name = bot_client.me.first_name if bot_client.me else f"ID {bot_id}"
             except Exception:
                 bot_name = f"ID {bot_id}"
             try:

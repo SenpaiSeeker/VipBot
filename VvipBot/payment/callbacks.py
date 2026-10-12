@@ -8,12 +8,9 @@ from pyrogram import filters
 from helpers import parse_dt
 
 from .. import (
-    LIST_VVIP_ICON_BUY_ALL_KEY,
     command,
     ctx,
-    get_list_vvip_icons,
     listen,
-    render_list_vvip_icon_html,
 )
 from .invoice import (
     _create_all_vvip_payment_invoice,
@@ -53,7 +50,6 @@ async def pay_all_vvip_callback(client, callback_query):
         f"{table.md(['Paket', 'Harga'], rows)}\n\n"
         f"{client.ns.emoji.md('money_bag')} **Total: Rp {int(total_amount):,}** ({len(selected_items)} paket)"
     )
-
 
     layout = [
         [
@@ -340,9 +336,7 @@ async def notes_data(client, callback_query):
             ),
             ("Harga Normal", f"`Rp {formatted_price}`"),
         ]
-        default_footer = (
-            "Silakan klik tombol **Bayar** di bawah untuk melanjutkan!"
-        )
+        default_footer = "Silakan klik tombol **Bayar** di bawah untuk melanjutkan!"
         rich_desc = _build_package_detail_table(
             client, "sparkles", "Detail Paket VVIP", default_rows, default_footer
         )
@@ -385,7 +379,10 @@ async def notes_data(client, callback_query):
         )
 
     table = client.ns.table
-    missing_rows = [["Status", "Paket tidak ditemukan"], ["Aksi", "Kembali ke daftar VVIP"]]
+    missing_rows = [
+        ["Status", "Paket tidak ditemukan"],
+        ["Aksi", "Kembali ke daftar VVIP"],
+    ]
     text = (
         f"{client.ns.emoji.md('cross_mark')} **Paket VVIP Tidak Ditemukan**\n\n"
         f"{table.md(['Info', 'Nilai'], missing_rows)}"
@@ -456,9 +453,7 @@ async def promo_detail(client, callback_query):
         )
 
         desc = (
-            promo_text.replace("{name}", name).replace(
-                "{promo_price}", formatted_promo
-            )
+            promo_text.replace("{name}", name).replace("{promo_price}", formatted_promo)
             if promo_text
             else rich_desc
         )

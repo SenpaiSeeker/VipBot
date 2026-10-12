@@ -3,8 +3,9 @@ import asyncio
 import pyrogram
 from pyrogram import filters
 
-from .. import command, ctx, is_bot_owner, listen
 from helpers.income_template import INCOME_TEMPLATE_VARIABLES
+
+from .. import command, ctx, is_bot_owner, listen
 
 TEMPLATE_EXAMPLE = (
     "{mention} baru saja membeli **{item_name}**\n\n"

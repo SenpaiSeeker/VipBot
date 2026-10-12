@@ -165,7 +165,10 @@ async def settings(client, callback_query):
     menu_rows = [
         [f"{client.ns.emoji.md('frame')} Start", "Foto & Teks"],
         [f"{client.ns.emoji.md('plus')} VVIP", "Tambah/Hapus/Harga/Icon"],
-        [f"{client.ns.emoji.md('busts_in_silhouette')} Member", "Pengguna, VVIP, Aktif"],
+        [
+            f"{client.ns.emoji.md('busts_in_silhouette')} Member",
+            "Pengguna, VVIP, Aktif",
+        ],
         [f"{client.ns.emoji.md('mag_right')} Grup", "Status Grup VVIP"],
         [f"{client.ns.emoji.md('loudspeaker')} Broadcast", "Kirim & Harga"],
         [f"{client.ns.emoji.md('key')} Kunci", "API & Kupon"],

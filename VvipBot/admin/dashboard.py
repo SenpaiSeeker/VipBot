@@ -49,14 +49,10 @@ async def dashboard_command_handler(client, message):
             ["RAM", f"`[{ram_bar}] {ram_pct}%`"],
             ["Disk", f"`[{disk_bar}] {disk_pct}%`"],
         ]
-        server_stats_text = client.ns.table.md(
-            ["Komponen", "Penggunaan"], server_rows
-        )
+        server_stats_text = client.ns.table.md(["Komponen", "Penggunaan"], server_rows)
     except Exception as e:
         stats_data = {"cpu": 0, "ram": 0, "disk": 0}
-        server_stats_text = (
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal mengambil statistik server'], ['Error', f'`{e}`']])}"
-        )
+        server_stats_text = f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal mengambil statistik server'], ['Error', f'`{e}`']])}"
 
     platform_rows = [
         ["Total Bot Aktif", f"`{total_bots}`"],
@@ -105,9 +101,9 @@ async def refund_stars_callback(client, callback_query):
             await callback_query.edit_message_text(
                 rich_message=pyrogram.types.InputRichMessage(
                     markdown=(
-                    f"{callback_query.message.text}\n\n"
-                    f"{client.ns.table.md(['Status', 'Keterangan'], [['Gagal', 'Transaksi tidak ditemukan atau sudah di-refund']])}"
-                )
+                        f"{callback_query.message.text}\n\n"
+                        f"{client.ns.table.md(['Status', 'Keterangan'], [['Gagal', 'Transaksi tidak ditemukan atau sudah di-refund']])}"
+                    )
                 )
             )
             return
@@ -227,16 +223,32 @@ async def show_stars_stats(client, callback_query):
             ).astimezone(jakarta_timezone)
             formatted_date = transaction_date.strftime("%d %b, %H:%M %Z")
             transactions_rows.append(
-                [f"`{formatted_date}`", f"**{amount_str}{client.ns.emoji.md('star')}**", peer_mention]
+                [
+                    f"`{formatted_date}`",
+                    f"**{amount_str}{client.ns.emoji.md('star')}**",
+                    peer_mention,
+                ]
             )
 
         summary_rows = [
-            [f"{client.ns.emoji.md('money_bag')} Saldo Saat Ini", f"`{total_balance}` {client.ns.emoji.md('star')}"],
-            [f"{client.ns.emoji.md('chart_up')} Total Pemasukan", f"`{total_income}` {client.ns.emoji.md('star')}"],
-            [f"{client.ns.emoji.md('chart_down')} Total Pengembalian", f"`{total_refunds}` {client.ns.emoji.md('star')}"],
-            [f"{client.ns.emoji.md('repeat')} Total Transaksi (Tampil)", f"`{total_transactions_count}`"],
+            [
+                f"{client.ns.emoji.md('money_bag')} Saldo Saat Ini",
+                f"`{total_balance}` {client.ns.emoji.md('star')}",
+            ],
+            [
+                f"{client.ns.emoji.md('chart_up')} Total Pemasukan",
+                f"`{total_income}` {client.ns.emoji.md('star')}",
+            ],
+            [
+                f"{client.ns.emoji.md('chart_down')} Total Pengembalian",
+                f"`{total_refunds}` {client.ns.emoji.md('star')}",
+            ],
+            [
+                f"{client.ns.emoji.md('repeat')} Total Transaksi (Tampil)",
+                f"`{total_transactions_count}`",
+            ],
         ]
-        summary_text = table.md(['Aspek', 'Nilai'], summary_rows)
+        summary_text = table.md(["Aspek", "Nilai"], summary_rows)
         text = (
             f"{client.ns.emoji.md('chart_bar')} **Statistik Pendapatan Stars**\n\n"
             f"{summary_text}\n\n"

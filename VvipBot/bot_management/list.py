@@ -50,9 +50,7 @@ async def list_my_bots_callback(client, callback_query):
         bot_name = f"ID {bot_id} (Error)"
 
     exp_date = parse_dt(await ctx.db.getVars(bot_id, "bot_expiration_date"))
-    days_left = (
-        (exp_date - datetime.now(timezone.utc)).days if exp_date else "N/A"
-    )
+    days_left = (exp_date - datetime.now(timezone.utc)).days if exp_date else "N/A"
 
     bot_rows = [
         ["Nama Bot", bot_name],
@@ -66,7 +64,6 @@ async def list_my_bots_callback(client, callback_query):
         f"**{client.ns.emoji.md('folder')} Daftar Bot Saya ({page + 1}/{total_pages})**\n\n"
         f"{table.md(['Info', 'Detail'], bot_rows)}"
     )
-
 
     layout = []
     pagination_row = []
@@ -190,7 +187,6 @@ async def manage_bot_callback(client, callback_query):
         f"{table.md(['Info', 'Detail'], manage_rows)}\n\n"
         f"Pilih tindakan yang ingin Anda lakukan:"
     )
-
 
     btn = client.ns.telegram.button.build_button_grid(layout)
 

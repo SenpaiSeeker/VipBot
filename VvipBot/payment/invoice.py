@@ -103,7 +103,10 @@ async def _create_payment_invoice(
         formatted_amount = f"{int(amount_raw):,}"
 
         detail_rows = [
-            [f"{client.ns.emoji.md('shopping_bags')} Produk", f"{names} ({tipe.title()})"],
+            [
+                f"{client.ns.emoji.md('shopping_bags')} Produk",
+                f"{names} ({tipe.title()})",
+            ],
             [f"{client.ns.emoji.md('gem')} Jumlah", f"`Rp {formatted_amount}`"],
             [f"{client.ns.emoji.md('id_card')} Order ID", f"`{transaction_id}`"],
         ]
@@ -214,7 +217,10 @@ async def _create_pick_vvip_payment_invoice(
         total_len = len(selected_items)
 
         detail_rows = [
-            [f"{client.ns.emoji.md('shopping_bags')} Produk", f"Pilihan Sendiri ({total_len} paket)"],
+            [
+                f"{client.ns.emoji.md('shopping_bags')} Produk",
+                f"Pilihan Sendiri ({total_len} paket)",
+            ],
             [f"{client.ns.emoji.md('gem')} Jumlah", f"`Rp {formatted_amount}`"],
             [f"{client.ns.emoji.md('id_card')} Order ID", f"`{transaction_id}`"],
         ]
@@ -325,7 +331,10 @@ async def _create_all_vvip_payment_invoice(
         total_len = len(selected_items)
 
         detail_rows = [
-            [f"{client.ns.emoji.md('shopping_bags')} Produk", f"Semua VIP ({total_len} paket)"],
+            [
+                f"{client.ns.emoji.md('shopping_bags')} Produk",
+                f"Semua VIP ({total_len} paket)",
+            ],
             [f"{client.ns.emoji.md('gem')} Jumlah", f"`Rp {formatted_amount}`"],
             [f"{client.ns.emoji.md('id_card')} Order ID", f"`{transaction_id}`"],
         ]

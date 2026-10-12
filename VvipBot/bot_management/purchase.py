@@ -46,35 +46,35 @@ async def create_bot_callback(client, callback_query):
     user_expiry = parse_dt(await ctx.db.getVars(user_id, "user_expiry_date"))
 
     if user_expiry and user_expiry > datetime.now(timezone.utc):
-            text = (
-                f"{client.ns.emoji.md('white_check_mark')} **Anda Sudah Berlangganan!**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Anda sudah memiliki akses untuk membuat bot'], ['Aksi', 'Tekan tombol di bawah untuk memulai proses pembuatan']])}"
-            )
+        text = (
+            f"{client.ns.emoji.md('white_check_mark')} **Anda Sudah Berlangganan!**\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Anda sudah memiliki akses untuk membuat bot'], ['Aksi', 'Tekan tombol di bawah untuk memulai proses pembuatan']])}"
+        )
 
-            layout = [
-                [
-                    {
-                        "text": "▶️ Lanjutkan Membuat Bot",
-                        "callback_data": "start_creation_process",
-                        "style": "green",
-                        "emoji": client.ns.emoji.id("rocket"),
-                    }
-                ],
-                [
-                    {
-                        "text": "• Kembali •",
-                        "callback_data": "start",
-                        "style": "blue",
-                        "emoji": client.ns.emoji.id("back_arrow"),
-                    }
-                ],
-            ]
-            btn = client.ns.telegram.button.build_button_grid(layout)
+        layout = [
+            [
+                {
+                    "text": "▶️ Lanjutkan Membuat Bot",
+                    "callback_data": "start_creation_process",
+                    "style": "green",
+                    "emoji": client.ns.emoji.id("rocket"),
+                }
+            ],
+            [
+                {
+                    "text": "• Kembali •",
+                    "callback_data": "start",
+                    "style": "blue",
+                    "emoji": client.ns.emoji.id("back_arrow"),
+                }
+            ],
+        ]
+        btn = client.ns.telegram.button.build_button_grid(layout)
 
-            return await callback_query.edit_message_text(
-                rich_message=pyrogram.types.InputRichMessage(markdown=text),
-                reply_markup=btn,
-            )
+        return await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=btn,
+        )
 
     text, btn = await get_bot_purchase_panel(client, user_id, 1)
 
@@ -213,7 +213,7 @@ async def proceed_bot_payment_callback(client, callback_query):
 )
 async def confirm_bot_payment_callback(client, callback_query):
     prefix = "confirm_bot_payment_"
-    transaction_id = callback_query.data[len(prefix):]
+    transaction_id = callback_query.data[len(prefix) :]
     user = callback_query.from_user
     order_data_str = await ctx.db.getVars(client.me.id, transaction_id)
 

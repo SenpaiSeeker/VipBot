@@ -82,8 +82,10 @@ async def render_list_vvip_icon_menu(client, callback_query):
         item_id = uuid.uuid4().hex[:8]
         ctx.vip_list_icon[item_id] = item
 
-        status_icon = icons[name]["id"] if name in icons else client.ns.emoji.id(
-            LIST_VVIP_ICON_DEFAULT["normal"]
+        status_icon = (
+            icons[name]["id"]
+            if name in icons
+            else client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT["normal"])
         )
 
         button_row.append(
@@ -263,8 +265,10 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
 
         status = "diubah" if emoji_id else "dikembalikan ke ID bawaan"
         result_display = (
-            client.ns.emoji.md(emoji_char) if emoji_char else f"`{emoji_id}`"
-        ) if emoji_id else client.ns.emoji.md(LIST_VVIP_ICON_DEFAULT["normal"])
+            (client.ns.emoji.md(emoji_char) if emoji_char else f"`{emoji_id}`")
+            if emoji_id
+            else client.ns.emoji.md(LIST_VVIP_ICON_DEFAULT["normal"])
+        )
 
         await client.send_rich_message(
             chat_id,

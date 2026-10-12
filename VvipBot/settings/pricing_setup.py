@@ -275,12 +275,12 @@ async def set_start_text_callback(client, callback_query):
 
             return await client.send_rich_message(
                 chat_id,
-                    pyrogram.types.InputRichMessage(
-                        markdown=(
-                            f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Teks /start telah dihapus']])}"
-                        )
-                    ),
+                pyrogram.types.InputRichMessage(
+                    markdown=(
+                        f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Teks /start telah dihapus']])}"
+                    )
+                ),
                 reply_markup=back_btn,
             )
 
@@ -524,10 +524,10 @@ async def setup_listvvip(client, callback_query):
         if vvip_data["promo_price"] > 0:
             vvip_data["chat_id_promo"] = int(
                 validate(
-                await ask(
-                    f"{client.ns.emoji.md('id_card')} **Langkah 6/8: Chat ID Grup Promo**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', 'Diisi jika Harga Promo > 0']])}"
-                ),
+                    await ask(
+                        f"{client.ns.emoji.md('id_card')} **Langkah 6/8: Chat ID Grup Promo**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', 'Diisi jika Harga Promo > 0']])}"
+                    ),
                     is_chatid,
                     "settings.setup_vvip.err_must_be_chat_id",
                 )
@@ -690,7 +690,7 @@ async def confirm_delete_vvip(client, callback_query):
             show_alert=True,
         )
 
-    name = ctx.vip_list[item_id].get("name", "Tanpa Nama")
+    ctx.vip_list[item_id].get("name", "Tanpa Nama")
     item_to_remove = ctx.vip_list[item_id]
 
     if item_to_remove:

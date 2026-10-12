@@ -193,7 +193,15 @@ async def broadcast_callback(client, callback_query):
                 )
             ),
             reply_markup=client.ns.telegram.button.build_button_grid(
-                [[{"text": "BATALKAN", "callback_data": f"broadcast_cancel_{bot_id}", "style": "red"}]]
+                [
+                    [
+                        {
+                            "text": "BATALKAN",
+                            "callback_data": f"broadcast_cancel_{bot_id}",
+                            "style": "red",
+                        }
+                    ]
+                ]
             ),
         )
         success_count, fail_count = 0, 0
@@ -202,6 +210,7 @@ async def broadcast_callback(client, callback_query):
         async def send_to_user(target_user_id):
             nonlocal success_count, fail_count
             from .. import ctx
+
             if getattr(ctx, "broadcast_stop", {}).get(client.me.id):
                 nonlocal should_stop
                 should_stop = True
@@ -263,7 +272,9 @@ async def broadcast_cancel_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return await callback_query.answer("🚫 Akses ditolak", show_alert=True)
 
-    await callback_query.answer("Siaran akan dihentikan setelah pengiriman saat ini...", show_alert=False)
+    await callback_query.answer(
+        "Siaran akan dihentikan setelah pengiriman saat ini...", show_alert=False
+    )
     from .. import ctx
 
     if not hasattr(ctx, "broadcast_stop"):

@@ -122,7 +122,10 @@ async def list_gift_handler(client, message):
     try:
         gifts = await client.get_available_gifts()
         if not gifts:
-            empty_rows = [["Jumlah Hadiah", "`0`"], ["Status", "Tidak ada hadiah tersedia"]]
+            empty_rows = [
+                ["Jumlah Hadiah", "`0`"],
+                ["Status", "Tidak ada hadiah tersedia"],
+            ]
             return await status_msg.edit(
                 rich_message=pyrogram.types.InputRichMessage(
                     markdown=(

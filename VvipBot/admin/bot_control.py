@@ -1,6 +1,6 @@
-from helpers import parse_dt
-
 import pyrogram
+
+from helpers import parse_dt
 
 from .. import *
 
@@ -65,9 +65,7 @@ async def build_extend_panel(client, bot_id):
 async def apply_extend_duration(client, bot_id, days_to_add):
     exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
     current_exp_date = (
-        parse_dt(exp_date_str)
-        if exp_date_str
-        else datetime.now(timezone.utc)
+        parse_dt(exp_date_str) if exp_date_str else datetime.now(timezone.utc)
     )
     new_exp_date = current_exp_date + timedelta(days=days_to_add)
     await ctx.db.setVars(bot_id, "bot_expiration_date", new_exp_date.isoformat())

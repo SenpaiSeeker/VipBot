@@ -116,7 +116,10 @@ async def show_vip_revenue_callback(client, callback_query):
     table = client.ns.table
     report_rows = [
         ["Periode", period_text],
-        [f"{client.ns.emoji.md('money_bag')} Total Pendapatan", f"`Rp {total_amount:,}`"],
+        [
+            f"{client.ns.emoji.md('money_bag')} Total Pendapatan",
+            f"`Rp {total_amount:,}`",
+        ],
         [f"{client.ns.emoji.md('repeat')} Jumlah Transaksi", f"`{transaction_count}`"],
     ]
 

@@ -254,9 +254,7 @@ class DataBase:
         snapshot = deepcopy(user_data)
 
         await self._mutate(
-            lambda data: data.setdefault("vars", {}).__setitem__(
-                user_id_str, snapshot
-            )
+            lambda data: data.setdefault("vars", {}).__setitem__(user_id_str, snapshot)
         )
 
     async def setVars(self, user_id, query_name, value, var_key="variabel"):
@@ -304,9 +302,7 @@ class DataBase:
         encrypted_value = await self._encrypt_async(val_str)
 
         def apply(data):
-            target = self._namespace(data, user_id, var_key).setdefault(
-                query_name, []
-            )
+            target = self._namespace(data, user_id, var_key).setdefault(query_name, [])
 
             if encrypted_value in target:
                 return False
@@ -364,9 +360,10 @@ class DataBase:
 
         def apply(data):
             target = (
-                data.get("vars", {}).get(str(user_id), {}).get(var_key, {}).get(
-                    query_name
-                )
+                data.get("vars", {})
+                .get(str(user_id), {})
+                .get(var_key, {})
+                .get(query_name)
             )
             if not target:
                 return False
@@ -448,9 +445,7 @@ class DataBase:
 
                 try:
                     decoded = await self._decrypt_many_async(value)
-                    decrypted[key] = [
-                        decode(d) for d in decoded
-                    ]
+                    decrypted[key] = [decode(d) for d in decoded]
                 except Exception:
                     decrypted[key] = value
             else:

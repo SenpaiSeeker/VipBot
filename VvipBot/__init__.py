@@ -139,7 +139,9 @@ async def check_new_user(client, update):
     if not update or not getattr(update, "from_user", None):
         return
 
-    already_seen = await ctx.db.isMemberOf(client.me.id, "user_ids", update.from_user.id)
+    already_seen = await ctx.db.isMemberOf(
+        client.me.id, "user_ids", update.from_user.id
+    )
     if not already_seen:
         await ctx.db.setListVars(
             client.me.id,

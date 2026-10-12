@@ -5,9 +5,10 @@ from zoneinfo import ZoneInfo
 import pyrogram
 from pyrogram import filters
 
+from helpers.income_template import render_income_template
+
 from .. import command, ctx, get_notification_target, is_bot_owner
 from .verifier import verify_user_join, verify_user_join_multiple
-from helpers.income_template import render_income_template
 
 _TZ = ZoneInfo("Asia/Jakarta")
 
@@ -209,7 +210,9 @@ async def manual_check_payment_callback(client, callback_query):
     is_bundle_order = ref_parts[0] == "ALL"
     is_pick_order = ref_parts[0] == "PICK"
     is_multi_order = is_bundle_order or is_pick_order
-    tipe = ref_parts[1] if len(ref_parts) > 1 else ("normal" if is_multi_order else None)
+    tipe = (
+        ref_parts[1] if len(ref_parts) > 1 else ("normal" if is_multi_order else None)
+    )
     amount_raw = int(ref_parts[2]) if len(ref_parts) > 2 else 0
     coupon_code = None
     bundle_indexes = []
@@ -229,9 +232,7 @@ async def manual_check_payment_callback(client, callback_query):
 
     if is_multi_order:
         if extra:
-            bundle_indexes = [
-                int(i) for i in extra.split(",") if i.strip().isdigit()
-            ]
+            bundle_indexes = [int(i) for i in extra.split(",") if i.strip().isdigit()]
     else:
         item_index = int(ref_parts[0])
         coupon_code = extra or None
@@ -490,9 +491,7 @@ async def manual_check_payment_callback(client, callback_query):
                         new_coupons.append(c)
                     return new_coupons if coupon_consumed["found"] else None
 
-                await ctx.db.updateListVars(
-                    client.me.id, "coupons", _consume_coupon
-                )
+                await ctx.db.updateListVars(client.me.id, "coupons", _consume_coupon)
 
             await ctx.db.setListVars(client.me.id, "vvip_members", member_data)
 
@@ -544,9 +543,7 @@ async def manual_check_payment_callback(client, callback_query):
                 else:
                     owner_bot_id = await get_notification_target(client)
 
-                unit_price = item_found.get(
-                    "promo_price" if is_promo else "price", 0
-                )
+                unit_price = item_found.get("promo_price" if is_promo else "price", 0)
                 single_order = {
                     "name": name,
                     "price": unit_price or amount_raw,

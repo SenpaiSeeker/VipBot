@@ -95,9 +95,7 @@ async def owner_approve_extension_callback(client, callback_query):
 
         exp_date_str = await ctx.db.getVars(bot_id_to_extend, "bot_expiration_date")
         current_exp_date = (
-            parse_dt(exp_date_str)
-            if exp_date_str
-            else datetime.now(timezone.utc)
+            parse_dt(exp_date_str) if exp_date_str else datetime.now(timezone.utc)
         )
 
         new_exp_date = current_exp_date + timedelta(days=days_to_add)
