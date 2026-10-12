@@ -185,11 +185,6 @@ async def expiration_checker_method():
 
                 if last_notif_date_str != today_str:
                     try:
-                        owner_user = await main_client.get_users(owner_id)
-                        mention_owner = main_client.ns.telegram.arg.getMention(
-                            owner_user
-                        )
-
                         bot_instance = manager.running_bots.get(bot_id)
                         bot_name = (
                             bot_instance.me.first_name
@@ -197,11 +192,15 @@ async def expiration_checker_method():
                             else f"ID {bot_id}"
                         )
 
+                        notif_client = bot_instance if bot_instance else main_client
+                        owner_user = await notif_client.get_users(owner_id)
+                        mention_owner = notif_client.ns.telegram.arg.getMention(
+                            owner_user, md=True
+                        )
+
                         warning_message = (
-                            f"{main_client.ns.emoji.md('bell')} **Notifikasi Masa Aktif** {main_client.ns.emoji.md('bell')}\n\n"
-                            f"Halo {mention_owner},\n"
-                            f"Masa aktif bot Anda (**{bot_name}**) tinggal **{days_left} hari** lagi.\n\n"
-                            "Silakan hubungi @NorSodikin jika mau diperpanjang."
+                            f"{notif_client.ns.emoji.md('bell')} **Notifikasi Masa Aktif**\n\n"
+                            f"{notif_client.ns.table.md(['Info', 'Nilai'], [['Pengguna', f'{mention_owner}'], ['Bot', f'**{bot_name}**'], ['Sisa Aktif', f'**{days_left} hari**'], ['Aksi', 'Silakan hubungi @NorSodikin jika mau diperpanjang']])}"
                         )
                         try:
                             await main_client.send_rich_message(
