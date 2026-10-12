@@ -26,7 +26,7 @@ async def allbots_detail_callback(client, callback_query):
         pass
 
     owner_id = await ctx.db.getVars(bot_id, "owner_id")
-    owner_text = await _resolve_owner_text(client, owner_id)
+    owner_text = await _resolve_owner_text(bot_instance or client, owner_id)
 
     exp_date = parse_dt(await ctx.db.getVars(bot_id, "bot_expiration_date"))
     days_left = (exp_date - datetime.now(timezone.utc)).days if exp_date else "N/A"
