@@ -15,7 +15,11 @@ from .. import (
     listen,
     render_list_vvip_icon_html,
 )
-from .invoice import _create_all_vvip_payment_invoice, _create_payment_invoice
+from .invoice import (
+    _create_all_vvip_payment_invoice,
+    _create_payment_invoice,
+    _create_pick_vvip_payment_invoice,
+)
 from .verifier import _get_all_vvip_items
 
 
@@ -105,6 +109,165 @@ async def pay_all_vvip_confirm_callback(client, callback_query):
     total_amount = sum((item.get("price", 0) for item in selected_items))
 
     await _create_all_vvip_payment_invoice(
+        client,
+        callback_query.from_user,
+        selected_items,
+        total_amount,
+        processing_msg=processing_msg,
+    )
+
+
+def _parse_pick_sel(sel_text):
+    if not sel_text or sel_text == "-":
+        return []
+    return sorted({int(i) for i in str(sel_text).split(",") if i.strip().isdigit()})
+
+
+def _pick_valid_indexes(vvip_list):
+    return [
+        i
+        for i, item in enumerate(vvip_list)
+        if int(item.get("price", 0) or 0) > 0 and item.get("chat_id_normal")
+    ]
+
+
+async def _render_pick_panel(client, callback_query, selected):
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    valid_idx = _pick_valid_indexes(vvip_list)
+    if not valid_idx:
+        return await callback_query.answer(
+            "❌ Tidak ada paket VIP valid.", show_alert=True
+        )
+
+    selected = [i for i in selected if i in valid_idx]
+    sel_txt = ",".join(str(i) for i in selected) or "-"
+
+    rows = []
+    total = 0
+    layout = []
+    for i in valid_idx:
+        item = vvip_list[i]
+        name = item.get("name", f"Paket {i + 1}")
+        price = int(item.get("price", 0) or 0)
+        picked = i in selected
+        if picked:
+            total += price
+        rows.append([name, f"Rp {price:,}", "✅ Dipilih" if picked else "⬜ Belum"])
+        layout.append(
+            [
+                {
+                    "text": f"{'✅ ' if picked else ''}{name}",
+                    "callback_data": f"pick_vvip_toggle_{sel_txt}_{i}",
+                    "style": "green" if picked else "blue",
+                    "emoji": client.ns.emoji.id(
+                        "white_check_mark" if picked else "shopping_bags"
+                    ),
+                }
+            ]
+        )
+
+    count = len(selected)
+    text = (
+        f"{client.ns.emoji.md('shopping_bags')} **Pilih Paket VIP**\n\n"
+        f"{client.ns.table.md(['Paket', 'Harga', 'Status'], rows)}\n\n"
+        f"{client.ns.emoji.md('money_bag')} **Total: Rp {total:,}** ({count} paket)"
+    )
+
+    layout.append(
+        [
+            {
+                "text": f"💳 Bayar ({count})",
+                "callback_data": f"pick_vvip_pay_{sel_txt}",
+                "style": "green",
+                "emoji": client.ns.emoji.id("white_check_mark"),
+            }
+        ]
+    )
+    layout.append(
+        [
+            {
+                "text": "• Kembali ke Daftar VVIP •",
+                "callback_data": "list_vvip",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("back_arrow"),
+            }
+        ]
+    )
+    btn = client.ns.telegram.button.build_button_grid(layout)
+
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
+
+
+@command(
+    lambda ctx: filters.regex("^pick_vvip$"),
+    handler_type="callback",
+)
+async def pick_vvip_callback(client, callback_query):
+    await _render_pick_panel(client, callback_query, [])
+
+
+@command(
+    lambda ctx: filters.regex("^pick_vvip_toggle_(.+?)_(\\d+)$"),
+    handler_type="callback",
+)
+async def pick_vvip_toggle_callback(client, callback_query):
+    sel_txt = callback_query.matches[0].group(1)
+    idx = int(callback_query.matches[0].group(2))
+    selected = _parse_pick_sel(sel_txt)
+    if idx in selected:
+        selected.remove(idx)
+    else:
+        selected.append(idx)
+    await _render_pick_panel(client, callback_query, selected)
+
+
+@command(
+    lambda ctx: filters.regex("^pick_vvip_pay_(.+)$"),
+    handler_type="callback",
+)
+async def pick_vvip_pay_callback(client, callback_query):
+    sel_txt = callback_query.matches[0].group(1)
+    selected = _parse_pick_sel(sel_txt)
+    if not selected:
+        return await callback_query.answer(
+            "❌ Pilih minimal 1 paket dulu.", show_alert=True
+        )
+
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    valid_idx = _pick_valid_indexes(vvip_list)
+    selected = [i for i in selected if i in valid_idx]
+    if not selected:
+        return await callback_query.answer(
+            "❌ Paket yang dipilih sudah tidak valid.", show_alert=True
+        )
+
+    selected_items = [
+        {
+            "index": i,
+            "name": vvip_list[i].get("name", f"Paket {i + 1}"),
+            "price": int(vvip_list[i].get("price", 0) or 0),
+            "chat_id": vvip_list[i].get("chat_id_normal"),
+            "duration": vvip_list[i].get("duration", 0),
+        }
+        for i in selected
+    ]
+    total_amount = sum(item.get("price", 0) for item in selected_items)
+
+    processing_msg = None
+    if callback_query.message.photo:
+        await callback_query.message.delete()
+    else:
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=_processing_text(client)
+            )
+        )
+        processing_msg = callback_query.message
+
+    await _create_pick_vvip_payment_invoice(
         client,
         callback_query.from_user,
         selected_items,

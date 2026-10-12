@@ -57,6 +57,7 @@ async def _build_income_notification(
         "normal": "Normal",
         "promo": "Promo",
         "bundle": "Bundle (Semua VIP)",
+        "pick": "Pilihan Sendiri",
     }.get(tipe, str(tipe or "-").title())
 
     def section(title):
@@ -206,7 +207,9 @@ async def manual_check_payment_callback(client, callback_query):
 
     ref_parts = ref_data_str.split("|")
     is_bundle_order = ref_parts[0] == "ALL"
-    tipe = ref_parts[1] if len(ref_parts) > 1 else ("normal" if is_bundle_order else None)
+    is_pick_order = ref_parts[0] == "PICK"
+    is_multi_order = is_bundle_order or is_pick_order
+    tipe = ref_parts[1] if len(ref_parts) > 1 else ("normal" if is_multi_order else None)
     amount_raw = int(ref_parts[2]) if len(ref_parts) > 2 else 0
     coupon_code = None
     bundle_indexes = []
@@ -224,7 +227,7 @@ async def manual_check_payment_callback(client, callback_query):
             show_alert=True,
         )
 
-    if is_bundle_order:
+    if is_multi_order:
         if extra:
             bundle_indexes = [
                 int(i) for i in extra.split(",") if i.strip().isdigit()
@@ -247,7 +250,7 @@ async def manual_check_payment_callback(client, callback_query):
             await ctx.db.removeVars(client.me.id, transaction_id)
             vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
-            if is_bundle_order:
+            if is_multi_order:
                 invite_payloads = []
                 purchased_names = []
                 bundle_orders = []
@@ -321,7 +324,9 @@ async def manual_check_payment_callback(client, callback_query):
 
                 if not invite_payloads:
                     raise ValueError(
-                        "Tidak ada paket VIP valid untuk pembelian semua VIP."
+                        "Tidak ada paket valid untuk pilihan Anda."
+                        if is_pick_order
+                        else "Tidak ada paket VIP valid untuk pembelian semua VIP."
                     )
 
                 if not block_mode:
@@ -331,7 +336,7 @@ async def manual_check_payment_callback(client, callback_query):
                         "amount": amount_raw,
                         "date": datetime.now(timezone.utc).isoformat(),
                         "item_name": " + ".join(purchased_names),
-                        "type": "bundle",
+                        "type": "pick" if is_pick_order else "bundle",
                     }
 
                     await ctx.db.setListVars(
@@ -340,39 +345,63 @@ async def manual_check_payment_callback(client, callback_query):
                         revenue_data,
                     )
 
-                link_text = "\n".join(
-                    [
-                        f"- {item.get('name')}: {item.get('link')}"
-                        for item in invite_payloads
-                    ]
-                )
-
-                link_msg = await client.send_rich_message(
-                    user.id,
-                    pyrogram.types.InputRichMessage(
-                        markdown=(
-                            f"{client.ns.emoji.md('party_popper')} **Pembayaran Paket Semua VIP Berhasil!**\n\n"
-                            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Pembayaran berhasil'], ['Akses', 'Berikut semua link akses VIP Anda']])}\n\n"
-                            f"{link_text}\n\n"
-                            f"{client.ns.table.md(['Info', 'Nilai'], [['Perhatian', 'Setiap link hanya berlaku 1 kali klik dan kedaluwarsa dalam 60 menit']])}"
+                if is_pick_order:
+                    for payload in invite_payloads:
+                        pick_link_msg = await client.send_rich_message(
+                            user.id,
+                            pyrogram.types.InputRichMessage(
+                                markdown=(
+                                    f"{client.ns.emoji.md('party_popper')} **Pembayaran Paket {payload.get('name')} Berhasil!**\n\n"
+                                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Pembayaran berhasil'], ['Paket', f"**{payload.get('name')}**"], ['Akses', 'Berikut link akses Anda']])}\n\n"
+                                    f"{payload.get('link')}\n\n"
+                                    f"{client.ns.table.md(['Info', 'Nilai'], [['Perhatian', 'Link hanya berlaku 1 kali klik dan kedaluwarsa dalam 60 menit']])}"
+                                )
+                            ),
+                            protect_content=True,
                         )
-                    ),
-                    protect_content=True,
-                )
+                        asyncio.create_task(
+                            verify_user_join(
+                                client,
+                                user,
+                                payload.get("chat_id"),
+                                pick_link_msg,
+                            )
+                        )
+                else:
+                    link_text = "\n".join(
+                        [
+                            f"- {item.get('name')}: {item.get('link')}"
+                            for item in invite_payloads
+                        ]
+                    )
+
+                    link_msg = await client.send_rich_message(
+                        user.id,
+                        pyrogram.types.InputRichMessage(
+                            markdown=(
+                                f"{client.ns.emoji.md('party_popper')} **Pembayaran Paket Semua VIP Berhasil!**\n\n"
+                                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Pembayaran berhasil'], ['Akses', 'Berikut semua link akses VIP Anda']])}\n\n"
+                                f"{link_text}\n\n"
+                                f"{client.ns.table.md(['Info', 'Nilai'], [['Perhatian', 'Setiap link hanya berlaku 1 kali klik dan kedaluwarsa dalam 60 menit']])}"
+                            )
+                        ),
+                        protect_content=True,
+                    )
 
                 try:
                     await callback_query.message.delete()
                 except Exception:
                     pass
 
-                asyncio.create_task(
-                    verify_user_join_multiple(
-                        client,
-                        user,
-                        invite_payloads,
-                        link_msg,
+                if not is_pick_order:
+                    asyncio.create_task(
+                        verify_user_join_multiple(
+                            client,
+                            user,
+                            invite_payloads,
+                            link_msg,
+                        )
                     )
-                )
 
                 await callback_query.answer(
                     "✅ Pembayaran berhasil dikonfirmasi!", show_alert=False
@@ -393,7 +422,7 @@ async def manual_check_payment_callback(client, callback_query):
                                 orders=bundle_orders,
                                 amount_raw=amount_raw,
                                 transaction_id=transaction_id,
-                                tipe="bundle",
+                                tipe="pick" if is_pick_order else "bundle",
                                 coupon_code=coupon_code,
                             )
                         ),
