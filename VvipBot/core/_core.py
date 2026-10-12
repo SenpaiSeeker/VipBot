@@ -249,21 +249,17 @@ async def list_vvip_bot(client, callback_query):
         layout.append(
             [
                 {
-                    "text": "Pilih Paket Sendiri",
+                    "text": "Ambil Sebagian VIP",
                     "callback_data": "pick_vvip",
                     "style": "blue",
                     "emoji": client.ns.emoji.id("shopping_bags"),
-                }
-            ]
-        )
-        layout.append(
-            [
+                },
                 {
                     "text": "Ambil Semua VIP",
                     "callback_data": "pay_all_vvip",
                     "style": "green",
                     "emoji": buy_all_icon,
-                }
+                },
             ]
         )
 
