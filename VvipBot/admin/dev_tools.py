@@ -814,7 +814,6 @@ async def block_purchase_handler(client, message):
 @command(lambda ctx: filters.command("botowners") & filters.user(ctx.owner_id))
 async def bot_owners_handler(client, message):
     rows = []
-    exp_rows = []
     for _, x in ctx.manager.running_bots.items():
         try:
             uname = f"@{x.me.username}" if x.me.username else f"ID {x.me.id}"
@@ -836,8 +835,7 @@ async def bot_owners_handler(client, message):
             owner_id = await ctx.db.getVars(x.me.id, "owner_id")
 
             if not owner_id:
-                rows.append([uname, "Owner belum diatur", "-"])
-                exp_rows.append([uname, exp_text])
+                rows.append([uname, "Owner belum diatur", "-", exp_text])
                 continue
 
             user = await x.get_users(owner_id)
@@ -848,16 +846,12 @@ async def bot_owners_handler(client, message):
                 else client.ns.telegram.arg.getMention(user, md=True)
             )
 
-            rows.append([uname, mention, f"`{x.bot_token}`"])
-            exp_rows.append([uname, exp_text])
+            rows.append([uname, mention, f"`{x.bot_token}`", exp_text])
         except Exception as e:
-            rows.append([uname, "Error", f"`{e}`"])
-            exp_rows.append([uname, exp_text])
+            rows.append([uname, "Error", f"`{e}`", exp_text])
 
     text = (
         f"{client.ns.emoji.md('busts_in_silhouette')} **Daftar Owner Bot**\n\n"
-        f"{client.ns.table.md(['Bot', 'Owner', 'Token'], rows)}\n\n"
-        f"{client.ns.emoji.md('calendar')} **Masa Aktif Bot**\n\n"
-        f"{client.ns.table.md(['Bot', 'Expired'], exp_rows)}"
+        f"{client.ns.table.md(['Bot', 'Owner', 'Token', 'Expired'], rows)}"
     )
     await message.reply_rich(pyrogram.types.InputRichMessage(markdown=text))
