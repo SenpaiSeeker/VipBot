@@ -37,8 +37,45 @@ async def build_extend_panel(client, bot_id):
     )
 
     text = (
-        f"{client.ns.emoji.md('calendar')} **Perpanjang Masa Aktif**\n\n"
-        f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'**{bot_name}** (`{bot_id}`)'], ['Masa Aktif', f'{expiry_text}'], ['Pilih', 'Tambah 1-12 bulan (1 bulan = 30 hari)']])}"
+        f"{client.ns.emoji.md('calendar')} **Atur Masa Aktif**\n\n"
+        f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'**{bot_name}** (`{bot_id}`)'], ['Masa Aktif', f'{expiry_text}'], ['Pilih', 'Tambah atau kurangi masa aktif']])}"
+    )
+
+    layout = [
+        [
+            {
+                "text": "➕ Tambah Expired",
+                "callback_data": f"extend_mode_{bot_id}_add",
+                "style": "green",
+                "emoji": client.ns.emoji.id("plus"),
+            },
+            {
+                "text": "➖ Kurangi Expired",
+                "callback_data": f"extend_mode_{bot_id}_sub",
+                "style": "red",
+                "emoji": client.ns.emoji.id("minus"),
+            },
+        ]
+    ]
+
+    btn = client.ns.telegram.button.build_button_grid(layout)
+    return text, btn
+
+
+async def build_extend_month_grid(client, bot_id, mode):
+    try:
+        bot_id = int(bot_id)
+    except (TypeError, ValueError):
+        pass
+    is_add = mode == "add"
+    title = (
+        f"{client.ns.emoji.md('calendar')} **Tambah Masa Aktif**"
+        if is_add
+        else f"{client.ns.emoji.md('calendar')} **Kurangi Masa Aktif**"
+    )
+    text = (
+        f"{title}\n\n"
+        f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'`{bot_id}`'], ['Satuan', '1 bulan = 30 hari'], ['Pilih', 'Jumlah bulan di bawah ini']])}"
     )
 
     layout = []
@@ -47,7 +84,7 @@ async def build_extend_panel(client, bot_id):
         row.append(
             {
                 "text": f"{m} Bulan",
-                "callback_data": f"extend_month_{bot_id}_{m}",
+                "callback_data": f"extend_month_{bot_id}_{mode}_{m}",
                 "style": "blue",
                 "emoji": client.ns.emoji.id("calendar"),
             }
@@ -57,6 +94,16 @@ async def build_extend_panel(client, bot_id):
             row = []
     if row:
         layout.append(row)
+    layout.append(
+        [
+            {
+                "text": "• Kembali •",
+                "callback_data": f"extend_panel_{bot_id}",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("back_arrow"),
+            }
+        ]
+    )
 
     btn = client.ns.telegram.button.build_button_grid(layout)
     return text, btn
@@ -72,7 +119,7 @@ async def apply_extend_duration(client, bot_id, days_to_add):
     return new_exp_date.strftime("%d %b %Y")
 
 
-async def notify_extend_owner(client, bot_id):
+async def notify_extend_owner(client, bot_id, action="diperpanjang"):
     owner_bot_id = await ctx.db.getVars(bot_id, "owner_id")
     if not owner_bot_id:
         return
@@ -84,7 +131,7 @@ async def notify_extend_owner(client, bot_id):
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('party_popper')} **Kabar Baik!**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'**{bot_name}**'], ['Status', 'Masa aktif bot Anda telah diperpanjang oleh Owner Utama']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'**{bot_name}**'], ['Status', f'Masa aktif bot Anda telah {action} oleh Owner Utama']])}"
                 )
             ),
         )
@@ -93,7 +140,44 @@ async def notify_extend_owner(client, bot_id):
 
 
 @command(
-    lambda ctx: filters.regex("^extend_month_(\\d+)_(\\d+)$"),
+    lambda ctx: filters.regex("^extend_panel_(\\d+)$"),
+    handler_type="callback",
+)
+async def extend_panel_callback(client, callback_query):
+    if callback_query.from_user.id != ctx.owner_id:
+        return await callback_query.answer(
+            "🚫 Anda tidak memiliki akses ke menu ini.",
+            show_alert=True,
+        )
+    bot_id = int(callback_query.matches[0].group(1))
+    text, btn = await build_extend_panel(client, bot_id)
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
+
+
+@command(
+    lambda ctx: filters.regex("^extend_mode_(\\d+)_(add|sub)$"),
+    handler_type="callback",
+)
+async def extend_mode_callback(client, callback_query):
+    if callback_query.from_user.id != ctx.owner_id:
+        return await callback_query.answer(
+            "🚫 Anda tidak memiliki akses ke menu ini.",
+            show_alert=True,
+        )
+    bot_id = int(callback_query.matches[0].group(1))
+    mode = callback_query.matches[0].group(2)
+    text, btn = await build_extend_month_grid(client, bot_id, mode)
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=btn,
+    )
+
+
+@command(
+    lambda ctx: filters.regex("^extend_month_(\\d+)_(add|sub)_(\\d+)$"),
     handler_type="callback",
 )
 async def extend_month_callback(client, callback_query):
@@ -103,19 +187,28 @@ async def extend_month_callback(client, callback_query):
             show_alert=True,
         )
     bot_id = int(callback_query.matches[0].group(1))
-    months = int(callback_query.matches[0].group(2))
-    days_to_add = months * 30
+    mode = callback_query.matches[0].group(2)
+    months = int(callback_query.matches[0].group(3))
+    days_to_add = months * 30 if mode == "add" else -(months * 30)
 
     formatted_new_date = await apply_extend_duration(client, bot_id, days_to_add)
+    if mode == "add":
+        title = f"{client.ns.emoji.md('white_check_mark')} **Sukses!**"
+        aksi = f"`{months}` bulan (`{days_to_add}` hari)"
+        action = "diperpanjang"
+    else:
+        title = f"{client.ns.emoji.md('white_check_mark')} **Sukses!**"
+        aksi = f"`{months}` bulan (`{abs(days_to_add)}` hari)"
+        action = "dikurangi"
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(
             markdown=(
-                f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'`{bot_id}`'], ['Tambahan', f'`{months}` bulan (`{days_to_add}` hari)'], ['Masa Aktif Baru', f'`{formatted_new_date}`']])}"
+                f"{title}\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'`{bot_id}`'], ['Aksi', f'{action.title()} masa aktif'], ['Jumlah', f'{aksi}'], ['Masa Aktif Baru', f'`{formatted_new_date}`']])}"
             )
         )
     )
-    await notify_extend_owner(client, bot_id)
+    await notify_extend_owner(client, bot_id, action)
 
 
 @command(lambda ctx: filters.command("broadcast_owners") & filters.user(ctx.owner_id))
