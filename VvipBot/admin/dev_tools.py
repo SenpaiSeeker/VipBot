@@ -19,7 +19,7 @@ import sys
 import tempfile
 import traceback
 import zipfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from time import time
 from typing import Any, Dict, Optional, Tuple
 
@@ -28,6 +28,7 @@ import pyrogram
 from pyrogram import filters
 from pyrogram.types import LinkPreviewOptions, Message, ReplyParameters
 
+from helpers import parse_dt
 from services import initialize_bot_services
 
 from .. import command, ctx
@@ -813,16 +814,30 @@ async def block_purchase_handler(client, message):
 @command(lambda ctx: filters.command("botowners") & filters.user(ctx.owner_id))
 async def bot_owners_handler(client, message):
     rows = []
+    exp_rows = []
     for _, x in ctx.manager.running_bots.items():
         try:
             uname = f"@{x.me.username}" if x.me.username else f"ID {x.me.id}"
         except Exception:
             uname = "Tidak diketahui"
         try:
+            exp_date = parse_dt(await ctx.db.getVars(x.me.id, "bot_expiration_date"))
+            if exp_date:
+                days_left = (exp_date - datetime.now(timezone.utc)).days
+                if days_left >= 0:
+                    exp_text = f"`{exp_date.strftime('%d %b %Y')}` ({days_left} hari)"
+                else:
+                    exp_text = "Habis"
+            else:
+                exp_text = "Belum diatur"
+        except Exception:
+            exp_text = "-"
+        try:
             owner_id = await ctx.db.getVars(x.me.id, "owner_id")
 
             if not owner_id:
                 rows.append([uname, "Owner belum diatur", "-"])
+                exp_rows.append([uname, exp_text])
                 continue
 
             user = await x.get_users(owner_id)
@@ -834,11 +849,15 @@ async def bot_owners_handler(client, message):
             )
 
             rows.append([uname, mention, f"`{x.bot_token}`"])
+            exp_rows.append([uname, exp_text])
         except Exception as e:
             rows.append([uname, "Error", f"`{e}`"])
+            exp_rows.append([uname, exp_text])
 
     text = (
         f"{client.ns.emoji.md('busts_in_silhouette')} **Daftar Owner Bot**\n\n"
-        f"{client.ns.table.md(['Bot', 'Owner', 'Token'], rows)}"
+        f"{client.ns.table.md(['Bot', 'Owner', 'Token'], rows)}\n\n"
+        f"{client.ns.emoji.md('calendar')} **Masa Aktif Bot**\n\n"
+        f"{client.ns.table.md(['Bot', 'Expired'], exp_rows)}"
     )
     await message.reply_rich(pyrogram.types.InputRichMessage(markdown=text))
