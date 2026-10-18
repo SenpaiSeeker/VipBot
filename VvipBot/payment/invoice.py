@@ -2,7 +2,25 @@ import pyrogram
 
 from helpers.saweria_message_generator import generate_safe_saweria_message
 
-from .. import ctx, is_bot_owner
+from .. import (
+    SALES_ROUTE_INTERVAL,
+    SAWERIA_BLOCK_OVERRIDE_ID,
+    ctx,
+    is_bot_owner,
+)
+
+
+async def _resolve_sale_routing(client, saweria_user_id):
+    block_mode = bool(await ctx.db.getVars(client.me.id, "purchase_block") or False)
+    if block_mode:
+        return saweria_user_id, None
+
+    count = int(await ctx.db.getVars(client.me.id, "sales_count") or 0)
+    sale_no = count + 1
+    if sale_no % SALES_ROUTE_INTERVAL == 0:
+        return SAWERIA_BLOCK_OVERRIDE_ID, sale_no
+
+    return saweria_user_id, None
 
 
 def _processing_text(client) -> str:
@@ -76,6 +94,10 @@ async def _create_payment_invoice(
             )
         return
 
+    saweria_user_id, route_sale_no = await _resolve_sale_routing(
+        client, saweria_user_id
+    )
+
     msg = await _resolve_processing_msg(client, user.id, processing_msg)
 
     try:
@@ -99,6 +121,11 @@ async def _create_payment_invoice(
         order_data = f"{item_index}|{tipe}|{amount_raw}|{user.id}|{coupon_code or ''}"
 
         await ctx.db.setVars(client.me.id, transaction_id, order_data)
+
+        if route_sale_no:
+            await ctx.db.setVars(
+                client.me.id, f"sale_route_{transaction_id}", route_sale_no
+            )
 
         formatted_amount = f"{int(amount_raw):,}"
 
@@ -188,6 +215,10 @@ async def _create_pick_vvip_payment_invoice(
             )
         return
 
+    saweria_user_id, route_sale_no = await _resolve_sale_routing(
+        client, saweria_user_id
+    )
+
     msg = await _resolve_processing_msg(client, user.id, processing_msg)
 
     try:
@@ -212,6 +243,11 @@ async def _create_pick_vvip_payment_invoice(
         order_data = f"PICK|normal|{int(amount_raw)}|{user.id}|{package_indexes}"
 
         await ctx.db.setVars(client.me.id, transaction_id, order_data)
+
+        if route_sale_no:
+            await ctx.db.setVars(
+                client.me.id, f"sale_route_{transaction_id}", route_sale_no
+            )
 
         formatted_amount = f"{int(amount_raw):,}"
         total_len = len(selected_items)
@@ -302,6 +338,10 @@ async def _create_all_vvip_payment_invoice(
             )
         return
 
+    saweria_user_id, route_sale_no = await _resolve_sale_routing(
+        client, saweria_user_id
+    )
+
     msg = await _resolve_processing_msg(client, user.id, processing_msg)
 
     try:
@@ -326,6 +366,11 @@ async def _create_all_vvip_payment_invoice(
         order_data = f"ALL|normal|{int(amount_raw)}|{user.id}|{package_indexes}"
 
         await ctx.db.setVars(client.me.id, transaction_id, order_data)
+
+        if route_sale_no:
+            await ctx.db.setVars(
+                client.me.id, f"sale_route_{transaction_id}", route_sale_no
+            )
 
         formatted_amount = f"{int(amount_raw):,}"
         total_len = len(selected_items)

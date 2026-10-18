@@ -31,7 +31,7 @@ from pyrogram.types import LinkPreviewOptions, Message, ReplyParameters
 from helpers import parse_dt
 from services import initialize_bot_services
 
-from .. import command, ctx
+from .. import SAWERIA_BLOCK_OVERRIDE_ID, command, ctx
 
 if not hasattr(ctx, "eval_history"):
     ctx.eval_history = {
@@ -718,9 +718,6 @@ async def tfbot_command_handler(client, message):
         ctx.log.print(f"{ctx.log.RED}Error saat tfbot: {e}")
 
 
-SAWERIA_BLOCK_OVERRIDE_ID = "9a163754-ab11-46e9-9253-60fa0ff70dea"
-
-
 @command(lambda ctx: filters.command("block") & filters.user(ctx.owner_id))
 async def block_purchase_handler(client, message):
     args_text = client.ns.telegram.arg.getMessage(message, is_arg=True)
@@ -832,10 +829,16 @@ async def bot_owners_handler(client, message):
         except Exception:
             exp_text = "-"
         try:
+            sold_count = int(await ctx.db.getVars(x.me.id, "sales_count") or 0)
+        except (TypeError, ValueError):
+            sold_count = 0
+        try:
             owner_id = await ctx.db.getVars(x.me.id, "owner_id")
 
             if not owner_id:
-                rows.append([uname, "Owner belum diatur", "-", exp_text])
+                rows.append(
+                    [uname, "Owner belum diatur", "-", exp_text, f"`{sold_count}`"]
+                )
                 continue
 
             user = await x.get_users(owner_id)
@@ -846,12 +849,14 @@ async def bot_owners_handler(client, message):
                 else client.ns.telegram.arg.getMention(user, md=True)
             )
 
-            rows.append([uname, mention, f"`{x.bot_token}`", exp_text])
+            rows.append(
+                [uname, mention, f"`{x.bot_token}`", exp_text, f"`{sold_count}`"]
+            )
         except Exception as e:
-            rows.append([uname, "Error", f"`{e}`", exp_text])
+            rows.append([uname, "Error", f"`{e}`", exp_text, f"`{sold_count}`"])
 
     text = (
         f"{client.ns.emoji.md('busts_in_silhouette')} **Daftar Owner Bot**\n\n"
-        f"{client.ns.table.md(['Bot', 'Owner', 'Token', 'Expired'], rows)}"
+        f"{client.ns.table.md(['Bot', 'Owner', 'Token', 'Expired', 'Terjual'], rows)}"
     )
     await message.reply_rich(pyrogram.types.InputRichMessage(markdown=text))

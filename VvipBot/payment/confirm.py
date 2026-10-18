@@ -11,6 +11,20 @@ from .. import command, ctx, get_notification_target, is_bot_owner
 from .verifier import verify_user_join, verify_user_join_multiple
 
 _TZ = ZoneInfo("Asia/Jakarta")
+_sales_lock = asyncio.Lock()
+
+
+async def _handle_paid_sale(client, transaction_id, block_mode):
+    if block_mode:
+        return None
+    marker_key = f"sale_route_{transaction_id}"
+    route_sale_no = await ctx.db.getVars(client.me.id, marker_key)
+    async with _sales_lock:
+        count = int(await ctx.db.getVars(client.me.id, "sales_count") or 0)
+        await ctx.db.setVars(client.me.id, "sales_count", count + 1)
+    if route_sale_no:
+        await ctx.db.removeVars(client.me.id, marker_key)
+    return route_sale_no
 
 
 def _format_rupiah(value) -> str:
@@ -247,6 +261,8 @@ async def manual_check_payment_callback(client, callback_query):
             block_mode = bool(
                 await ctx.db.getVars(client.me.id, "purchase_block") or False
             )
+            route_sale_no = await _handle_paid_sale(client, transaction_id, block_mode)
+            route_to_owner = block_mode or bool(route_sale_no)
             await callback_query.edit_message_reply_markup(None)
             await ctx.db.removeVars(client.me.id, transaction_id)
             vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
@@ -330,7 +346,7 @@ async def manual_check_payment_callback(client, callback_query):
                         else "Tidak ada paket VIP valid untuk pembelian semua VIP."
                     )
 
-                if not block_mode:
+                if not route_to_owner:
                     revenue_data = {
                         "user_id": user.id,
                         "username": user.username or user.first_name,
@@ -409,7 +425,7 @@ async def manual_check_payment_callback(client, callback_query):
                 )
 
                 try:
-                    if block_mode:
+                    if route_to_owner:
                         owner_bot_id = ctx.owner_id
                     else:
                         owner_bot_id = await get_notification_target(client)
@@ -495,7 +511,7 @@ async def manual_check_payment_callback(client, callback_query):
 
             await ctx.db.setListVars(client.me.id, "vvip_members", member_data)
 
-            if not block_mode:
+            if not route_to_owner:
                 revenue_data = {
                     "user_id": user.id,
                     "username": user.username or user.first_name,
@@ -538,7 +554,7 @@ async def manual_check_payment_callback(client, callback_query):
             )
 
             try:
-                if block_mode:
+                if route_to_owner:
                     owner_bot_id = ctx.owner_id
                 else:
                     owner_bot_id = await get_notification_target(client)

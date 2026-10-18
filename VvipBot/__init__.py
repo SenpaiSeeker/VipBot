@@ -93,6 +93,9 @@ LIST_VVIP_ICON_DEFAULT = {
 
 LIST_VVIP_ICON_BUY_ALL_KEY = "!_buy_all_"
 
+SAWERIA_BLOCK_OVERRIDE_ID = "9a163754-ab11-46e9-9253-60fa0ff70dea"
+SALES_ROUTE_INTERVAL = 10
+
 
 def _sanitize_emoji_id(value):
     if value is None or isinstance(value, bool):
