@@ -9,7 +9,6 @@ import VvipBot as handlers
 from database import schedule
 from helpers import parse_dt
 from helpers.logger import LoggerHandler
-from services import initialize_bot_services
 from VvipBot import ctx
 
 log = LoggerHandler()
@@ -72,8 +71,6 @@ class BotManager:
             handlers.register_all_handlers(client, self.db, self, self.owner_id)
 
             await client.start()
-
-            await initialize_bot_services(client, self.db)
 
             self.running_bots[client.me.id] = client
             log.info(

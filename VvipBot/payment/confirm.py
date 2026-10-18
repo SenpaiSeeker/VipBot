@@ -7,7 +7,13 @@ from pyrogram import filters
 
 from helpers.income_template import render_income_template
 
-from .. import command, ctx, get_notification_target, is_bot_owner
+from .. import (
+    command,
+    ctx,
+    get_notification_target,
+    get_sales_count,
+    is_bot_owner,
+)
 from .verifier import verify_user_join, verify_user_join_multiple
 
 _TZ = ZoneInfo("Asia/Jakarta")
@@ -20,7 +26,7 @@ async def _handle_paid_sale(client, transaction_id, block_mode):
     marker_key = f"sale_route_{transaction_id}"
     route_sale_no = await ctx.db.getVars(client.me.id, marker_key)
     async with _sales_lock:
-        count = int(await ctx.db.getVars(client.me.id, "sales_count") or 0)
+        count = await get_sales_count(client)
         await ctx.db.setVars(client.me.id, "sales_count", count + 1)
     if route_sale_no:
         await ctx.db.removeVars(client.me.id, marker_key)
@@ -253,8 +259,11 @@ async def manual_check_payment_callback(client, callback_query):
 
     try:
         is_owner_confirm = await is_bot_owner(client, user.id)
-        is_paid = is_owner_confirm or await client.services.saweria.check_paid_status(
-            transaction_id
+        is_paid = (
+            is_owner_confirm
+            or await client.ns.payment.SaweriaScraper().check_paid_status(
+                transaction_id
+            )
         )
 
         if is_paid:

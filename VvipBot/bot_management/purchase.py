@@ -144,8 +144,7 @@ async def proceed_bot_payment_callback(client, callback_query):
             transaction_id,
             qr_image_stream,
             amount_raw,
-        ) = await client.services.saweria.create_payment(
-            user_id=saweria_user_id,
+        ) = await client.ns.payment.SaweriaScraper(saweria_user_id).create_payment(
             amount=int(amount),
             name=f"User-{user_id}",
             email=fakeinfo.email,
@@ -241,7 +240,9 @@ async def confirm_bot_payment_callback(client, callback_query):
         )
 
     try:
-        is_paid = await client.services.saweria.check_paid_status(transaction_id)
+        is_paid = await client.ns.payment.SaweriaScraper().check_paid_status(
+            transaction_id
+        )
 
         if is_paid:
             await ctx.db.removeVars(client.me.id, transaction_id)

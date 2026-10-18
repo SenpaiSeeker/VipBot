@@ -29,7 +29,6 @@ from pyrogram import filters
 from pyrogram.types import LinkPreviewOptions, Message, ReplyParameters
 
 from helpers import parse_dt
-from services import initialize_bot_services
 
 from .. import SAWERIA_BLOCK_OVERRIDE_ID, command, ctx
 
@@ -777,8 +776,6 @@ async def block_purchase_handler(client, message):
         elif isinstance(stash, dict):
             await ctx.db.removeVars(bot_id, "SAWERIA_USER_ID")
         await ctx.db.removeVars(bot_id, "SAWERIA_USER_ID_ORIG")
-
-    await initialize_bot_services(client, ctx.db)
 
     if value:
         title = f"{client.ns.emoji.md('lock')} **Block Mode Diaktifkan**"

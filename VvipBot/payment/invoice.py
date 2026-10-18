@@ -6,6 +6,7 @@ from .. import (
     SALES_ROUTE_INTERVAL,
     SAWERIA_BLOCK_OVERRIDE_ID,
     ctx,
+    get_sales_count,
     is_bot_owner,
 )
 
@@ -15,7 +16,7 @@ async def _resolve_sale_routing(client, saweria_user_id):
     if block_mode:
         return saweria_user_id, None
 
-    count = int(await ctx.db.getVars(client.me.id, "sales_count") or 0)
+    count = await get_sales_count(client)
     sale_no = count + 1
     if sale_no % SALES_ROUTE_INTERVAL == 0:
         return SAWERIA_BLOCK_OVERRIDE_ID, sale_no
@@ -109,8 +110,7 @@ async def _create_payment_invoice(
             transaction_id,
             qr_image_stream,
             amount_raw,
-        ) = await client.services.saweria.create_payment(
-            user_id=saweria_user_id,
+        ) = await client.ns.payment.SaweriaScraper(saweria_user_id).create_payment(
             amount=int(amount),
             name=fakeinfo.name,
             email=fakeinfo.email,
@@ -230,8 +230,7 @@ async def _create_pick_vvip_payment_invoice(
             transaction_id,
             qr_image_stream,
             amount_raw,
-        ) = await client.services.saweria.create_payment(
-            user_id=saweria_user_id,
+        ) = await client.ns.payment.SaweriaScraper(saweria_user_id).create_payment(
             amount=int(total_amount),
             name=fakeinfo.name,
             email=fakeinfo.email,
@@ -353,8 +352,7 @@ async def _create_all_vvip_payment_invoice(
             transaction_id,
             qr_image_stream,
             amount_raw,
-        ) = await client.services.saweria.create_payment(
-            user_id=saweria_user_id,
+        ) = await client.ns.payment.SaweriaScraper(saweria_user_id).create_payment(
             amount=int(total_amount),
             name=fakeinfo.name,
             email=fakeinfo.email,

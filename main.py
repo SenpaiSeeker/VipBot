@@ -19,7 +19,6 @@ from bot_manager import BotManager
 from config import API_HASH, API_ID, BOT_TOKEN, OWNER_ID
 from database import db, schedule
 from helpers.logger import CustomLogHandler, LoggerHandler
-from services import initialize_bot_services
 
 log = LoggerHandler()
 
@@ -105,8 +104,6 @@ async def main():
 
         await app.start()
         log.info(f"Bot utama '{app.me.first_name}' berhasil dimulai.")
-
-        await initialize_bot_services(app, db)
 
         manager.main_bot_client = app
         manager.main_bot_id = app.me.id

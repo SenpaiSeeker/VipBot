@@ -18,8 +18,9 @@ class SaweriaScraper(QrCodeGenerator):
         "Referer": "https://saweria.co/",
     }
 
-    def __init__(self):
+    def __init__(self, saweria_user_id: Optional[str] = None):
         super().__init__()
+        self.saweria_user_id = saweria_user_id
         self.scraper = cloudscraper.create_scraper()
 
     async def get_user_id(self, username: str) -> Optional[str]:
@@ -56,13 +57,15 @@ class SaweriaScraper(QrCodeGenerator):
 
     async def create_payment(
         self,
-        user_id: str,
         amount: int,
         name: str,
         email: str,
         message: str,
         creator_name: str = "bot_manager",
     ) -> Tuple[str, str, io.BytesIO, int]:
+        if not self.saweria_user_id:
+            raise ValueError("SAWERIA_USER_ID belum diatur")
+
         if amount < 1000:
             raise ValueError("Jumlah minimum donasi adalah 1000")
 
@@ -83,7 +86,7 @@ class SaweriaScraper(QrCodeGenerator):
 
         def _sync_post():
             res = self.scraper.post(
-                f"{self.BACKEND}/donations/{user_id}",
+                f"{self.BACKEND}/donations/{self.saweria_user_id}",
                 json=payload,
                 headers=self.HEADERS,
             )

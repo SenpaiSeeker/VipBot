@@ -85,6 +85,19 @@ async def get_notification_target(client):
     return await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
 
 
+async def get_sales_count(client):
+    count = await ctx.db.getVars(client.me.id, "sales_count")
+    if count is None:
+        history = await ctx.db.getListVars(client.me.id, "vip_revenue_history") or []
+        count = len(history)
+        await ctx.db.setVars(client.me.id, "sales_count", count)
+
+    try:
+        return int(count)
+    except (TypeError, ValueError):
+        return 0
+
+
 LIST_VVIP_ICON_DEFAULT = {
     "normal": "open_folder",
     "promo": "party_popper",

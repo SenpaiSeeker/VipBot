@@ -3,8 +3,6 @@ import asyncio
 import pyrogram
 from pyrogram import filters
 
-from services import initialize_bot_services
-
 from .. import command, ctx, is_bot_owner, listen
 
 
@@ -174,8 +172,6 @@ async def set_api_key_prompt(client, callback_query):
             )
             return
 
-        await initialize_bot_services(client, ctx.db)
-
     except (listen.UserCancelled, asyncio.TimeoutError):
         await client.send_rich_message(
             chat_id,
@@ -240,10 +236,6 @@ async def do_delete_api_keys(client, callback_query):
         return
 
     await ctx.db.removeVars(client.me.id, "SAWERIA_USER_ID")
-
-    from services import initialize_bot_services
-
-    await initialize_bot_services(client, ctx.db)
 
     await callback_query.answer(
         "Semua kunci API untuk bot ini telah berhasil dihapus.",
