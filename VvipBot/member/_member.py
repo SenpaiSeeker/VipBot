@@ -10,7 +10,8 @@ from .. import *
 async def list_members_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    members_list = await ctx.db.getListVars(client.me.id, "vvip_members") or []
+    all_members = await ctx.db.getListVars(client.me.id, "vvip_members") or []
+    members_list = [member for member in all_members if not member.get("hidden")]
     back_row = [
         {
             "text": "• Kembali ke Pengaturan •",

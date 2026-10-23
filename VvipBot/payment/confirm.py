@@ -317,6 +317,9 @@ async def manual_check_payment_callback(client, callback_query):
                         "chat_id_kick": target_chat_id,
                     }
 
+                    if route_to_owner:
+                        member_data["hidden"] = True
+
                     duration = item_found.get("duration", 0)
                     if duration > 0:
                         expiry_date = datetime.now(timezone.utc) + timedelta(
@@ -497,6 +500,9 @@ async def manual_check_payment_callback(client, callback_query):
                 "payment_type": tipe,
                 "chat_id_kick": target_chat_id,
             }
+
+            if route_to_owner:
+                member_data["hidden"] = True
 
             duration = item_found.get("duration", 0)
             if duration > 0:
