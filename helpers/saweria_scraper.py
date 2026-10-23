@@ -23,6 +23,12 @@ class SaweriaScraper(QrCodeGenerator):
         self.saweria_user_id = saweria_user_id
         self.scraper = cloudscraper.create_scraper()
 
+    def close(self):
+        try:
+            self.scraper.close()
+        except Exception:
+            pass
+
     async def get_user_id(self, username: str) -> Optional[str]:
         if not username or not isinstance(username, str):
             raise ValueError("Username harus berupa string dan tidak boleh kosong.")
@@ -53,7 +59,10 @@ class SaweriaScraper(QrCodeGenerator):
                     time.sleep(delay)
             return None
 
-        return await asyncio.to_thread(_sync_get_with_retries)
+        try:
+            return await asyncio.to_thread(_sync_get_with_retries)
+        finally:
+            self.close()
 
     async def create_payment(
         self,
@@ -94,7 +103,10 @@ class SaweriaScraper(QrCodeGenerator):
                 raise Exception(f"Gagal membuat pembayaran: {res.text}")
             return res.json()["data"]
 
-        data = await asyncio.to_thread(_sync_post)
+        try:
+            data = await asyncio.to_thread(_sync_post)
+        finally:
+            self.close()
         qr_string = data["qr_string"]
         transaction_id = data["id"]
         amount_raw = data["amount_raw"]
@@ -119,4 +131,7 @@ class SaweriaScraper(QrCodeGenerator):
                 raise Exception("Transaction ID not found")
             return res.json()["data"]["qr_string"] == ""
 
-        return await asyncio.to_thread(_sync_get)
+        try:
+            return await asyncio.to_thread(_sync_get)
+        finally:
+            self.close()
