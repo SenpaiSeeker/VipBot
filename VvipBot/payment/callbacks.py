@@ -10,12 +10,14 @@ from helpers import parse_dt
 from .. import (
     command,
     ctx,
+    get_bot_cache,
     listen,
 )
 from .invoice import (
     _create_all_vvip_payment_invoice,
     _create_payment_invoice,
     _create_pick_vvip_payment_invoice,
+    _package_price,
 )
 from .verifier import _get_all_vvip_items
 
@@ -298,12 +300,13 @@ async def notes_data(client, callback_query):
     if item_id.isdigit():
         item_index = int(item_id)
     else:
-        if not hasattr(ctx, "vip_list") or item_id not in ctx.vip_list:
+        vip_cache = get_bot_cache("vip_list", client.me.id)
+        if item_id not in vip_cache:
             return await callback_query.answer(
                 "Sesi kedaluwarsa, silakan muat ulang menu.",
                 show_alert=True,
             )
-        item_index = ctx.vip_list[item_id]
+        item_index = vip_cache[item_id]
 
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
@@ -351,7 +354,7 @@ async def notes_data(client, callback_query):
             [
                 {
                     "text": "💸 Bayar Harga Normal",
-                    "callback_data": f"paynow_{item_index}_normal_{price_val}",
+                    "callback_data": f"paynow_{item_index}_normal",
                     "style": "green",
                     "emoji": client.ns.emoji.id("gem"),
                 }
@@ -359,7 +362,7 @@ async def notes_data(client, callback_query):
             [
                 {
                     "text": "🎟️ Gunakan Kupon",
-                    "callback_data": f"apply_coupon_{item_index}_normal_{price_val}",
+                    "callback_data": f"apply_coupon_{item_index}_normal",
                     "style": "blue",
                     "emoji": client.ns.emoji.id("ticket_admit"),
                 },
@@ -405,12 +408,13 @@ async def promo_detail(client, callback_query):
     if item_id.isdigit():
         item_index = int(item_id)
     else:
-        if not hasattr(ctx, "vip_list") or item_id not in ctx.vip_list:
+        vip_cache = get_bot_cache("vip_list", client.me.id)
+        if item_id not in vip_cache:
             return await callback_query.answer(
                 "Sesi kedaluwarsa, silakan muat ulang menu.",
                 show_alert=True,
             )
-        item_index = ctx.vip_list[item_id]
+        item_index = vip_cache[item_id]
 
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
@@ -462,7 +466,7 @@ async def promo_detail(client, callback_query):
             [
                 {
                     "text": "✅ Bayar Harga Promo",
-                    "callback_data": f"paynow_{item_index}_promo_{promo_price_val}",
+                    "callback_data": f"paynow_{item_index}_promo",
                     "style": "green",
                     "emoji": client.ns.emoji.id("white_check_mark"),
                 }
@@ -470,7 +474,7 @@ async def promo_detail(client, callback_query):
             [
                 {
                     "text": "🎟️ Gunakan Kupon",
-                    "callback_data": f"apply_coupon_{item_index}_promo_{promo_price_val}",
+                    "callback_data": f"apply_coupon_{item_index}_promo",
                     "style": "blue",
                     "emoji": client.ns.emoji.id("ticket_admit"),
                 },
@@ -502,7 +506,7 @@ async def promo_detail(client, callback_query):
 
 
 @command(
-    lambda ctx: filters.regex("^apply_coupon_(\\d+)_(normal|promo)_(\\d+)"),
+    lambda ctx: filters.regex("^apply_coupon_(\\d+)_(normal|promo)(?:_\\d+)?$"),
     handler_type="callback",
 )
 async def apply_coupon_callback(client, callback_query):
@@ -510,7 +514,23 @@ async def apply_coupon_callback(client, callback_query):
     match = callback_query.matches[0]
     item_index = int(match.group(1))
     tipe = match.group(2)
-    original_amount = int(match.group(3))
+
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    try:
+        package = vvip_list[item_index]
+    except (IndexError, TypeError):
+        return await callback_query.answer(
+            "❌ Paket VVIP tidak ditemukan.",
+            show_alert=True,
+        )
+
+    original_amount = _package_price(package, tipe)
+    if original_amount <= 0:
+        return await callback_query.answer(
+            "❌ Harga paket belum diatur.",
+            show_alert=True,
+        )
+
     await callback_query.message.delete()
 
     try:
@@ -527,7 +547,11 @@ async def apply_coupon_callback(client, callback_query):
         coupon_code = ask_msg.text.upper()
         coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
         coupon = next(
-            (c for c in coupons if c.get("code") == coupon_code),
+            (
+                c
+                for c in coupons
+                if str(c.get("code", "")).upper() == coupon_code
+            ),
             None,
         )
 
@@ -536,27 +560,38 @@ async def apply_coupon_callback(client, callback_query):
                 f"{client.ns.emoji.md('cross_mark')} Kode kupon tidak valid."
             )
 
-        if coupon.get("uses_left", 1) <= 0:
+        try:
+            uses_left = int(coupon.get("uses_left", 0) or 0)
+        except (TypeError, ValueError):
+            uses_left = 0
+
+        if uses_left <= 0:
             raise ValueError(
                 f"{client.ns.emoji.md('cross_mark')} Kupon ini sudah habis digunakan."
             )
 
         expiry_str = coupon.get("expiry_date")
-        coupon_expiry = parse_dt(expiry_str)
+        try:
+            coupon_expiry = parse_dt(expiry_str)
+        except (TypeError, ValueError):
+            raise ValueError(
+                f"{client.ns.emoji.md('cross_mark')} Tanggal kedaluwarsa kupon tidak valid."
+            )
+
         if coupon_expiry and coupon_expiry < datetime.now(timezone.utc):
             raise ValueError(
                 f"{client.ns.emoji.md('cross_mark')} Kupon ini sudah kedaluwarsa."
             )
 
         discount_type = coupon["discount_type"]
-        discount_value = coupon["discount_value"]
+        discount_value = float(coupon["discount_value"])
 
         if discount_type == "percentage":
             final_amount = original_amount - original_amount * (discount_value / 100)
         else:
             final_amount = original_amount - discount_value
 
-        final_amount = max(1000, int(final_amount))
+        final_amount = min(original_amount, max(1000, int(final_amount)))
 
         await client.send_rich_message(
             chat_id,
@@ -573,8 +608,7 @@ async def apply_coupon_callback(client, callback_query):
             callback_query.from_user,
             item_index,
             tipe,
-            final_amount,
-            coupon_code,
+            coupon_code=coupon_code,
         )
 
     except listen.UserCancelled:
@@ -617,14 +651,13 @@ async def apply_coupon_callback(client, callback_query):
 
 
 @command(
-    lambda ctx: filters.regex("^paynow_(\\d+)_(normal|promo)_(\\d+)"),
+    lambda ctx: filters.regex("^paynow_(\\d+)_(normal|promo)(?:_\\d+)?$"),
     handler_type="callback",
 )
 async def paynow(client, callback_query):
     match = callback_query.matches[0]
     item_index = int(match.group(1))
     tipe = match.group(2)
-    amount = int(match.group(3))
 
     processing_msg = None
     if callback_query.message.photo:
@@ -642,7 +675,6 @@ async def paynow(client, callback_query):
         callback_query.from_user,
         item_index,
         tipe,
-        amount,
         processing_msg=processing_msg,
     )
 

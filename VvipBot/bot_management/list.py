@@ -18,7 +18,11 @@ async def list_my_bots_callback(client, callback_query):
     all_bots_data = await ctx.db.getBots(is_token=True)
 
     for b in all_bots_data:
-        owner = await ctx.db.getVars(int(b["name"]), "owner_id")
+        try:
+            bot_id = int(b["name"])
+            owner = await ctx.db.getVars(bot_id, "owner_id")
+        except Exception:
+            continue
 
         if (owner or 0) == user_id:
             my_bots.append(b)

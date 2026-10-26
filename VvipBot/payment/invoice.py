@@ -1,5 +1,8 @@
+from datetime import datetime, timezone
+
 import pyrogram
 
+from helpers import parse_dt
 from helpers.saweria_message_generator import generate_safe_saweria_message
 
 from .. import (
@@ -9,6 +12,62 @@ from .. import (
     get_sales_count,
     is_bot_owner,
 )
+
+
+def _package_price(item, tipe):
+    key = "promo_price" if tipe == "promo" else "price"
+    try:
+        return int(item.get(key, 0) or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+async def _resolve_invoice_amount(client, item, tipe, coupon_code=None):
+    amount = _package_price(item, tipe)
+    if amount <= 0:
+        raise ValueError("Harga paket belum diatur.")
+
+    if not coupon_code:
+        return amount
+
+    coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
+    coupon = next(
+        (
+            c
+            for c in coupons
+            if str(c.get("code", "")).upper() == str(coupon_code).upper()
+        ),
+        None,
+    )
+    if not coupon:
+        raise ValueError("Kode kupon tidak valid.")
+
+    try:
+        uses_left = int(coupon.get("uses_left", 0) or 0)
+    except (TypeError, ValueError):
+        uses_left = 0
+    if uses_left <= 0:
+        raise ValueError("Kupon ini sudah habis digunakan.")
+
+    try:
+        coupon_expiry = parse_dt(coupon.get("expiry_date"))
+    except (TypeError, ValueError):
+        raise ValueError("Tanggal kedaluwarsa kupon tidak valid.")
+
+    if coupon_expiry and coupon_expiry < datetime.now(timezone.utc):
+        raise ValueError("Kupon ini sudah kedaluwarsa.")
+
+    try:
+        discount_value = float(coupon.get("discount_value", 0) or 0)
+    except (TypeError, ValueError):
+        raise ValueError("Nilai kupon tidak valid.")
+
+    if coupon.get("discount_type") == "percentage":
+        final_amount = amount - amount * (discount_value / 100)
+    else:
+        final_amount = amount - discount_value
+
+    return min(amount, max(1000, int(final_amount)))
 
 
 async def _resolve_sale_routing(client, saweria_user_id):
@@ -41,20 +100,33 @@ async def _resolve_processing_msg(client, user_id, processing_msg=None):
 
 
 async def _create_payment_invoice(
-    client, user, item_index, tipe, amount, coupon_code=None, processing_msg=None
+    client, user, item_index, tipe, coupon_code=None, processing_msg=None
 ):
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
     try:
         item = vvip_list[item_index]
-        names = item.get("name")
-    except IndexError:
+    except (IndexError, TypeError):
         return await client.send_rich_message(
             user.id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Paket Tidak Ditemukan**\n\n"
                     f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Paket VVIP tidak ditemukan']])}"
+                )
+            ),
+        )
+
+    names = item.get("name")
+    try:
+        amount = await _resolve_invoice_amount(client, item, tipe, coupon_code)
+    except ValueError as e:
+        return await client.send_rich_message(
+            user.id,
+            pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Paket Tidak Dapat Dibeli**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Harga paket/kupon tidak valid'], ['Keterangan', f'`{e}`']])}"
                 )
             ),
         )
@@ -100,6 +172,7 @@ async def _create_payment_invoice(
     )
 
     msg = await _resolve_processing_msg(client, user.id, processing_msg)
+    qr_image_stream = None
 
     try:
         fakeinfo = client.ns.utils.faker.generate()
@@ -118,7 +191,10 @@ async def _create_payment_invoice(
             creator_name=client.me.username,
         )
 
-        order_data = f"{item_index}|{tipe}|{amount_raw}|{user.id}|{coupon_code or ''}"
+        order_data = (
+            f"{item_index}|{tipe}|{amount_raw}|{user.id}|{coupon_code or ''}"
+            f"|{route_sale_no or 0}"
+        )
 
         await ctx.db.setVars(client.me.id, transaction_id, order_data)
 
@@ -164,8 +240,11 @@ async def _create_payment_invoice(
             reply_markup=btn,
         )
         await msg.delete()
+        qr_image_stream.close()
 
     except Exception as e:
+        if qr_image_stream is not None:
+            qr_image_stream.close()
         await msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
@@ -179,6 +258,7 @@ async def _create_payment_invoice(
 async def _create_pick_vvip_payment_invoice(
     client, user, selected_items, total_amount, processing_msg=None
 ):
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
 
     if not saweria_user_id:
@@ -215,11 +295,35 @@ async def _create_pick_vvip_payment_invoice(
             )
         return
 
+    resolved_items = []
+    for item in selected_items:
+        try:
+            item_data = vvip_list[item.get("index")]
+        except (IndexError, TypeError):
+            resolved_items = []
+            break
+        resolved_items.append(item_data)
+
+    total_amount = sum(
+        _package_price(item_data, "normal") for item_data in resolved_items
+    )
+    if not resolved_items or total_amount <= 0:
+        return await client.send_rich_message(
+            user.id,
+            pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Paket Tidak Dapat Dibeli**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Harga paket belum diatur']])}"
+                )
+            ),
+        )
+
     saweria_user_id, route_sale_no = await _resolve_sale_routing(
         client, saweria_user_id
     )
 
     msg = await _resolve_processing_msg(client, user.id, processing_msg)
+    qr_image_stream = None
 
     try:
         fakeinfo = client.ns.utils.faker.generate()
@@ -239,7 +343,10 @@ async def _create_pick_vvip_payment_invoice(
         )
 
         package_indexes = ",".join(str(item.get("index")) for item in selected_items)
-        order_data = f"PICK|normal|{int(amount_raw)}|{user.id}|{package_indexes}"
+        order_data = (
+            f"PICK|normal|{int(amount_raw)}|{user.id}|{package_indexes}"
+            f"|{route_sale_no or 0}"
+        )
 
         await ctx.db.setVars(client.me.id, transaction_id, order_data)
 
@@ -286,8 +393,11 @@ async def _create_pick_vvip_payment_invoice(
             reply_markup=btn,
         )
         await msg.delete()
+        qr_image_stream.close()
 
     except Exception as e:
+        if qr_image_stream is not None:
+            qr_image_stream.close()
         await msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
@@ -301,6 +411,7 @@ async def _create_pick_vvip_payment_invoice(
 async def _create_all_vvip_payment_invoice(
     client, user, selected_items, total_amount, processing_msg=None
 ):
+    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
 
     if not saweria_user_id:
@@ -337,11 +448,35 @@ async def _create_all_vvip_payment_invoice(
             )
         return
 
+    resolved_items = []
+    for item in selected_items:
+        try:
+            item_data = vvip_list[item.get("index")]
+        except (IndexError, TypeError):
+            resolved_items = []
+            break
+        resolved_items.append(item_data)
+
+    total_amount = sum(
+        _package_price(item_data, "normal") for item_data in resolved_items
+    )
+    if not resolved_items or total_amount <= 0:
+        return await client.send_rich_message(
+            user.id,
+            pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Paket Tidak Dapat Dibeli**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Harga paket belum diatur']])}"
+                )
+            ),
+        )
+
     saweria_user_id, route_sale_no = await _resolve_sale_routing(
         client, saweria_user_id
     )
 
     msg = await _resolve_processing_msg(client, user.id, processing_msg)
+    qr_image_stream = None
 
     try:
         fakeinfo = client.ns.utils.faker.generate()
@@ -361,7 +496,10 @@ async def _create_all_vvip_payment_invoice(
         )
 
         package_indexes = ",".join((str(item.get("index")) for item in selected_items))
-        order_data = f"ALL|normal|{int(amount_raw)}|{user.id}|{package_indexes}"
+        order_data = (
+            f"ALL|normal|{int(amount_raw)}|{user.id}|{package_indexes}"
+            f"|{route_sale_no or 0}"
+        )
 
         await ctx.db.setVars(client.me.id, transaction_id, order_data)
 
@@ -408,8 +546,11 @@ async def _create_all_vvip_payment_invoice(
             reply_markup=btn,
         )
         await msg.delete()
+        qr_image_stream.close()
 
     except Exception as e:
+        if qr_image_stream is not None:
+            qr_image_stream.close()
         await msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(

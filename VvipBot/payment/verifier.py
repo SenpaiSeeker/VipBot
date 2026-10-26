@@ -29,6 +29,17 @@ async def verify_user_join(client, user, chat_id, link_msg):
         except pyrogram.errors.UserNotParticipant:
             await asyncio.sleep(15)
 
+        except pyrogram.errors.FloodWait as e:
+            await asyncio.sleep(e.value + 1)
+
+        except (
+            pyrogram.errors.Timeout,
+            pyrogram.errors.InternalServerError,
+            pyrogram.errors.ServiceUnavailable,
+        ) as e:
+            ctx.log.print(f"Error sementara verifikasi join {user.id}: {e}")
+            await asyncio.sleep(15)
+
         except Exception as e:
             ctx.log.print(f"Error verifikasi join {user.id}: {e}")
             break
@@ -70,6 +81,18 @@ async def verify_user_join_multiple(client, user, invite_payloads, link_msg):
                     pending_payloads.append(payload)
 
             except pyrogram.errors.UserNotParticipant:
+                pending_payloads.append(payload)
+
+            except pyrogram.errors.FloodWait as e:
+                pending_payloads.append(payload)
+                await asyncio.sleep(e.value + 1)
+
+            except (
+                pyrogram.errors.Timeout,
+                pyrogram.errors.InternalServerError,
+                pyrogram.errors.ServiceUnavailable,
+            ) as e:
+                ctx.log.print(f"Error sementara verifikasi multi-join {user.id}: {e}")
                 pending_payloads.append(payload)
 
             except Exception as e:

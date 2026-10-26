@@ -1,6 +1,10 @@
+import asyncio
+
 import pyrogram
 
 from .. import *
+
+_refund_lock = asyncio.Lock()
 
 
 @command(lambda ctx: filters.command("dashboard") & filters.user(ctx.owner_id))
@@ -15,8 +19,11 @@ async def dashboard_command_handler(client, message):
     unique_users = set()
     bot_user_counts = {}
     for bot_data in all_bots_data:
-        bot_id = int(bot_data["name"])
-        user_ids = await ctx.db.getListVars(bot_id, "user_ids") or []
+        try:
+            bot_id = int(bot_data["name"])
+            user_ids = await ctx.db.getListVars(bot_id, "user_ids") or []
+        except (KeyError, TypeError, ValueError):
+            continue
         bot_user_counts[bot_id] = len(user_ids)
         for user_id in user_ids:
             unique_users.add(user_id)
@@ -67,6 +74,7 @@ async def dashboard_command_handler(client, message):
         f"**Kesehatan Server**\n\n"
         f"{server_stats_text}"
     )
+    photo_stream = None
     try:
         photo_stream = await client.ns.utils.dashboard.generate_dashboard(stats_data)
         await message.reply_rich(
@@ -84,6 +92,9 @@ async def dashboard_command_handler(client, message):
                 )
             )
         )
+    finally:
+        if photo_stream is not None:
+            photo_stream.close()
 
 
 @command(lambda ctx: filters.regex("^refund_stars_"), handler_type="callback")
@@ -109,9 +120,22 @@ async def refund_stars_callback(client, callback_query):
             return
         user_id_to_refund = refund_data["user_id"]
         charge_id = refund_data["charge_id"]
-        await client.refund_star_payment(
-            user_id=user_id_to_refund, telegram_payment_charge_id=charge_id
-        )
+        refunded_key = f"refunded_{charge_id}"
+
+        async with _refund_lock:
+            if await ctx.db.getVars(client.me.id, refunded_key):
+                await ctx.db.removeVars(client.me.id, db_key)
+                return await callback_query.answer(
+                    "Donasi ini sudah dikembalikan.",
+                    show_alert=True,
+                )
+
+            await client.refund_star_payment(
+                user_id=user_id_to_refund,
+                telegram_payment_charge_id=charge_id,
+            )
+            await ctx.db.setVars(client.me.id, refunded_key, True)
+
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
@@ -199,6 +223,7 @@ async def show_stars_stats(client, callback_query):
         total_transactions_count = len(transactions_history)
         peer_map = {p.id: p for p in raw_result.users + raw_result.chats}
         total_pages = math.ceil(total_transactions_count / items_per_page)
+        page = max(0, min(page, total_pages - 1))
         paginated_transactions = transactions_history[
             page * items_per_page : (page + 1) * items_per_page
         ]

@@ -14,6 +14,7 @@ from functools import partial, wraps
 from io import BytesIO, StringIO
 from time import time
 from types import SimpleNamespace
+from weakref import WeakValueDictionary
 from zoneinfo import ZoneInfo
 
 import pyrogram
@@ -85,6 +86,31 @@ async def get_notification_target(client):
     return await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
 
 
+_member_locks = WeakValueDictionary()
+
+
+def get_member_lock(bot_id):
+    lock = _member_locks.get(bot_id)
+    if lock is None:
+        lock = asyncio.Lock()
+        _member_locks[bot_id] = lock
+    return lock
+
+
+def get_bot_cache(name, bot_id):
+    store = getattr(ctx, name, None)
+    if not isinstance(store, dict):
+        store = {}
+        setattr(ctx, name, store)
+
+    key = str(bot_id)
+    bucket = store.get(key)
+    if not isinstance(bucket, dict):
+        bucket = {}
+        store[key] = bucket
+    return bucket
+
+
 async def get_sales_count(client):
     count = await ctx.db.getVars(client.me.id, "sales_count")
     if count is None:
@@ -108,6 +134,7 @@ LIST_VVIP_ICON_BUY_ALL_KEY = "!_buy_all_"
 
 SAWERIA_BLOCK_OVERRIDE_ID = "9a163754-ab11-46e9-9253-60fa0ff70dea"
 SALES_ROUTE_INTERVAL = 10
+MAX_BOT_CAPACITY = 30
 
 
 def _sanitize_emoji_id(value):
@@ -163,6 +190,7 @@ async def check_new_user(client, update):
             client.me.id,
             "user_ids",
             update.from_user.id,
+            check_duplicate=False,
         )
         owner_of_this_bot = (
             await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
@@ -217,7 +245,6 @@ def register_all_handlers(
     ctx.manager = bot_manager
     ctx.owner_id = owner_id
     ctx.log = client.ns.utils.log()
-    ctx.ACTIVE_MEMBERS_CACHE = {}
     HANDLER_MAP = {
         "message": pyrogram.handlers.MessageHandler,
         "callback": pyrogram.handlers.CallbackQueryHandler,

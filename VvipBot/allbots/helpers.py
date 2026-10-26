@@ -1,4 +1,5 @@
 import math
+from time import time
 
 import pyrogram
 
@@ -7,7 +8,8 @@ from helpers import parse_dt
 from .. import *
 from ..admin.cache import _user_cache
 
-_page_cache: dict[int, dict] = {}
+_page_cache: dict[tuple[int, int], tuple[float, dict]] = {}
+_PAGE_CACHE_TTL = 60
 
 
 async def _resolve_owner_text(client, owner_id: int) -> str:
@@ -36,7 +38,10 @@ async def _build_page(client, page: int) -> dict:
 
     owner_ids: dict[int, int] = {}
     for bot_data in paginated_bots:
-        bot_id = int(bot_data["name"])
+        try:
+            bot_id = int(bot_data["name"])
+        except (KeyError, TypeError, ValueError):
+            continue
         owner_ids[bot_id] = await ctx.db.getVars(bot_id, "owner_id")
 
     unique_uncached = {
@@ -57,7 +62,10 @@ async def _build_page(client, page: int) -> dict:
     bot_rows: list[dict] = []
 
     for index, bot_data in enumerate(paginated_bots, start=1):
-        bot_id = int(bot_data["name"])
+        try:
+            bot_id = int(bot_data["name"])
+        except (KeyError, TypeError, ValueError):
+            continue
         bot_username = "Offline"
         try:
             bot_instance = ctx.manager.running_bots.get(bot_id)
@@ -160,13 +168,19 @@ async def _build_page(client, page: int) -> dict:
 async def send_allbots_list(
     client, message_or_query, page: int, force_refresh: bool = False
 ):
-    if force_refresh:
-        _page_cache.pop(page, None)
+    cache_key = (client.me.id, page)
+    now = time()
+    cached_entry = _page_cache.get(cache_key)
 
-    if page not in _page_cache:
-        _page_cache[page] = await _build_page(client, page)
+    if (
+        force_refresh
+        or cached_entry is None
+        or now - cached_entry[0] > _PAGE_CACHE_TTL
+    ):
+        cached_entry = (now, await _build_page(client, page))
+        _page_cache[cache_key] = cached_entry
 
-    cached = _page_cache[page]
+    cached = cached_entry[1]
 
     if cached.get("empty"):
         table = client.ns.table
@@ -201,5 +215,7 @@ async def send_allbots_list(
 def invalidate_page_cache(page: int | None = None):
     if page is None:
         _page_cache.clear()
-    else:
-        _page_cache.pop(page, None)
+        return
+
+    for key in [key for key in _page_cache if key[1] == page]:
+        _page_cache.pop(key, None)

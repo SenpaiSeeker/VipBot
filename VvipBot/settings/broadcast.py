@@ -55,7 +55,7 @@ async def set_broadcast_price_callback(client, callback_query):
                     reply_markup=back_btn,
                 )
 
-        if not ask_msg.text.isdigit():
+        if not ask_msg.text or not ask_msg.text.isdigit():
             raise ValueError("**Format Salah**")
 
         stars_amount = int(ask_msg.text)
@@ -207,28 +207,49 @@ async def broadcast_callback(client, callback_query):
         success_count, fail_count = 0, 0
         should_stop = False
 
+        permanent_errors = (
+            pyrogram.errors.UserIsBlocked,
+            pyrogram.errors.InputUserDeactivated,
+            pyrogram.errors.PeerIdInvalid,
+            pyrogram.errors.UserDeactivated,
+            pyrogram.errors.UserDeactivatedBan,
+            pyrogram.errors.ChatWriteForbidden,
+            pyrogram.errors.UserNotParticipant,
+        )
+
         async def send_to_user(target_user_id):
-            nonlocal success_count, fail_count
+            nonlocal success_count, fail_count, should_stop
             from .. import ctx
 
-            if getattr(ctx, "broadcast_stop", {}).get(client.me.id):
-                nonlocal should_stop
-                should_stop = True
-                return
-            try:
-                await _send_broadcast_message(
-                    client,
-                    target_user_id,
-                    ask_message,
-                    broadcast_price,
-                )
-                success_count += 1
-            except pyrogram.errors.FloodWait as e:
-                await asyncio.sleep(e.value + 1)
-                await send_to_user(target_user_id)
-            except Exception:
-                await ctx.db.removeListVars(client.me.id, "user_ids", target_user_id)
-                fail_count += 1
+            while True:
+                if getattr(ctx, "broadcast_stop", {}).get(client.me.id):
+                    should_stop = True
+                    return
+
+                try:
+                    await _send_broadcast_message(
+                        client,
+                        target_user_id,
+                        ask_message,
+                        broadcast_price,
+                    )
+                    success_count += 1
+                    break
+                except pyrogram.errors.FloodWait as e:
+                    await asyncio.sleep(e.value + 1)
+                    continue
+                except permanent_errors:
+                    await ctx.db.removeListVars(
+                        client.me.id,
+                        "user_ids",
+                        target_user_id,
+                    )
+                    fail_count += 1
+                    break
+                except Exception:
+                    fail_count += 1
+                    break
+
             await asyncio.sleep(0.1)
 
         for user_id in user_ids:

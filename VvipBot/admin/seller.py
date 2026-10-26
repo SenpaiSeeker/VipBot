@@ -110,6 +110,13 @@ async def do_give_access_callback(client, callback_query):
     _, _, target_id_str, months_str = callback_query.data.split("_")
     target_id = int(target_id_str)
     months_to_add = int(months_str)
+
+    if months_to_add not in {1, 3, 6, 12}:
+        return await callback_query.answer(
+            "Durasi akses tidak valid.",
+            show_alert=True,
+        )
+
     try:
         target_user = await client.get_users(target_id)
         current_expiry = parse_dt(

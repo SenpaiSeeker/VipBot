@@ -1,15 +1,18 @@
 import asyncio
 from datetime import datetime, timedelta, timezone
+from weakref import WeakValueDictionary
 from zoneinfo import ZoneInfo
 
 import pyrogram
 from pyrogram import filters
 
+from helpers import parse_dt
 from helpers.income_template import render_income_template
 
 from .. import (
     command,
     ctx,
+    get_member_lock,
     get_notification_target,
     get_sales_count,
     is_bot_owner,
@@ -17,20 +20,193 @@ from .. import (
 from .verifier import verify_user_join, verify_user_join_multiple
 
 _TZ = ZoneInfo("Asia/Jakarta")
+_confirm_locks = WeakValueDictionary()
 _sales_lock = asyncio.Lock()
 
 
-async def _handle_paid_sale(client, transaction_id, block_mode):
+def _get_confirm_lock(bot_id, transaction_id):
+    key = (bot_id, transaction_id)
+    lock = _confirm_locks.get(key)
+    if lock is None:
+        lock = asyncio.Lock()
+        _confirm_locks[key] = lock
+    return lock
+
+
+async def _handle_paid_sale(
+    client, transaction_id, block_mode, route_sale_no=None
+):
     if block_mode:
         return None
-    marker_key = f"sale_route_{transaction_id}"
-    route_sale_no = await ctx.db.getVars(client.me.id, marker_key)
+    if not route_sale_no:
+        marker_key = f"sale_route_{transaction_id}"
+        route_sale_no = await ctx.db.getVars(client.me.id, marker_key)
     async with _sales_lock:
         count = await get_sales_count(client)
-        await ctx.db.setVars(client.me.id, "sales_count", count + 1)
-    if route_sale_no:
-        await ctx.db.removeVars(client.me.id, marker_key)
+        await ctx.db.increment_sales_once(
+            client.me.id,
+            transaction_id,
+            count + 1,
+        )
     return route_sale_no
+
+
+async def _preflight_chat(client, chat_id):
+    try:
+        await client.get_chat(chat_id)
+    except Exception as e:
+        raise ValueError(
+            f"Bot tidak dapat mengakses grup `{chat_id}`. Pastikan bot masih "
+            f"menjadi admin dan chat ID benar. ({e})"
+        )
+
+
+def _duration_days(value):
+    try:
+        return max(int(value or 0), 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+async def _upsert_member(client, member_data, route_to_owner, transaction_id):
+    lock = get_member_lock(client.me.id)
+    async with lock:
+        members = await ctx.db.getListVars(client.me.id, "vvip_members") or []
+        user_id = str(member_data.get("user_id"))
+        chat_id = str(member_data.get("chat_id_kick"))
+        existing = next(
+            (
+                member
+                for member in members
+                if str(member.get("user_id")) == user_id
+                and str(member.get("chat_id_kick")) == chat_id
+            ),
+            None,
+        )
+        now = datetime.now(timezone.utc)
+        duration = _duration_days(member_data.get("duration", 0))
+
+        if existing is None:
+            new_member = dict(member_data)
+            new_member.pop("duration", None)
+            new_member["join_date"] = now.isoformat()
+            new_member["last_transaction_id"] = transaction_id
+            if route_to_owner:
+                new_member["hidden"] = True
+            if duration > 0:
+                new_member["expiry_date"] = (
+                    now + timedelta(days=duration)
+                ).isoformat()
+            else:
+                new_member.pop("expiry_date", None)
+            await ctx.db.setListVars(
+                client.me.id,
+                "vvip_members",
+                new_member,
+            )
+            return
+
+        updated = dict(existing)
+        updated["vvip_name"] = member_data.get("vvip_name")
+        updated["payment_type"] = member_data.get("payment_type")
+        updated["last_transaction_id"] = transaction_id
+        if route_to_owner:
+            updated["hidden"] = True
+
+        already_extended = (
+            str(existing.get("last_transaction_id")) == str(transaction_id)
+        )
+        if not already_extended:
+            old_expiry = parse_dt(updated.get("expiry_date"))
+            base_date = old_expiry if old_expiry and old_expiry > now else now
+            if duration > 0:
+                updated["expiry_date"] = (
+                    base_date + timedelta(days=duration)
+                ).isoformat()
+            else:
+                updated.pop("expiry_date", None)
+
+        async def update(member_list):
+            return [
+                updated
+                if str(member.get("user_id")) == user_id
+                and str(member.get("chat_id_kick")) == chat_id
+                else member
+                for member in member_list
+            ]
+
+        await ctx.db.updateListVars(
+            client.me.id,
+            "vvip_members",
+            update,
+        )
+
+
+async def _record_revenue(client, transaction_id, revenue_data):
+    async def update(history):
+        if any(
+            str(item.get("transaction_id")) == str(transaction_id)
+            for item in history
+        ):
+            return None
+
+        history.append({**revenue_data, "transaction_id": transaction_id})
+        return history
+
+    await ctx.db.updateListVars(
+        client.me.id,
+        "vip_revenue_history",
+        update,
+    )
+
+
+async def _consume_coupon(client, transaction_id, coupon_code):
+    if not coupon_code:
+        return
+
+    marker_key = f"coupon_used_{transaction_id}"
+    if await ctx.db.getVars(client.me.id, marker_key):
+        return
+
+    coupon_consumed = {"found": False}
+    expected_code = str(coupon_code).upper()
+
+    async def update(coupons):
+        new_coupons = []
+        for coupon in coupons:
+            coupon = dict(coupon)
+            if (
+                not coupon_consumed["found"]
+                and str(coupon.get("code", "")).upper() == expected_code
+            ):
+                try:
+                    uses_left = int(coupon.get("uses_left", 0) or 0)
+                except (TypeError, ValueError):
+                    uses_left = 0
+                if uses_left > 0:
+                    coupon["uses_left"] = uses_left - 1
+                    coupon_consumed["found"] = True
+            new_coupons.append(coupon)
+
+        return new_coupons if coupon_consumed["found"] else None
+
+    await ctx.db.updateListVars(client.me.id, "coupons", update)
+    await ctx.db.setVars(client.me.id, marker_key, True)
+
+
+async def _cleanup_order(client, transaction_id, route_sale_no):
+    await ctx.db.removeVars(client.me.id, transaction_id)
+    markers = [
+        f"sale_counted_{transaction_id}",
+        f"coupon_used_{transaction_id}",
+        f"sale_route_{transaction_id}",
+    ]
+
+    for marker in markers:
+        try:
+            await ctx.db.removeVars(client.me.id, marker)
+        except Exception:
+            pass
 
 
 def _format_rupiah(value) -> str:
@@ -212,13 +388,7 @@ async def _build_income_notification(
     )
 
 
-@command(
-    lambda ctx: filters.regex("^confirm_payment\\s(.+)"),
-    handler_type="callback",
-)
-async def manual_check_payment_callback(client, callback_query):
-    transaction_id = callback_query.data.split(" ", 1)[1]
-    user = callback_query.from_user
+async def _confirm_payment(client, callback_query, transaction_id, user):
     ref_data_str = await ctx.db.getVars(client.me.id, transaction_id)
 
     if not ref_data_str:
@@ -233,16 +403,27 @@ async def manual_check_payment_callback(client, callback_query):
     tipe = (
         ref_parts[1] if len(ref_parts) > 1 else ("normal" if is_multi_order else None)
     )
-    amount_raw = int(ref_parts[2]) if len(ref_parts) > 2 else 0
     coupon_code = None
     bundle_indexes = []
+    snapshot_route = 0
 
-    if len(ref_parts) >= 5:
-        buyer_id = int(ref_parts[3])
-        extra = ref_parts[4]
-    else:
-        buyer_id = None
-        extra = ref_parts[3] if len(ref_parts) > 3 else None
+    try:
+        amount_raw = int(ref_parts[2]) if len(ref_parts) > 2 else 0
+        if len(ref_parts) >= 5:
+            buyer_id = int(ref_parts[3])
+            extra = ref_parts[4]
+        else:
+            buyer_id = None
+            extra = ref_parts[3] if len(ref_parts) > 3 else None
+        if len(ref_parts) >= 6:
+            snapshot_route = int(ref_parts[5] or 0)
+        if not is_multi_order:
+            item_index = int(ref_parts[0])
+    except (TypeError, ValueError):
+        return await callback_query.answer(
+            "⚠️ Invoice ini tidak valid atau sudah kedaluwarsa.",
+            show_alert=True,
+        )
 
     if buyer_id and buyer_id != user.id:
         return await callback_query.answer(
@@ -250,11 +431,16 @@ async def manual_check_payment_callback(client, callback_query):
             show_alert=True,
         )
 
+    if buyer_id is None and not await is_bot_owner(client, user.id):
+        return await callback_query.answer(
+            "⚠️ Invoice ini tidak valid atau sudah kedaluwarsa.",
+            show_alert=True,
+        )
+
     if is_multi_order:
         if extra:
             bundle_indexes = [int(i) for i in extra.split(",") if i.strip().isdigit()]
     else:
-        item_index = int(ref_parts[0])
         coupon_code = extra or None
 
     try:
@@ -262,7 +448,8 @@ async def manual_check_payment_callback(client, callback_query):
         is_paid = (
             is_owner_confirm
             or await client.ns.payment.SaweriaScraper().check_paid_status(
-                transaction_id
+                transaction_id,
+                amount_raw or None,
             )
         )
 
@@ -270,70 +457,66 @@ async def manual_check_payment_callback(client, callback_query):
             block_mode = bool(
                 await ctx.db.getVars(client.me.id, "purchase_block") or False
             )
-            route_sale_no = await _handle_paid_sale(client, transaction_id, block_mode)
+            route_sale_no = None
+            if not block_mode:
+                route_sale_no = snapshot_route or await ctx.db.getVars(
+                    client.me.id,
+                    f"sale_route_{transaction_id}",
+                )
             route_to_owner = block_mode or bool(route_sale_no)
             await callback_query.edit_message_reply_markup(None)
-            await ctx.db.removeVars(client.me.id, transaction_id)
             vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
 
             if is_multi_order:
-                invite_payloads = []
-                purchased_names = []
-                bundle_orders = []
-
+                selected_items = []
+                seen_indexes = set()
                 for idx in bundle_indexes:
+                    if idx in seen_indexes:
+                        continue
+                    seen_indexes.add(idx)
+
                     try:
                         item_found = vvip_list[idx]
-                    except IndexError:
-                        continue
+                    except (IndexError, TypeError):
+                        raise ValueError("Paket VVIP tidak ditemukan di database.")
 
                     name = item_found.get("name")
                     target_chat_id = item_found.get("chat_id_normal")
 
                     if not target_chat_id:
-                        continue
-
-                    try:
-                        expire_date_link = datetime.now() + timedelta(minutes=60)
-
-                        invite_link_obj = await client.create_chat_invite_link(
-                            chat_id=target_chat_id,
-                            member_limit=1,
-                            expire_date=expire_date_link,
+                        raise ValueError(
+                            f"Chat ID untuk paket {name or '-'} belum diatur oleh admin."
                         )
-                        link = invite_link_obj.invite_link
 
-                    except Exception as e:
-                        ctx.log.print(
-                            f"Gagal membuat invite link bundle untuk {target_chat_id}: {e}"
-                        )
-                        continue
+                    selected_items.append((item_found, target_chat_id))
 
-                    member_data = {
-                        "user_id": user.id,
-                        "vvip_name": name,
-                        "join_date": datetime.now(timezone.utc).isoformat(),
-                        "payment_type": "normal",
-                        "chat_id_kick": target_chat_id,
-                    }
-
-                    if route_to_owner:
-                        member_data["hidden"] = True
-
-                    duration = item_found.get("duration", 0)
-                    if duration > 0:
-                        expiry_date = datetime.now(timezone.utc) + timedelta(
-                            days=duration
-                        )
-                        member_data["expiry_date"] = expiry_date.isoformat()
-
-                    await ctx.db.setListVars(
-                        client.me.id,
-                        "vvip_members",
-                        member_data,
+                if not selected_items:
+                    raise ValueError(
+                        "Tidak ada paket valid untuk pilihan Anda."
+                        if is_pick_order
+                        else "Tidak ada paket VIP valid untuk pembelian semua VIP."
                     )
-                    purchased_names.append(name)
 
+                invite_payloads = []
+                purchased_names = []
+                bundle_orders = []
+                checked_chats = set()
+
+                for item_found, target_chat_id in selected_items:
+                    name = item_found.get("name")
+                    if target_chat_id not in checked_chats:
+                        await _preflight_chat(client, target_chat_id)
+                        checked_chats.add(target_chat_id)
+                    expire_date_link = datetime.now() + timedelta(minutes=60)
+
+                    invite_link_obj = await client.create_chat_invite_link(
+                        chat_id=target_chat_id,
+                        member_limit=1,
+                        expire_date=expire_date_link,
+                    )
+                    link = invite_link_obj.invite_link
+
+                    purchased_names.append(name)
                     invite_payloads.append(
                         {
                             "name": name,
@@ -341,7 +524,6 @@ async def manual_check_payment_callback(client, callback_query):
                             "link": link,
                         }
                     )
-
                     bundle_orders.append(
                         {
                             "name": name,
@@ -351,27 +533,24 @@ async def manual_check_payment_callback(client, callback_query):
                         }
                     )
 
-                if not invite_payloads:
-                    raise ValueError(
-                        "Tidak ada paket valid untuk pilihan Anda."
-                        if is_pick_order
-                        else "Tidak ada paket VIP valid untuk pembelian semua VIP."
-                    )
-
-                if not route_to_owner:
-                    revenue_data = {
+                for item_found, target_chat_id in selected_items:
+                    member_data = {
                         "user_id": user.id,
-                        "username": user.username or user.first_name,
-                        "amount": amount_raw,
-                        "date": datetime.now(timezone.utc).isoformat(),
-                        "item_name": " + ".join(purchased_names),
-                        "type": "pick" if is_pick_order else "bundle",
+                        "vvip_name": item_found.get("name"),
+                        "join_date": datetime.now(timezone.utc).isoformat(),
+                        "payment_type": "normal",
+                        "chat_id_kick": target_chat_id,
+                        "duration": item_found.get("duration", 0),
                     }
 
-                    await ctx.db.setListVars(
-                        client.me.id,
-                        "vip_revenue_history",
-                        revenue_data,
+                    if route_to_owner:
+                        member_data["hidden"] = True
+
+                    await _upsert_member(
+                        client,
+                        member_data,
+                        route_to_owner,
+                        transaction_id,
                     )
 
                 if is_pick_order:
@@ -417,6 +596,28 @@ async def manual_check_payment_callback(client, callback_query):
                         protect_content=True,
                     )
 
+                await _handle_paid_sale(
+                    client,
+                    transaction_id,
+                    block_mode,
+                    route_sale_no,
+                )
+                if not route_to_owner:
+                    revenue_data = {
+                        "user_id": user.id,
+                        "username": user.username or user.first_name,
+                        "amount": amount_raw,
+                        "date": datetime.now(timezone.utc).isoformat(),
+                        "item_name": " + ".join(purchased_names),
+                        "type": "pick" if is_pick_order else "bundle",
+                    }
+
+                    await _record_revenue(
+                        client,
+                        transaction_id,
+                        revenue_data,
+                    )
+
                 try:
                     await callback_query.message.delete()
                 except Exception:
@@ -432,9 +633,12 @@ async def manual_check_payment_callback(client, callback_query):
                         )
                     )
 
-                await callback_query.answer(
-                    "✅ Pembayaran berhasil dikonfirmasi!", show_alert=False
-                )
+                try:
+                    await callback_query.answer(
+                        "✅ Pembayaran berhasil dikonfirmasi!", show_alert=False
+                    )
+                except Exception:
+                    pass
 
                 try:
                     if route_to_owner:
@@ -459,6 +663,7 @@ async def manual_check_payment_callback(client, callback_query):
                 except Exception as e:
                     ctx.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
 
+                await _cleanup_order(client, transaction_id, route_sale_no)
                 return
 
             try:
@@ -480,6 +685,7 @@ async def manual_check_payment_callback(client, callback_query):
                 )
 
             try:
+                await _preflight_chat(client, target_chat_id)
                 expire_date_link = datetime.now() + timedelta(minutes=60)
 
                 invite_link_obj = await client.create_chat_invite_link(
@@ -499,48 +705,18 @@ async def manual_check_payment_callback(client, callback_query):
                 "join_date": datetime.now(timezone.utc).isoformat(),
                 "payment_type": tipe,
                 "chat_id_kick": target_chat_id,
+                "duration": item_found.get("duration", 0),
             }
 
             if route_to_owner:
                 member_data["hidden"] = True
 
-            duration = item_found.get("duration", 0)
-            if duration > 0:
-                expiry_date = datetime.now(timezone.utc) + timedelta(days=duration)
-                member_data["expiry_date"] = expiry_date.isoformat()
-
-            if coupon_code:
-                coupon_consumed = {"found": False}
-
-                async def _consume_coupon(coupons):
-                    new_coupons = []
-                    for c in coupons:
-                        c = dict(c)
-                        if c.get("code") == coupon_code:
-                            c["uses_left"] = max(int(c.get("uses_left", 1)) - 1, 0)
-                            coupon_consumed["found"] = True
-                        new_coupons.append(c)
-                    return new_coupons if coupon_consumed["found"] else None
-
-                await ctx.db.updateListVars(client.me.id, "coupons", _consume_coupon)
-
-            await ctx.db.setListVars(client.me.id, "vvip_members", member_data)
-
-            if not route_to_owner:
-                revenue_data = {
-                    "user_id": user.id,
-                    "username": user.username or user.first_name,
-                    "amount": amount_raw,
-                    "date": datetime.now(timezone.utc).isoformat(),
-                    "item_name": name,
-                    "type": tipe,
-                }
-
-                await ctx.db.setListVars(
-                    client.me.id,
-                    "vip_revenue_history",
-                    revenue_data,
-                )
+            await _upsert_member(
+                client,
+                member_data,
+                route_to_owner,
+                transaction_id,
+            )
 
             link_msg = await client.send_rich_message(
                 user.id,
@@ -555,6 +731,29 @@ async def manual_check_payment_callback(client, callback_query):
                 protect_content=True,
             )
 
+            await _handle_paid_sale(
+                client,
+                transaction_id,
+                block_mode,
+                route_sale_no,
+            )
+            await _consume_coupon(client, transaction_id, coupon_code)
+            if not route_to_owner:
+                revenue_data = {
+                    "user_id": user.id,
+                    "username": user.username or user.first_name,
+                    "amount": amount_raw,
+                    "date": datetime.now(timezone.utc).isoformat(),
+                    "item_name": name,
+                    "type": tipe,
+                }
+
+                await _record_revenue(
+                    client,
+                    transaction_id,
+                    revenue_data,
+                )
+
             try:
                 await callback_query.message.delete()
             except Exception:
@@ -564,9 +763,12 @@ async def manual_check_payment_callback(client, callback_query):
                 verify_user_join(client, user, target_chat_id, link_msg)
             )
 
-            await callback_query.answer(
-                "✅ Pembayaran berhasil dikonfirmasi!", show_alert=False
-            )
+            try:
+                await callback_query.answer(
+                    "✅ Pembayaran berhasil dikonfirmasi!", show_alert=False
+                )
+            except Exception:
+                pass
 
             try:
                 if route_to_owner:
@@ -598,6 +800,8 @@ async def manual_check_payment_callback(client, callback_query):
                 )
             except Exception as e:
                 ctx.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
+
+            await _cleanup_order(client, transaction_id, route_sale_no)
         else:
             await callback_query.answer(
                 "❌ Pembayaran belum terdeteksi. Silakan coba lagi setelah beberapa saat.",
@@ -608,6 +812,18 @@ async def manual_check_payment_callback(client, callback_query):
             f"**Terjadi Kesalahan**\n{e}",
             show_alert=True,
         )
+
+
+@command(
+    lambda ctx: filters.regex("^confirm_payment\\s(.+)"),
+    handler_type="callback",
+)
+async def manual_check_payment_callback(client, callback_query):
+    transaction_id = callback_query.data.split(" ", 1)[1]
+    user = callback_query.from_user
+    lock = _get_confirm_lock(client.me.id, transaction_id)
+    async with lock:
+        await _confirm_payment(client, callback_query, transaction_id, user)
 
 
 @command(

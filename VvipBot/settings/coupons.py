@@ -1,4 +1,5 @@
 import asyncio
+import re
 from datetime import datetime, timedelta, timezone
 
 import pyrogram
@@ -7,6 +8,8 @@ from pyrogram import filters
 from helpers import parse_dt
 
 from .. import command, ctx, is_bot_owner, listen
+
+_COUPON_CODE_RE = re.compile(r"^[A-Z0-9_-]{1,32}$")
 
 
 @command(
@@ -74,6 +77,13 @@ async def add_coupon_callback(client, callback_query):
 
     try:
 
+        async def ask_value(prompt):
+            answer = await ask(prompt)
+            value = (answer.text or "").strip()
+            if value.lower() == "/batal":
+                raise listen.UserCancelled
+            return value
+
         def ask(text):
             return client.ask(
                 chat_id,
@@ -82,38 +92,61 @@ async def add_coupon_callback(client, callback_query):
             )
 
         code = (
-            await ask(
+            await ask_value(
                 f"**1/4: Masukkan Kode Kupon**\n\n"
                 f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', 'Kode kupon unik (misal: `DISKONBARU`)']])}"
             )
-        ).text.upper()
+        ).upper()
 
-        type_msg = await ask(
+        if not _COUPON_CODE_RE.fullmatch(code):
+            raise ValueError(
+                "Kode kupon hanya boleh berisi huruf, angka, `_`, atau `-` (maksimal 32 karakter)."
+            )
+
+        existing_coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
+        if any(
+            str(coupon.get("code", "")).upper() == code
+            for coupon in existing_coupons
+        ):
+            raise ValueError("Kode kupon sudah digunakan.")
+
+        type_text = await ask_value(
             f"**2/4: Pilih Tipe Diskon**\n\n"
             f"{client.ns.table.md(['Opsi', 'Keterangan'], [['1', 'Persentase (%)'], ['2', 'Potongan Harga Tetap']])}"
         )
-        discount_type = "percentage" if "1" in type_msg.text else "fixed"
+        if type_text not in {"1", "2"}:
+            raise ValueError("Tipe diskon harus `1` atau `2`.")
+        discount_type = "percentage" if type_text == "1" else "fixed"
 
         value_prompt = (
             f"**3/4: Nilai Diskon**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Isi', 'Masukkan nilai persentase' if discount_type == 'percentage' else 'Masukkan jumlah potongan harga']])}"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Isi', 'Masukkan nilai persentase (1-100)' if discount_type == 'percentage' else 'Masukkan jumlah potongan harga']])}"
         )
-        discount_value = int((await ask(value_prompt)).text)
+        discount_value = int(await ask_value(value_prompt))
+
+        if discount_type == "percentage":
+            if not 1 <= discount_value <= 100:
+                raise ValueError("Persentase diskon harus antara 1 sampai 100.")
+        elif discount_value <= 0:
+            raise ValueError("Potongan harga harus lebih dari 0.")
 
         uses_left = int(
-            (
-                await ask(
-                    f"**4/4: Batas Penggunaan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Isi', 'Berapa kali kupon ini bisa digunakan?']])}"
-                )
-            ).text
+            await ask_value(
+                f"**4/4: Batas Penggunaan**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Isi', 'Berapa kali kupon ini bisa digunakan?']])}"
+            )
         )
+        if uses_left <= 0:
+            raise ValueError("Batas penggunaan harus lebih dari 0.")
 
-        expiry_days_msg = await ask(
-            f"**5/5: Masa Berlaku**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Isi', 'Berapa hari kupon ini akan berlaku?']])}"
+        expiry_days = int(
+            await ask_value(
+                f"**5/5: Masa Berlaku**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Isi', 'Berapa hari kupon ini akan berlaku?']])}"
+            )
         )
-        expiry_days = int(expiry_days_msg.text)
+        if expiry_days < 0:
+            raise ValueError("Masa berlaku tidak boleh negatif.")
 
         expiry_date = (
             (datetime.now(timezone.utc) + timedelta(days=expiry_days)).isoformat()

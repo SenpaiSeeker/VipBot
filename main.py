@@ -1,5 +1,7 @@
 import asyncio
+import glob
 import logging
+import os
 import signal
 import traceback
 
@@ -69,14 +71,26 @@ async def shutdown(app: pyrogram.Client, manager: BotManager):
     log.print(f"{log.RED}Semua proses telah dimatikan.")
 
 
+def _remove_stale_sessions():
+    allowed_prefixes = ("vvip_manager_main", "temp_bot_name_fetcher")
+
+    for directory in {os.getcwd(), "/tmp"}:
+        for path in glob.glob(os.path.join(directory, "*.session*")):
+            stem = os.path.basename(path).split(".session", 1)[0]
+            if not (stem.startswith(allowed_prefixes) or stem.isdigit()):
+                continue
+            if directory == "/tmp" and not stem.startswith(allowed_prefixes):
+                continue
+            try:
+                if os.path.isfile(path):
+                    os.remove(path)
+            except OSError:
+                pass
+
+
 async def clean_sessions():
     try:
-        process = await asyncio.create_subprocess_shell(
-            "rm -rf *.session* /tmp/*.session*",
-            stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.DEVNULL,
-        )
-        await process.communicate()
+        await asyncio.to_thread(_remove_stale_sessions)
     except Exception:
         pass
 

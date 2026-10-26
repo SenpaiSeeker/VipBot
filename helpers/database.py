@@ -2,9 +2,11 @@ import asyncio
 import json
 import os
 import shutil
+import tempfile
 import zipfile
 from copy import deepcopy
 from datetime import datetime
+from weakref import WeakValueDictionary
 from zoneinfo import ZoneInfo
 
 import aiofiles
@@ -12,6 +14,17 @@ import aiofiles.os
 import aiohttp
 
 from .encrypt import CipherHandler
+
+_FILE_LOCKS = WeakValueDictionary()
+
+
+def _get_file_lock(path):
+    key = os.path.abspath(path)
+    lock = _FILE_LOCKS.get(key)
+    if lock is None:
+        lock = asyncio.Lock()
+        _FILE_LOCKS[key] = lock
+    return lock
 
 
 class DataBase:
@@ -27,7 +40,9 @@ class DataBase:
             method=self.method_encrypt,
         )
 
-        self._lock = asyncio.Lock()
+        self.data_file = f"{self.file_name}.json"
+        self._lock = _get_file_lock(self.data_file)
+        self._mtime = None
         self._data = None
         self._member_cache = {}
         self.auto_backup = options.get("auto_backup", False)
@@ -35,8 +50,8 @@ class DataBase:
         self.backup_chat_id = options.get("backup_chat_id")
         self.backup_cron_spec = options.get("backup_cron_spec", "0 */3 * * *")
         self.scheduler = options.get("scheduler_instance")
-
-        self.data_file = f"{self.file_name}.json"
+        self._backup_tasks = set()
+        self._backup_lock = asyncio.Lock()
 
         if not os.path.exists(self.data_file):
             with open(self.data_file, "w") as f:
@@ -56,9 +71,24 @@ class DataBase:
 
             @self.scheduler.cron(self.backup_cron_spec)
             async def scheduled_backup_task():
-                asyncio.create_task(self.perform_backup())
+                self._spawn_backup_task()
+
+    def _spawn_backup_task(self):
+        if any(not task.done() for task in self._backup_tasks):
+            return
+
+        task = asyncio.create_task(self.perform_backup())
+        self._backup_tasks.add(task)
+        task.add_done_callback(self._backup_tasks.discard)
 
     async def perform_backup(self):
+        if self._backup_lock.locked():
+            return
+
+        async with self._backup_lock:
+            await self._perform_backup()
+
+    async def _perform_backup(self):
         zip_path = None
         temp_backup_dir = "temp_db_backup"
         db_path = self.data_file
@@ -137,23 +167,43 @@ class DataBase:
             except Exception:
                 pass
 
+    async def _file_mtime(self):
+        try:
+            stat = await self._run_sync(os.stat, self.data_file)
+        except FileNotFoundError:
+            return None
+        return stat.st_mtime_ns
+
+    async def _refresh_locked(self):
+        mtime = await self._file_mtime()
+        if self._data is None or self._mtime != mtime:
+            self._data = await self._read_data_file()
+            self._mtime = mtime
+
     async def _load_data(self):
-        if self._data is None:
-            async with self._lock:
-                if self._data is None:
-                    self._data = await self._read_data_file()
+        mtime = await self._file_mtime()
+        if self._data is not None and self._mtime == mtime:
+            return self._data
+
+        async with self._lock:
+            await self._refresh_locked()
 
         return self._data
 
     async def _mutate(self, mutator):
         async with self._lock:
-            if self._data is None:
-                self._data = await self._read_data_file()
+            await self._refresh_locked()
 
             if mutator(self._data) is False:
                 return
 
             await self._write_data_file()
+
+    async def close_async(self):
+        async with self._lock:
+            self._data = None
+            self._mtime = None
+        self._invalidate_members()
 
     def _invalidate_members(self, user_id=None):
         if user_id is None:
@@ -209,13 +259,30 @@ class DataBase:
             ) from e
 
     async def _write_data_file(self):
-        temp_file = f"{self.data_file}.tmp"
-        content = await self._run_sync(json.dumps, self._data, separators=(",", ":"))
+        directory = os.path.dirname(os.path.abspath(self.data_file))
+        fd, temp_file = tempfile.mkstemp(
+            prefix=f"{os.path.basename(self.data_file)}.",
+            suffix=".tmp",
+            dir=directory,
+        )
+        os.close(fd)
 
-        async with aiofiles.open(temp_file, "w") as f:
-            await f.write(content)
+        try:
+            content = await self._run_sync(
+                json.dumps, self._data, separators=(",", ":")
+            )
 
-        await aiofiles.os.replace(temp_file, self.data_file)
+            async with aiofiles.open(temp_file, "w") as f:
+                await f.write(content)
+
+            await aiofiles.os.replace(temp_file, self.data_file)
+            self._mtime = await self._file_mtime()
+        finally:
+            if os.path.exists(temp_file):
+                try:
+                    os.remove(temp_file)
+                except OSError:
+                    pass
 
     async def _encrypt_async(self, data: str) -> str:
         return await self._run_sync(self.cipher.encrypt, data)
@@ -268,6 +335,43 @@ class DataBase:
         await self._mutate(apply)
         self._invalidate_members(user_id)
 
+    async def setVarsOnce(self, user_id, query_name, value, var_key="variabel"):
+        encrypted_value = await self._encrypt_async(json.dumps(value))
+        result = {"created": False}
+
+        def apply(data):
+            bucket = self._namespace(data, user_id, var_key)
+            if query_name in bucket:
+                return False
+
+            bucket[query_name] = encrypted_value
+            result["created"] = True
+            return True
+
+        await self._mutate(apply)
+        self._invalidate_members(user_id)
+        return result["created"]
+
+    async def increment_sales_once(self, user_id, transaction_id, next_count):
+        marker_key = f"sale_counted_{transaction_id}"
+        enc_marker = await self._encrypt_async(json.dumps(True))
+        enc_count = await self._encrypt_async(json.dumps(int(next_count)))
+        result = {"incremented": False}
+
+        def apply(data):
+            bucket = self._namespace(data, user_id, "variabel")
+            if marker_key in bucket:
+                return False
+
+            bucket[marker_key] = enc_marker
+            bucket["sales_count"] = enc_count
+            result["incremented"] = True
+            return True
+
+        await self._mutate(apply)
+        self._invalidate_members(user_id)
+        return result["incremented"]
+
     async def getVars(self, user_id, query_name, var_key="variabel"):
         data = await self._load_data()
         encrypted_value = (
@@ -297,14 +401,21 @@ class DataBase:
         await self._mutate(apply)
         self._invalidate_members(user_id)
 
-    async def setListVars(self, user_id, query_name, value, var_key="variabel"):
+    async def setListVars(
+        self,
+        user_id,
+        query_name,
+        value,
+        var_key="variabel",
+        check_duplicate=True,
+    ):
         val_str = json.dumps(value)
         encrypted_value = await self._encrypt_async(val_str)
 
         def apply(data):
             target = self._namespace(data, user_id, var_key).setdefault(query_name, [])
 
-            if encrypted_value in target:
+            if check_duplicate and encrypted_value in target:
                 return False
 
             target.append(encrypted_value)
@@ -380,8 +491,7 @@ class DataBase:
 
     async def updateListVars(self, user_id, query_name, updater, var_key="variabel"):
         async with self._lock:
-            if self._data is None:
-                self._data = await self._read_data_file()
+            await self._refresh_locked()
 
             bucket = self._namespace(self._data, user_id, var_key)
             encrypted_list = list(bucket.get(query_name) or [])

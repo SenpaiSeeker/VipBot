@@ -17,15 +17,22 @@ async def successful_donation_handler(client, message):
     current_bot_id = client.me.id
     super_admin_id = ctx.owner_id
 
-    await client.send_rich_message(
-        chat_id=user.id,
-        rich_message=pyrogram.types.InputRichMessage(
-            markdown=(
-                f"{client.ns.emoji.md('party_popper')} **Terima Kasih Banyak, {user.first_name}!**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Donasi', f"**{stars_donated} Stars ({client.ns.emoji.md('star')})**"], ['Status', 'Kami telah menerima donasi Anda'], ['Catatan', 'Dukungan Anda adalah bahan bakar semangat bagi kami. Semoga hari Anda menyenangkan!']])}"
-            )
-        ),
-    )
+    try:
+        await client.send_rich_message(
+            chat_id=user.id,
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('party_popper')} **Terima Kasih Banyak, {user.first_name}!**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Donasi', f"**{stars_donated} Stars ({client.ns.emoji.md('star')})**"], ['Status', 'Kami telah menerima donasi Anda'], ['Catatan', 'Dukungan Anda adalah bahan bakar semangat bagi kami. Semoga hari Anda menyenangkan!']])}"
+                )
+            ),
+        )
+    except Exception as e:
+        ctx.log.print(f"Gagal mengirim ucapan donasi: {e}")
+
+    charge_marker = f"stars_charge_{charge_id}"
+    if not await ctx.db.setVarsOnce(current_bot_id, charge_marker, True):
+        return
 
     owner_of_this_bot = await get_notification_target(client)
     main_bot_client = ctx.manager.main_bot_client

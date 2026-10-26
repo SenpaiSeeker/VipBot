@@ -170,8 +170,10 @@ async def list_gift_handler(client, message):
                     ],
                 ]
                 markup = client.ns.telegram.button.build_button_grid(buttons)
-                if hasattr(gift, "sticker") and gift.sticker.thumbs:
-                    thumb = gift.sticker.thumbs[-1]
+                sticker = getattr(gift, "sticker", None)
+                thumbs = getattr(sticker, "thumbs", None)
+                if thumbs:
+                    thumb = thumbs[-1]
                     file_path = None
                     try:
                         file_path = await client.download_media(thumb.file_id)
@@ -200,7 +202,7 @@ async def list_gift_handler(client, message):
                         reply_markup=markup,
                     )
                 await asyncio.sleep(1.5)
-            await status_msg.delete()
+        await status_msg.delete()
     except Exception as e:
         await status_msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
@@ -258,6 +260,8 @@ async def ask_send_gift_callback(client, callback_query):
             f"{client.ns.table.md(['Info', 'Nilai'], [['Instruksi', 'Silakan kirim **User ID** atau **Username** (@username) tujuan penerima hadiah'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
         )
         ask_msg = await client.ask(chat_id, prompt, timeout=60)
+        if not ask_msg.text:
+            raise ValueError("Input harus berupa User ID atau username.")
         if ask_msg.text.lower() == "/batal":
             await client.send_rich_message(
                 chat_id,

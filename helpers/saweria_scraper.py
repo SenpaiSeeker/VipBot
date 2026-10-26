@@ -98,6 +98,7 @@ class SaweriaScraper(QrCodeGenerator):
                 f"{self.BACKEND}/donations/{self.saweria_user_id}",
                 json=payload,
                 headers=self.HEADERS,
+                timeout=20,
             )
             if not res.ok:
                 raise Exception(f"Gagal membuat pembayaran: {res.text}")
@@ -121,15 +122,33 @@ class SaweriaScraper(QrCodeGenerator):
 
         return (qr_string, transaction_id, qr_image_stream, amount_raw)
 
-    async def check_paid_status(self, transaction_id: str) -> bool:
+    async def check_paid_status(
+        self,
+        transaction_id: str,
+        expected_amount: Optional[int] = None,
+    ) -> bool:
         def _sync_get():
             res = self.scraper.get(
                 f"{self.BACKEND}/donations/qris/{transaction_id}",
                 headers=self.HEADERS,
+                timeout=20,
             )
             if not res.ok:
                 raise Exception("Transaction ID not found")
-            return res.json()["data"]["qr_string"] == ""
+
+            data = res.json().get("data") or {}
+            if data.get("qr_string") != "":
+                return False
+
+            if expected_amount is not None and data.get("amount_raw") is not None:
+                try:
+                    paid_amount = int(data.get("amount_raw"))
+                except (TypeError, ValueError):
+                    return False
+                if paid_amount != int(expected_amount):
+                    return False
+
+            return True
 
         try:
             return await asyncio.to_thread(_sync_get)

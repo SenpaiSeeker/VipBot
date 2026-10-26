@@ -74,6 +74,8 @@ async def login_command_handler(client, message):
         bot_info = await client.ns.telegram.arg.getNamebot(bot_token)
         if not isinstance(bot_info, pyrogram.types.User):
             raise ValueError("Bot token tidak valid.")
+        if int(bot_info.id) != new_bot_id:
+            raise ValueError("Token bot tidak cocok dengan ID bot.")
     except Exception as e:
         return await msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
@@ -87,7 +89,13 @@ async def login_command_handler(client, message):
     existing_owner = await ctx.db.getVars(new_bot_id, "owner_id")
     resolved_owner = owner_id or existing_owner or ctx.owner_id
 
-    expiry_date_str = (datetime.now(timezone.utc) + timedelta(days=31)).isoformat()
+    existing_expiry = parse_dt(
+        await ctx.db.getVars(new_bot_id, "bot_expiration_date")
+    )
+    expiry_date = existing_expiry or (
+        datetime.now(timezone.utc) + timedelta(days=31)
+    )
+    expiry_date_str = expiry_date.isoformat()
 
     api_id = client.api_id
     api_hash = client.api_hash
@@ -98,6 +106,8 @@ async def login_command_handler(client, message):
         "api_hash": api_hash,
         "bot_token": bot_token,
     }
+
+    await ctx.db.saveBot(new_bot_id, api_id, api_hash, bot_token, is_token=True)
 
     await ctx.manager.start_bot(bot_data)
 
@@ -122,7 +132,6 @@ async def login_command_handler(client, message):
             )
         )
 
-    await ctx.db.saveBot(new_bot_id, api_id, api_hash, bot_token, is_token=True)
     await ctx.db.setVars(new_bot_id, "owner_id", resolved_owner)
     await ctx.db.setVars(new_bot_id, "bot_expiration_date", expiry_date_str)
 

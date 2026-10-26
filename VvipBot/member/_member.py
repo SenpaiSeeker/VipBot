@@ -264,8 +264,9 @@ async def do_kick_member_callback(client, callback_query):
 async def check_active_menu_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
+    members_cache = get_bot_cache("ACTIVE_MEMBERS_CACHE", client.me.id)
     if "init" in callback_query.data:
-        ctx.ACTIVE_MEMBERS_CACHE = {}
+        members_cache.clear()
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     layout = []
     button_row = []
@@ -347,7 +348,8 @@ async def list_active_members_callback(client, callback_query):
         chat_id, page = (int(chat_id_str), int(page_str))
     except Exception:
         return await callback_query.answer("Data callback tidak valid.")
-    if chat_id not in ctx.ACTIVE_MEMBERS_CACHE:
+    members_cache = get_bot_cache("ACTIVE_MEMBERS_CACHE", client.me.id)
+    if chat_id not in members_cache:
         try:
             await callback_query.answer(
                 "<emoji id=5451732530048802485>⏳</emoji> Mengambil data member dari server Telegram, mohon tunggu...",
@@ -357,7 +359,7 @@ async def list_active_members_callback(client, callback_query):
                 m async for m in client.get_chat_members(chat_id) if not m.user.is_bot
             ]
             random.shuffle(members)
-            ctx.ACTIVE_MEMBERS_CACHE[chat_id] = members
+            members_cache[chat_id] = members
         except Exception as e:
             await callback_query.edit_message_text(
                 rich_message=pyrogram.types.InputRichMessage(
@@ -368,7 +370,7 @@ async def list_active_members_callback(client, callback_query):
                 )
             )
             return
-    all_members = ctx.ACTIVE_MEMBERS_CACHE.get(chat_id, [])
+    all_members = members_cache.get(chat_id, [])
     if not all_members:
         empty_rows = [
             ["Jumlah Anggota", "`0`"],
@@ -528,9 +530,10 @@ async def do_kick_active_callback(client, callback_query):
                 "vvip_members",
                 record_to_remove,
             )
-        if chat_id in ctx.ACTIVE_MEMBERS_CACHE:
-            ctx.ACTIVE_MEMBERS_CACHE[chat_id] = [
-                m for m in ctx.ACTIVE_MEMBERS_CACHE[chat_id] if m.user.id != user_id
+        members_cache = get_bot_cache("ACTIVE_MEMBERS_CACHE", client.me.id)
+        if chat_id in members_cache:
+            members_cache[chat_id] = [
+                m for m in members_cache[chat_id] if m.user.id != user_id
             ]
         user = await client.get_users(user_id)
 

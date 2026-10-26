@@ -116,6 +116,35 @@ class BotManager:
                 del self.running_bots[bot_id]
 
 
+@schedule.cron("*/5 * * * *")
+async def flood_retry_method():
+    manager = ctx.manager
+    if not manager:
+        return
+
+    try:
+        all_bots_data = await manager.db.getBots(is_token=True)
+    except Exception as e:
+        log.error(f"Gagal memuat daftar bot untuk retry FloodWait: {e}")
+        return
+
+    for bot_data in all_bots_data:
+        try:
+            bot_id = int(bot_data.get("name"))
+        except (TypeError, ValueError):
+            continue
+
+        if bot_id in manager.running_bots:
+            continue
+
+        remaining = await manager.flood_remaining(bot_id)
+        if remaining > 0:
+            continue
+
+        log.info(f"Mencoba mengaktifkan kembali bot {bot_id} setelah FloodWait.")
+        await manager.start_bot(bot_data)
+
+
 @schedule.cron("0 * * * *")
 async def expiration_checker_method():
     log.info(f"Menjalankan pemeriksaan masa aktif bot...")
@@ -246,7 +275,12 @@ async def subscription_checker_method():
 
     now = datetime.now(timezone.utc)
     all_bot_ids_data = await manager.db.getBots(is_token=True)
-    all_bot_ids = [int(bot["name"]) for bot in all_bot_ids_data]
+    all_bot_ids = []
+    for bot in all_bot_ids_data:
+        try:
+            all_bot_ids.append(int(bot["name"]))
+        except (KeyError, TypeError, ValueError):
+            continue
 
     for bot_id in all_bot_ids:
         bot_client = manager.running_bots.get(bot_id)
@@ -255,16 +289,22 @@ async def subscription_checker_method():
 
         members = await manager.db.getListVars(bot_id, "vvip_members") or []
         vvip_list = await manager.db.getListVars(bot_id, "list_vvip") or []
-        members_to_keep = []
+        expired_keys = set()
 
         for member in members:
-            expiry_date_str = member.get("expiry_date")
-            if not expiry_date_str:
-                members_to_keep.append(member)
-                continue
+            try:
+                expiry_date_str = member.get("expiry_date")
+                if not expiry_date_str:
+                    continue
 
-            expiry_date = parse_dt(expiry_date_str)
-            user_id = member["user_id"]
+                expiry_date = parse_dt(expiry_date_str)
+                if not expiry_date:
+                    continue
+
+                user_id = member["user_id"]
+            except (KeyError, TypeError, ValueError) as e:
+                log.error(f"Data member tidak valid di bot {bot_id}: {e}")
+                continue
             if now > expiry_date:
                 try:
                     chat_id = member["chat_id_kick"]
@@ -284,6 +324,7 @@ async def subscription_checker_method():
                         user_id,
                         InputRichMessage(markdown=expired_message_text),
                     )
+                    expired_keys.add((str(user_id), str(chat_id)))
                     log.debug(
                         f"Langganan {user_id} di bot {bot_id} habis. Dikeluarkan dari grup."
                     )
@@ -348,10 +389,39 @@ async def subscription_checker_method():
                             f"{ctx.log.RED}Gagal kirim notif perpanjangan ke {user_id}: {e}"
                         )
 
-            members_to_keep.append(member)
+        if expired_keys:
+            async with handlers.get_member_lock(bot_id):
 
-        if len(members_to_keep) != len(members):
-            await manager.db.replaceListVars(bot_id, "vvip_members", members_to_keep)
+                async def remove_expired(current_members):
+                    filtered = []
+                    for member in current_members:
+                        key = (
+                            str(member.get("user_id")),
+                            str(member.get("chat_id_kick")),
+                        )
+                        if key not in expired_keys:
+                            filtered.append(member)
+                            continue
+
+                        member_expiry = parse_dt(member.get("expiry_date"))
+                        if member_expiry and member_expiry < datetime.now(
+                            timezone.utc
+                        ):
+                            continue
+
+                        filtered.append(member)
+
+                    return (
+                        filtered
+                        if len(filtered) != len(current_members)
+                        else None
+                    )
+
+                await manager.db.updateListVars(
+                    bot_id,
+                    "vvip_members",
+                    remove_expired,
+                )
 
 
 _WATCHDOG_AUTH_ERRORS = (

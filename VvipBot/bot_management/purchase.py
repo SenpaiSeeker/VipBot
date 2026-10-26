@@ -1,4 +1,6 @@
+import asyncio
 from datetime import datetime, timedelta, timezone
+from weakref import WeakValueDictionary
 
 import pyrogram
 from pyrogram import filters
@@ -6,8 +8,19 @@ from pyrogram import filters
 from config import BACKUP_BOT
 from helpers import parse_dt
 
-from .. import command, ctx
+from .. import MAX_BOT_CAPACITY, command, ctx
 from .pricing import calculate_bot_price, get_bot_purchase_panel
+
+_purchase_locks = WeakValueDictionary()
+
+
+def _get_purchase_lock(bot_id, transaction_id):
+    key = (bot_id, transaction_id)
+    lock = _purchase_locks.get(key)
+    if lock is None:
+        lock = asyncio.Lock()
+        _purchase_locks[key] = lock
+    return lock
 
 
 @command(
@@ -17,12 +30,12 @@ from .pricing import calculate_bot_price, get_bot_purchase_panel
 async def create_bot_callback(client, callback_query):
     all_bots_data = await ctx.db.getBots(is_token=True)
 
-    if len(all_bots_data) >= 25:
+    if len(all_bots_data) >= MAX_BOT_CAPACITY:
         backup_text = f" melalui @{BACKUP_BOT}" if BACKUP_BOT else ""
 
         text_warning = (
             f"{client.ns.emoji.md('cross_mark')} **Kapasitas Bot Penuh!**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Server sudah mencapai batas maksimal pembuatan bot (25 Bot)'], ['Saran', f'Silakan buat bot baru{backup_text}']])}"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', f'Server sudah mencapai batas maksimal pembuatan bot ({MAX_BOT_CAPACITY} Bot)'], ['Saran', f'Silakan buat bot baru{backup_text}']])}"
         )
 
         layout = [
@@ -114,6 +127,12 @@ async def proceed_bot_payment_callback(client, callback_query):
     user_id = callback_query.from_user.id
     months = int(callback_query.data.split("_")[-1])
 
+    if not 1 <= months <= 12:
+        return await callback_query.answer(
+            "Durasi minimal 1 bulan dan maksimal 12 bulan.",
+            show_alert=True,
+        )
+
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(
             markdown=(
@@ -137,6 +156,7 @@ async def proceed_bot_payment_callback(client, callback_query):
 
     _, _, amount = calculate_bot_price(months)
     fakeinfo = client.ns.utils.faker.generate()
+    qr_image_stream = None
 
     try:
         (
@@ -193,8 +213,11 @@ async def proceed_bot_payment_callback(client, callback_query):
             ),
             reply_markup=btn,
         )
+        qr_image_stream.close()
 
     except Exception as e:
+        if qr_image_stream is not None:
+            qr_image_stream.close()
         await client.send_rich_message(
             user_id,
             pyrogram.types.InputRichMessage(
@@ -206,14 +229,7 @@ async def proceed_bot_payment_callback(client, callback_query):
         )
 
 
-@command(
-    lambda ctx: filters.regex("^confirm_bot_payment_(.+)"),
-    handler_type="callback",
-)
-async def confirm_bot_payment_callback(client, callback_query):
-    prefix = "confirm_bot_payment_"
-    transaction_id = callback_query.data[len(prefix) :]
-    user = callback_query.from_user
+async def _confirm_bot_payment(client, callback_query, transaction_id, user):
     order_data_str = await ctx.db.getVars(client.me.id, transaction_id)
 
     if not order_data_str:
@@ -230,10 +246,17 @@ async def confirm_bot_payment_callback(client, callback_query):
         )
 
     months_str, amount_raw_str, buyer_id_str = parts[:3]
-    months = int(months_str)
-    amount_raw = int(amount_raw_str)
+    try:
+        months = max(1, min(12, int(months_str)))
+        amount_raw = max(0, int(amount_raw_str))
+        buyer_id = int(buyer_id_str) if buyer_id_str else None
+    except (TypeError, ValueError):
+        return await callback_query.answer(
+            "<emoji id=6271786398404055377>⚠️</emoji> Invoice ini sudah tidak valid.",
+            show_alert=True,
+        )
 
-    if buyer_id_str and int(buyer_id_str) != user.id:
+    if buyer_id is not None and buyer_id != user.id:
         return await callback_query.answer(
             "<emoji id=6271786398404055377>⚠️</emoji> Invoice ini milik pengguna lain.",
             show_alert=True,
@@ -241,18 +264,45 @@ async def confirm_bot_payment_callback(client, callback_query):
 
     try:
         is_paid = await client.ns.payment.SaweriaScraper().check_paid_status(
-            transaction_id
+            transaction_id,
+            amount_raw or None,
         )
 
         if is_paid:
-            await ctx.db.removeVars(client.me.id, transaction_id)
-            expiry_date = datetime.now(timezone.utc) + timedelta(days=30 * months)
+            marker_key = f"bot_purchase_done_{transaction_id}"
+            already_processed = bool(
+                await ctx.db.getVars(client.me.id, marker_key)
+            )
+
+            if already_processed:
+                await ctx.db.removeVars(client.me.id, transaction_id)
+                await ctx.db.removeVars(client.me.id, marker_key)
+                try:
+                    await callback_query.message.delete()
+                except Exception:
+                    pass
+                return await callback_query.answer(
+                    "✅ Pembayaran ini sudah diproses.",
+                    show_alert=False,
+                )
+
+            current_expiry = parse_dt(
+                await ctx.db.getVars(user.id, "user_expiry_date")
+            )
+            start_date = max(
+                current_expiry or datetime.now(timezone.utc),
+                datetime.now(timezone.utc),
+            )
+            expiry_date = start_date + timedelta(days=30 * months)
 
             await ctx.db.setVars(
                 user.id,
                 "user_expiry_date",
                 expiry_date.isoformat(),
             )
+            await ctx.db.setVars(client.me.id, marker_key, True)
+            await ctx.db.removeVars(client.me.id, transaction_id)
+            await ctx.db.removeVars(client.me.id, marker_key)
             await callback_query.message.delete()
 
             success_text = (
@@ -302,4 +352,21 @@ async def confirm_bot_payment_callback(client, callback_query):
         await callback_query.answer(
             f"❌ Terjadi kesalahan: {e}",
             show_alert=True,
+        )
+
+
+@command(
+    lambda ctx: filters.regex("^confirm_bot_payment_(.+)"),
+    handler_type="callback",
+)
+async def confirm_bot_payment_callback(client, callback_query):
+    prefix = "confirm_bot_payment_"
+    transaction_id = callback_query.data[len(prefix) :]
+    lock = _get_purchase_lock(client.me.id, transaction_id)
+    async with lock:
+        await _confirm_bot_payment(
+            client,
+            callback_query,
+            transaction_id,
+            callback_query.from_user,
         )

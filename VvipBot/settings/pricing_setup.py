@@ -4,7 +4,7 @@ import uuid
 import pyrogram
 from pyrogram import filters
 
-from .. import command, ctx, is_bot_owner, listen
+from .. import command, ctx, get_bot_cache, is_bot_owner, listen
 from ..core import DEFAULT_START_PHOTO
 
 
@@ -628,8 +628,8 @@ async def delete_listvvip(client, callback_query):
             reply_markup=btn,
         )
 
-    if not hasattr(ctx, "vip_list"):
-        ctx.vip_list = {}
+    vip_cache = get_bot_cache("vip_list", client.me.id)
+    vip_cache.clear()
 
     layout = []
     button_row = []
@@ -637,7 +637,7 @@ async def delete_listvvip(client, callback_query):
     for item in vvip_list:
         name = item.get("name", "Tanpa Nama")
         item_id = uuid.uuid4().hex[:8]
-        ctx.vip_list[item_id] = item
+        vip_cache[item_id] = item
 
         button_row.append(
             {
@@ -684,18 +684,18 @@ async def confirm_delete_vvip(client, callback_query):
         return
 
     _, item_id = callback_query.data.split(" ", 1)
-    if not hasattr(ctx, "vip_list") or item_id not in ctx.vip_list:
+    vip_cache = get_bot_cache("vip_list", client.me.id)
+    if item_id not in vip_cache:
         return await callback_query.answer(
             "Sesi tidak ditemukan atau kedaluwarsa.",
             show_alert=True,
         )
 
-    ctx.vip_list[item_id].get("name", "Tanpa Nama")
-    item_to_remove = ctx.vip_list[item_id]
+    item_to_remove = vip_cache[item_id]
 
     if item_to_remove:
         await ctx.db.removeListVars(client.me.id, "list_vvip", item_to_remove)
-        ctx.vip_list.pop(item_id, None)
+        vip_cache.pop(item_id, None)
         await callback_query.answer("Kategori berhasil dihapus.", show_alert=True)
 
     await delete_listvvip(client, callback_query)
@@ -733,8 +733,8 @@ async def edit_price_listvvip_callback(client, callback_query):
             reply_markup=btn,
         )
 
-    if not hasattr(ctx, "vip_list_edit"):
-        ctx.vip_list_edit = {}
+    edit_cache = get_bot_cache("vip_list_edit", client.me.id)
+    edit_cache.clear()
 
     layout = []
     button_row = []
@@ -742,7 +742,7 @@ async def edit_price_listvvip_callback(client, callback_query):
     for item in vvip_list:
         name = item.get("name", "Tanpa Nama")
         item_id = uuid.uuid4().hex[:8]
-        ctx.vip_list_edit[item_id] = item
+        edit_cache[item_id] = item
 
         button_row.append(
             {
@@ -791,14 +791,15 @@ async def edit_vvip_price_callback(client, callback_query):
     chat_id = callback_query.from_user.id
     _, item_id = callback_query.data.split(" ", 1)
 
-    if not hasattr(ctx, "vip_list_edit") or item_id not in ctx.vip_list_edit:
+    edit_cache = get_bot_cache("vip_list_edit", client.me.id)
+    if item_id not in edit_cache:
         return await callback_query.answer(
             "Sesi tidak ditemukan atau kedaluwarsa.",
             show_alert=True,
         )
 
-    name = ctx.vip_list_edit[item_id].get("name", "Tanpa Nama")
-    old_item = ctx.vip_list_edit[item_id]
+    name = edit_cache[item_id].get("name", "Tanpa Nama")
+    old_item = edit_cache[item_id]
 
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     item_index = next(
@@ -851,7 +852,7 @@ async def edit_vvip_price_callback(client, callback_query):
         vvip_list[item_index]["promo_price"] = new_promo
 
         await ctx.db.replaceListVars(client.me.id, "list_vvip", vvip_list)
-        ctx.vip_list_edit.pop(item_id, None)
+        edit_cache.pop(item_id, None)
 
         await client.send_rich_message(
             chat_id,

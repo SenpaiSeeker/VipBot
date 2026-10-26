@@ -468,6 +468,15 @@ async def restore_database_handler(client, message):
                 with zipfile.ZipFile(downloaded_zip_path, "r") as zf:
                     if not zf.namelist():
                         raise ValueError("File .zip ini kosong atau rusak.")
+                    temp_root = os.path.realpath(temp_dir)
+                    for member in zf.infolist():
+                        target_path = os.path.realpath(
+                            os.path.join(temp_dir, member.filename)
+                        )
+                        if target_path != temp_root and not target_path.startswith(
+                            temp_root + os.sep
+                        ):
+                            raise ValueError("Arsip backup berisi path yang tidak aman.")
                     zf.extractall(path=temp_dir)
                 restored_files = []
                 current_db_path = getattr(
@@ -492,6 +501,7 @@ async def restore_database_handler(client, message):
                 return restored_files
 
         restored_files = await asyncio.to_thread(_do_restore)
+        await ctx.db.close_async()
         restored_names = ", ".join(restored_files)
         await status_msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
@@ -551,6 +561,8 @@ async def tfdatabase_command_handler(client, message):
             )
         )
     )
+    source_db = None
+    target_db = None
     try:
         from helpers.database import DataBase
 
@@ -609,6 +621,11 @@ async def tfdatabase_command_handler(client, message):
                 )
             )
         )
+    finally:
+        if source_db is not None and source_db is not ctx.db:
+            await source_db.close_async()
+        if target_db is not None and target_db is not ctx.db:
+            await target_db.close_async()
 
 
 @command(lambda ctx: filters.command("tfbot") & filters.user(ctx.owner_id))
@@ -644,6 +661,8 @@ async def tfbot_command_handler(client, message):
             )
         )
     )
+    source_db = None
+    target_db = None
     try:
         from helpers.database import DataBase
 
@@ -715,6 +734,19 @@ async def tfbot_command_handler(client, message):
         )
     except Exception as e:
         ctx.log.print(f"{ctx.log.RED}Error saat tfbot: {e}")
+        await msg.edit_text(
+            rich_message=pyrogram.types.InputRichMessage(
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Migrasi Gagal**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Terjadi kesalahan saat migrasi bot'], ['Error', f'`{e}`']])}"
+                )
+            )
+        )
+    finally:
+        if source_db is not None and source_db is not ctx.db:
+            await source_db.close_async()
+        if target_db is not None and target_db is not ctx.db:
+            await target_db.close_async()
 
 
 @command(lambda ctx: filters.command("block") & filters.user(ctx.owner_id))
@@ -846,9 +878,12 @@ async def bot_owners_handler(client, message):
                 else client.ns.telegram.arg.getMention(user, md=True)
             )
 
-            rows.append(
-                [uname, mention, f"`{x.bot_token}`", exp_text, f"`{sold_count}`"]
-            )
+            token_hint = "-"
+            if x.bot_token:
+                token_prefix = x.bot_token.split(":", 1)[0]
+                token_hint = f"`{token_prefix}:***`"
+
+            rows.append([uname, mention, token_hint, exp_text, f"`{sold_count}`"])
         except Exception as e:
             rows.append([uname, "Error", f"`{e}`", exp_text, f"`{sold_count}`"])
 

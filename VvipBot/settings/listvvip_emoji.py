@@ -10,6 +10,7 @@ from .. import (
     _sanitize_emoji_id,
     command,
     ctx,
+    get_bot_cache,
     get_list_vvip_icons,
     is_bot_owner,
     listen,
@@ -51,8 +52,8 @@ async def render_list_vvip_icon_menu(client, callback_query):
     vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
     icons = await get_list_vvip_icons(client)
 
-    if not hasattr(ctx, "vip_list_icon"):
-        ctx.vip_list_icon = {}
+    icon_cache = get_bot_cache("vip_list_icon", client.me.id)
+    icon_cache.clear()
 
     layout = []
     if not vvip_list:
@@ -80,7 +81,7 @@ async def render_list_vvip_icon_menu(client, callback_query):
     for item in vvip_list:
         name = item.get("name", "Tanpa Nama")
         item_id = uuid.uuid4().hex[:8]
-        ctx.vip_list_icon[item_id] = item
+        icon_cache[item_id] = item
 
         status_icon = (
             icons[name]["id"]
@@ -160,9 +161,6 @@ async def set_listvvip_icon_callback(client, callback_query):
             show_alert=True,
         )
 
-    if not hasattr(ctx, "vip_list_icon"):
-        ctx.vip_list_icon = {}
-
     await render_list_vvip_icon_menu(client, callback_query)
 
 
@@ -182,13 +180,14 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
         name = LIST_VVIP_ICON_BUY_ALL_KEY
         display_name = "Ambil Semua VIP"
     else:
-        if not hasattr(ctx, "vip_list_icon") or item_id not in ctx.vip_list_icon:
+        icon_cache = get_bot_cache("vip_list_icon", client.me.id)
+        if item_id not in icon_cache:
             return await callback_query.answer(
                 "Sesi tidak ditemukan atau kedaluwarsa. Buka kembali menu dari Pengaturan.",
                 show_alert=True,
             )
 
-        item = ctx.vip_list_icon[item_id]
+        item = icon_cache[item_id]
         name = item.get("name", "Tanpa Nama")
         display_name = name
 

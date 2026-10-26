@@ -6,7 +6,9 @@ from pyrogram import filters
 
 from helpers import listen, parse_dt
 
-from .. import command, ctx
+from .. import MAX_BOT_CAPACITY, command, ctx
+
+_creation_lock = asyncio.Lock()
 
 
 @command(
@@ -17,7 +19,7 @@ async def start_creation_process_callback(client, callback_query):
     user_id = callback_query.from_user.id
     expiry_date = parse_dt(await ctx.db.getVars(user_id, "user_expiry_date"))
 
-    if not expiry_date or expiry_date < datetime.now(timezone.utc):
+    if not expiry_date or expiry_date <= datetime.now(timezone.utc):
         return await callback_query.answer(
             "Langganan Anda tidak valid atau telah berakhir.",
             show_alert=True,
@@ -25,12 +27,12 @@ async def start_creation_process_callback(client, callback_query):
 
     all_bots_data = await ctx.db.getBots(is_token=True)
 
-    if len(all_bots_data) >= 30:
+    if len(all_bots_data) >= MAX_BOT_CAPACITY:
         from config import BACKUP_BOT
 
         backup_text = f" melalui @{BACKUP_BOT}" if BACKUP_BOT else ""
         return await callback_query.answer(
-            f"Kapasitas bot sudah penuh (30 Bot). Silakan buat bot baru{backup_text}.",
+            f"Kapasitas bot sudah penuh ({MAX_BOT_CAPACITY} Bot). Silakan buat bot baru{backup_text}.",
             show_alert=True,
         )
 
@@ -51,10 +53,13 @@ async def start_creation_process_callback(client, callback_query):
         )
         token_msg = await ask(token_prompt)
 
-        if token_msg.text.lower() == "/batal":
+        if not token_msg or not token_msg.text:
+            raise ValueError("Token bot tidak boleh kosong.")
+
+        if token_msg.text.strip().lower() == "/batal":
             raise listen.UserCancelled
 
-        token = token_msg.text
+        token = token_msg.text.strip()
 
         msg = await client.send_rich_message(
             user_id,
@@ -71,6 +76,14 @@ async def start_creation_process_callback(client, callback_query):
         if not isinstance(new_bot_name, pyrogram.types.User):
             raise ValueError("Token bot yang Anda masukkan tidak valid.")
 
+        new_bot_id = int(token.split(":", 1)[0])
+        if int(new_bot_name.id) != new_bot_id:
+            raise ValueError("Token bot tidak cocok dengan ID bot.")
+
+        existing_bots = await ctx.db.getBots(is_token=True)
+        if any(str(bot.get("name")) == str(new_bot_id) for bot in existing_bots):
+            raise ValueError("Bot ini sudah terdaftar dan tidak dapat ditambahkan ulang.")
+
         await msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
@@ -80,7 +93,6 @@ async def start_creation_process_callback(client, callback_query):
             )
         )
 
-        new_bot_id = int(token.split(":", 1)[0])
         api_id = client.api_id
         api_hash = client.api_hash
         bot_data = {
@@ -90,23 +102,47 @@ async def start_creation_process_callback(client, callback_query):
             "bot_token": token,
         }
 
-        await ctx.manager.start_bot(bot_data)
+        async with _creation_lock:
+            existing_bots = await ctx.db.getBots(is_token=True)
+            if any(
+                str(bot.get("name")) == str(new_bot_id)
+                for bot in existing_bots
+            ):
+                raise ValueError(
+                    "Bot ini sudah terdaftar dan tidak dapat ditambahkan ulang."
+                )
 
-        await ctx.db.saveBot(
-            new_bot_id,
-            api_id,
-            api_hash,
-            token,
-            is_token=True,
-        )
+            await ctx.db.saveBot(
+                new_bot_id,
+                api_id,
+                api_hash,
+                token,
+                is_token=True,
+            )
 
         await ctx.db.setVars(
             new_bot_id,
             "bot_expiration_date",
             expiry_date.isoformat(),
         )
-
         await ctx.db.setVars(new_bot_id, "owner_id", user_id)
+
+        await ctx.manager.start_bot(bot_data)
+
+        if new_bot_id not in ctx.manager.running_bots:
+            remaining = await ctx.manager.flood_remaining(new_bot_id)
+            if remaining > 0:
+                mins = max(1, remaining // 60)
+                raise ValueError(
+                    f"Bot tersimpan tetapi sedang FloodWait ±{mins} menit. "
+                    "Bot akan dicoba aktifkan kembali otomatis."
+                )
+
+            await ctx.db.removeBot(new_bot_id)
+            await ctx.db.removeVars(new_bot_id, "owner_id")
+            await ctx.db.removeVars(new_bot_id, "bot_expiration_date")
+            raise ValueError("Gagal mengaktifkan bot. Silakan coba lagi.")
+
         await ctx.db.removeVars(user_id, "user_expiry_date")
 
         await msg.edit(
