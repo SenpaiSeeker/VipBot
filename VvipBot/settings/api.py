@@ -40,7 +40,7 @@ async def api_settings_callback(client, callback_query):
         ],
         [
             {
-                "text": "• Kembali ke Payment Gateway •",
+                "text": "• Kembali ke Pengaturan •",
                 "callback_data": "settings",
                 "style": "blue",
                 "emoji": client.ns.emoji.id("back_arrow"),
@@ -164,7 +164,7 @@ async def set_api_key_prompt(client, callback_query):
                 pyrogram.types.InputRichMessage(
                     markdown=(
                         f"{client.ns.emoji.md('cross_mark')} **Fitur Tidak Didukung**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Fitur tidak didukung'], ['Aksi', 'Kembali ke pengaturan']])}"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Fitur tidak didukung'], ['Aksi', 'Kembali ke Payment Gateway']])}"
                     )
                 ),
                 reply_markup=back_btn,
