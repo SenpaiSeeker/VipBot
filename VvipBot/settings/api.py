@@ -48,20 +48,16 @@ async def api_settings_callback(client, callback_query):
         ],
     ]
 
-    status_rows = [
-        ["Gateway", "Saweria"],
-        ["Status", f"**{saweria_status}**"],
-        ["Metode", "QRIS otomatis"],
-        ["Kredensial", "Username Saweria"],
-        ["Fungsi", "Membuat dan mengecek pembayaran"],
-        ["Setup", "Gunakan tombol Setup Payment"],
-        ["Hapus", "Gunakan tombol Hapus Payment"],
+    status_row = [
+        "Saweria",
+        f"**{saweria_status}**",
+        f"`{saweria_user_id}`" if saweria_user_id else "Belum Diatur",
     ]
 
     table = client.ns.table
     text = (
         f"{client.ns.emoji.md('key')} **Payment Gateway untuk {client.ns.telegram.arg.getMention(client.me, md=True)}**\n\n"
-        f"{table.md(['Informasi', 'Keterangan'], status_rows)}\n\n"
+        f"{table.md(['Gateway', 'Status', 'User ID'], [status_row])}\n\n"
         f"Pilih tindakan:"
     )
     btn = client.ns.telegram.button.build_button_grid(layout)
