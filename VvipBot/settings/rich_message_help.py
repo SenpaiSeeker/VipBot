@@ -34,7 +34,7 @@ async def rich_message_help_callback(client, callback_query):
     rich_message_rows = [
         ["Input", "Disimpan dari `ask_text_msg.text.markdown`"],
         ["Teks", "Format dari Telegram otomatis dipertahankan"],
-        ["Blok", "Heading, list, tabel, media, kutipan, footnote, rumus"],
+        ["Blok", "Heading, list, tabel, kutipan, footnote, rumus"],
         ["Tombol", "Gunakan `[[...]]`"],
         ["Render", "Dikirim sebagai `InputRichMessage(markdown=...)`"],
     ]
@@ -46,7 +46,6 @@ async def rich_message_help_callback(client, callback_query):
         ["Kutipan", "`> teks kutipan`"],
         ["Garis pemisah", "`---`"],
         ["Footnote", "`[^1]` dan definisi `[^1]: isi catatan`"],
-        ["Media", '`![](https://contoh.com/foto.jpg "Caption")`'],
         ["Tabel", "Gunakan template di bawah"],
     ]
 
@@ -61,7 +60,6 @@ async def rich_message_help_callback(client, callback_query):
     ]
 
     note_rows = [
-        ["Media", "Hanya URL HTTP/HTTPS dan ditulis sebagai blok terpisah"],
         ["Tabel", "Sel hanya mendukung inline formatting, maksimal 20 kolom"],
         ["Batas", "32.768 karakter, 500 blok, 16 level nesting, 50 media"],
         ["Tombol", "`[[...]]` otomatis dirender di teks start"],
