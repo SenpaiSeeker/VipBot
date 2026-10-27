@@ -57,9 +57,7 @@ def render_start_template(template, client, user, is_owner, is_main_bot):
     now = datetime.now(START_TIMEZONE)
     first_name = user.first_name or "-"
     last_name = user.last_name or "-"
-    full_name = (
-        " ".join(part for part in (first_name, last_name) if part != "-") or "-"
-    )
+    full_name = " ".join(part for part in (first_name, last_name) if part != "-") or "-"
     bot_username = client.me.username or "-"
     date_text = now.strftime("%d-%m-%Y")
     time_text = now.strftime("%H:%M")
@@ -190,6 +188,9 @@ async def get_start_keyboard_and_content(client, user):
         is_owner,
         is_main_bot,
     )
+    welcome_text, start_buttons = client.ns.table.render_buttons(welcome_text)
+    if start_buttons:
+        welcome_text = f"{welcome_text}\n\n{start_buttons}"
 
     layout = []
 

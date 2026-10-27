@@ -11,7 +11,8 @@ START_TEMPLATE_EXAMPLE = (
     "{greeting}, {mention}! Selamat datang di {bot_name}.\n\n"
     "Hari ini {day}, {date} pukul {time} WIB.\n"
     "Silakan pilih paket melalui tombol di bawah ini.\n"
-    "Akses akan dikirim otomatis setelah pembayaran berhasil."
+    "Akses akan dikirim otomatis setelah pembayaran berhasil.\n\n"
+    "[[Buka | url=https://t.me | style=green]]"
 )
 
 
@@ -263,11 +264,11 @@ async def set_start_text_callback(client, callback_query):
         prompt = (
             f"{client.ns.emoji.md('writing_hand')} **Atur Teks Start**\n\n"
             f"Status saat ini: **{status}**\n\n"
-            f"Kirim teks baru untuk pesan `/start`. Variabel yang tersedia:\n\n"
+            f"Kirim rich message baru untuk pesan `/start`. Variabel yang tersedia:\n\n"
             f"{client.ns.table.md(['Variabel', 'Keterangan'], var_rows)}\n\n"
             f"Contoh template:\n"
             f"```\n{START_TEMPLATE_EXAMPLE}\n```\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Format', 'Mendukung Markdown dan emoji premium Telegram'], ['Variabel lain', 'Placeholder yang tidak dikenali akan dibiarkan apa adanya'], ['Foto', 'Foto start diatur terpisah melalui menu Atur Foto Start'], ['Hapus', 'Ketik `/empty` untuk kembali ke teks default'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Format', 'Rich message Markdown, emoji premium, dan tombol `[[...]]`'], ['Input', 'Format teks dari Telegram disimpan melalui `text.markdown`'], ['Variabel lain', 'Placeholder yang tidak dikenali akan dibiarkan apa adanya'], ['Foto', 'Foto start diatur terpisah melalui menu Atur Foto Start'], ['Hapus', 'Ketik `/empty` untuk kembali ke teks default'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
         )
         ask_text_msg = await client.ask(chat_id, prompt, timeout=600)
 

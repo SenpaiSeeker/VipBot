@@ -99,3 +99,13 @@ class TableBuilder:
                 )
 
         return "\n".join(blocks)
+
+    def render_buttons(self, text, align: str = "center"):
+        raw = str(text or "")
+        markup = self.buttons(raw, align=align)
+        if not markup:
+            return raw, ""
+
+        lines = [_BUTTON_ENTRY_RE.sub("", line).rstrip() for line in raw.splitlines()]
+        cleaned = re.sub(r"\n{3,}", "\n\n", "\n".join(lines).strip())
+        return cleaned, markup

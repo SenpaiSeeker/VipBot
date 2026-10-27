@@ -31,20 +31,12 @@ async def rich_message_help_callback(client, callback_query):
         )
 
     table = client.ns.table
-    text_style_rows = [
-        ["Tebal", "`**teks**` atau `__teks__`"],
-        ["Miring", "`*teks*` atau `_teks_`"],
-        ["Coret", "`~~teks~~`"],
-        ["Kode inline", "`` `teks` ``"],
-        ["Mark", "`==teks==`"],
-        ["Link", "`[teks](https://t.me)`"],
-        ["Mention", "`[nama](tg://user?id=123456789)`"],
-        ["Email", "`[email](mailto:user@example.com)`"],
-        ["Telepon", "`[telepon](tel:+123456789)`"],
-        ["Emoji premium", "`![👍](tg://emoji?id=5368324170671202286)`"],
-        ["Waktu", "`![22:45 besok](tg://time?unix=1647531900&format=wDT)`"],
-        ["Rumus inline", "`$x^2 + y^2$`"],
-        ["Rumus blok", "`$$E = mc^2$$`"],
+    rich_message_rows = [
+        ["Input", "Disimpan dari `ask_text_msg.text.markdown`"],
+        ["Teks", "Format dari Telegram otomatis dipertahankan"],
+        ["Blok", "Heading, list, tabel, media, kutipan, footnote, rumus"],
+        ["Tombol", "Gunakan `[[...]]`"],
+        ["Render", "Dikirim sebagai `InputRichMessage(markdown=...)`"],
     ]
 
     block_rows = [
@@ -73,19 +65,18 @@ async def rich_message_help_callback(client, callback_query):
         ["Media", "Hanya URL HTTP/HTTPS dan ditulis sebagai blok terpisah"],
         ["Tabel", "Sel hanya mendukung inline formatting, maksimal 20 kolom"],
         ["Batas", "32.768 karakter, 500 blok, 16 level nesting, 50 media"],
-        ["Tombol", "`[[...]]` adalah shortcut helper `TableBuilder.buttons()`"],
+        ["Tombol", "`[[...]]` otomatis dirender di teks start"],
         [
             "Teks start",
-            "Markdown teks dan blok bisa dipakai di menu Atur Teks Start",
+            "Markdown teks, blok, dan tombol bisa dipakai di menu Atur Teks Start",
         ],
     ]
 
     content = (
-        f"{client.ns.emoji.md('open_book')} **Panduan Format Markdown**\n\n"
-        f"{table.md(['Info', 'Nilai'], [['Format', 'Markdown rich message'], ['Dukungan', 'Heading, list, tabel, media, kutipan, footnote, rumus, dan tombol'], ['Batas', '32.768 karakter, 500 blok, 20 kolom, 50 media']])}\n\n"
-        f"**1. Teks & Gaya**\n\n"
-        f"{table.md(['Format', 'Sintaks'], text_style_rows)}\n\n"
-        f"Spoiler: `||teks||`.\n\n"
+        f"{client.ns.emoji.md('open_book')} **Panduan Rich Message**\n\n"
+        f"{table.md(['Info', 'Nilai'], [['Format', 'Rich message Markdown'], ['Input', '`text.markdown`'], ['Tombol', '`[[...]]`'], ['Batas', '32.768 karakter, 500 blok, 20 kolom, 50 media']])}\n\n"
+        f"**1. Rich Message**\n\n"
+        f"{table.md(['Topik', 'Keterangan'], rich_message_rows)}\n\n"
         f"**2. Blok & Struktur**\n\n"
         f"{table.md(['Blok', 'Sintaks'], block_rows)}\n\n"
         f"Contoh tabel:\n"
