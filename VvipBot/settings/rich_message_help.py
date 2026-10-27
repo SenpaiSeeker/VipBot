@@ -47,8 +47,7 @@ async def rich_message_help_callback(client, callback_query):
         ["Garis pemisah", "`---`"],
         ["Footnote", "`[^1]` dan definisi `[^1]: isi catatan`"],
         ["Media", '`![](https://contoh.com/foto.jpg "Caption")`'],
-        ["Tabel", "Lihat contoh di bawah"],
-        ["Kode blok", "Lihat contoh di bawah"],
+        ["Tabel", "Gunakan template di bawah"],
     ]
 
     button_rows = [
@@ -79,16 +78,13 @@ async def rich_message_help_callback(client, callback_query):
         f"{table.md(['Topik', 'Keterangan'], rich_message_rows)}\n\n"
         f"**2. Blok & Struktur**\n\n"
         f"{table.md(['Blok', 'Sintaks'], block_rows)}\n\n"
-        f"Contoh tabel:\n"
+        f"Template tabel:\n"
         f"```\n"
-        f"| Header 1 | Header 2 |\n"
-        f"|:---------|:--------:|\n"
-        f"| kiri     | tengah   |\n"
+        f"| Header 1 | Header 2 | Header 3 |\n"
+        f"| --- | --- | --- |\n"
+        f"| Isi 1 | Isi 2 | Isi 3 |\n"
         f"```\n\n"
-        f"Contoh kode blok:\n"
-        f"```python\n"
-        f"print('Hello, world!')\n"
-        f"```\n\n"
+        f"Ganti teks Header dan Isi sesuai kebutuhan.\n\n"
         f"**3. Tombol `[[...]]`**\n\n"
         f"{table.md(['Aturan', 'Keterangan'], button_rows)}\n\n"
         f"Contoh tombol:\n"
