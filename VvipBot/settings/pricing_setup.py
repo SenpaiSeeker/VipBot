@@ -5,17 +5,14 @@ import pyrogram
 from pyrogram import filters
 
 from .. import command, ctx, get_bot_cache, is_bot_owner, listen
-from ..core import DEFAULT_START_PHOTO
+from ..core import DEFAULT_START_PHOTO, START_TEMPLATE_VARIABLES
 
 START_TEMPLATE_EXAMPLE = (
-    "{mention} Selamat datang di layanan VVIP!\n\n"
+    "{greeting}, {mention}! Selamat datang di {bot_name}.\n\n"
+    "Hari ini {day}, {date} pukul {time} WIB.\n"
     "Silakan pilih paket melalui tombol di bawah ini.\n"
     "Akses akan dikirim otomatis setelah pembayaran berhasil."
 )
-
-START_TEMPLATE_VARIABLES = [
-    ("{mention}", "Menyapa pengguna dengan nama atau mention Telegram"),
-]
 
 
 @command(
@@ -270,7 +267,7 @@ async def set_start_text_callback(client, callback_query):
             f"{client.ns.table.md(['Variabel', 'Keterangan'], var_rows)}\n\n"
             f"Contoh template:\n"
             f"```\n{START_TEMPLATE_EXAMPLE}\n```\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Format', 'Mendukung Markdown dan emoji premium Telegram'], ['Foto', 'Foto start diatur terpisah melalui menu Atur Foto Start'], ['Hapus', 'Ketik `/empty` untuk kembali ke teks default'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Format', 'Mendukung Markdown dan emoji premium Telegram'], ['Variabel lain', 'Placeholder yang tidak dikenali akan dibiarkan apa adanya'], ['Foto', 'Foto start diatur terpisah melalui menu Atur Foto Start'], ['Hapus', 'Ketik `/empty` untuk kembali ke teks default'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
         )
         ask_text_msg = await client.ask(chat_id, prompt, timeout=600)
 

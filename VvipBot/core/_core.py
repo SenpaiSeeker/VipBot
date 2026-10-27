@@ -1,6 +1,99 @@
+import re
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from .. import *
 
 DEFAULT_START_PHOTO = "https://files.catbox.moe/ozzvtz.jpg"
+START_TIMEZONE = ZoneInfo("Asia/Jakarta")
+_START_PLACEHOLDER_RE = re.compile(r"\{([a-z0-9_]+)\}")
+_DAY_NAMES = {
+    0: "Senin",
+    1: "Selasa",
+    2: "Rabu",
+    3: "Kamis",
+    4: "Jumat",
+    5: "Sabtu",
+    6: "Minggu",
+}
+
+START_TEMPLATE_VARIABLES = [
+    ("{mention}", "Mention pengguna (bisa diklik)"),
+    ("{user_id}", "ID Telegram pengguna"),
+    ("{username}", "Username pengguna (tanpa @)"),
+    ("{first_name}", "Nama depan pengguna"),
+    ("{last_name}", "Nama belakang pengguna"),
+    ("{full_name}", "Nama lengkap pengguna"),
+    ("{language_code}", "Kode bahasa Telegram pengguna"),
+    ("{is_premium}", "Status Telegram Premium pengguna (Ya/Tidak)"),
+    ("{bot_name}", "Nama bot ini"),
+    ("{bot_username}", "Username bot ini (tanpa @)"),
+    ("{bot_mention}", "Mention bot ini (bisa diklik)"),
+    ("{bot_id}", "ID Telegram bot ini"),
+    ("{bot_link}", "Link chat bot ini"),
+    ("{greeting}", "Sapaan sesuai waktu (pagi/siang/sore/malam)"),
+    ("{day}", "Nama hari dalam Bahasa Indonesia"),
+    ("{date}", "Tanggal hari ini (DD-MM-YYYY)"),
+    ("{time}", "Jam saat ini (HH:MM WIB)"),
+    ("{datetime}", "Tanggal dan jam lengkap (WIB)"),
+    ("{timezone}", "Zona waktu (WIB)"),
+    ("{is_owner}", "Apakah pengguna owner bot (Ya/Tidak)"),
+    ("{is_main_bot}", "Apakah bot ini bot utama (Ya/Tidak)"),
+    ("{role}", "Peran pengguna di bot ini"),
+]
+
+
+def _start_greeting(hour):
+    if 4 <= hour < 11:
+        return "Selamat pagi"
+    if 11 <= hour < 15:
+        return "Selamat siang"
+    if 15 <= hour < 18:
+        return "Selamat sore"
+    return "Selamat malam"
+
+
+def render_start_template(template, client, user, is_owner, is_main_bot):
+    now = datetime.now(START_TIMEZONE)
+    first_name = user.first_name or "-"
+    last_name = user.last_name or "-"
+    full_name = (
+        " ".join(part for part in (first_name, last_name) if part != "-") or "-"
+    )
+    bot_username = client.me.username or "-"
+    date_text = now.strftime("%d-%m-%Y")
+    time_text = now.strftime("%H:%M")
+
+    values = {
+        "mention": client.ns.telegram.arg.getMention(user, md=True),
+        "user_id": user.id,
+        "username": user.username or "-",
+        "first_name": first_name,
+        "last_name": last_name,
+        "full_name": full_name,
+        "language_code": getattr(user, "language_code", None) or "-",
+        "is_premium": "Ya" if getattr(user, "is_premium", False) else "Tidak",
+        "bot_name": client.me.first_name or "-",
+        "bot_username": bot_username,
+        "bot_mention": client.ns.telegram.arg.getMention(client.me, md=True),
+        "bot_id": client.me.id,
+        "bot_link": f"https://t.me/{bot_username}" if bot_username != "-" else "-",
+        "greeting": _start_greeting(now.hour),
+        "day": _DAY_NAMES[now.weekday()],
+        "date": date_text,
+        "time": time_text,
+        "datetime": f"{date_text} {time_text} WIB",
+        "timezone": "WIB",
+        "is_owner": "Ya" if is_owner else "Tidak",
+        "is_main_bot": "Ya" if is_main_bot else "Tidak",
+        "role": "Owner" if is_owner else "Pengguna",
+    }
+
+    def replace(match):
+        key = match.group(1)
+        return str(values.get(key, match.group(0)))
+
+    return _START_PLACEHOLDER_RE.sub(replace, str(template or ""))
 
 
 async def get_start_keyboard_and_content(client, user):
@@ -26,8 +119,12 @@ async def get_start_keyboard_and_content(client, user):
     db_photo_id = await ctx.db.getVars(client.me.id, "start_photo_id")
     photo_id = db_photo_id if db_photo_id is not None else None
 
-    welcome_text = main_text_template.replace(
-        "{mention}", client.ns.telegram.arg.getMention(user, md=True)
+    welcome_text = render_start_template(
+        main_text_template,
+        client,
+        user,
+        is_owner,
+        is_main_bot,
     )
 
     layout = []
