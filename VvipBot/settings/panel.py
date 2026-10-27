@@ -32,6 +32,14 @@ async def settings(client, callback_query):
         ],
         [
             {
+                "text": "📘 Format Rich Message",
+                "callback_data": "rich_message_help",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("open_book"),
+            }
+        ],
+        [
+            {
                 "text": "🧾 Atur Notifikasi Pemasukan",
                 "callback_data": "set_income_text",
                 "style": "blue",
@@ -164,6 +172,7 @@ async def settings(client, callback_query):
 
     menu_rows = [
         [f"{client.ns.emoji.md('frame')} Start", "Foto & Teks"],
+        [f"{client.ns.emoji.md('open_book')} Format", "Panduan Rich Message"],
         [f"{client.ns.emoji.md('plus')} VVIP", "Tambah/Hapus/Harga/Icon"],
         [
             f"{client.ns.emoji.md('busts_in_silhouette')} Member",

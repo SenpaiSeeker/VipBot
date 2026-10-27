@@ -7,3 +7,4 @@ from .notification import *
 from .panel import *
 from .pricing_setup import *
 from .revenue import *
+from .rich_message_help import *
