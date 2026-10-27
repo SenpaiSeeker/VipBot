@@ -7,6 +7,16 @@ from pyrogram import filters
 from .. import command, ctx, get_bot_cache, is_bot_owner, listen
 from ..core import DEFAULT_START_PHOTO
 
+START_TEMPLATE_EXAMPLE = (
+    "{mention} Selamat datang di layanan VVIP!\n\n"
+    "Silakan pilih paket melalui tombol di bawah ini.\n"
+    "Akses akan dikirim otomatis setelah pembayaran berhasil."
+)
+
+START_TEMPLATE_VARIABLES = [
+    ("{mention}", "Menyapa pengguna dengan nama atau mention Telegram"),
+]
+
 
 @command(
     lambda ctx: filters.regex("^set_start_photo$"),
@@ -249,9 +259,18 @@ async def set_start_text_callback(client, callback_query):
     back_btn = client.ns.telegram.button.build_button_grid(layout)
 
     try:
+        current = await ctx.db.getVars(client.me.id, "start_text_template")
+        status = "Kustom (aktif)" if current else "Default (bawaan)"
+        var_rows = [[f"`{name}`", desc] for name, desc in START_TEMPLATE_VARIABLES]
+
         prompt = (
             f"{client.ns.emoji.md('writing_hand')} **Atur Teks Start**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Instruksi', 'Silakan kirim teks baru untuk pesan /start'], ['Variabel', 'Gunakan variabel `{{mention}}` untuk menyapa pengguna'], ['Hapus', 'Ketik `/empty` untuk menghapus teks kustom dan kembali ke default'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
+            f"Status saat ini: **{status}**\n\n"
+            f"Kirim teks baru untuk pesan `/start`. Variabel yang tersedia:\n\n"
+            f"{client.ns.table.md(['Variabel', 'Keterangan'], var_rows)}\n\n"
+            f"Contoh template:\n"
+            f"```\n{START_TEMPLATE_EXAMPLE}\n```\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Format', 'Mendukung Markdown dan emoji premium Telegram'], ['Foto', 'Foto start diatur terpisah melalui menu Atur Foto Start'], ['Hapus', 'Ketik `/empty` untuk kembali ke teks default'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
         )
         ask_text_msg = await client.ask(chat_id, prompt, timeout=600)
 
