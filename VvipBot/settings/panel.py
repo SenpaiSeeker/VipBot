@@ -120,7 +120,7 @@ async def settings(client, callback_query):
         ],
         [
             {
-                "text": "🔑 Kelola Kunci API",
+                "text": "💳 Payment Gateway",
                 "callback_data": "api_settings",
                 "style": "blue",
                 "emoji": client.ns.emoji.id("key"),
@@ -180,7 +180,7 @@ async def settings(client, callback_query):
         ],
         [f"{client.ns.emoji.md('mag_right')} Grup", "Status Grup VVIP"],
         [f"{client.ns.emoji.md('loudspeaker')} Broadcast", "Kirim & Harga"],
-        [f"{client.ns.emoji.md('key')} Kunci", "API & Kupon"],
+        [f"{client.ns.emoji.md('key')} Payment", "Gateway, kupon & transaksi"],
         [f"{client.ns.emoji.md('bell')} Notifikasi", "Tempat Notifikasi"],
         [f"{client.ns.emoji.md('money_bag')} Laporan", "Pendapatan & Stars"],
     ]

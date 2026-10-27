@@ -16,7 +16,7 @@ async def api_settings_callback(client, callback_query):
 
     saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
     saweria_status = (
-        f"{client.ns.emoji.md('white_check_mark')} Ativ"
+        f"{client.ns.emoji.md('white_check_mark')} Aktif"
         if saweria_user_id
         else f"{client.ns.emoji.md('cross_mark')} Belum Diatur"
     )
@@ -24,7 +24,7 @@ async def api_settings_callback(client, callback_query):
     layout = [
         [
             {
-                "text": "💳 Atur Kunci Saweria",
+                "text": "💳 Setup Payment",
                 "callback_data": "set_api SAWERIA",
                 "style": "green",
                 "emoji": client.ns.emoji.id("gem"),
@@ -32,7 +32,7 @@ async def api_settings_callback(client, callback_query):
         ],
         [
             {
-                "text": "🗑️ Hapus Semua Kunci",
+                "text": "🗑️ Hapus Payment",
                 "callback_data": "del_api_confirm",
                 "style": "red",
                 "emoji": client.ns.emoji.id("minus"),
@@ -40,7 +40,7 @@ async def api_settings_callback(client, callback_query):
         ],
         [
             {
-                "text": "• Kembali ke Pengaturan •",
+                "text": "• Kembali ke Payment Gateway •",
                 "callback_data": "settings",
                 "style": "blue",
                 "emoji": client.ns.emoji.id("back_arrow"),
@@ -49,16 +49,19 @@ async def api_settings_callback(client, callback_query):
     ]
 
     status_rows = [
-        [
-            "`Gateway Pembayaran (Saweria)`",
-            f"**{saweria_status}**" if saweria_user_id else "Belum Diatur",
-        ],
+        ["Gateway", "Saweria"],
+        ["Status", f"**{saweria_status}**"],
+        ["Metode", "QRIS otomatis"],
+        ["Kredensial", "Username Saweria"],
+        ["Fungsi", "Membuat dan mengecek pembayaran"],
+        ["Setup", "Gunakan tombol Setup Payment"],
+        ["Hapus", "Gunakan tombol Hapus Payment"],
     ]
 
     table = client.ns.table
     text = (
-        f"{client.ns.emoji.md('key')} **Pengelola Kunci API untuk {client.ns.telegram.arg.getMention(client.me, md=True)}**\n\n"
-        f"{table.md(['Layanan', 'Status'], status_rows)}\n\n"
+        f"{client.ns.emoji.md('key')} **Payment Gateway untuk {client.ns.telegram.arg.getMention(client.me, md=True)}**\n\n"
+        f"{table.md(['Informasi', 'Keterangan'], status_rows)}\n\n"
         f"Pilih tindakan:"
     )
     btn = client.ns.telegram.button.build_button_grid(layout)
@@ -84,7 +87,7 @@ async def set_api_key_prompt(client, callback_query):
     layout = [
         [
             {
-                "text": "• Kembali ke Pengaturan API •",
+                "text": "• Kembali ke Payment Gateway •",
                 "callback_data": "api_settings",
                 "style": "blue",
                 "emoji": client.ns.emoji.id("back_arrow"),
@@ -142,7 +145,7 @@ async def set_api_key_prompt(client, callback_query):
                     pyrogram.types.InputRichMessage(
                         markdown=(
                             f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Kunci Saweria berhasil disimpan']])}"
+                            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Payment Saweria berhasil disetup']])}"
                         )
                     ),
                     reply_markup=back_btn,
@@ -153,7 +156,7 @@ async def set_api_key_prompt(client, callback_query):
                     rich_message=pyrogram.types.InputRichMessage(
                         markdown=(
                             f"{client.ns.emoji.md('cross_mark')} **Gagal!**\n\n"
-                            f"{client.ns.table.md(['Info', 'Isi'], [['Status', 'Gagal menyimpan API'], ['Error', f'`{e}`']])}"
+                            f"{client.ns.table.md(['Info', 'Isi'], [['Status', 'Gagal menyimpan payment'], ['Error', f'`{e}`']])}"
                         )
                     ),
                     reply_markup=back_btn,
@@ -194,19 +197,20 @@ async def confirm_delete_api_keys(client, callback_query):
         return
 
     confirm_rows = [
-        ["Tindakan", "Hapus SEMUA kunci API"],
+        ["Tindakan", "Hapus konfigurasi payment"],
         ["Target", "Saweria Gateway"],
+        ["Dampak", "Pembayaran QRIS tidak dapat dibuat"],
     ]
 
     table = client.ns.table
     text = (
-        f"{client.ns.emoji.md('exclamation')} **Konfirmasi**\n\n"
+        f"{client.ns.emoji.md('exclamation')} **Konfirmasi Hapus Payment**\n\n"
         f"{table.md(['Detail', 'Keterangan'], confirm_rows)}"
     )
     layout = [
         [
             {
-                "text": "✅ Ya, Hapus Semua",
+                "text": "✅ Ya, Hapus Payment",
                 "callback_data": "do_del_api",
                 "style": "red",
                 "emoji": client.ns.emoji.id("minus"),
@@ -238,7 +242,7 @@ async def do_delete_api_keys(client, callback_query):
     await ctx.db.removeVars(client.me.id, "SAWERIA_USER_ID")
 
     await callback_query.answer(
-        "Semua kunci API untuk bot ini telah berhasil dihapus.",
+        "Payment untuk bot ini telah berhasil dihapus.",
         show_alert=True,
     )
     await api_settings_callback(client, callback_query)

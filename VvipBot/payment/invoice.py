@@ -137,12 +137,12 @@ async def _create_payment_invoice(
         if await is_bot_owner(client, user.id):
             text = (
                 f"{client.ns.emoji.md('exclamation')} **Layanan Pembayaran Tidak Aktif**\n\n"
-                f"Silakan atur API Key untuk payment gateway terlebih dahulu."
+                f"Silakan setup payment terlebih dahulu."
             )
             layout = [
                 [
                     {
-                        "text": "⚙️ Atur Kunci API",
+                        "text": "⚙️ Setup Payment",
                         "callback_data": "api_settings",
                         "style": "blue",
                         "emoji": client.ns.emoji.id("toolbox"),
@@ -265,12 +265,12 @@ async def _create_pick_vvip_payment_invoice(
         if await is_bot_owner(client, user.id):
             text = (
                 f"{client.ns.emoji.md('exclamation')} **Layanan Pembayaran Tidak Aktif**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Layanan pembayaran tidak aktif'], ['Aksi', 'Silakan atur API Key untuk payment gateway terlebih dahulu']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Layanan pembayaran tidak aktif'], ['Aksi', 'Silakan setup payment terlebih dahulu']])}"
             )
             layout = [
                 [
                     {
-                        "text": "⚙️ Atur Kunci API",
+                        "text": "⚙️ Setup Payment",
                         "callback_data": "api_settings",
                         "style": "blue",
                         "emoji": client.ns.emoji.id("toolbox"),
@@ -418,12 +418,12 @@ async def _create_all_vvip_payment_invoice(
         if await is_bot_owner(client, user.id):
             text = (
                 f"{client.ns.emoji.md('exclamation')} **Layanan Pembayaran Tidak Aktif**\n\n"
-                f"Silakan atur API Key untuk payment gateway terlebih dahulu."
+                f"Silakan setup payment terlebih dahulu."
             )
             layout = [
                 [
                     {
-                        "text": "⚙️ Atur Kunci API",
+                        "text": "⚙️ Setup Payment",
                         "callback_data": "api_settings",
                         "style": "blue",
                         "emoji": client.ns.emoji.id("toolbox"),
