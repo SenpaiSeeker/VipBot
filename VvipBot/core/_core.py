@@ -103,12 +103,76 @@ async def get_start_keyboard_and_content(client, user):
     if is_main_bot:
         _default_text = (
             f"{client.ns.emoji.md('waving')} **Selamat Datang, {{mention}}!**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Peran', 'Asisten utama pembuatan dan pengelolaan Bot VVIP'], ['Navigasi', 'Jelajahi semua fitur melalui tombol di bawah ini']])}"
+            f"{client.ns.table.md(
+                [
+                    f"{client.ns.emoji.md('id_card')} Fitur",
+                    f"{client.ns.emoji.md('open_book')} Keterangan",
+                ],
+                [
+                    [
+                        f"{client.ns.emoji.md('robot')} Peran",
+                        'Asisten utama pembuatan dan pengelolaan Bot VVIP',
+                    ],
+                    [
+                        f"{client.ns.emoji.md('open_folder')} Navigasi",
+                        'Jelajahi semua fitur melalui tombol di bawah ini',
+                    ],
+                    [
+                        f"{client.ns.emoji.md('key')} Akses Owner",
+                        'Panel pengaturan tersedia untuk owner bot',
+                    ],
+                    [
+                        f"{client.ns.emoji.md('money_bag')} Pembayaran",
+                        'QRIS otomatis dan aman melalui Saweria',
+                    ],
+                    [
+                        f"{client.ns.emoji.md('shield')} Keamanan",
+                        'Akses VVIP dikirim otomatis setelah pembayaran',
+                    ],
+                    [
+                        f"{client.ns.emoji.md('rocket')} Mulai",
+                        'Gunakan tombol di bawah untuk membuat atau mengelola bot',
+                    ],
+                ],
+            )}\n\n"
+            f"{client.ns.emoji.md('heart_hands')} **Terima kasih telah menggunakan layanan kami.**"
         )
     else:
         _default_text = (
             f"{client.ns.emoji.md('waving')} **Selamat Datang, {{mention}}!**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Peran', 'Asisten pribadi akses konten eksklusif'], ['Navigasi', 'Jelajahi semua fitur melalui tombol di bawah ini']])}"
+            f"{client.ns.table.md(
+                [
+                    f"{client.ns.emoji.md('id_card')} Fitur",
+                    f"{client.ns.emoji.md('open_book')} Keterangan",
+                ],
+                [
+                    [
+                        f"{client.ns.emoji.md('robot')} Peran",
+                        'Asisten pribadi akses konten eksklusif',
+                    ],
+                    [
+                        f"{client.ns.emoji.md('gem')} Paket",
+                        'Pilih paket VVIP yang tersedia',
+                    ],
+                    [
+                        f"{client.ns.emoji.md('open_folder')} Navigasi",
+                        'Jelajahi semua fitur melalui tombol di bawah ini',
+                    ],
+                    [
+                        f"{client.ns.emoji.md('white_check_mark')} Akses",
+                        'Link undangan dikirim otomatis setelah pembayaran',
+                    ],
+                    [
+                        f"{client.ns.emoji.md('shield')} Keamanan",
+                        'Akses hanya untuk member yang sudah membayar',
+                    ],
+                    [
+                        f"{client.ns.emoji.md('rocket')} Mulai",
+                        'Tekan tombol di bawah untuk melihat daftar VVIP',
+                    ],
+                ],
+            )}\n\n"
+            f"{client.ns.emoji.md('heart_hands')} **Terima kasih telah menggunakan layanan kami.**"
         )
 
     db_text_template = await ctx.db.getVars(client.me.id, "start_text_template")
