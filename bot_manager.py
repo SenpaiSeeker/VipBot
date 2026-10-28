@@ -13,6 +13,9 @@ from VvipBot import ctx
 
 log = LoggerHandler()
 
+START_CONCURRENCY = 3
+START_STAGGER_SECONDS = 0.75
+
 
 class BotManager:
     def __init__(self, db_instance, owner_id):
@@ -100,8 +103,14 @@ class BotManager:
 
     async def start_all_bots(self):
         all_bots_data = await self.db.getBots(is_token=True)
-        tasks = [self.start_bot(bot_data) for bot_data in all_bots_data]
-        await asyncio.gather(*tasks)
+        semaphore = asyncio.Semaphore(START_CONCURRENCY)
+
+        async def start_one(bot_data):
+            async with semaphore:
+                await self.start_bot(bot_data)
+                await asyncio.sleep(START_STAGGER_SECONDS)
+
+        await asyncio.gather(*(start_one(bot_data) for bot_data in all_bots_data))
 
     async def stop_bot(self, bot_id):
         if bot_id in self.running_bots:
