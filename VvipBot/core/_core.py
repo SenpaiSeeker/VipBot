@@ -100,7 +100,8 @@ async def get_start_keyboard_and_content(client, user):
 
     if is_main_bot:
         _default_text = (
-            f"{client.ns.emoji.md('waving')} **Selamat Datang, {{mention}}!**\n\n"
+            f"{client.ns.emoji.md('waving')} **Selamat Datang, "
+            "{mention}!**\n\n"
             f"{client.ns.table.md(
                 [
                     f"{client.ns.emoji.md('id_card')} Fitur",
@@ -137,7 +138,8 @@ async def get_start_keyboard_and_content(client, user):
         )
     else:
         _default_text = (
-            f"{client.ns.emoji.md('waving')} **Selamat Datang, {{mention}}!**\n\n"
+            f"{client.ns.emoji.md('waving')} **Selamat Datang, "
+            "{mention}!**\n\n"
             f"{client.ns.table.md(
                 [
                     f"{client.ns.emoji.md('id_card')} Fitur",
@@ -302,7 +304,7 @@ async def about_bot_callback(client, callback_query):
         f"{client.ns.emoji.md('robot')} **Fungsi Utama Saya**\n\n"
         f"{table.md(['Fitur', 'Keterangan'], [['Pembayaran', 'Otomatis dan aman via QRIS'], ['Akses', 'Instan setelah transaksi berhasil'], ['Konfirmasi', 'Tanpa menunggu konfirmasi manual']])}\n\n"
         f"{client.ns.emoji.md('rocket')} **Alur Penggunaan**\n\n"
-        f"{table.md(['Langkah', 'Tindakan'], [['1', 'Pilih paket — jelajahi daftar VVIP yang tersedia'], ['2', 'Lakukan pembayaran — scan QRIS yang saya berikan'], ['3', 'Akses instan — link undangan terkirim otomatis setelah pembayaran terkonfirmasi']])}"
+        f"{table.md(['Tindakan'], [['Pilih paket — jelajahi daftar VVIP yang tersedia'], ['Lakukan pembayaran — scan QRIS yang saya berikan'], ['Akses instan — link undangan terkirim otomatis setelah pembayaran terkonfirmasi']])}"
     )
 
     layout = [

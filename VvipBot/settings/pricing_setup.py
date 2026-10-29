@@ -477,7 +477,7 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
 
         vvip_data["name"] = validate(
             await ask(
-                f"{client.ns.emoji.md('pencil')} **Langkah 1/8: Nama Kategori**\n\n"
+                f"{client.ns.emoji.md('pencil')} **Nama Kategori**\n\n"
                 f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', '`VVIP Bulanan`']])}"
             ),
             lambda t: True,
@@ -487,7 +487,7 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
         vvip_data["price"] = int(
             validate(
                 await ask(
-                    f"{client.ns.emoji.md('money_bag')} **Langkah 2/8: Harga Normal**\n\n"
+                    f"{client.ns.emoji.md('money_bag')} **Harga Normal**\n\n"
                     f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', '`50000`']])}"
                 ),
                 is_digit,
@@ -498,7 +498,7 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
         vvip_data["duration"] = int(
             validate(
                 await ask(
-                    f"{client.ns.emoji.md('hourglass')} **Langkah 3/8: Durasi Keanggotaan (Hari)**\n\n"
+                    f"{client.ns.emoji.md('hourglass')} **Durasi Keanggotaan (Hari)**\n\n"
                     f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', 'Kirim `0` untuk akses permanen']])}"
                 ),
                 is_digit,
@@ -510,7 +510,7 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
             vvip_data["chat_id_normal"] = int(
                 validate(
                     await ask(
-                        f"{client.ns.emoji.md('id_card')} **Langkah 4/8: Chat ID Grup Normal**\n\n"
+                        f"{client.ns.emoji.md('id_card')} **Chat ID Grup Normal**\n\n"
                         f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', '`-100123456789`']])}"
                     ),
                     is_chatid,
@@ -532,7 +532,7 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
         vvip_data["promo_price"] = int(
             validate(
                 await ask(
-                    f"{client.ns.emoji.md('party_popper')} **Langkah 5/8: Harga Promo**\n\n"
+                    f"{client.ns.emoji.md('party_popper')} **Harga Promo**\n\n"
                     f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', 'Kirim `0` jika tidak ada harga promo']])}"
                 ),
                 is_digit,
@@ -544,7 +544,7 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
             vvip_data["chat_id_promo"] = int(
                 validate(
                     await ask(
-                        f"{client.ns.emoji.md('id_card')} **Langkah 6/8: Chat ID Grup Promo**\n\n"
+                        f"{client.ns.emoji.md('id_card')} **Chat ID Grup Promo**\n\n"
                         f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', 'Diisi jika Harga Promo > 0']])}"
                     ),
                     is_chatid,
@@ -552,9 +552,10 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
                 )
             )
 
+            promo_variables = "Gunakan `{name}` dan `{promo_price}`"
             prompt_promo = (
-                f"{client.ns.emoji.md('pencil')} **Langkah 7/8: Teks Deskripsi Promo**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Variabel', 'Gunakan `{{name}}` dan `{{promo_price}}`'], ['Lewati', 'Ketik `/skip` untuk menggunakan teks default'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
+                f"{client.ns.emoji.md('pencil')} **Teks Deskripsi Promo**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Variabel', promo_variables], ['Lewati', 'Ketik `/skip` untuk menggunakan teks default'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
             )
             promo_text_msg = await client.ask(chat_id, prompt_promo, timeout=600)
 
@@ -569,9 +570,10 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
                 vvip_data["promo_text"],
             ) = (0, "")
 
+        normal_variables = "Gunakan `{name}` dan `{price}`"
         prompt_normal = (
-            f"{client.ns.emoji.md('pencil')} **Langkah 8/8: Teks Deskripsi Normal**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Variabel', 'Gunakan `{{name}}` and `{{price}}`'], ['Lewati', 'Ketik `/skip` untuk menggunakan teks default'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
+            f"{client.ns.emoji.md('pencil')} **Teks Deskripsi Normal**\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], [['Variabel', normal_variables], ['Lewati', 'Ketik `/skip` untuk menggunakan teks default'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
         )
         normal_text_msg = await client.ask(chat_id, prompt_normal, timeout=600)
 
