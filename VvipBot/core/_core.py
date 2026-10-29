@@ -501,20 +501,15 @@ async def donate_callback(client, callback_query):
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
 
-    if callback_query.message.photo:
-        await callback_query.message.delete()
-
     try:
-        await client.send_rich_message(
-            callback_query.from_user.id,
-            client.ns.table.rich_photo(
+        await callback_query.edit_message_text(
+            rich_message=client.ns.table.rich_photo(
                 photo=photo_url, markdown=text, alias="donate_photo"
             ),
             reply_markup=btn,
         )
     except Exception:
-        await client.send_rich_message(
-            callback_query.from_user.id,
+        await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(markdown=text),
             reply_markup=btn,
         )
