@@ -276,20 +276,12 @@ async def start_callback(client, callback_query):
         client, callback_query.from_user
     )
 
-    if photo_id:
-        await callback_query.message.delete()
-        await client.send_rich_message(
-            callback_query.from_user.id,
-            client.ns.table.rich_photo(
-                photo=photo_id, markdown=txt, alias="start_photo"
-            ),
-            reply_markup=btn,
-        )
-    else:
-        await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(markdown=txt),
-            reply_markup=btn,
-        )
+    await callback_query.edit_message_text(
+        rich_message=client.ns.table.rich_photo(
+            photo=photo_id, markdown=txt, alias="start_photo"
+        ),
+        reply_markup=btn,
+    )
 
 
 @command(
