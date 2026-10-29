@@ -441,17 +441,7 @@ async def check_vvip_status_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^setup_listvvip$"),
-    handler_type="callback",
-)
-async def setup_listvvip(client, callback_query):
-    if not await is_bot_owner(client, callback_query.from_user.id):
-        return
-
-    chat_id = callback_query.from_user.id
-    await callback_query.message.delete()
-
+async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
     try:
 
         def ask(text):
@@ -516,16 +506,28 @@ async def setup_listvvip(client, callback_query):
             )
         )
 
-        vvip_data["chat_id_normal"] = int(
-            validate(
-                await ask(
-                    f"{client.ns.emoji.md('id_card')} **Langkah 4/8: Chat ID Grup Normal**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', '`-100123456789`']])}"
-                ),
-                is_chatid,
-                "settings.setup_vvip.err_must_be_chat_id",
+        if preset_chat_id is None:
+            vvip_data["chat_id_normal"] = int(
+                validate(
+                    await ask(
+                        f"{client.ns.emoji.md('id_card')} **Langkah 4/8: Chat ID Grup Normal**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', '`-100123456789`']])}"
+                    ),
+                    is_chatid,
+                    "settings.setup_vvip.err_must_be_chat_id",
+                )
             )
-        )
+        else:
+            vvip_data["chat_id_normal"] = int(preset_chat_id)
+            await client.send_rich_message(
+                chat_id,
+                pyrogram.types.InputRichMessage(
+                    markdown=(
+                        f"{client.ns.emoji.md('id_card')} **Chat ID Grup/Channel Normal**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], [['Chat ID', f'`{preset_chat_id}`'], ['Status', 'Otomatis dari grup/channel yang baru ditambahkan']])}"
+                    )
+                ),
+            )
 
         vvip_data["promo_price"] = int(
             validate(
@@ -611,6 +613,39 @@ async def setup_listvvip(client, callback_query):
                 )
             ),
         )
+
+
+@command(
+    lambda ctx: filters.regex("^setup_listvvip$"),
+    handler_type="callback",
+)
+async def setup_listvvip(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+
+    await callback_query.message.delete()
+    await _run_setup_listvvip(client, callback_query.from_user.id)
+
+
+@command(
+    lambda ctx: filters.regex(r"^setup_listvvip_from_chat\s(-?\d+)$"),
+    handler_type="callback",
+)
+async def setup_listvvip_from_chat(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+
+    try:
+        preset_chat_id = int(callback_query.data.split(maxsplit=1)[1])
+    except (IndexError, ValueError):
+        return await callback_query.answer("Chat ID tidak valid.", show_alert=True)
+
+    await callback_query.message.delete()
+    await _run_setup_listvvip(
+        client,
+        callback_query.from_user.id,
+        preset_chat_id=preset_chat_id,
+    )
 
 
 @command(

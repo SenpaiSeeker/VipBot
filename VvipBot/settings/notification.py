@@ -132,3 +132,41 @@ async def set_notif_chat_callback(client, callback_query):
             ),
             reply_markup=back_btn,
         )
+
+
+@command(
+    lambda ctx: filters.regex(r"^set_notif_payment\s(-?\d+)$"),
+    handler_type="callback",
+)
+async def set_notif_payment_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+
+    try:
+        chat_target = int(callback_query.data.split(maxsplit=1)[1])
+    except (IndexError, ValueError):
+        return await callback_query.answer("Chat ID tidak valid.", show_alert=True)
+
+    await ctx.db.setVars(client.me.id, "notif_chat_id", chat_target)
+
+    layout = [
+        [
+            {
+                "text": "• Kembali ke Pengaturan •",
+                "callback_data": "settings",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("back_arrow"),
+            }
+        ]
+    ]
+    back_btn = client.ns.telegram.button.build_button_grid(layout)
+
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(
+            markdown=(
+                f"{client.ns.emoji.md('white_check_mark')} **Notifikasi Payment Diaktifkan**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Semua notifikasi payment dialihkan ke chat tujuan'], ['Chat ID', f'`{chat_target}`']])}"
+            )
+        ),
+        reply_markup=back_btn,
+    )

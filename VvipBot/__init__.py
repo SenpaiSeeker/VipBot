@@ -248,6 +248,7 @@ def register_all_handlers(
     HANDLER_MAP = {
         "message": pyrogram.handlers.MessageHandler,
         "callback": pyrogram.handlers.CallbackQueryHandler,
+        "chat_member": pyrogram.handlers.ChatMemberUpdatedHandler,
         "pre_checkout": pyrogram.handlers.PreCheckoutQueryHandler,
     }
     for func, filter_lambda, handler_type in ALL_HANDLERS:

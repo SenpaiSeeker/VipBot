@@ -1,5 +1,6 @@
 from .api import *
 from .broadcast import *
+from .chat_added import *
 from .coupons import *
 from .income_notif import *
 from .listvvip_emoji import *
