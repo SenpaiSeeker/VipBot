@@ -1,16 +1,13 @@
+from helpers.modules import Modules
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import pyrogram
 from pyrogram import filters
 
-from .. import command, ctx, is_bot_owner
+from .. import is_bot_owner
 
 
-@command(
-    lambda ctx: filters.regex("^vip_revenue_menu$"),
-    handler_type="callback",
-)
 async def vip_revenue_menu_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -67,17 +64,13 @@ async def vip_revenue_menu_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^show_revenue_(daily|weekly|monthly)$"),
-    handler_type="callback",
-)
 async def show_vip_revenue_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
     period = callback_query.matches[0].group(1)
     revenue_history = (
-        await ctx.db.getListVars(client.me.id, "vip_revenue_history") or []
+        await client.db.getListVars(client.me.id, "vip_revenue_history") or []
     )
 
     now = datetime.now(ZoneInfo("Asia/Jakarta"))
@@ -144,3 +137,14 @@ async def show_vip_revenue_callback(client, callback_query):
         rich_message=pyrogram.types.InputRichMessage(markdown=text),
         reply_markup=btn,
     )
+
+
+class SettingsRevenue(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^vip_revenue_menu$"))(
+            self.handle(vip_revenue_menu_callback)
+        )
+        self.client.on_callback_query(
+            filters.regex("^show_revenue_(daily|weekly|monthly)$")
+        )(self.handle(show_vip_revenue_callback))

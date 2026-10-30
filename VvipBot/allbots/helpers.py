@@ -27,7 +27,7 @@ async def _resolve_owner_text(client, owner_id: int) -> str:
 
 
 async def _build_page(client, page: int) -> dict:
-    all_bots = await ctx.db.getBots(is_token=True)
+    all_bots = await client.db.getBots(is_token=True)
     if not all_bots:
         return {"empty": True}
 
@@ -42,7 +42,7 @@ async def _build_page(client, page: int) -> dict:
             bot_id = int(bot_data["name"])
         except (KeyError, TypeError, ValueError):
             continue
-        owner_ids[bot_id] = await ctx.db.getVars(bot_id, "owner_id")
+        owner_ids[bot_id] = await client.db.getVars(bot_id, "owner_id")
 
     unique_uncached = {
         oid for oid in owner_ids.values() if oid and _user_cache.get(oid) is None
@@ -68,7 +68,7 @@ async def _build_page(client, page: int) -> dict:
             continue
         bot_username = "Offline"
         try:
-            bot_instance = ctx.manager.running_bots.get(bot_id)
+            bot_instance = client.manager.running_bots.get(bot_id)
             if bot_instance and bot_instance.is_connected:
                 bot_username = (
                     f"@{bot_instance.me.username}"
@@ -81,7 +81,7 @@ async def _build_page(client, page: int) -> dict:
         owner_id = owner_ids.get(bot_id)
         owner_text = await _resolve_owner_text(client, owner_id)
 
-        exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
+        exp_date_str = await client.db.getVars(bot_id, "bot_expiration_date")
         try:
             exp_date = parse_dt(exp_date_str)
             days_left = (
@@ -172,11 +172,7 @@ async def send_allbots_list(
     now = time()
     cached_entry = _page_cache.get(cache_key)
 
-    if (
-        force_refresh
-        or cached_entry is None
-        or now - cached_entry[0] > _PAGE_CACHE_TTL
-    ):
+    if force_refresh or cached_entry is None or now - cached_entry[0] > _PAGE_CACHE_TTL:
         cached_entry = (now, await _build_page(client, page))
         _page_cache[cache_key] = cached_entry
 

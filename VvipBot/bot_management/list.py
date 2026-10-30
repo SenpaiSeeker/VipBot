@@ -1,3 +1,4 @@
+from helpers.modules import Modules
 from datetime import datetime, timezone
 
 import pyrogram
@@ -5,22 +6,16 @@ from pyrogram import filters
 
 from helpers import parse_dt
 
-from .. import command, ctx
 
-
-@command(
-    lambda ctx: filters.regex("^list_my_bots(_\\d+)?$"),
-    handler_type="callback",
-)
 async def list_my_bots_callback(client, callback_query):
     user_id = callback_query.from_user.id
     my_bots = []
-    all_bots_data = await ctx.db.getBots(is_token=True)
+    all_bots_data = await client.db.getBots(is_token=True)
 
     for b in all_bots_data:
         try:
             bot_id = int(b["name"])
-            owner = await ctx.db.getVars(bot_id, "owner_id")
+            owner = await client.db.getVars(bot_id, "owner_id")
         except Exception:
             continue
 
@@ -46,14 +41,14 @@ async def list_my_bots_callback(client, callback_query):
     bot_username = "N/A"
 
     try:
-        bot_instance = ctx.manager.running_bots.get(bot_id)
+        bot_instance = client.manager.running_bots.get(bot_id)
         if bot_instance and bot_instance.is_connected:
             bot_name = bot_instance.me.first_name
             bot_username = bot_instance.me.username
     except Exception:
         bot_name = f"ID {bot_id} (Error)"
 
-    exp_date = parse_dt(await ctx.db.getVars(bot_id, "bot_expiration_date"))
+    exp_date = parse_dt(await client.db.getVars(bot_id, "bot_expiration_date"))
     days_left = (exp_date - datetime.now(timezone.utc)).days if exp_date else "N/A"
 
     bot_rows = [
@@ -125,28 +120,26 @@ async def list_my_bots_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^manage_bot\\s(\\d+)"),
-    handler_type="callback",
-)
 async def manage_bot_callback(client, callback_query):
     bot_id_to_manage = int(callback_query.data.split(" ", 1)[1])
     user_id = callback_query.from_user.id
-    owner_of_target_bot = await ctx.db.getVars(bot_id_to_manage, "owner_id") or 0
+    owner_of_target_bot = await client.db.getVars(bot_id_to_manage, "owner_id") or 0
 
-    if user_id != owner_of_target_bot and user_id != ctx.owner_id:
+    if user_id != owner_of_target_bot and user_id != client.owner_id:
         return await callback_query.answer("Ini bukan bot milik Anda.", show_alert=True)
 
     bot_name = f"ID {bot_id_to_manage}"
 
     try:
-        bot_instance = ctx.manager.running_bots.get(bot_id_to_manage)
+        bot_instance = client.manager.running_bots.get(bot_id_to_manage)
         if bot_instance and bot_instance.is_connected:
             bot_name = bot_instance.me.first_name
     except Exception:
         pass
 
-    exp_date = parse_dt(await ctx.db.getVars(bot_id_to_manage, "bot_expiration_date"))
+    exp_date = parse_dt(
+        await client.db.getVars(bot_id_to_manage, "bot_expiration_date")
+    )
     days_left_text = "Tidak diatur"
 
     if exp_date:
@@ -198,3 +191,14 @@ async def manage_bot_callback(client, callback_query):
         rich_message=pyrogram.types.InputRichMessage(markdown=text),
         reply_markup=btn,
     )
+
+
+class BotList(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^list_my_bots(_\\d+)?$"))(
+            self.handle(list_my_bots_callback)
+        )
+        self.client.on_callback_query(filters.regex("^manage_bot\\s(\\d+)"))(
+            self.handle(manage_bot_callback)
+        )

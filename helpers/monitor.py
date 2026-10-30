@@ -6,9 +6,14 @@ from types import SimpleNamespace
 
 import psutil
 
+from .patcher import Object
 
-class ServerMonitor:
-    def __init__(self):
+
+class ServerMonitor(Object):
+    _ns_alias = "monitor"
+
+    def __init__(self, client=None):
+        super().__init__(client)
         self.boot_time = psutil.boot_time()
 
     def _create_progress_bar(self, percentage: float, length: int = 10) -> str:

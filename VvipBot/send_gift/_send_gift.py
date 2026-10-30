@@ -1,3 +1,4 @@
+from helpers.modules import Modules
 import asyncio
 
 import aiofiles.os
@@ -5,7 +6,7 @@ import pyrogram
 from pyrogram import filters
 from pyrogram.raw import functions, types
 
-from .. import command, is_bot_owner
+from .. import is_bot_owner
 
 
 async def send_star_gift_raw(client, user_id: int, gift_id: int):
@@ -21,7 +22,6 @@ async def send_star_gift_raw(client, user_id: int, gift_id: int):
     return result
 
 
-@command(lambda ctx: filters.command("gift") & filters.private)
 async def send_gift_handler(client, message):
     if not await is_bot_owner(client, message.from_user.id):
         return
@@ -110,7 +110,6 @@ async def send_gift_handler(client, message):
         )
 
 
-@command(lambda ctx: filters.command("listgift") & filters.private)
 async def list_gift_handler(client, message):
     if not await is_bot_owner(client, message.from_user.id):
         return
@@ -211,10 +210,6 @@ async def list_gift_handler(client, message):
         )
 
 
-@command(
-    lambda ctx: filters.regex("^gift_claim_self_(\\d+)"),
-    handler_type="callback",
-)
 async def claim_self_gift_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return await callback_query.answer(
@@ -241,10 +236,6 @@ async def claim_self_gift_callback(client, callback_query):
         )
 
 
-@command(
-    lambda ctx: filters.regex("^gift_send_ask_(\\d+)"),
-    handler_type="callback",
-)
 async def ask_send_gift_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return await callback_query.answer(
@@ -331,4 +322,21 @@ async def ask_send_gift_callback(client, callback_query):
                     f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal mengirim hadiah'], ['Error', f'`{e}`']])}"
                 )
             ),
+        )
+
+
+class SendGift(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_message(filters.command("gift") & filters.private)(
+            self.handle(send_gift_handler)
+        )
+        self.client.on_message(filters.command("listgift") & filters.private)(
+            self.handle(list_gift_handler)
+        )
+        self.client.on_callback_query(filters.regex("^gift_claim_self_(\\d+)"))(
+            self.handle(claim_self_gift_callback)
+        )
+        self.client.on_callback_query(filters.regex("^gift_send_ask_(\\d+)"))(
+            self.handle(ask_send_gift_callback)
         )

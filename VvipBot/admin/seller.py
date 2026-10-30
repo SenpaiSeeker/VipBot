@@ -1,3 +1,4 @@
+from helpers.modules import Modules
 import pyrogram
 
 from helpers import parse_dt
@@ -5,7 +6,6 @@ from helpers import parse_dt
 from .. import *
 
 
-@command(lambda ctx: filters.command("akses"))
 @seller_only
 async def access_command_handler(client, message):
     user_id_target, _ = await client.ns.telegram.arg.getReasonAndId(message)
@@ -21,7 +21,7 @@ async def access_command_handler(client, message):
     try:
         target_user = await client.get_users(user_id_target)
         has_access = False
-        expiry = parse_dt(await ctx.db.getVars(target_user.id, "user_expiry_date"))
+        expiry = parse_dt(await client.db.getVars(target_user.id, "user_expiry_date"))
         if expiry and expiry > datetime.now(timezone.utc):
             has_access = True
         status_text = (
@@ -69,7 +69,6 @@ async def access_command_handler(client, message):
         )
 
 
-@command(lambda ctx: filters.regex("^give_access_(\\d+)"), handler_type="callback")
 @seller_only
 async def give_access_callback(client, callback_query):
     target_id = int(callback_query.data.split("_")[-1])
@@ -104,7 +103,6 @@ async def give_access_callback(client, callback_query):
     )
 
 
-@command(lambda ctx: filters.regex("^do_give_(\\d+)_(\\d+)"), handler_type="callback")
 @seller_only
 async def do_give_access_callback(client, callback_query):
     _, _, target_id_str, months_str = callback_query.data.split("_")
@@ -120,11 +118,13 @@ async def do_give_access_callback(client, callback_query):
     try:
         target_user = await client.get_users(target_id)
         current_expiry = parse_dt(
-            await ctx.db.getVars(target_id, "user_expiry_date")
+            await client.db.getVars(target_id, "user_expiry_date")
         ) or datetime.now(timezone.utc)
         start_date = max(current_expiry, datetime.now(timezone.utc))
         new_expiry_date = start_date + timedelta(days=30 * months_to_add)
-        await ctx.db.setVars(target_id, "user_expiry_date", new_expiry_date.isoformat())
+        await client.db.setVars(
+            target_id, "user_expiry_date", new_expiry_date.isoformat()
+        )
         expiry_in_jakarta = new_expiry_date.astimezone(ZoneInfo("Asia/Jakarta"))
 
         mention_str = client.ns.telegram.arg.getMention(target_user, md=True)
@@ -144,14 +144,13 @@ async def do_give_access_callback(client, callback_query):
         await callback_query.answer(f"Gagal memproses. Error: `{e}`", show_alert=True)
 
 
-@command(lambda ctx: filters.regex("^revoke_access_(\\d+)"), handler_type="callback")
 @seller_only
 async def revoke_access_callback(client, callback_query):
     target_id = int(callback_query.data.split("_")[-1])
     try:
         target_user = await client.get_users(target_id)
         mention = client.ns.telegram.arg.getMention(target_user, md=True)
-        await ctx.db.removeVars(target_id, "user_expiry_date")
+        await client.db.removeVars(target_id, "user_expiry_date")
         await callback_query.answer(
             "<emoji id=6298671811345254603>❌</emoji> Akses berhasil dicabut dari {target_id}".format(
                 target_id=target_id
@@ -167,7 +166,6 @@ async def revoke_access_callback(client, callback_query):
         await callback_query.answer(f"Gagal memproses. Error: `{e}`", show_alert=True)
 
 
-@command(lambda ctx: filters.command("addseller") & filters.user(ctx.owner_id))
 async def add_seller_handler(client, message):
     user_id_target, _ = await client.ns.telegram.arg.getReasonAndId(message)
     if not user_id_target:
@@ -181,7 +179,9 @@ async def add_seller_handler(client, message):
         )
     try:
         target_user = await client.get_users(user_id_target)
-        seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
+        seller_list = (
+            await client.db.getListVars(client.owner_id, "seller_id_list") or []
+        )
         if target_user.id in seller_list:
             return await message.reply_rich(
                 pyrogram.types.InputRichMessage(
@@ -191,7 +191,7 @@ async def add_seller_handler(client, message):
                     )
                 )
             )
-        await ctx.db.setListVars(ctx.owner_id, "seller_id_list", target_user.id)
+        await client.db.setListVars(client.owner_id, "seller_id_list", target_user.id)
         user_mention = client.ns.telegram.arg.getMention(target_user, md=True)
         await message.reply_rich(
             pyrogram.types.InputRichMessage(
@@ -212,9 +212,8 @@ async def add_seller_handler(client, message):
         )
 
 
-@command(lambda ctx: filters.command("listseller") & filters.user(ctx.owner_id))
 async def list_seller_handler(client, message):
-    seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
+    seller_list = await client.db.getListVars(client.owner_id, "seller_id_list") or []
     if not seller_list:
         empty_rows = [
             ["Jumlah Seller", "`0`"],
@@ -257,17 +256,16 @@ async def list_seller_handler(client, message):
     )
 
 
-@command(lambda ctx: filters.regex("^del_sell_(\\d+)"), handler_type="callback")
 async def delete_seller_callback(client, callback_query):
-    if callback_query.from_user.id != ctx.owner_id:
+    if callback_query.from_user.id != client.owner_id:
         return
     target_id = int(callback_query.matches[0].group(1))
-    await ctx.db.removeListVars(ctx.owner_id, "seller_id_list", target_id)
+    await client.db.removeListVars(client.owner_id, "seller_id_list", target_id)
     await callback_query.answer(
         "Seller `{user_id}` berhasil dihapus.".format(user_id=target_id),
         show_alert=True,
     )
-    seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
+    seller_list = await client.db.getListVars(client.owner_id, "seller_id_list") or []
     if not seller_list:
         empty_rows = [
             ["Jumlah Seller", "`0`"],
@@ -311,13 +309,12 @@ async def delete_seller_callback(client, callback_query):
     )
 
 
-@command(lambda ctx: filters.command("listakses") & filters.user(ctx.owner_id))
 async def list_akses_handler(client, message):
-    user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
+    user_ids = await client.db.getListVars(client.me.id, "user_ids") or []
     now = datetime.now(timezone.utc)
     access_users = []
     for uid in user_ids:
-        expiry = parse_dt(await ctx.db.getVars(uid, "user_expiry_date"))
+        expiry = parse_dt(await client.db.getVars(uid, "user_expiry_date"))
         if expiry and expiry > now:
             access_users.append(uid)
     if not access_users:
@@ -362,21 +359,20 @@ async def list_akses_handler(client, message):
     )
 
 
-@command(lambda ctx: filters.regex("^del_acc_(\\d+)"), handler_type="callback")
 async def delete_access_callback(client, callback_query):
-    if callback_query.from_user.id != ctx.owner_id:
+    if callback_query.from_user.id != client.owner_id:
         return
     target_id = int(callback_query.matches[0].group(1))
-    await ctx.db.removeVars(target_id, "user_expiry_date")
+    await client.db.removeVars(target_id, "user_expiry_date")
     await callback_query.answer(
         "Akses untuk `{user_id}` telah dicabut.".format(user_id=target_id),
         show_alert=True,
     )
-    user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
+    user_ids = await client.db.getListVars(client.me.id, "user_ids") or []
     now = datetime.now(timezone.utc)
     access_users = []
     for uid in user_ids:
-        expiry = parse_dt(await ctx.db.getVars(uid, "user_expiry_date"))
+        expiry = parse_dt(await client.db.getVars(uid, "user_expiry_date"))
         if expiry and expiry > now:
             access_users.append(uid)
     if not access_users:
@@ -420,3 +416,35 @@ async def delete_access_callback(client, callback_query):
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(markdown=text), reply_markup=btn
     )
+
+
+class AdminSeller(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_message(filters.command("akses"))(
+            self.handle(access_command_handler)
+        )
+        self.client.on_callback_query(filters.regex("^give_access_(\\d+)"))(
+            self.handle(give_access_callback)
+        )
+        self.client.on_callback_query(filters.regex("^do_give_(\\d+)_(\\d+)"))(
+            self.handle(do_give_access_callback)
+        )
+        self.client.on_callback_query(filters.regex("^revoke_access_(\\d+)"))(
+            self.handle(revoke_access_callback)
+        )
+        self.client.on_message(
+            filters.command("addseller") & filters.user(self.client.owner_id)
+        )(self.handle(add_seller_handler))
+        self.client.on_message(
+            filters.command("listseller") & filters.user(self.client.owner_id)
+        )(self.handle(list_seller_handler))
+        self.client.on_callback_query(filters.regex("^del_sell_(\\d+)"))(
+            self.handle(delete_seller_callback)
+        )
+        self.client.on_message(
+            filters.command("listakses") & filters.user(self.client.owner_id)
+        )(self.handle(list_akses_handler))
+        self.client.on_callback_query(filters.regex("^del_acc_(\\d+)"))(
+            self.handle(delete_access_callback)
+        )

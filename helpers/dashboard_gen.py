@@ -7,10 +7,17 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from .patcher import Object
+
 executor = ThreadPoolExecutor(max_workers=4)
 
 
-class DashboardGenerator:
+class DashboardGenerator(Object):
+    _ns_alias = "dashboard"
+
+    def __init__(self, client=None):
+        super().__init__(client)
+
     def _sync_generate_dashboard(self, stats_data):
         fig, ax = plt.subplots(figsize=(8, 6))
         fig.patch.set_facecolor("black")

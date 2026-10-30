@@ -5,11 +5,14 @@ import sys
 import zoneinfo
 
 from .colorize import AnsiColors
+from .patcher import Object
 
 
-class LoggerHandler(AnsiColors):
-    def __init__(self, **options):
-        super().__init__()
+class LoggerHandler(Object, AnsiColors):
+    _ns_alias = "log"
+
+    def __init__(self, client=None, **options):
+        super().__init__(client)
         self.tz = zoneinfo.ZoneInfo(options.get("tz", "Asia/Jakarta"))
         self.fmt = options.get(
             "fmt",

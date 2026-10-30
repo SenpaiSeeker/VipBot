@@ -1,15 +1,12 @@
+from helpers.modules import Modules
 import asyncio
 
 import pyrogram
 from pyrogram import filters
 
-from .. import command, ctx, is_bot_owner, listen
+from .. import is_bot_owner, listen
 
 
-@command(
-    lambda ctx: filters.regex("^set_broadcast_price$"),
-    handler_type="callback",
-)
 async def set_broadcast_price_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -42,7 +39,7 @@ async def set_broadcast_price_callback(client, callback_query):
             if ask_msg.text.lower() == "/batal":
                 raise listen.UserCancelled
             if ask_msg.text.lower() in ["/empty", "0"]:
-                await ctx.db.removeVars(client.me.id, "broadcast_price")
+                await client.db.removeVars(client.me.id, "broadcast_price")
 
                 return await client.send_rich_message(
                     chat_id,
@@ -59,7 +56,7 @@ async def set_broadcast_price_callback(client, callback_query):
             raise ValueError("**Format Salah**")
 
         stars_amount = int(ask_msg.text)
-        await ctx.db.setVars(client.me.id, "broadcast_price", stars_amount)
+        await client.db.setVars(client.me.id, "broadcast_price", stars_amount)
 
         await client.send_rich_message(
             chat_id,
@@ -130,10 +127,6 @@ async def _send_broadcast_message(
     )
 
 
-@command(
-    lambda ctx: filters.regex("^broadcast$"),
-    handler_type="callback",
-)
 async def broadcast_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return await callback_query.answer(
@@ -144,9 +137,9 @@ async def broadcast_callback(client, callback_query):
     chat_id = callback_query.message.chat.id
     bot_id = client.me.id
 
-    if not hasattr(ctx, "broadcast_stop"):
-        ctx.broadcast_stop = {}
-    ctx.broadcast_stop[bot_id] = False
+    if not hasattr(client, "broadcast_stop"):
+        client.broadcast_stop = {}
+    client.broadcast_stop[bot_id] = False
 
     try:
         await callback_query.message.delete()
@@ -159,7 +152,7 @@ async def broadcast_callback(client, callback_query):
         if ask_message.text and ask_message.text.lower() == "/batal":
             raise listen.UserCancelled
 
-        broadcast_price = await ctx.db.getVars(bot_id, "broadcast_price") or 0
+        broadcast_price = await client.db.getVars(bot_id, "broadcast_price") or 0
         broadcast_price = int(broadcast_price)
 
         if broadcast_price > 0 and (not (ask_message.photo or ask_message.video)):
@@ -167,7 +160,7 @@ async def broadcast_callback(client, callback_query):
                 f"{client.ns.emoji.md('cross_mark')} **Gagal:** Paid Broadcast memerlukan media foto/video!"
             )
 
-        user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
+        user_ids = await client.db.getListVars(client.me.id, "user_ids") or []
         if not user_ids:
             empty_rows = [
                 ["Jumlah Pengguna", "`0`"],
@@ -219,10 +212,9 @@ async def broadcast_callback(client, callback_query):
 
         async def send_to_user(target_user_id):
             nonlocal success_count, fail_count, should_stop
-            from .. import ctx
 
             while True:
-                if getattr(ctx, "broadcast_stop", {}).get(client.me.id):
+                if getattr(client, "broadcast_stop", {}).get(client.me.id):
                     should_stop = True
                     return
 
@@ -239,7 +231,7 @@ async def broadcast_callback(client, callback_query):
                     await asyncio.sleep(e.value + 1)
                     continue
                 except permanent_errors:
-                    await ctx.db.removeListVars(
+                    await client.db.removeListVars(
                         client.me.id,
                         "user_ids",
                         target_user_id,
@@ -255,7 +247,7 @@ async def broadcast_callback(client, callback_query):
         for user_id in user_ids:
             if should_stop:
                 break
-            if user_id != ctx.owner_id:
+            if user_id != client.owner_id:
                 await send_to_user(user_id)
 
         await progress_msg.delete()
@@ -285,10 +277,6 @@ async def broadcast_callback(client, callback_query):
         )
 
 
-@command(
-    lambda ctx: filters.regex("^broadcast_cancel_"),
-    handler_type="callback",
-)
 async def broadcast_cancel_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return await callback_query.answer("🚫 Akses ditolak", show_alert=True)
@@ -296,8 +284,21 @@ async def broadcast_cancel_callback(client, callback_query):
     await callback_query.answer(
         "Siaran akan dihentikan setelah pengiriman saat ini...", show_alert=False
     )
-    from .. import ctx
 
-    if not hasattr(ctx, "broadcast_stop"):
-        ctx.broadcast_stop = {}
-    ctx.broadcast_stop[client.me.id] = True
+    if not hasattr(client, "broadcast_stop"):
+        client.broadcast_stop = {}
+    client.broadcast_stop[client.me.id] = True
+
+
+class SettingsBroadcast(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^set_broadcast_price$"))(
+            self.handle(set_broadcast_price_callback)
+        )
+        self.client.on_callback_query(filters.regex("^broadcast$"))(
+            self.handle(broadcast_callback)
+        )
+        self.client.on_callback_query(filters.regex("^broadcast_cancel_"))(
+            self.handle(broadcast_cancel_callback)
+        )

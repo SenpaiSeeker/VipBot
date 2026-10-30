@@ -1,16 +1,13 @@
+from helpers.modules import Modules
 import pyrogram
 
 from .. import *
 
 
-@command(
-    lambda ctx: filters.regex("^list_members_(\\-?\\d+)$"),
-    handler_type="callback",
-)
 async def list_members_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    all_members = await ctx.db.getListVars(client.me.id, "vvip_members") or []
+    all_members = await client.db.getListVars(client.me.id, "vvip_members") or []
     members_list = [member for member in all_members if not member.get("hidden")]
     back_row = [
         {
@@ -65,7 +62,7 @@ async def list_members_callback(client, callback_query):
             rich_message=pyrogram.types.InputRichMessage(markdown=text_error),
             reply_markup=btn_back,
         )
-        await ctx.db.removeListVars(client.me.id, "vvip_members", member_data)
+        await client.db.removeListVars(client.me.id, "vvip_members", member_data)
         return
     join_dt_utc = datetime.fromisoformat(join_date_iso)
     expiry_date_str = "Permanen"
@@ -133,10 +130,6 @@ async def list_members_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^kick_(\\d+)_(.+)"),
-    handler_type="callback",
-)
 async def confirm_kick_member_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -173,17 +166,13 @@ async def confirm_kick_member_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^do_kick_(\\d+)_(.+)"),
-    handler_type="callback",
-)
 async def do_kick_member_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
     match = callback_query.matches[0]
     user_id = int(match.group(1))
     vvip_name = match.group(2)
-    members_list = await ctx.db.getListVars(client.me.id, "vvip_members") or []
+    members_list = await client.db.getListVars(client.me.id, "vvip_members") or []
     record_to_remove = next(
         (
             r
@@ -222,7 +211,7 @@ async def do_kick_member_callback(client, callback_query):
         await client.ban_chat_member(chat_id_kick, user_id)
         await asyncio.sleep(1)
         await client.unban_chat_member(chat_id_kick, user_id)
-        await ctx.db.removeListVars(client.me.id, "vvip_members", record_to_remove)
+        await client.db.removeListVars(client.me.id, "vvip_members", record_to_remove)
         user_to_kick = await client.get_users(user_id)
         layout = [
             [
@@ -257,17 +246,13 @@ async def do_kick_member_callback(client, callback_query):
         )
 
 
-@command(
-    lambda ctx: filters.regex("^check_active_menu"),
-    handler_type="callback",
-)
 async def check_active_menu_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
-    members_cache = get_bot_cache("ACTIVE_MEMBERS_CACHE", client.me.id)
+    members_cache = get_bot_cache(client, "ACTIVE_MEMBERS_CACHE")
     if "init" in callback_query.data:
         members_cache.clear()
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
     layout = []
     button_row = []
     for item in vvip_list:
@@ -336,10 +321,6 @@ async def check_active_menu_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^list_active_(\\-?\\d+)_(\\-?\\d+)"),
-    handler_type="callback",
-)
 async def list_active_members_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -348,7 +329,7 @@ async def list_active_members_callback(client, callback_query):
         chat_id, page = (int(chat_id_str), int(page_str))
     except Exception:
         return await callback_query.answer("Data callback tidak valid.")
-    members_cache = get_bot_cache("ACTIVE_MEMBERS_CACHE", client.me.id)
+    members_cache = get_bot_cache(client, "ACTIVE_MEMBERS_CACHE")
     if chat_id not in members_cache:
         try:
             await callback_query.answer(
@@ -454,10 +435,6 @@ async def list_active_members_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^kick_active_(\\-?\\d+)_(\\d+)_(\\-?\\d+)"),
-    handler_type="callback",
-)
 async def confirm_kick_active_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -492,10 +469,6 @@ async def confirm_kick_active_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^do_kick_active_(\\-?\\d+)_(\\d+)"),
-    handler_type="callback",
-)
 async def do_kick_active_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -515,7 +488,7 @@ async def do_kick_active_callback(client, callback_query):
         )
         await client.ban_chat_member(chat_id, user_id)
         await client.unban_chat_member(chat_id, user_id)
-        members_list = await ctx.db.getListVars(client.me.id, "vvip_members") or []
+        members_list = await client.db.getListVars(client.me.id, "vvip_members") or []
         record_to_remove = next(
             (
                 r
@@ -525,12 +498,12 @@ async def do_kick_active_callback(client, callback_query):
             None,
         )
         if record_to_remove:
-            await ctx.db.removeListVars(
+            await client.db.removeListVars(
                 client.me.id,
                 "vvip_members",
                 record_to_remove,
             )
-        members_cache = get_bot_cache("ACTIVE_MEMBERS_CACHE", client.me.id)
+        members_cache = get_bot_cache(client, "ACTIVE_MEMBERS_CACHE")
         if chat_id in members_cache:
             members_cache[chat_id] = [
                 m for m in members_cache[chat_id] if m.user.id != user_id
@@ -566,3 +539,29 @@ async def do_kick_active_callback(client, callback_query):
                 )
             )
         )
+
+
+class MemberManager(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^list_members_(\\-?\\d+)$"))(
+            self.handle(list_members_callback)
+        )
+        self.client.on_callback_query(filters.regex("^kick_(\\d+)_(.+)"))(
+            self.handle(confirm_kick_member_callback)
+        )
+        self.client.on_callback_query(filters.regex("^do_kick_(\\d+)_(.+)"))(
+            self.handle(do_kick_member_callback)
+        )
+        self.client.on_callback_query(filters.regex("^check_active_menu"))(
+            self.handle(check_active_menu_callback)
+        )
+        self.client.on_callback_query(
+            filters.regex("^list_active_(\\-?\\d+)_(\\-?\\d+)")
+        )(self.handle(list_active_members_callback))
+        self.client.on_callback_query(
+            filters.regex("^kick_active_(\\-?\\d+)_(\\d+)_(\\-?\\d+)")
+        )(self.handle(confirm_kick_active_callback))
+        self.client.on_callback_query(
+            filters.regex("^do_kick_active_(\\-?\\d+)_(\\d+)")
+        )(self.handle(do_kick_active_callback))

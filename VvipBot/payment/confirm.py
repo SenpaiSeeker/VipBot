@@ -1,3 +1,4 @@
+from helpers.modules import Modules
 import asyncio
 from datetime import datetime, timedelta, timezone
 from weakref import WeakValueDictionary
@@ -9,14 +10,7 @@ from pyrogram import filters
 from helpers import parse_dt
 from helpers.income_template import render_income_template
 
-from .. import (
-    command,
-    ctx,
-    get_member_lock,
-    get_notification_target,
-    get_sales_count,
-    is_bot_owner,
-)
+from .. import get_member_lock, get_notification_target, get_sales_count, is_bot_owner
 from .verifier import verify_user_join, verify_user_join_multiple
 
 _TZ = ZoneInfo("Asia/Jakarta")
@@ -33,17 +27,15 @@ def _get_confirm_lock(bot_id, transaction_id):
     return lock
 
 
-async def _handle_paid_sale(
-    client, transaction_id, block_mode, route_sale_no=None
-):
+async def _handle_paid_sale(client, transaction_id, block_mode, route_sale_no=None):
     if block_mode:
         return None
     if not route_sale_no:
         marker_key = f"sale_route_{transaction_id}"
-        route_sale_no = await ctx.db.getVars(client.me.id, marker_key)
+        route_sale_no = await client.db.getVars(client.me.id, marker_key)
     async with _sales_lock:
         count = await get_sales_count(client)
-        await ctx.db.increment_sales_once(
+        await client.db.increment_sales_once(
             client.me.id,
             transaction_id,
             count + 1,
@@ -69,9 +61,9 @@ def _duration_days(value):
 
 
 async def _upsert_member(client, member_data, route_to_owner, transaction_id):
-    lock = get_member_lock(client.me.id)
+    lock = get_member_lock(client)
     async with lock:
-        members = await ctx.db.getListVars(client.me.id, "vvip_members") or []
+        members = await client.db.getListVars(client.me.id, "vvip_members") or []
         user_id = str(member_data.get("user_id"))
         chat_id = str(member_data.get("chat_id_kick"))
         existing = next(
@@ -94,12 +86,10 @@ async def _upsert_member(client, member_data, route_to_owner, transaction_id):
             if route_to_owner:
                 new_member["hidden"] = True
             if duration > 0:
-                new_member["expiry_date"] = (
-                    now + timedelta(days=duration)
-                ).isoformat()
+                new_member["expiry_date"] = (now + timedelta(days=duration)).isoformat()
             else:
                 new_member.pop("expiry_date", None)
-            await ctx.db.setListVars(
+            await client.db.setListVars(
                 client.me.id,
                 "vvip_members",
                 new_member,
@@ -113,8 +103,8 @@ async def _upsert_member(client, member_data, route_to_owner, transaction_id):
         if route_to_owner:
             updated["hidden"] = True
 
-        already_extended = (
-            str(existing.get("last_transaction_id")) == str(transaction_id)
+        already_extended = str(existing.get("last_transaction_id")) == str(
+            transaction_id
         )
         if not already_extended:
             old_expiry = parse_dt(updated.get("expiry_date"))
@@ -128,14 +118,16 @@ async def _upsert_member(client, member_data, route_to_owner, transaction_id):
 
         async def update(member_list):
             return [
-                updated
-                if str(member.get("user_id")) == user_id
-                and str(member.get("chat_id_kick")) == chat_id
-                else member
+                (
+                    updated
+                    if str(member.get("user_id")) == user_id
+                    and str(member.get("chat_id_kick")) == chat_id
+                    else member
+                )
                 for member in member_list
             ]
 
-        await ctx.db.updateListVars(
+        await client.db.updateListVars(
             client.me.id,
             "vvip_members",
             update,
@@ -145,15 +137,14 @@ async def _upsert_member(client, member_data, route_to_owner, transaction_id):
 async def _record_revenue(client, transaction_id, revenue_data):
     async def update(history):
         if any(
-            str(item.get("transaction_id")) == str(transaction_id)
-            for item in history
+            str(item.get("transaction_id")) == str(transaction_id) for item in history
         ):
             return None
 
         history.append({**revenue_data, "transaction_id": transaction_id})
         return history
 
-    await ctx.db.updateListVars(
+    await client.db.updateListVars(
         client.me.id,
         "vip_revenue_history",
         update,
@@ -165,7 +156,7 @@ async def _consume_coupon(client, transaction_id, coupon_code):
         return
 
     marker_key = f"coupon_used_{transaction_id}"
-    if await ctx.db.getVars(client.me.id, marker_key):
+    if await client.db.getVars(client.me.id, marker_key):
         return
 
     coupon_consumed = {"found": False}
@@ -190,12 +181,12 @@ async def _consume_coupon(client, transaction_id, coupon_code):
 
         return new_coupons if coupon_consumed["found"] else None
 
-    await ctx.db.updateListVars(client.me.id, "coupons", update)
-    await ctx.db.setVars(client.me.id, marker_key, True)
+    await client.db.updateListVars(client.me.id, "coupons", update)
+    await client.db.setVars(client.me.id, marker_key, True)
 
 
 async def _cleanup_order(client, transaction_id, route_sale_no):
-    await ctx.db.removeVars(client.me.id, transaction_id)
+    await client.db.removeVars(client.me.id, transaction_id)
     markers = [
         f"sale_counted_{transaction_id}",
         f"coupon_used_{transaction_id}",
@@ -204,7 +195,7 @@ async def _cleanup_order(client, transaction_id, route_sale_no):
 
     for marker in markers:
         try:
-            await ctx.db.removeVars(client.me.id, marker)
+            await client.db.removeVars(client.me.id, marker)
         except Exception:
             pass
 
@@ -366,7 +357,7 @@ async def _build_income_notification(
         "sold_count": len(orders),
     }
 
-    custom_template = await ctx.db.getVars(client.me.id, "income_text_template")
+    custom_template = await client.db.getVars(client.me.id, "income_text_template")
     if custom_template:
         return render_income_template(custom_template, values)
 
@@ -389,7 +380,7 @@ async def _build_income_notification(
 
 
 async def _confirm_payment(client, callback_query, transaction_id, user):
-    ref_data_str = await ctx.db.getVars(client.me.id, transaction_id)
+    ref_data_str = await client.db.getVars(client.me.id, transaction_id)
 
     if not ref_data_str:
         return await callback_query.answer(
@@ -455,17 +446,17 @@ async def _confirm_payment(client, callback_query, transaction_id, user):
 
         if is_paid:
             block_mode = bool(
-                await ctx.db.getVars(client.me.id, "purchase_block") or False
+                await client.db.getVars(client.me.id, "purchase_block") or False
             )
             route_sale_no = None
             if not block_mode:
-                route_sale_no = snapshot_route or await ctx.db.getVars(
+                route_sale_no = snapshot_route or await client.db.getVars(
                     client.me.id,
                     f"sale_route_{transaction_id}",
                 )
             route_to_owner = block_mode or bool(route_sale_no)
             await callback_query.edit_message_reply_markup(None)
-            vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+            vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
 
             if is_multi_order:
                 selected_items = []
@@ -642,7 +633,7 @@ async def _confirm_payment(client, callback_query, transaction_id, user):
 
                 try:
                     if route_to_owner:
-                        owner_bot_id = ctx.owner_id
+                        owner_bot_id = client.owner_id
                     else:
                         owner_bot_id = await get_notification_target(client)
 
@@ -661,7 +652,7 @@ async def _confirm_payment(client, callback_query, transaction_id, user):
                         ),
                     )
                 except Exception as e:
-                    ctx.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
+                    client.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
 
                 await _cleanup_order(client, transaction_id, route_sale_no)
                 return
@@ -696,7 +687,9 @@ async def _confirm_payment(client, callback_query, transaction_id, user):
                 link = invite_link_obj.invite_link
 
             except Exception as e:
-                ctx.log.print(f"Gagal membuat invite link untuk {target_chat_id}: {e}")
+                client.log.print(
+                    f"Gagal membuat invite link untuk {target_chat_id}: {e}"
+                )
                 raise Exception("Gagal membuat link undangan.")
 
             member_data = {
@@ -772,7 +765,7 @@ async def _confirm_payment(client, callback_query, transaction_id, user):
 
             try:
                 if route_to_owner:
-                    owner_bot_id = ctx.owner_id
+                    owner_bot_id = client.owner_id
                 else:
                     owner_bot_id = await get_notification_target(client)
 
@@ -799,7 +792,7 @@ async def _confirm_payment(client, callback_query, transaction_id, user):
                     ),
                 )
             except Exception as e:
-                ctx.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
+                client.log.print(f"Gagal mengirim notifikasi pemasukan: {e}")
 
             await _cleanup_order(client, transaction_id, route_sale_no)
         else:
@@ -814,10 +807,6 @@ async def _confirm_payment(client, callback_query, transaction_id, user):
         )
 
 
-@command(
-    lambda ctx: filters.regex("^confirm_payment\\s(.+)"),
-    handler_type="callback",
-)
 async def manual_check_payment_callback(client, callback_query):
     transaction_id = callback_query.data.split(" ", 1)[1]
     user = callback_query.from_user
@@ -826,9 +815,14 @@ async def manual_check_payment_callback(client, callback_query):
         await _confirm_payment(client, callback_query, transaction_id, user)
 
 
-@command(
-    lambda ctx: filters.PreCheckoutQuery,
-    handler_type="pre_checkout",
-)
 async def pre_checkout_handler(client, pre_checkout_query):
     await pre_checkout_query.answer(ok=True)
+
+
+class PaymentConfirm(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^confirm_payment\\s(.+)"))(
+            self.handle(manual_check_payment_callback)
+        )
+        self.client.on_pre_checkout_query()(self.handle(pre_checkout_handler))

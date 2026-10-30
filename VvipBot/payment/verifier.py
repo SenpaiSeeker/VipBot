@@ -3,8 +3,6 @@ from time import time
 
 import pyrogram
 
-from .. import ctx
-
 
 async def verify_user_join(client, user, chat_id, link_msg):
     verification_timeout = 3600
@@ -21,8 +19,8 @@ async def verify_user_join(client, user, chat_id, link_msg):
             ]:
                 is_joined = True
 
-                ctx.log.print(
-                    f"{ctx.log.GREEN}User {user.id} berhasil bergabung ke {chat_id}."
+                client.log.print(
+                    f"{client.log.GREEN}User {user.id} berhasil bergabung ke {chat_id}."
                 )
                 break
 
@@ -37,11 +35,11 @@ async def verify_user_join(client, user, chat_id, link_msg):
             pyrogram.errors.InternalServerError,
             pyrogram.errors.ServiceUnavailable,
         ) as e:
-            ctx.log.print(f"Error sementara verifikasi join {user.id}: {e}")
+            client.log.print(f"Error sementara verifikasi join {user.id}: {e}")
             await asyncio.sleep(15)
 
         except Exception as e:
-            ctx.log.print(f"Error verifikasi join {user.id}: {e}")
+            client.log.print(f"Error verifikasi join {user.id}: {e}")
             break
 
     try:
@@ -92,11 +90,13 @@ async def verify_user_join_multiple(client, user, invite_payloads, link_msg):
                 pyrogram.errors.InternalServerError,
                 pyrogram.errors.ServiceUnavailable,
             ) as e:
-                ctx.log.print(f"Error sementara verifikasi multi-join {user.id}: {e}")
+                client.log.print(
+                    f"Error sementara verifikasi multi-join {user.id}: {e}"
+                )
                 pending_payloads.append(payload)
 
             except Exception as e:
-                ctx.log.print(f"Error verifikasi multi-join {user.id}: {e}")
+                client.log.print(f"Error verifikasi multi-join {user.id}: {e}")
                 pending_payloads.append(payload)
 
         if not pending_payloads:

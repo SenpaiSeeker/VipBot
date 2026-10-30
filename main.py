@@ -16,7 +16,6 @@ else:
 finally:
     asyncio.set_event_loop(loop)
 
-import VvipBot as handlers
 from bot_manager import BotManager
 from config import API_HASH, API_ID, BOT_TOKEN, OWNER_ID
 from database import db, schedule
@@ -99,7 +98,6 @@ async def main():
     await clean_sessions()
 
     manager = BotManager(db, OWNER_ID)
-    handlers.ctx.manager = manager
 
     app = pyrogram.Client(
         name="vvip_manager_main",
@@ -110,12 +108,24 @@ async def main():
         in_memory=True,
     )
 
-    handlers.register_all_handlers(app, db, manager, OWNER_ID)
+    app.db = db
+    app.manager = manager
+    app.owner_id = OWNER_ID
+    app.broadcast_stop = {}
+    app.eval_history = {
+        "last_code": None,
+        "last_result": None,
+        "last_stdout": None,
+        "last_error": None,
+        "last_time": None,
+    }
+    app.kwargs = {}
 
     try:
         app.ns.utils.grad.render_text("VVIP Meneger")
         log.print(f"{log.MAGENTA}Developed by NorSodikin")
 
+        app.load_all(directory="VvipBot")
         await app.start()
         log.info(f"Bot utama '{app.me.first_name}' berhasil dimulai.")
 

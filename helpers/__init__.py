@@ -1,18 +1,17 @@
 from datetime import datetime, timezone
-from types import SimpleNamespace
-
-from pyrogram import Client
 
 from .argument import Argument
-from .button import Button
+from .button import Button, Buttons
 from .dashboard_gen import DashboardGenerator
-from .emoji_parse import EmojiParse
+from .emoji_parse import Emoji, EmojiParse
 from .faker_gen import FakeInfoGenerator
 from .gradient import Gradient
 from .logger import LoggerHandler
+from .modules import Modules
 from .monitor import ServerMonitor
+from .patcher import DataObject, NamespaceProxy, Object
 from .saweria_scraper import SaweriaScraper
-from .table import TableBuilder
+from .table import Table, TableBuilder
 
 
 def parse_dt(value) -> "datetime | None":
@@ -27,25 +26,23 @@ def parse_dt(value) -> "datetime | None":
     return parsed.astimezone(timezone.utc)
 
 
-class CleanNamespace:
-    def __init__(self, client):
-        self.telegram = SimpleNamespace(arg=Argument(client), button=Button())
-        self.utils = SimpleNamespace(
-            log=LoggerHandler,
-            faker=FakeInfoGenerator(),
-            grad=Gradient(),
-            dashboard=DashboardGenerator(),
-        )
-        self.server = SimpleNamespace(monitor=ServerMonitor())
-        self.payment = SimpleNamespace(SaweriaScraper=SaweriaScraper)
-        self.emoji = EmojiParse()
-        self.table = TableBuilder()
-
-
-def get_ns(self):
-    if not hasattr(self, "_clean_ns_instance"):
-        self._clean_ns_instance = CleanNamespace(self)
-    return self._clean_ns_instance
-
-
-Client.ns = property(get_ns)
+__all__ = [
+    "Argument",
+    "Button",
+    "Buttons",
+    "DashboardGenerator",
+    "DataObject",
+    "Emoji",
+    "EmojiParse",
+    "FakeInfoGenerator",
+    "Gradient",
+    "LoggerHandler",
+    "Modules",
+    "NamespaceProxy",
+    "Object",
+    "SaweriaScraper",
+    "ServerMonitor",
+    "Table",
+    "TableBuilder",
+    "parse_dt",
+]

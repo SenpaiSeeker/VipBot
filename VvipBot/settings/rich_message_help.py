@@ -1,7 +1,8 @@
+from helpers.modules import Modules
 import pyrogram
 from pyrogram import filters
 
-from .. import command, is_bot_owner
+from .. import is_bot_owner
 
 
 def _back_button(client):
@@ -19,10 +20,6 @@ def _back_button(client):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^rich_message_help$"),
-    handler_type="callback",
-)
 async def rich_message_help_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return await callback_query.answer(
@@ -100,3 +97,11 @@ async def rich_message_help_callback(client, callback_query):
         rich_message=pyrogram.types.InputRichMessage(markdown=content),
         reply_markup=_back_button(client),
     )
+
+
+class SettingsRichMessageHelp(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^rich_message_help$"))(
+            self.handle(rich_message_help_callback)
+        )

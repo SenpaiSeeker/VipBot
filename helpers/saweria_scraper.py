@@ -6,10 +6,12 @@ from typing import Optional, Tuple
 import cloudscraper25 as cloudscraper
 from bs4 import BeautifulSoup
 
+from .patcher import Object
 from .qrcode_gen import QrCodeGenerator
 
 
-class SaweriaScraper(QrCodeGenerator):
+class SaweriaScraper(Object, QrCodeGenerator):
+    _ns_alias = "payment"
     BACKEND = "https://backend.saweria.co"
     FRONTEND = "https://saweria.co"
     HEADERS = {
@@ -18,8 +20,11 @@ class SaweriaScraper(QrCodeGenerator):
         "Referer": "https://saweria.co/",
     }
 
-    def __init__(self, saweria_user_id: Optional[str] = None):
-        super().__init__()
+    def __init__(self, client=None, saweria_user_id: Optional[str] = None):
+        if isinstance(client, str) and saweria_user_id is None:
+            saweria_user_id = client
+            client = None
+        super().__init__(client)
         self.saweria_user_id = saweria_user_id
         self.scraper = cloudscraper.create_scraper()
 
@@ -154,3 +159,6 @@ class SaweriaScraper(QrCodeGenerator):
             return await asyncio.to_thread(_sync_get)
         finally:
             self.close()
+
+
+SaweriaScraper.SaweriaScraper = SaweriaScraper

@@ -8,7 +8,6 @@ from helpers.saweria_message_generator import generate_safe_saweria_message
 from .. import (
     SALES_ROUTE_INTERVAL,
     SAWERIA_BLOCK_OVERRIDE_ID,
-    ctx,
     get_sales_count,
     is_bot_owner,
 )
@@ -30,7 +29,7 @@ async def _resolve_invoice_amount(client, item, tipe, coupon_code=None):
     if not coupon_code:
         return amount
 
-    coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
+    coupons = await client.db.getListVars(client.me.id, "coupons") or []
     coupon = next(
         (
             c
@@ -71,7 +70,7 @@ async def _resolve_invoice_amount(client, item, tipe, coupon_code=None):
 
 
 async def _resolve_sale_routing(client, saweria_user_id):
-    block_mode = bool(await ctx.db.getVars(client.me.id, "purchase_block") or False)
+    block_mode = bool(await client.db.getVars(client.me.id, "purchase_block") or False)
     if block_mode:
         return saweria_user_id, None
 
@@ -102,7 +101,7 @@ async def _resolve_processing_msg(client, user_id, processing_msg=None):
 async def _create_payment_invoice(
     client, user, item_index, tipe, coupon_code=None, processing_msg=None
 ):
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
 
     try:
         item = vvip_list[item_index]
@@ -131,7 +130,7 @@ async def _create_payment_invoice(
             ),
         )
 
-    saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
+    saweria_user_id = await client.db.getVars(client.me.id, "SAWERIA_USER_ID")
 
     if not saweria_user_id:
         if await is_bot_owner(client, user.id):
@@ -196,10 +195,10 @@ async def _create_payment_invoice(
             f"|{route_sale_no or 0}"
         )
 
-        await ctx.db.setVars(client.me.id, transaction_id, order_data)
+        await client.db.setVars(client.me.id, transaction_id, order_data)
 
         if route_sale_no:
-            await ctx.db.setVars(
+            await client.db.setVars(
                 client.me.id, f"sale_route_{transaction_id}", route_sale_no
             )
 
@@ -258,8 +257,8 @@ async def _create_payment_invoice(
 async def _create_pick_vvip_payment_invoice(
     client, user, selected_items, total_amount, processing_msg=None
 ):
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-    saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
+    saweria_user_id = await client.db.getVars(client.me.id, "SAWERIA_USER_ID")
 
     if not saweria_user_id:
         if await is_bot_owner(client, user.id):
@@ -348,10 +347,10 @@ async def _create_pick_vvip_payment_invoice(
             f"|{route_sale_no or 0}"
         )
 
-        await ctx.db.setVars(client.me.id, transaction_id, order_data)
+        await client.db.setVars(client.me.id, transaction_id, order_data)
 
         if route_sale_no:
-            await ctx.db.setVars(
+            await client.db.setVars(
                 client.me.id, f"sale_route_{transaction_id}", route_sale_no
             )
 
@@ -411,8 +410,8 @@ async def _create_pick_vvip_payment_invoice(
 async def _create_all_vvip_payment_invoice(
     client, user, selected_items, total_amount, processing_msg=None
 ):
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
-    saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
+    saweria_user_id = await client.db.getVars(client.me.id, "SAWERIA_USER_ID")
 
     if not saweria_user_id:
         if await is_bot_owner(client, user.id):
@@ -501,10 +500,10 @@ async def _create_all_vvip_payment_invoice(
             f"|{route_sale_no or 0}"
         )
 
-        await ctx.db.setVars(client.me.id, transaction_id, order_data)
+        await client.db.setVars(client.me.id, transaction_id, order_data)
 
         if route_sale_no:
-            await ctx.db.setVars(
+            await client.db.setVars(
                 client.me.id, f"sale_route_{transaction_id}", route_sale_no
             )
 

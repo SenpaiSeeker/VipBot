@@ -2,10 +2,11 @@ from typing import Optional, Tuple, Union
 
 import pyrogram
 
+from .patcher import Object
 
-class Argument:
-    def __init__(self, client):
-        self.client: pyrogram.Client = client
+
+class Argument(Object):
+    _ns_alias = "arg"
 
     def getMention(
         self,

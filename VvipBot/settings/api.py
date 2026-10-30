@@ -1,20 +1,17 @@
+from helpers.modules import Modules
 import asyncio
 
 import pyrogram
 from pyrogram import filters
 
-from .. import command, ctx, is_bot_owner, listen
+from .. import is_bot_owner, listen
 
 
-@command(
-    lambda ctx: filters.regex("^api_settings$"),
-    handler_type="callback",
-)
 async def api_settings_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
-    saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
+    saweria_user_id = await client.db.getVars(client.me.id, "SAWERIA_USER_ID")
     saweria_status = (
         f"{client.ns.emoji.md('white_check_mark')} Aktif"
         if saweria_user_id
@@ -68,10 +65,6 @@ async def api_settings_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^set_api\\s(.+)"),
-    handler_type="callback",
-)
 async def set_api_key_prompt(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -128,7 +121,7 @@ async def set_api_key_prompt(client, callback_query):
                 if not user_id_saweria:
                     raise Exception("Username Saweria tidak ditemukan.")
 
-                await ctx.db.setVars(
+                await client.db.setVars(
                     client.me.id,
                     "SAWERIA_USER_ID",
                     user_id_saweria,
@@ -184,10 +177,6 @@ async def set_api_key_prompt(client, callback_query):
         )
 
 
-@command(
-    lambda ctx: filters.regex("^del_api_confirm$"),
-    handler_type="callback",
-)
 async def confirm_delete_api_keys(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -227,18 +216,31 @@ async def confirm_delete_api_keys(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^do_del_api$"),
-    handler_type="callback",
-)
 async def do_delete_api_keys(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
-    await ctx.db.removeVars(client.me.id, "SAWERIA_USER_ID")
+    await client.db.removeVars(client.me.id, "SAWERIA_USER_ID")
 
     await callback_query.answer(
         "Payment untuk bot ini telah berhasil dihapus.",
         show_alert=True,
     )
     await api_settings_callback(client, callback_query)
+
+
+class SettingsApi(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^api_settings$"))(
+            self.handle(api_settings_callback)
+        )
+        self.client.on_callback_query(filters.regex("^set_api\\s(.+)"))(
+            self.handle(set_api_key_prompt)
+        )
+        self.client.on_callback_query(filters.regex("^del_api_confirm$"))(
+            self.handle(confirm_delete_api_keys)
+        )
+        self.client.on_callback_query(filters.regex("^do_del_api$"))(
+            self.handle(do_delete_api_keys)
+        )

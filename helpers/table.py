@@ -5,6 +5,8 @@ import re
 
 import pyrogram
 
+from .patcher import Object
+
 _ALIAS_COUNTER = 0
 
 _BUTTON_ENTRY_RE = re.compile(r"\[\[(.+?)\]\]")
@@ -23,7 +25,9 @@ _DEFAULT_STYLE = "primary"
 _BUTTON_PAD = "\u2800" * 8
 
 
-class TableBuilder:
+class TableBuilder(Object):
+    _ns_alias = "table"
+
     def md(self, headers, rows) -> str:
         headers = list(headers)
         lines = [
@@ -109,3 +113,6 @@ class TableBuilder:
         lines = [_BUTTON_ENTRY_RE.sub("", line).rstrip() for line in raw.splitlines()]
         cleaned = re.sub(r"\n{3,}", "\n\n", "\n".join(lines).strip())
         return cleaned, markup
+
+
+Table = TableBuilder

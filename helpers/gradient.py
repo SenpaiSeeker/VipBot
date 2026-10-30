@@ -2,9 +2,14 @@ import random
 
 import pyfiglet
 
+from .patcher import Object
 
-class Gradient:
-    def __init__(self):
+
+class Gradient(Object):
+    _ns_alias = "grad"
+
+    def __init__(self, client=None):
+        super().__init__(client)
         self.figlet = pyfiglet.Figlet(font="slant")
         self.start_color = self.random_color()
         self.end_color = self.random_color()

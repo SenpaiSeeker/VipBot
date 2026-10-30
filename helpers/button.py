@@ -3,8 +3,12 @@ from typing import Dict, List
 
 import pyrogram
 
+from .patcher import Object
 
-class Button:
+
+class Buttons(Object):
+    _ns_aliases = ("buttons", "button")
+
     def get_urls(self, text):
         return re.findall(
             r"(?:https?://)?(?:www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:[/?]\S+)?|tg://\S+$",
@@ -163,3 +167,6 @@ class Button:
                 keyboard.append(row)
 
         return pyrogram.types.InlineKeyboardMarkup(keyboard) if keyboard else None
+
+
+Button = Buttons

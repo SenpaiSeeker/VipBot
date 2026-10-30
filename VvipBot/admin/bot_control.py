@@ -1,3 +1,4 @@
+from helpers.modules import Modules
 import pyrogram
 
 from helpers import parse_dt
@@ -5,7 +6,6 @@ from helpers import parse_dt
 from .. import *
 
 
-@command(lambda ctx: filters.command("extend") & filters.user(ctx.owner_id))
 async def extend_command_handler(client, message):
     bot_id = client.me.id
     text, btn = await build_extend_panel(client, bot_id)
@@ -20,7 +20,7 @@ async def build_extend_panel(client, bot_id):
         bot_id = int(bot_id)
     except (TypeError, ValueError):
         pass
-    bot_instance = ctx.manager.running_bots.get(bot_id)
+    bot_instance = client.manager.running_bots.get(bot_id)
     if bot_id == client.me.id:
         bot_name = client.me.first_name
     elif bot_instance and bot_instance.me:
@@ -28,7 +28,7 @@ async def build_extend_panel(client, bot_id):
     else:
         bot_name = f"ID {bot_id}"
 
-    exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
+    exp_date_str = await client.db.getVars(bot_id, "bot_expiration_date")
     current_exp_date = parse_dt(exp_date_str) if exp_date_str else None
     expiry_text = (
         f"`{current_exp_date.strftime('%d %b %Y')}`"
@@ -110,21 +110,21 @@ async def build_extend_month_grid(client, bot_id, mode):
 
 
 async def apply_extend_duration(client, bot_id, days_to_add):
-    exp_date_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
+    exp_date_str = await client.db.getVars(bot_id, "bot_expiration_date")
     current_exp_date = (
         parse_dt(exp_date_str) if exp_date_str else datetime.now(timezone.utc)
     )
     new_exp_date = current_exp_date + timedelta(days=days_to_add)
-    await ctx.db.setVars(bot_id, "bot_expiration_date", new_exp_date.isoformat())
+    await client.db.setVars(bot_id, "bot_expiration_date", new_exp_date.isoformat())
     return new_exp_date.strftime("%d %b %Y")
 
 
 async def notify_extend_owner(client, bot_id, action="diperpanjang"):
-    owner_bot_id = await ctx.db.getVars(bot_id, "owner_id")
+    owner_bot_id = await client.db.getVars(bot_id, "owner_id")
     if not owner_bot_id:
         return
     try:
-        bot_instance = ctx.manager.running_bots.get(bot_id)
+        bot_instance = client.manager.running_bots.get(bot_id)
         bot_name = bot_instance.me.first_name if bot_instance else f"ID {bot_id}"
         await client.send_rich_message(
             owner_bot_id,
@@ -139,12 +139,8 @@ async def notify_extend_owner(client, bot_id, action="diperpanjang"):
         pass
 
 
-@command(
-    lambda ctx: filters.regex("^extend_panel_(\\d+)$"),
-    handler_type="callback",
-)
 async def extend_panel_callback(client, callback_query):
-    if callback_query.from_user.id != ctx.owner_id:
+    if callback_query.from_user.id != client.owner_id:
         return await callback_query.answer(
             "🚫 Anda tidak memiliki akses ke menu ini.",
             show_alert=True,
@@ -157,12 +153,8 @@ async def extend_panel_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^extend_mode_(\\d+)_(add|sub)$"),
-    handler_type="callback",
-)
 async def extend_mode_callback(client, callback_query):
-    if callback_query.from_user.id != ctx.owner_id:
+    if callback_query.from_user.id != client.owner_id:
         return await callback_query.answer(
             "🚫 Anda tidak memiliki akses ke menu ini.",
             show_alert=True,
@@ -176,12 +168,8 @@ async def extend_mode_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^extend_month_(\\d+)_(add|sub)_(\\d+)$"),
-    handler_type="callback",
-)
 async def extend_month_callback(client, callback_query):
-    if callback_query.from_user.id != ctx.owner_id:
+    if callback_query.from_user.id != client.owner_id:
         return await callback_query.answer(
             "🚫 Anda tidak memiliki akses ke menu ini.",
             show_alert=True,
@@ -211,7 +199,6 @@ async def extend_month_callback(client, callback_query):
     await notify_extend_owner(client, bot_id, action)
 
 
-@command(lambda ctx: filters.command("broadcast_owners") & filters.user(ctx.owner_id))
 async def broadcast_owners_handler(client, message):
     broadcast_msg = client.ns.telegram.arg.getMessage(message)
     if not broadcast_msg:
@@ -223,10 +210,10 @@ async def broadcast_owners_handler(client, message):
                 )
             )
         )
-    all_bots_data = await ctx.db.getBots(is_token=True)
+    all_bots_data = await client.db.getBots(is_token=True)
     owner_ids = set()
     for bot in all_bots_data:
-        owner_id = await ctx.db.getVars(int(bot["name"]), "owner_id")
+        owner_id = await client.db.getVars(int(bot["name"]), "owner_id")
         if owner_id:
             owner_ids.add(owner_id)
     if not owner_ids:
@@ -259,7 +246,9 @@ async def broadcast_owners_handler(client, message):
             await broadcast_msg.copy(owner_id)
             success_count += 1
         except Exception as e:
-            ctx.log.print(f"{ctx.log.RED}Gagal broadcast ke owner {owner_id}: {e}")
+            client.log.print(
+                f"{client.log.RED}Gagal broadcast ke owner {owner_id}: {e}"
+            )
             fail_count += 1
         await asyncio.sleep(0.2)
 
@@ -269,3 +258,23 @@ async def broadcast_owners_handler(client, message):
             f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Selesai'], ['Terkirim', f'`{success_count}`'], ['Gagal', f'`{fail_count}`']])}"
         )
     )
+
+
+class AdminBotControl(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_message(
+            filters.command("extend") & filters.user(self.client.owner_id)
+        )(self.handle(extend_command_handler))
+        self.client.on_callback_query(filters.regex("^extend_panel_(\\d+)$"))(
+            self.handle(extend_panel_callback)
+        )
+        self.client.on_callback_query(filters.regex("^extend_mode_(\\d+)_(add|sub)$"))(
+            self.handle(extend_mode_callback)
+        )
+        self.client.on_callback_query(
+            filters.regex("^extend_month_(\\d+)_(add|sub)_(\\d+)$")
+        )(self.handle(extend_month_callback))
+        self.client.on_message(
+            filters.command("broadcast_owners") & filters.user(self.client.owner_id)
+        )(self.handle(broadcast_owners_handler))

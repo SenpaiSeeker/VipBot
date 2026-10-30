@@ -1,3 +1,4 @@
+from helpers.modules import Modules
 import pyrogram
 
 from helpers import parse_dt
@@ -6,12 +7,8 @@ from .. import *
 from .helpers import invalidate_page_cache, send_allbots_list
 
 
-@command(
-    lambda ctx: filters.regex("^allbots_duration_(\\d+)_(\\d+)"),
-    handler_type="callback",
-)
 async def allbots_duration_callback(client, callback_query):
-    if callback_query.from_user.id != ctx.owner_id:
+    if callback_query.from_user.id != client.owner_id:
         return
     bot_id = int(callback_query.matches[0].group(1))
     page = int(callback_query.matches[0].group(2))
@@ -49,11 +46,8 @@ async def allbots_duration_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^allbots_extend_(\\d+)_(\\d+)"), handler_type="callback"
-)
 async def allbots_extend_callback(client, callback_query):
-    if callback_query.from_user.id != ctx.owner_id:
+    if callback_query.from_user.id != client.owner_id:
         return
     bot_id = int(callback_query.matches[0].group(1))
     page = int(callback_query.matches[0].group(2))
@@ -88,22 +82,18 @@ async def allbots_extend_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^allbots_do_extend_(\\d+)_(\\d+)_(\\d+)"),
-    handler_type="callback",
-)
 async def allbots_do_extend_callback(client, callback_query):
-    if callback_query.from_user.id != ctx.owner_id:
+    if callback_query.from_user.id != client.owner_id:
         return
     bot_id = int(callback_query.matches[0].group(1))
     days = int(callback_query.matches[0].group(2))
     page = int(callback_query.matches[0].group(3))
-    current_expiry_str = await ctx.db.getVars(bot_id, "bot_expiration_date")
+    current_expiry_str = await client.db.getVars(bot_id, "bot_expiration_date")
     start_date = datetime.now(timezone.utc)
     current_expiry = parse_dt(current_expiry_str)
     if current_expiry and current_expiry > start_date:
         start_date = current_expiry
-    await ctx.db.setVars(
+    await client.db.setVars(
         bot_id, "bot_expiration_date", (start_date + timedelta(days=days)).isoformat()
     )
     await callback_query.answer(
@@ -114,11 +104,8 @@ async def allbots_do_extend_callback(client, callback_query):
     await send_allbots_list(client, callback_query, page, force_refresh=True)
 
 
-@command(
-    lambda ctx: filters.regex("^allbots_reduce_(\\d+)_(\\d+)"), handler_type="callback"
-)
 async def allbots_reduce_callback(client, callback_query):
-    if callback_query.from_user.id != ctx.owner_id:
+    if callback_query.from_user.id != client.owner_id:
         return
     bot_id = int(callback_query.matches[0].group(1))
     page = int(callback_query.matches[0].group(2))
@@ -153,17 +140,13 @@ async def allbots_reduce_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^allbots_do_reduce_(\\d+)_(\\d+)_(\\d+)"),
-    handler_type="callback",
-)
 async def allbots_do_reduce_callback(client, callback_query):
-    if callback_query.from_user.id != ctx.owner_id:
+    if callback_query.from_user.id != client.owner_id:
         return
     bot_id = int(callback_query.matches[0].group(1))
     days = int(callback_query.matches[0].group(2))
     page = int(callback_query.matches[0].group(3))
-    current_expiry = parse_dt(await ctx.db.getVars(bot_id, "bot_expiration_date"))
+    current_expiry = parse_dt(await client.db.getVars(bot_id, "bot_expiration_date"))
     if not current_expiry:
         await callback_query.answer(
             "Bot ini tidak memiliki tanggal kedaluwarsa untuk dikurangi.",
@@ -171,10 +154,30 @@ async def allbots_do_reduce_callback(client, callback_query):
         )
         return
     new_expiry_date = current_expiry - timedelta(days=days)
-    await ctx.db.setVars(bot_id, "bot_expiration_date", new_expiry_date.isoformat())
+    await client.db.setVars(bot_id, "bot_expiration_date", new_expiry_date.isoformat())
     await callback_query.answer(
         f"Masa aktif bot {bot_id} berhasil dikurangi {days} hari.",
         show_alert=True,
     )
     invalidate_page_cache(page)
     await send_allbots_list(client, callback_query, page, force_refresh=True)
+
+
+class AllBotsDuration(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^allbots_duration_(\\d+)_(\\d+)"))(
+            self.handle(allbots_duration_callback)
+        )
+        self.client.on_callback_query(filters.regex("^allbots_extend_(\\d+)_(\\d+)"))(
+            self.handle(allbots_extend_callback)
+        )
+        self.client.on_callback_query(
+            filters.regex("^allbots_do_extend_(\\d+)_(\\d+)_(\\d+)")
+        )(self.handle(allbots_do_extend_callback))
+        self.client.on_callback_query(filters.regex("^allbots_reduce_(\\d+)_(\\d+)"))(
+            self.handle(allbots_reduce_callback)
+        )
+        self.client.on_callback_query(
+            filters.regex("^allbots_do_reduce_(\\d+)_(\\d+)_(\\d+)")
+        )(self.handle(allbots_do_reduce_callback))

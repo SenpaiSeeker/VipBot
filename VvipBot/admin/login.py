@@ -1,3 +1,4 @@
+from helpers.modules import Modules
 import pyrogram
 
 from helpers import parse_dt
@@ -5,7 +6,6 @@ from helpers import parse_dt
 from .. import *
 
 
-@command(lambda ctx: filters.command("login") & filters.user(ctx.owner_id))
 async def login_command_handler(client, message):
     usage_text = (
         f"{client.ns.emoji.md('robot')} **Perintah Login Bot**\n\n"
@@ -49,8 +49,8 @@ async def login_command_handler(client, message):
                 )
             )
 
-    if new_bot_id in ctx.manager.running_bots:
-        running = ctx.manager.running_bots[new_bot_id]
+    if new_bot_id in client.manager.running_bots:
+        running = client.manager.running_bots[new_bot_id]
         bot_name = running.me.first_name if running.me else f"ID {new_bot_id}"
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
@@ -86,15 +86,13 @@ async def login_command_handler(client, message):
             )
         )
 
-    existing_owner = await ctx.db.getVars(new_bot_id, "owner_id")
-    resolved_owner = owner_id or existing_owner or ctx.owner_id
+    existing_owner = await client.db.getVars(new_bot_id, "owner_id")
+    resolved_owner = owner_id or existing_owner or client.owner_id
 
     existing_expiry = parse_dt(
-        await ctx.db.getVars(new_bot_id, "bot_expiration_date")
+        await client.db.getVars(new_bot_id, "bot_expiration_date")
     )
-    expiry_date = existing_expiry or (
-        datetime.now(timezone.utc) + timedelta(days=31)
-    )
+    expiry_date = existing_expiry or (datetime.now(timezone.utc) + timedelta(days=31))
     expiry_date_str = expiry_date.isoformat()
 
     api_id = client.api_id
@@ -107,12 +105,12 @@ async def login_command_handler(client, message):
         "bot_token": bot_token,
     }
 
-    await ctx.db.saveBot(new_bot_id, api_id, api_hash, bot_token, is_token=True)
+    await client.db.saveBot(new_bot_id, api_id, api_hash, bot_token, is_token=True)
 
-    await ctx.manager.start_bot(bot_data)
+    await client.manager.start_bot(bot_data)
 
-    if new_bot_id not in ctx.manager.running_bots:
-        remaining = await ctx.manager.flood_remaining(new_bot_id)
+    if new_bot_id not in client.manager.running_bots:
+        remaining = await client.manager.flood_remaining(new_bot_id)
         if remaining > 0:
             mins = max(1, remaining // 60)
             return await msg.edit_text(
@@ -132,8 +130,8 @@ async def login_command_handler(client, message):
             )
         )
 
-    await ctx.db.setVars(new_bot_id, "owner_id", resolved_owner)
-    await ctx.db.setVars(new_bot_id, "bot_expiration_date", expiry_date_str)
+    await client.db.setVars(new_bot_id, "owner_id", resolved_owner)
+    await client.db.setVars(new_bot_id, "bot_expiration_date", expiry_date_str)
 
     if owner_id:
         owner_source = "argumen"
@@ -153,3 +151,11 @@ async def login_command_handler(client, message):
             f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'{bot_info.first_name} (`{new_bot_id}`)'], ['Owner', f'`{resolved_owner}` (dari {owner_source})'], ['Masa Aktif', f'`{formatted_expiry}`']])}"
         )
     )
+
+
+class AdminLogin(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_message(
+            filters.command("login") & filters.user(self.client.owner_id)
+        )(self.handle(login_command_handler))

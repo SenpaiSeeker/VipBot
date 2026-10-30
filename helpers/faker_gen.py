@@ -2,9 +2,14 @@ from types import SimpleNamespace
 
 from faker import Faker
 
+from .patcher import Object
 
-class FakeInfoGenerator:
-    def __init__(self, locale: str = "id_ID"):
+
+class FakeInfoGenerator(Object):
+    _ns_alias = "faker"
+
+    def __init__(self, client=None, locale: str = "id_ID"):
+        super().__init__(client)
         self.fake = Faker(locale)
 
     def generate(self) -> SimpleNamespace:

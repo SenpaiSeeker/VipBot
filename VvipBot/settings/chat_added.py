@@ -1,7 +1,6 @@
+from helpers.modules import Modules
 import pyrogram
 from pyrogram import enums, filters
-
-from .. import command, ctx
 
 _ACTIVE_STATUSES = {
     enums.ChatMemberStatus.MEMBER,
@@ -33,7 +32,6 @@ def _bot_added_filter(_, client, update):
 bot_added_filter = filters.create(_bot_added_filter)
 
 
-@command(lambda ctx: bot_added_filter, handler_type="chat_member")
 async def notify_bot_added_to_chat(client, update):
     new_member = getattr(update, "new_chat_member", None)
     old_member = getattr(update, "old_chat_member", None)
@@ -48,7 +46,7 @@ async def notify_bot_added_to_chat(client, update):
     if chat.type not in _TARGET_CHAT_TYPES:
         return
 
-    owner_id = await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
+    owner_id = await client.db.getVars(client.me.id, "owner_id") or client.owner_id
     chat_type = _CHAT_TYPE_LABELS.get(chat.type, "Chat")
     chat_title = chat.title or chat.username or str(chat.id)
 
@@ -87,4 +85,12 @@ async def notify_bot_added_to_chat(client, update):
             reply_markup=btn,
         )
     except Exception as e:
-        ctx.log.print(f"Gagal mengirim notifikasi bot ditambahkan ke chat: {e}")
+        client.log.print(f"Gagal mengirim notifikasi bot ditambahkan ke chat: {e}")
+
+
+class SettingsChatAdded(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_chat_member_updated(bot_added_filter)(
+            self.handle(notify_bot_added_to_chat)
+        )

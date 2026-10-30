@@ -1,3 +1,4 @@
+from helpers.modules import Modules
 import asyncio
 import re
 from datetime import datetime, timedelta, timezone
@@ -7,15 +8,11 @@ from pyrogram import filters
 
 from helpers import parse_dt
 
-from .. import command, ctx, is_bot_owner, listen
+from .. import is_bot_owner, listen
 
 _COUPON_CODE_RE = re.compile(r"^[A-Z0-9_-]{1,32}$")
 
 
-@command(
-    lambda ctx: filters.regex("^manage_coupons"),
-    handler_type="callback",
-)
 async def manage_coupons_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -64,10 +61,6 @@ async def manage_coupons_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^add_coupon"),
-    handler_type="callback",
-)
 async def add_coupon_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -103,10 +96,9 @@ async def add_coupon_callback(client, callback_query):
                 "Kode kupon hanya boleh berisi huruf, angka, `_`, atau `-` (maksimal 32 karakter)."
             )
 
-        existing_coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
+        existing_coupons = await client.db.getListVars(client.me.id, "coupons") or []
         if any(
-            str(coupon.get("code", "")).upper() == code
-            for coupon in existing_coupons
+            str(coupon.get("code", "")).upper() == code for coupon in existing_coupons
         ):
             raise ValueError("Kode kupon sudah digunakan.")
 
@@ -162,7 +154,7 @@ async def add_coupon_callback(client, callback_query):
             "expiry_date": expiry_date,
         }
 
-        await ctx.db.setListVars(client.me.id, "coupons", coupon_data)
+        await client.db.setListVars(client.me.id, "coupons", coupon_data)
 
         await client.send_rich_message(
             chat_id,
@@ -186,16 +178,12 @@ async def add_coupon_callback(client, callback_query):
         )
 
 
-@command(
-    lambda ctx: filters.regex("^list_coupons_(\\d+)"),
-    handler_type="callback",
-)
 async def list_coupons_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
     page = int(callback_query.data.split("_")[2])
-    coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
+    coupons = await client.db.getListVars(client.me.id, "coupons") or []
 
     back_row = [
         {
@@ -290,27 +278,40 @@ async def list_coupons_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^delete_coupon\\s(.+)\\s(\\d+)"),
-    handler_type="callback",
-)
 async def delete_coupon_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
     _, code, page_str = callback_query.data.split()
-    coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
+    coupons = await client.db.getListVars(client.me.id, "coupons") or []
     coupon_to_remove = next((c for c in coupons if c.get("code") == code), None)
 
     if coupon_to_remove:
-        await ctx.db.removeListVars(client.me.id, "coupons", coupon_to_remove)
+        await client.db.removeListVars(client.me.id, "coupons", coupon_to_remove)
         await callback_query.answer("Kupon berhasil dihapus.", show_alert=True)
 
     new_page = int(page_str)
-    remaining_coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
+    remaining_coupons = await client.db.getListVars(client.me.id, "coupons") or []
 
     if new_page >= len(remaining_coupons) and len(remaining_coupons) > 0:
         new_page = len(remaining_coupons) - 1
 
     callback_query.data = f"list_coupons_{new_page}"
     await list_coupons_callback(client, callback_query)
+
+
+class SettingsCoupons(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^manage_coupons"))(
+            self.handle(manage_coupons_callback)
+        )
+        self.client.on_callback_query(filters.regex("^add_coupon"))(
+            self.handle(add_coupon_callback)
+        )
+        self.client.on_callback_query(filters.regex("^list_coupons_(\\d+)"))(
+            self.handle(list_coupons_callback)
+        )
+        self.client.on_callback_query(filters.regex("^delete_coupon\\s(.+)\\s(\\d+)"))(
+            self.handle(delete_coupon_callback)
+        )

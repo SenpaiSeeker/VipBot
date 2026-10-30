@@ -1,12 +1,12 @@
+from helpers.modules import Modules
 import uuid
 
 import pyrogram
 from pyrogram import filters
 
-from .. import command, ctx, get_notification_target
+from .. import get_notification_target
 
 
-@command(lambda ctx: filters.successful_payment)
 async def successful_donation_handler(client, message):
     if not message.successful_payment.invoice_payload.startswith("donation_"):
         return
@@ -15,7 +15,7 @@ async def successful_donation_handler(client, message):
     stars_donated = message.successful_payment.total_amount
     charge_id = message.successful_payment.telegram_payment_charge_id
     current_bot_id = client.me.id
-    super_admin_id = ctx.owner_id
+    super_admin_id = client.owner_id
 
     try:
         await client.send_rich_message(
@@ -28,14 +28,14 @@ async def successful_donation_handler(client, message):
             ),
         )
     except Exception as e:
-        ctx.log.print(f"Gagal mengirim ucapan donasi: {e}")
+        client.log.print(f"Gagal mengirim ucapan donasi: {e}")
 
     charge_marker = f"stars_charge_{charge_id}"
-    if not await ctx.db.setVarsOnce(current_bot_id, charge_marker, True):
+    if not await client.db.setVarsOnce(current_bot_id, charge_marker, True):
         return
 
     owner_of_this_bot = await get_notification_target(client)
-    main_bot_client = ctx.manager.main_bot_client
+    main_bot_client = client.manager.main_bot_client
 
     try:
         user_mention_str = client.ns.telegram.arg.getMention(user, md=True)
@@ -52,7 +52,7 @@ async def successful_donation_handler(client, message):
             "charge_id": charge_id,
         }
 
-        await ctx.db.setVars(
+        await client.db.setVars(
             current_bot_id,
             f"refund_{refund_key}",
             refund_data,
@@ -92,4 +92,12 @@ async def successful_donation_handler(client, message):
             )
 
     except Exception as e:
-        ctx.log.print(f"Gagal mengirim notifikasi donasi: {e}")
+        client.log.print(f"Gagal mengirim notifikasi donasi: {e}")
+
+
+class PaymentStars(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_message(filters.successful_payment)(
+            self.handle(successful_donation_handler)
+        )

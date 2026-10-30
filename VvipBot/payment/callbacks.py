@@ -1,3 +1,4 @@
+from helpers.modules import Modules
 import asyncio
 import re
 from datetime import datetime, timezone
@@ -7,12 +8,7 @@ from pyrogram import filters
 
 from helpers import parse_dt
 
-from .. import (
-    command,
-    ctx,
-    get_bot_cache,
-    listen,
-)
+from .. import get_bot_cache, listen
 from .invoice import (
     _create_all_vvip_payment_invoice,
     _create_payment_invoice,
@@ -29,12 +25,8 @@ def _build_pay_all_rows(selected_items):
     ]
 
 
-@command(
-    lambda ctx: filters.regex("^pay_all_vvip$"),
-    handler_type="callback",
-)
 async def pay_all_vvip_callback(client, callback_query):
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
     selected_items = _get_all_vvip_items(vvip_list)
 
     if not selected_items:
@@ -79,12 +71,8 @@ async def pay_all_vvip_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^pay_all_vvip_confirm$"),
-    handler_type="callback",
-)
 async def pay_all_vvip_confirm_callback(client, callback_query):
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
     selected_items = _get_all_vvip_items(vvip_list)
 
     if not selected_items:
@@ -130,7 +118,7 @@ def _pick_valid_indexes(vvip_list):
 
 
 async def _render_pick_panel(client, callback_query, selected):
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
     valid_idx = _pick_valid_indexes(vvip_list)
     if not valid_idx:
         return await callback_query.answer(
@@ -199,18 +187,10 @@ async def _render_pick_panel(client, callback_query, selected):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^pick_vvip$"),
-    handler_type="callback",
-)
 async def pick_vvip_callback(client, callback_query):
     await _render_pick_panel(client, callback_query, [])
 
 
-@command(
-    lambda ctx: filters.regex("^pick_vvip_toggle_(.+?)_(\\d+)$"),
-    handler_type="callback",
-)
 async def pick_vvip_toggle_callback(client, callback_query):
     sel_txt = callback_query.matches[0].group(1)
     idx = int(callback_query.matches[0].group(2))
@@ -222,10 +202,6 @@ async def pick_vvip_toggle_callback(client, callback_query):
     await _render_pick_panel(client, callback_query, selected)
 
 
-@command(
-    lambda ctx: filters.regex("^pick_vvip_pay_(.+)$"),
-    handler_type="callback",
-)
 async def pick_vvip_pay_callback(client, callback_query):
     sel_txt = callback_query.matches[0].group(1)
     selected = _parse_pick_sel(sel_txt)
@@ -234,7 +210,7 @@ async def pick_vvip_pay_callback(client, callback_query):
             "❌ Pilih minimal 1 paket dulu.", show_alert=True
         )
 
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
     valid_idx = _pick_valid_indexes(vvip_list)
     selected = [i for i in selected if i in valid_idx]
     if not selected:
@@ -290,17 +266,13 @@ def _build_package_detail_table(client, emoji_name, title, rows, footer):
     return rich
 
 
-@command(
-    lambda ctx: filters.regex("^notes_(.+)"),
-    handler_type="callback",
-)
 async def notes_data(client, callback_query):
     item_id = callback_query.matches[0].group(1)
 
     if item_id.isdigit():
         item_index = int(item_id)
     else:
-        vip_cache = get_bot_cache("vip_list", client.me.id)
+        vip_cache = get_bot_cache(client, "vip_list")
         if item_id not in vip_cache:
             return await callback_query.answer(
                 "Sesi kedaluwarsa, silakan muat ulang menu.",
@@ -308,7 +280,7 @@ async def notes_data(client, callback_query):
             )
         item_index = vip_cache[item_id]
 
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
 
     layout = [
         [
@@ -398,17 +370,13 @@ async def notes_data(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^promo_detail_(.+)"),
-    handler_type="callback",
-)
 async def promo_detail(client, callback_query):
     item_id = callback_query.matches[0].group(1)
 
     if item_id.isdigit():
         item_index = int(item_id)
     else:
-        vip_cache = get_bot_cache("vip_list", client.me.id)
+        vip_cache = get_bot_cache(client, "vip_list")
         if item_id not in vip_cache:
             return await callback_query.answer(
                 "Sesi kedaluwarsa, silakan muat ulang menu.",
@@ -416,7 +384,7 @@ async def promo_detail(client, callback_query):
             )
         item_index = vip_cache[item_id]
 
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
 
     layout = [
         [
@@ -505,17 +473,13 @@ async def promo_detail(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^apply_coupon_(\\d+)_(normal|promo)(?:_\\d+)?$"),
-    handler_type="callback",
-)
 async def apply_coupon_callback(client, callback_query):
     chat_id = callback_query.from_user.id
     match = callback_query.matches[0]
     item_index = int(match.group(1))
     tipe = match.group(2)
 
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
     try:
         package = vvip_list[item_index]
     except (IndexError, TypeError):
@@ -545,13 +509,9 @@ async def apply_coupon_callback(client, callback_query):
             raise listen.UserCancelled
 
         coupon_code = ask_msg.text.upper()
-        coupons = await ctx.db.getListVars(client.me.id, "coupons") or []
+        coupons = await client.db.getListVars(client.me.id, "coupons") or []
         coupon = next(
-            (
-                c
-                for c in coupons
-                if str(c.get("code", "")).upper() == coupon_code
-            ),
+            (c for c in coupons if str(c.get("code", "")).upper() == coupon_code),
             None,
         )
 
@@ -650,10 +610,6 @@ async def apply_coupon_callback(client, callback_query):
         )
 
 
-@command(
-    lambda ctx: filters.regex("^paynow_(\\d+)_(normal|promo)(?:_\\d+)?$"),
-    handler_type="callback",
-)
 async def paynow(client, callback_query):
     match = callback_query.matches[0]
     item_index = int(match.group(1))
@@ -679,13 +635,9 @@ async def paynow(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^renew_sub_(\\d+)"),
-    handler_type="callback",
-)
 async def renew_subscription_callback(client, callback_query):
     item_index = int(callback_query.matches[0].group(1))
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
 
     try:
         item = vvip_list[item_index]
@@ -703,3 +655,38 @@ async def renew_subscription_callback(client, callback_query):
         callback_query.data = f"notes_{item_index}"
         callback_query.matches = [re.match("notes_(\\d+)", callback_query.data)]
         await notes_data(client, callback_query)
+
+
+class PaymentCallbacks(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^pay_all_vvip$"))(
+            self.handle(pay_all_vvip_callback)
+        )
+        self.client.on_callback_query(filters.regex("^pay_all_vvip_confirm$"))(
+            self.handle(pay_all_vvip_confirm_callback)
+        )
+        self.client.on_callback_query(filters.regex("^pick_vvip$"))(
+            self.handle(pick_vvip_callback)
+        )
+        self.client.on_callback_query(filters.regex("^pick_vvip_toggle_(.+?)_(\\d+)$"))(
+            self.handle(pick_vvip_toggle_callback)
+        )
+        self.client.on_callback_query(filters.regex("^pick_vvip_pay_(.+)$"))(
+            self.handle(pick_vvip_pay_callback)
+        )
+        self.client.on_callback_query(filters.regex("^notes_(.+)"))(
+            self.handle(notes_data)
+        )
+        self.client.on_callback_query(filters.regex("^promo_detail_(.+)"))(
+            self.handle(promo_detail)
+        )
+        self.client.on_callback_query(
+            filters.regex("^apply_coupon_(\\d+)_(normal|promo)(?:_\\d+)?$")
+        )(self.handle(apply_coupon_callback))
+        self.client.on_callback_query(
+            filters.regex("^paynow_(\\d+)_(normal|promo)(?:_\\d+)?$")
+        )(self.handle(paynow))
+        self.client.on_callback_query(filters.regex("^renew_sub_(\\d+)"))(
+            self.handle(renew_subscription_callback)
+        )

@@ -1,3 +1,4 @@
+from helpers.modules import Modules
 import asyncio
 from datetime import datetime, timezone
 
@@ -6,18 +7,14 @@ from pyrogram import filters
 
 from helpers import listen, parse_dt
 
-from .. import MAX_BOT_CAPACITY, command, ctx
+from .. import MAX_BOT_CAPACITY
 
 _creation_lock = asyncio.Lock()
 
 
-@command(
-    lambda ctx: filters.regex("^start_creation_process$"),
-    handler_type="callback",
-)
 async def start_creation_process_callback(client, callback_query):
     user_id = callback_query.from_user.id
-    expiry_date = parse_dt(await ctx.db.getVars(user_id, "user_expiry_date"))
+    expiry_date = parse_dt(await client.db.getVars(user_id, "user_expiry_date"))
 
     if not expiry_date or expiry_date <= datetime.now(timezone.utc):
         return await callback_query.answer(
@@ -25,7 +22,7 @@ async def start_creation_process_callback(client, callback_query):
             show_alert=True,
         )
 
-    all_bots_data = await ctx.db.getBots(is_token=True)
+    all_bots_data = await client.db.getBots(is_token=True)
 
     if len(all_bots_data) >= MAX_BOT_CAPACITY:
         from config import BACKUP_BOT
@@ -80,9 +77,11 @@ async def start_creation_process_callback(client, callback_query):
         if int(new_bot_name.id) != new_bot_id:
             raise ValueError("Token bot tidak cocok dengan ID bot.")
 
-        existing_bots = await ctx.db.getBots(is_token=True)
+        existing_bots = await client.db.getBots(is_token=True)
         if any(str(bot.get("name")) == str(new_bot_id) for bot in existing_bots):
-            raise ValueError("Bot ini sudah terdaftar dan tidak dapat ditambahkan ulang.")
+            raise ValueError(
+                "Bot ini sudah terdaftar dan tidak dapat ditambahkan ulang."
+            )
 
         await msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
@@ -103,16 +102,13 @@ async def start_creation_process_callback(client, callback_query):
         }
 
         async with _creation_lock:
-            existing_bots = await ctx.db.getBots(is_token=True)
-            if any(
-                str(bot.get("name")) == str(new_bot_id)
-                for bot in existing_bots
-            ):
+            existing_bots = await client.db.getBots(is_token=True)
+            if any(str(bot.get("name")) == str(new_bot_id) for bot in existing_bots):
                 raise ValueError(
                     "Bot ini sudah terdaftar dan tidak dapat ditambahkan ulang."
                 )
 
-            await ctx.db.saveBot(
+            await client.db.saveBot(
                 new_bot_id,
                 api_id,
                 api_hash,
@@ -120,17 +116,17 @@ async def start_creation_process_callback(client, callback_query):
                 is_token=True,
             )
 
-        await ctx.db.setVars(
+        await client.db.setVars(
             new_bot_id,
             "bot_expiration_date",
             expiry_date.isoformat(),
         )
-        await ctx.db.setVars(new_bot_id, "owner_id", user_id)
+        await client.db.setVars(new_bot_id, "owner_id", user_id)
 
-        await ctx.manager.start_bot(bot_data)
+        await client.manager.start_bot(bot_data)
 
-        if new_bot_id not in ctx.manager.running_bots:
-            remaining = await ctx.manager.flood_remaining(new_bot_id)
+        if new_bot_id not in client.manager.running_bots:
+            remaining = await client.manager.flood_remaining(new_bot_id)
             if remaining > 0:
                 mins = max(1, remaining // 60)
                 raise ValueError(
@@ -138,12 +134,12 @@ async def start_creation_process_callback(client, callback_query):
                     "Bot akan dicoba aktifkan kembali otomatis."
                 )
 
-            await ctx.db.removeBot(new_bot_id)
-            await ctx.db.removeVars(new_bot_id, "owner_id")
-            await ctx.db.removeVars(new_bot_id, "bot_expiration_date")
+            await client.db.removeBot(new_bot_id)
+            await client.db.removeVars(new_bot_id, "owner_id")
+            await client.db.removeVars(new_bot_id, "bot_expiration_date")
             raise ValueError("Gagal mengaktifkan bot. Silakan coba lagi.")
 
-        await ctx.db.removeVars(user_id, "user_expiry_date")
+        await client.db.removeVars(user_id, "user_expiry_date")
 
         await msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
@@ -187,4 +183,12 @@ async def start_creation_process_callback(client, callback_query):
                     f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Error pembuatan bot'], ['Error', f'`{e}`']])}"
                 )
             ),
+        )
+
+
+class BotCreation(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^start_creation_process$"))(
+            self.handle(start_creation_process_callback)
         )

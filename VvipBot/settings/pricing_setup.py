@@ -1,10 +1,11 @@
+from helpers.modules import Modules
 import asyncio
 import uuid
 
 import pyrogram
 from pyrogram import filters
 
-from .. import command, ctx, get_bot_cache, is_bot_owner, listen
+from .. import get_bot_cache, is_bot_owner, listen
 from ..core import DEFAULT_START_PHOTO, START_TEMPLATE_VARIABLES
 
 START_TEMPLATE_EXAMPLE = (
@@ -16,10 +17,6 @@ START_TEMPLATE_EXAMPLE = (
 )
 
 
-@command(
-    lambda ctx: filters.regex("^set_start_photo$"),
-    handler_type="callback",
-)
 async def set_start_photo_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -73,16 +70,12 @@ async def set_start_photo_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^set_default_start_photo$"),
-    handler_type="callback",
-)
 async def set_default_start_photo_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
     chat_id = callback_query.from_user.id
-    await ctx.db.setVars(client.me.id, "start_photo_id", DEFAULT_START_PHOTO)
+    await client.db.setVars(client.me.id, "start_photo_id", DEFAULT_START_PHOTO)
 
     layout = [
         [
@@ -110,16 +103,12 @@ async def set_default_start_photo_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^clear_start_photo$"),
-    handler_type="callback",
-)
 async def clear_start_photo_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
     chat_id = callback_query.from_user.id
-    await ctx.db.removeVars(client.me.id, "start_photo_id")
+    await client.db.removeVars(client.me.id, "start_photo_id")
 
     layout = [
         [
@@ -147,10 +136,6 @@ async def clear_start_photo_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^ask_start_photo$"),
-    handler_type="callback",
-)
 async def ask_start_photo_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -181,7 +166,7 @@ async def ask_start_photo_callback(client, callback_query):
             if ask_msg.text.lower() == "/batal":
                 raise listen.UserCancelled
             if ask_msg.text.lower() == "/empty":
-                await ctx.db.removeVars(client.me.id, "start_photo_id")
+                await client.db.removeVars(client.me.id, "start_photo_id")
 
                 return await client.send_rich_message(
                     chat_id,
@@ -207,7 +192,7 @@ async def ask_start_photo_callback(client, callback_query):
             )
 
         photo_id = ask_msg.photo.file_id
-        await ctx.db.setVars(client.me.id, "start_photo_id", photo_id)
+        await client.db.setVars(client.me.id, "start_photo_id", photo_id)
 
         await client.send_rich_message(
             chat_id,
@@ -233,10 +218,6 @@ async def ask_start_photo_callback(client, callback_query):
         )
 
 
-@command(
-    lambda ctx: filters.regex("^set_start_text$"),
-    handler_type="callback",
-)
 async def set_start_text_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -257,7 +238,7 @@ async def set_start_text_callback(client, callback_query):
     back_btn = client.ns.telegram.button.build_button_grid(layout)
 
     try:
-        current = await ctx.db.getVars(client.me.id, "start_text_template")
+        current = await client.db.getVars(client.me.id, "start_text_template")
         status = "Kustom (aktif)" if current else "Default (bawaan)"
         var_rows = [[f"`{name}`", desc] for name, desc in START_TEMPLATE_VARIABLES]
 
@@ -288,7 +269,7 @@ async def set_start_text_callback(client, callback_query):
             raise listen.UserCancelled
 
         if ask_text_msg.text.lower() == "/empty":
-            await ctx.db.removeVars(client.me.id, "start_text_template")
+            await client.db.removeVars(client.me.id, "start_text_template")
 
             return await client.send_rich_message(
                 chat_id,
@@ -301,7 +282,7 @@ async def set_start_text_callback(client, callback_query):
                 reply_markup=back_btn,
             )
 
-        await ctx.db.setVars(
+        await client.db.setVars(
             client.me.id,
             "start_text_template",
             ask_text_msg.text.markdown,
@@ -331,10 +312,6 @@ async def set_start_text_callback(client, callback_query):
         )
 
 
-@command(
-    lambda ctx: filters.regex("^check_vvip_status$"),
-    handler_type="callback",
-)
 async def check_vvip_status_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return await callback_query.answer(
@@ -355,7 +332,7 @@ async def check_vvip_status_callback(client, callback_query):
         ),
     )
 
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
     if not vvip_list:
         empty_rows = [
             ["Jumlah Paket", "`0`"],
@@ -583,7 +560,7 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
             "" if normal_text_msg.text.lower() == "/skip" else normal_text_msg.text
         )
 
-        await ctx.db.setListVars(client.me.id, "list_vvip", vvip_data)
+        await client.db.setListVars(client.me.id, "list_vvip", vvip_data)
 
         await client.send_rich_message(
             chat_id,
@@ -617,10 +594,6 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
         )
 
 
-@command(
-    lambda ctx: filters.regex("^setup_listvvip$"),
-    handler_type="callback",
-)
 async def setup_listvvip(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -629,10 +602,6 @@ async def setup_listvvip(client, callback_query):
     await _run_setup_listvvip(client, callback_query.from_user.id)
 
 
-@command(
-    lambda ctx: filters.regex(r"^setup_listvvip_from_chat\s(-?\d+)$"),
-    handler_type="callback",
-)
 async def setup_listvvip_from_chat(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -650,15 +619,11 @@ async def setup_listvvip_from_chat(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^delete_listvvip$"),
-    handler_type="callback",
-)
 async def delete_listvvip(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
     back_row = [
         {
             "text": "• Kembali ke Pengaturan •",
@@ -682,7 +647,7 @@ async def delete_listvvip(client, callback_query):
             reply_markup=btn,
         )
 
-    vip_cache = get_bot_cache("vip_list", client.me.id)
+    vip_cache = get_bot_cache(client, "vip_list")
     vip_cache.clear()
 
     layout = []
@@ -729,16 +694,12 @@ async def delete_listvvip(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^delete_vvip\\s(.+)"),
-    handler_type="callback",
-)
 async def confirm_delete_vvip(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
     _, item_id = callback_query.data.split(" ", 1)
-    vip_cache = get_bot_cache("vip_list", client.me.id)
+    vip_cache = get_bot_cache(client, "vip_list")
     if item_id not in vip_cache:
         return await callback_query.answer(
             "Sesi tidak ditemukan atau kedaluwarsa.",
@@ -748,22 +709,18 @@ async def confirm_delete_vvip(client, callback_query):
     item_to_remove = vip_cache[item_id]
 
     if item_to_remove:
-        await ctx.db.removeListVars(client.me.id, "list_vvip", item_to_remove)
+        await client.db.removeListVars(client.me.id, "list_vvip", item_to_remove)
         vip_cache.pop(item_id, None)
         await callback_query.answer("Kategori berhasil dihapus.", show_alert=True)
 
     await delete_listvvip(client, callback_query)
 
 
-@command(
-    lambda ctx: filters.regex("^edit_price_listvvip$"),
-    handler_type="callback",
-)
 async def edit_price_listvvip_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
 
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
     back_row = [
         {
             "text": "• Kembali ke Pengaturan •",
@@ -787,7 +744,7 @@ async def edit_price_listvvip_callback(client, callback_query):
             reply_markup=btn,
         )
 
-    edit_cache = get_bot_cache("vip_list_edit", client.me.id)
+    edit_cache = get_bot_cache(client, "vip_list_edit")
     edit_cache.clear()
 
     layout = []
@@ -834,10 +791,6 @@ async def edit_price_listvvip_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^edit_vvip_price\\s(.+)"),
-    handler_type="callback",
-)
 async def edit_vvip_price_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -845,7 +798,7 @@ async def edit_vvip_price_callback(client, callback_query):
     chat_id = callback_query.from_user.id
     _, item_id = callback_query.data.split(" ", 1)
 
-    edit_cache = get_bot_cache("vip_list_edit", client.me.id)
+    edit_cache = get_bot_cache(client, "vip_list_edit")
     if item_id not in edit_cache:
         return await callback_query.answer(
             "Sesi tidak ditemukan atau kedaluwarsa.",
@@ -855,7 +808,7 @@ async def edit_vvip_price_callback(client, callback_query):
     name = edit_cache[item_id].get("name", "Tanpa Nama")
     old_item = edit_cache[item_id]
 
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
     item_index = next(
         (i for i, item in enumerate(vvip_list) if item == old_item),
         None,
@@ -905,7 +858,7 @@ async def edit_vvip_price_callback(client, callback_query):
         vvip_list[item_index]["price"] = new_price
         vvip_list[item_index]["promo_price"] = new_promo
 
-        await ctx.db.replaceListVars(client.me.id, "list_vvip", vvip_list)
+        await client.db.replaceListVars(client.me.id, "list_vvip", vvip_list)
         edit_cache.pop(item_id, None)
 
         await client.send_rich_message(
@@ -937,4 +890,45 @@ async def edit_vvip_price_callback(client, callback_query):
                     f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Input tidak valid atau timeout'], ['Tindakan', 'Proses dibatalkan'], ['Error', f'`{e}`']])}"
                 )
             ),
+        )
+
+
+class SettingsPricingSetup(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^set_start_photo$"))(
+            self.handle(set_start_photo_callback)
+        )
+        self.client.on_callback_query(filters.regex("^set_default_start_photo$"))(
+            self.handle(set_default_start_photo_callback)
+        )
+        self.client.on_callback_query(filters.regex("^clear_start_photo$"))(
+            self.handle(clear_start_photo_callback)
+        )
+        self.client.on_callback_query(filters.regex("^ask_start_photo$"))(
+            self.handle(ask_start_photo_callback)
+        )
+        self.client.on_callback_query(filters.regex("^set_start_text$"))(
+            self.handle(set_start_text_callback)
+        )
+        self.client.on_callback_query(filters.regex("^check_vvip_status$"))(
+            self.handle(check_vvip_status_callback)
+        )
+        self.client.on_callback_query(filters.regex("^setup_listvvip$"))(
+            self.handle(setup_listvvip)
+        )
+        self.client.on_callback_query(
+            filters.regex(r"^setup_listvvip_from_chat\s(-?\d+)$")
+        )(self.handle(setup_listvvip_from_chat))
+        self.client.on_callback_query(filters.regex("^delete_listvvip$"))(
+            self.handle(delete_listvvip)
+        )
+        self.client.on_callback_query(filters.regex("^delete_vvip\\s(.+)"))(
+            self.handle(confirm_delete_vvip)
+        )
+        self.client.on_callback_query(filters.regex("^edit_price_listvvip$"))(
+            self.handle(edit_price_listvvip_callback)
+        )
+        self.client.on_callback_query(filters.regex("^edit_vvip_price\\s(.+)"))(
+            self.handle(edit_vvip_price_callback)
         )

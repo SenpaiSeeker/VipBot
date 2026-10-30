@@ -1,15 +1,12 @@
+from helpers.modules import Modules
 import asyncio
 
 import pyrogram
 from pyrogram import filters
 
-from .. import command, ctx, is_bot_owner, listen
+from .. import is_bot_owner, listen
 
 
-@command(
-    lambda ctx: filters.regex("^set_notif_chat$"),
-    handler_type="callback",
-)
 async def set_notif_chat_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -54,7 +51,7 @@ async def set_notif_chat_callback(client, callback_query):
             raise listen.UserCancelled
 
         if raw.lower() == "/none":
-            await ctx.db.removeVars(client.me.id, "notif_chat_id")
+            await client.db.removeVars(client.me.id, "notif_chat_id")
 
             return await client.send_rich_message(
                 chat_id,
@@ -69,7 +66,7 @@ async def set_notif_chat_callback(client, callback_query):
 
         if raw.lstrip("-").isdigit():
             chat_target = int(raw)
-            await ctx.db.setVars(client.me.id, "notif_chat_id", chat_target)
+            await client.db.setVars(client.me.id, "notif_chat_id", chat_target)
 
             return await client.send_rich_message(
                 chat_id,
@@ -97,7 +94,7 @@ async def set_notif_chat_callback(client, callback_query):
                     reply_markup=back_btn,
                 )
 
-            await ctx.db.setVars(client.me.id, "notif_chat_id", raw)
+            await client.db.setVars(client.me.id, "notif_chat_id", raw)
 
             return await client.send_rich_message(
                 chat_id,
@@ -134,10 +131,6 @@ async def set_notif_chat_callback(client, callback_query):
         )
 
 
-@command(
-    lambda ctx: filters.regex(r"^set_notif_payment\s(-?\d+)$"),
-    handler_type="callback",
-)
 async def set_notif_payment_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -147,7 +140,7 @@ async def set_notif_payment_callback(client, callback_query):
     except (IndexError, ValueError):
         return await callback_query.answer("Chat ID tidak valid.", show_alert=True)
 
-    await ctx.db.setVars(client.me.id, "notif_chat_id", chat_target)
+    await client.db.setVars(client.me.id, "notif_chat_id", chat_target)
 
     layout = [
         [
@@ -170,3 +163,14 @@ async def set_notif_payment_callback(client, callback_query):
         ),
         reply_markup=back_btn,
     )
+
+
+class SettingsNotification(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^set_notif_chat$"))(
+            self.handle(set_notif_chat_callback)
+        )
+        self.client.on_callback_query(filters.regex(r"^set_notif_payment\s(-?\d+)$"))(
+            self.handle(set_notif_payment_callback)
+        )

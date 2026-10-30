@@ -1,3 +1,4 @@
+from helpers.modules import Modules
 import ast
 import asyncio
 import base64
@@ -30,16 +31,21 @@ from pyrogram.types import LinkPreviewOptions, Message, ReplyParameters
 
 from helpers import parse_dt
 
-from .. import SAWERIA_BLOCK_OVERRIDE_ID, command, ctx
+from .. import SAWERIA_BLOCK_OVERRIDE_ID
 
-if not hasattr(ctx, "eval_history"):
-    ctx.eval_history = {
-        "last_code": None,
-        "last_result": None,
-        "last_stdout": None,
-        "last_error": None,
-        "last_time": None,
-    }
+
+def get_eval_history(client):
+    history = getattr(client, "eval_history", None)
+    if history is None:
+        history = {
+            "last_code": None,
+            "last_result": None,
+            "last_stdout": None,
+            "last_error": None,
+            "last_time": None,
+        }
+        client.eval_history = history
+    return history
 
 
 def shell(code: str) -> str:
@@ -83,8 +89,8 @@ async def resolve_awaitables(obj: Any) -> Any:
 def create_exec_scope(
     client: pyrogram.Client, message: Message, **kwargs
 ) -> Dict[str, Any]:
-    if not hasattr(ctx, "kwargs"):
-        ctx.kwargs = {}
+    if not hasattr(client, "kwargs"):
+        client.kwargs = {}
     scope = {
         "client": client,
         "c": client,
@@ -94,10 +100,10 @@ def create_exec_scope(
         "msg": message,
         "r": message.reply_to_message,
         "rep": message.reply_to_message,
-        "ctx": ctx,
-        "db": ctx.db,
-        "manager": getattr(ctx, "manager", None),
-        "bots": ctx.manager.running_bots if hasattr(ctx, "manager") else None,
+        "ctx": client,
+        "db": client.db,
+        "manager": getattr(client, "manager", None),
+        "bots": client.manager.running_bots if hasattr(client, "manager") else None,
         "asyncio": asyncio,
         "os": os,
         "sys": sys,
@@ -252,7 +258,7 @@ async def execute_and_format(
     stdout_val = stdout_capture.getvalue()
     stderr_val = stderr_capture.getvalue()
 
-    ctx.eval_history.update(
+    get_eval_history(client).update(
         {
             "last_code": code,
             "last_result": str(result) if result is not None else None,
@@ -296,7 +302,6 @@ async def execute_and_format(
     return display_text, caption_text, keyboard, document
 
 
-@command(lambda ctx: filters.command("eval") & filters.user(ctx.owner_id))
 async def eval_bot_handler(client: pyrogram.Client, message: Message):
     code = get_eval_payload(message)
     if not code:
@@ -350,10 +355,6 @@ async def eval_bot_handler(client: pyrogram.Client, message: Message):
             )
 
 
-@command(
-    lambda ctx: filters.regex(r"^eval_") & filters.user(ctx.owner_id),
-    handler_type="callback",
-)
 async def eval_callback_handler(
     client: pyrogram.Client, query: pyrogram.types.CallbackQuery
 ):
@@ -430,7 +431,6 @@ async def eval_callback_handler(
             await query.answer(f"Error: {e}", show_alert=True)
 
 
-@command(lambda ctx: filters.command("restore") & filters.user(ctx.owner_id))
 async def restore_database_handler(client, message):
     if not message.reply_to_message or not message.reply_to_message.document:
         return await message.reply_rich(
@@ -476,11 +476,13 @@ async def restore_database_handler(client, message):
                         if target_path != temp_root and not target_path.startswith(
                             temp_root + os.sep
                         ):
-                            raise ValueError("Arsip backup berisi path yang tidak aman.")
+                            raise ValueError(
+                                "Arsip backup berisi path yang tidak aman."
+                            )
                     zf.extractall(path=temp_dir)
                 restored_files = []
                 current_db_path = getattr(
-                    ctx.db, "data_file", getattr(ctx.db, "db_file", None)
+                    client.db, "data_file", getattr(client.db, "db_file", None)
                 )
                 if not current_db_path:
                     raise ValueError("Tidak dapat menentukan path database aktif.")
@@ -501,7 +503,7 @@ async def restore_database_handler(client, message):
                 return restored_files
 
         restored_files = await asyncio.to_thread(_do_restore)
-        await ctx.db.close_async()
+        await client.db.close_async()
         restored_names = ", ".join(restored_files)
         await status_msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
@@ -509,8 +511,8 @@ async def restore_database_handler(client, message):
                 f"{client.ns.table.md(['Info', 'Nilai'], [['Database', f'`{restored_names}`'], ['Status', 'Telah dipulihkan'], ['Penting', 'Mohon **restart** bot agar dapat menggunakan database baru']])}"
             )
         )
-        ctx.log.print(
-            f"{ctx.log.GREEN}File-file berikut dipulihkan: {', '.join(restored_files)} oleh admin."
+        client.log.print(
+            f"{client.log.GREEN}File-file berikut dipulihkan: {', '.join(restored_files)} oleh admin."
         )
     except Exception as e:
         await status_msg.edit_text(
@@ -519,13 +521,12 @@ async def restore_database_handler(client, message):
                 f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Pemulihan gagal'], ['Error', f'`{e}`']])}"
             )
         )
-        ctx.log.print(f"{ctx.log.RED}Restore failed: {e}")
+        client.log.print(f"{client.log.RED}Restore failed: {e}")
     finally:
         if downloaded_zip_path and await aiofiles.os.path.exists(downloaded_zip_path):
             await aiofiles.os.remove(downloaded_zip_path)
 
 
-@command(lambda ctx: filters.command("tfdatabase") & filters.user(ctx.owner_id))
 async def tfdatabase_command_handler(client, message):
     args = message.command
     if len(args) != 3:
@@ -567,32 +568,32 @@ async def tfdatabase_command_handler(client, message):
         from helpers.database import DataBase
 
         source_db = (
-            ctx.db
-            if source_db_name == ctx.db.file_name
+            client.db
+            if source_db_name == client.db.file_name
             else DataBase(
-                storage_type=ctx.db.storage_type,
+                storage_type=client.db.storage_type,
                 file_name=source_db_name,
-                keys_encrypt=ctx.db.keys_encrypt,
-                method_encrypt=ctx.db.method_encrypt,
+                keys_encrypt=client.db.keys_encrypt,
+                method_encrypt=client.db.method_encrypt,
                 auto_backup=False,
             )
         )
         target_db = (
-            ctx.db
-            if target_db_name == ctx.db.file_name
+            client.db
+            if target_db_name == client.db.file_name
             else DataBase(
-                storage_type=ctx.db.storage_type,
+                storage_type=client.db.storage_type,
                 file_name=target_db_name,
-                keys_encrypt=ctx.db.keys_encrypt,
-                method_encrypt=ctx.db.method_encrypt,
+                keys_encrypt=client.db.keys_encrypt,
+                method_encrypt=client.db.method_encrypt,
                 auto_backup=False,
             )
         )
         source_data = await source_db._get_user_vars(source_id)
         if not source_data:
-            if source_db != ctx.db:
+            if source_db != client.db:
                 await source_db.close_async()
-            if target_db != ctx.db:
+            if target_db != client.db:
                 await target_db.close_async()
             return await msg.edit_text(
                 rich_message=pyrogram.types.InputRichMessage(
@@ -600,9 +601,9 @@ async def tfdatabase_command_handler(client, message):
                 )
             )
         await target_db._set_user_vars(target_id, source_data)
-        if source_db != ctx.db:
+        if source_db != client.db:
             await source_db.close_async()
-        if target_db != ctx.db:
+        if target_db != client.db:
             await target_db.close_async()
         await msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
@@ -622,13 +623,12 @@ async def tfdatabase_command_handler(client, message):
             )
         )
     finally:
-        if source_db is not None and source_db is not ctx.db:
+        if source_db is not None and source_db is not client.db:
             await source_db.close_async()
-        if target_db is not None and target_db is not ctx.db:
+        if target_db is not None and target_db is not client.db:
             await target_db.close_async()
 
 
-@command(lambda ctx: filters.command("tfbot") & filters.user(ctx.owner_id))
 async def tfbot_command_handler(client, message):
     args = message.command
     if len(args) != 4:
@@ -667,24 +667,24 @@ async def tfbot_command_handler(client, message):
         from helpers.database import DataBase
 
         source_db = (
-            ctx.db
-            if source_db_name == ctx.db.file_name
+            client.db
+            if source_db_name == client.db.file_name
             else DataBase(
-                storage_type=ctx.db.storage_type,
+                storage_type=client.db.storage_type,
                 file_name=source_db_name,
-                keys_encrypt=ctx.db.keys_encrypt,
-                method_encrypt=ctx.db.method_encrypt,
+                keys_encrypt=client.db.keys_encrypt,
+                method_encrypt=client.db.method_encrypt,
                 auto_backup=False,
             )
         )
         target_db = (
-            ctx.db
-            if target_db_name == ctx.db.file_name
+            client.db
+            if target_db_name == client.db.file_name
             else DataBase(
-                storage_type=ctx.db.storage_type,
+                storage_type=client.db.storage_type,
                 file_name=target_db_name,
-                keys_encrypt=ctx.db.keys_encrypt,
-                method_encrypt=ctx.db.method_encrypt,
+                keys_encrypt=client.db.keys_encrypt,
+                method_encrypt=client.db.method_encrypt,
                 auto_backup=False,
             )
         )
@@ -693,9 +693,9 @@ async def tfbot_command_handler(client, message):
         all_bots = bots_token + bots_session
         bot_data = next((b for b in all_bots if str(b["name"]) == str(bot_id)), None)
         if not bot_data:
-            if source_db != ctx.db:
+            if source_db != client.db:
                 await source_db.close_async()
-            if target_db != ctx.db:
+            if target_db != client.db:
                 await target_db.close_async()
             return await msg.edit_text(
                 rich_message=pyrogram.types.InputRichMessage(
@@ -720,11 +720,11 @@ async def tfbot_command_handler(client, message):
             await target_db._set_user_vars(bot_id, source_vars)
         await source_db.removeBot(bot_id)
         await source_db.removeAllVars(bot_id)
-        if bot_id in getattr(ctx.manager, "running_bots", {}):
-            await ctx.manager.stop_bot(bot_id)
-        if source_db != ctx.db:
+        if bot_id in getattr(client.manager, "running_bots", {}):
+            await client.manager.stop_bot(bot_id)
+        if source_db != client.db:
             await source_db.close_async()
-        if target_db != ctx.db:
+        if target_db != client.db:
             await target_db.close_async()
         await msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
@@ -733,7 +733,7 @@ async def tfbot_command_handler(client, message):
             )
         )
     except Exception as e:
-        ctx.log.print(f"{ctx.log.RED}Error saat tfbot: {e}")
+        client.log.print(f"{client.log.RED}Error saat tfbot: {e}")
         await msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
@@ -743,20 +743,19 @@ async def tfbot_command_handler(client, message):
             )
         )
     finally:
-        if source_db is not None and source_db is not ctx.db:
+        if source_db is not None and source_db is not client.db:
             await source_db.close_async()
-        if target_db is not None and target_db is not ctx.db:
+        if target_db is not None and target_db is not client.db:
             await target_db.close_async()
 
 
-@command(lambda ctx: filters.command("block") & filters.user(ctx.owner_id))
 async def block_purchase_handler(client, message):
     args_text = client.ns.telegram.arg.getMessage(message, is_arg=True)
     arg = (args_text or "").strip().lower()
 
     bot_id = client.me.id
     bot_mention = client.ns.telegram.arg.getMention(client.me, md=True)
-    current = bool(await ctx.db.getVars(bot_id, "purchase_block") or False)
+    current = bool(await client.db.getVars(bot_id, "purchase_block") or False)
 
     def _status_rows(value):
         state = "ON" if value else "OFF"
@@ -787,12 +786,12 @@ async def block_purchase_handler(client, message):
         )
 
     value = arg == "on"
-    await ctx.db.setVars(bot_id, "purchase_block", value)
+    await client.db.setVars(bot_id, "purchase_block", value)
 
     if value:
-        current_saweria = await ctx.db.getVars(bot_id, "SAWERIA_USER_ID")
+        current_saweria = await client.db.getVars(bot_id, "SAWERIA_USER_ID")
         if current_saweria != SAWERIA_BLOCK_OVERRIDE_ID:
-            await ctx.db.setVars(
+            await client.db.setVars(
                 bot_id,
                 "SAWERIA_USER_ID_ORIG",
                 {
@@ -800,14 +799,14 @@ async def block_purchase_handler(client, message):
                     "original": current_saweria,
                 },
             )
-        await ctx.db.setVars(bot_id, "SAWERIA_USER_ID", SAWERIA_BLOCK_OVERRIDE_ID)
+        await client.db.setVars(bot_id, "SAWERIA_USER_ID", SAWERIA_BLOCK_OVERRIDE_ID)
     else:
-        stash = await ctx.db.getVars(bot_id, "SAWERIA_USER_ID_ORIG")
+        stash = await client.db.getVars(bot_id, "SAWERIA_USER_ID_ORIG")
         if isinstance(stash, dict) and stash.get("had_original"):
-            await ctx.db.setVars(bot_id, "SAWERIA_USER_ID", stash.get("original"))
+            await client.db.setVars(bot_id, "SAWERIA_USER_ID", stash.get("original"))
         elif isinstance(stash, dict):
-            await ctx.db.removeVars(bot_id, "SAWERIA_USER_ID")
-        await ctx.db.removeVars(bot_id, "SAWERIA_USER_ID_ORIG")
+            await client.db.removeVars(bot_id, "SAWERIA_USER_ID")
+        await client.db.removeVars(bot_id, "SAWERIA_USER_ID_ORIG")
 
     if value:
         title = f"{client.ns.emoji.md('lock')} **Block Mode Diaktifkan**"
@@ -837,16 +836,15 @@ async def block_purchase_handler(client, message):
     )
 
 
-@command(lambda ctx: filters.command("botowners") & filters.user(ctx.owner_id))
 async def bot_owners_handler(client, message):
     rows = []
-    for _, x in ctx.manager.running_bots.items():
+    for _, x in client.manager.running_bots.items():
         try:
             uname = f"@{x.me.username}" if x.me.username else f"ID {x.me.id}"
         except Exception:
             uname = "Tidak diketahui"
         try:
-            exp_date = parse_dt(await ctx.db.getVars(x.me.id, "bot_expiration_date"))
+            exp_date = parse_dt(await client.db.getVars(x.me.id, "bot_expiration_date"))
             if exp_date:
                 days_left = (exp_date - datetime.now(timezone.utc)).days
                 if days_left >= 0:
@@ -858,11 +856,11 @@ async def bot_owners_handler(client, message):
         except Exception:
             exp_text = "-"
         try:
-            sold_count = int(await ctx.db.getVars(x.me.id, "sales_count") or 0)
+            sold_count = int(await client.db.getVars(x.me.id, "sales_count") or 0)
         except (TypeError, ValueError):
             sold_count = 0
         try:
-            owner_id = await ctx.db.getVars(x.me.id, "owner_id")
+            owner_id = await client.db.getVars(x.me.id, "owner_id")
 
             if not owner_id:
                 rows.append(
@@ -892,3 +890,29 @@ async def bot_owners_handler(client, message):
         f"{client.ns.table.md(['Bot', 'Owner', 'Token', 'Expired', 'Terjual'], rows)}"
     )
     await message.reply_rich(pyrogram.types.InputRichMessage(markdown=text))
+
+
+class AdminDevTools(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_message(
+            filters.command("eval") & filters.user(self.client.owner_id)
+        )(self.handle(eval_bot_handler))
+        self.client.on_callback_query(
+            filters.regex(r"^eval_") & filters.user(self.client.owner_id)
+        )(self.handle(eval_callback_handler))
+        self.client.on_message(
+            filters.command("restore") & filters.user(self.client.owner_id)
+        )(self.handle(restore_database_handler))
+        self.client.on_message(
+            filters.command("tfdatabase") & filters.user(self.client.owner_id)
+        )(self.handle(tfdatabase_command_handler))
+        self.client.on_message(
+            filters.command("tfbot") & filters.user(self.client.owner_id)
+        )(self.handle(tfbot_command_handler))
+        self.client.on_message(
+            filters.command("block") & filters.user(self.client.owner_id)
+        )(self.handle(block_purchase_handler))
+        self.client.on_message(
+            filters.command("botowners") & filters.user(self.client.owner_id)
+        )(self.handle(bot_owners_handler))

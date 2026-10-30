@@ -1,3 +1,4 @@
+from helpers.modules import Modules
 import asyncio
 
 import pyrogram
@@ -5,7 +6,7 @@ from pyrogram import filters
 
 from helpers.income_template import INCOME_TEMPLATE_VARIABLES
 
-from .. import command, ctx, is_bot_owner, listen
+from .. import is_bot_owner, listen
 
 TEMPLATE_EXAMPLE = (
     "{mention} baru saja membeli **{item_name}**\n\n"
@@ -31,10 +32,6 @@ def _back_button(client):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^set_income_text$"),
-    handler_type="callback",
-)
 async def set_income_text_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return await callback_query.answer("🚫 Akses ditolak", show_alert=True)
@@ -43,7 +40,7 @@ async def set_income_text_callback(client, callback_query):
     await callback_query.message.delete()
     back_btn = _back_button(client)
 
-    current = await ctx.db.getVars(client.me.id, "income_text_template")
+    current = await client.db.getVars(client.me.id, "income_text_template")
     status = "Kustom (aktif)" if current else "Default (bawaan)"
     var_rows = [[f"`{name}`", desc] for name, desc in INCOME_TEMPLATE_VARIABLES]
 
@@ -76,7 +73,7 @@ async def set_income_text_callback(client, callback_query):
             raise listen.UserCancelled
 
         if ask_text_msg.text.lower() == "/empty":
-            await ctx.db.removeVars(client.me.id, "income_text_template")
+            await client.db.removeVars(client.me.id, "income_text_template")
 
             return await client.send_rich_message(
                 chat_id,
@@ -89,7 +86,7 @@ async def set_income_text_callback(client, callback_query):
                 reply_markup=back_btn,
             )
 
-        await ctx.db.setVars(
+        await client.db.setVars(
             client.me.id,
             "income_text_template",
             ask_text_msg.text.markdown,
@@ -116,4 +113,12 @@ async def set_income_text_callback(client, callback_query):
                 )
             ),
             reply_markup=back_btn,
+        )
+
+
+class SettingsIncomeNotif(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^set_income_text$"))(
+            self.handle(set_income_text_callback)
         )

@@ -1,3 +1,4 @@
+from helpers.modules import Modules
 import re
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -96,7 +97,7 @@ def render_start_template(template, client, user, is_owner, is_main_bot):
 
 async def get_start_keyboard_and_content(client, user):
     is_owner = await is_bot_owner(client, user.id)
-    is_main_bot = client.me.id == ctx.manager.main_bot_id
+    is_main_bot = client.me.id == client.manager.main_bot_id
 
     if is_main_bot:
         _default_text = (
@@ -175,12 +176,12 @@ async def get_start_keyboard_and_content(client, user):
             f"{client.ns.emoji.md('heart_hands')} **Terima kasih telah menggunakan layanan kami.**"
         )
 
-    db_text_template = await ctx.db.getVars(client.me.id, "start_text_template")
+    db_text_template = await client.db.getVars(client.me.id, "start_text_template")
     main_text_template = (
         db_text_template if db_text_template is not None else _default_text
     )
 
-    db_photo_id = await ctx.db.getVars(client.me.id, "start_photo_id")
+    db_photo_id = await client.db.getVars(client.me.id, "start_photo_id")
     photo_id = db_photo_id if db_photo_id is not None else None
 
     welcome_text = render_start_template(
@@ -257,7 +258,6 @@ async def get_start_keyboard_and_content(client, user):
     return btn, welcome_text, photo_id
 
 
-@command(lambda ctx: filters.command("start") & filters.private)
 async def start_bot(client, message):
     btn, txt, photo_id = await get_start_keyboard_and_content(client, message.from_user)
     await message.reply_rich(
@@ -267,10 +267,6 @@ async def start_bot(client, message):
     await check_new_user(client, message)
 
 
-@command(
-    lambda ctx: filters.regex("^start$"),
-    handler_type="callback",
-)
 async def start_callback(client, callback_query):
     btn, txt, photo_id = await get_start_keyboard_and_content(
         client, callback_query.from_user
@@ -284,10 +280,6 @@ async def start_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^about_bot$"),
-    handler_type="callback",
-)
 async def about_bot_callback(client, callback_query):
     table = client.ns.table
     text = (
@@ -317,10 +309,6 @@ async def about_bot_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^close_panel$"),
-    handler_type="callback",
-)
 async def close_panel_callback(client, callback_query):
     try:
         await callback_query.message.delete()
@@ -328,12 +316,8 @@ async def close_panel_callback(client, callback_query):
         await callback_query.answer("Done.")
 
 
-@command(
-    lambda ctx: filters.regex("^list_vvip$"),
-    handler_type="callback",
-)
 async def list_vvip_bot(client, callback_query):
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
     normal_icon = client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT["normal"])
     promo_icon = client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT["promo"])
     custom_icons = await get_list_vvip_icons(client)
@@ -442,10 +426,6 @@ async def list_vvip_bot(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^donate_stars$"),
-    handler_type="callback",
-)
 async def donate_callback(client, callback_query):
     photo_url = "https://files.catbox.moe/1f9j10.jpg"
     donate_rows = [
@@ -515,10 +495,6 @@ async def donate_callback(client, callback_query):
         )
 
 
-@command(
-    lambda ctx: filters.regex("^donate_pay_(\\d+)$"),
-    handler_type="callback",
-)
 async def process_donation_callback(client, callback_query):
     try:
         star_amount = int(callback_query.data.split("_")[2])
@@ -544,8 +520,34 @@ async def process_donation_callback(client, callback_query):
     try:
         await client.send_invoice(callback_query.from_user.id, **invoice)
     except Exception as e:
-        ctx.log.print(f"Gagal mengirim invoice Stars: {e}")
+        client.log.print(f"Gagal mengirim invoice Stars: {e}")
         await callback_query.answer(
             "Gagal membuat invoice donasi. Coba lagi nanti.",
             show_alert=True,
+        )
+
+
+class CoreBot(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_message(filters.command("start") & filters.private)(
+            self.handle(start_bot)
+        )
+        self.client.on_callback_query(filters.regex("^start$"))(
+            self.handle(start_callback)
+        )
+        self.client.on_callback_query(filters.regex("^about_bot$"))(
+            self.handle(about_bot_callback)
+        )
+        self.client.on_callback_query(filters.regex("^close_panel$"))(
+            self.handle(close_panel_callback)
+        )
+        self.client.on_callback_query(filters.regex("^list_vvip$"))(
+            self.handle(list_vvip_bot)
+        )
+        self.client.on_callback_query(filters.regex("^donate_stars$"))(
+            self.handle(donate_callback)
+        )
+        self.client.on_callback_query(filters.regex("^donate_pay_(\\d+)$"))(
+            self.handle(process_donation_callback)
         )

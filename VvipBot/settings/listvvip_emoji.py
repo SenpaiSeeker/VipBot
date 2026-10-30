@@ -1,3 +1,4 @@
+from helpers.modules import Modules
 import asyncio
 import uuid
 
@@ -8,8 +9,6 @@ from .. import (
     LIST_VVIP_ICON_BUY_ALL_KEY,
     LIST_VVIP_ICON_DEFAULT,
     _sanitize_emoji_id,
-    command,
-    ctx,
     get_bot_cache,
     get_list_vvip_icons,
     is_bot_owner,
@@ -49,10 +48,10 @@ def extract_custom_emoji(message):
 
 
 async def render_list_vvip_icon_menu(client, callback_query):
-    vvip_list = await ctx.db.getListVars(client.me.id, "list_vvip") or []
+    vvip_list = await client.db.getListVars(client.me.id, "list_vvip") or []
     icons = await get_list_vvip_icons(client)
 
-    icon_cache = get_bot_cache("vip_list_icon", client.me.id)
+    icon_cache = get_bot_cache(client, "vip_list_icon")
     icon_cache.clear()
 
     layout = []
@@ -150,10 +149,6 @@ async def render_list_vvip_icon_menu(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^set_listvvip_icon$"),
-    handler_type="callback",
-)
 async def set_listvvip_icon_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return await callback_query.answer(
@@ -164,10 +159,6 @@ async def set_listvvip_icon_callback(client, callback_query):
     await render_list_vvip_icon_menu(client, callback_query)
 
 
-@command(
-    lambda ctx: filters.regex("^set_listvvip_icon_item\\s(.+)"),
-    handler_type="callback",
-)
 async def set_listvvip_icon_item_prompt(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return await callback_query.answer(
@@ -180,7 +171,7 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
         name = LIST_VVIP_ICON_BUY_ALL_KEY
         display_name = "Ambil Semua VIP"
     else:
-        icon_cache = get_bot_cache("vip_list_icon", client.me.id)
+        icon_cache = get_bot_cache(client, "vip_list_icon")
         if item_id not in icon_cache:
             return await callback_query.answer(
                 "Sesi tidak ditemukan atau kedaluwarsa. Buka kembali menu dari Pengaturan.",
@@ -201,7 +192,7 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
     back_btn = client.ns.telegram.button.build_button_grid(layout)
 
     default_id = client.ns.emoji.id(LIST_VVIP_ICON_DEFAULT["normal"])
-    current_id = await ctx.db.getVars(client.me.id, "list_vvip_icon")
+    current_id = await client.db.getVars(client.me.id, "list_vvip_icon")
     raw_current = current_id.get(name) if isinstance(current_id, dict) else None
     if isinstance(raw_current, dict):
         current_display = f"`{raw_current.get('id')}`"
@@ -246,7 +237,7 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
                     reply_markup=back_btn,
                 )
 
-        saved = await ctx.db.getVars(client.me.id, "list_vvip_icon")
+        saved = await client.db.getVars(client.me.id, "list_vvip_icon")
         saved = saved if isinstance(saved, dict) else {}
 
         if emoji_id:
@@ -258,9 +249,9 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
             saved.pop(name, None)
 
         if saved:
-            await ctx.db.setVars(client.me.id, "list_vvip_icon", saved)
+            await client.db.setVars(client.me.id, "list_vvip_icon", saved)
         else:
-            await ctx.db.removeVars(client.me.id, "list_vvip_icon")
+            await client.db.removeVars(client.me.id, "list_vvip_icon")
 
         status = "diubah" if emoji_id else "dikembalikan ke ID bawaan"
         result_display = (
@@ -293,10 +284,6 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
         )
 
 
-@command(
-    lambda ctx: filters.regex("^reset_listvvip_icon$"),
-    handler_type="callback",
-)
 async def reset_listvvip_icon_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return await callback_query.answer(
@@ -304,10 +291,24 @@ async def reset_listvvip_icon_callback(client, callback_query):
             show_alert=True,
         )
 
-    await ctx.db.removeVars(client.me.id, "list_vvip_icon")
+    await client.db.removeVars(client.me.id, "list_vvip_icon")
     await callback_query.answer(
         "Semua icon list VVIP dikembalikan ke ID bawaan.",
         show_alert=True,
     )
 
     await render_list_vvip_icon_menu(client, callback_query)
+
+
+class SettingsListVvipEmoji(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^set_listvvip_icon$"))(
+            self.handle(set_listvvip_icon_callback)
+        )
+        self.client.on_callback_query(filters.regex("^set_listvvip_icon_item\\s(.+)"))(
+            self.handle(set_listvvip_icon_item_prompt)
+        )
+        self.client.on_callback_query(filters.regex("^reset_listvvip_icon$"))(
+            self.handle(reset_listvvip_icon_callback)
+        )

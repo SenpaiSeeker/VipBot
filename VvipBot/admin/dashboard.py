@@ -1,3 +1,4 @@
+from helpers.modules import Modules
 import asyncio
 
 import pyrogram
@@ -7,21 +8,20 @@ from .. import *
 _refund_lock = asyncio.Lock()
 
 
-@command(lambda ctx: filters.command("dashboard") & filters.user(ctx.owner_id))
 async def dashboard_command_handler(client, message):
     msg = await message.reply_rich(
         pyrogram.types.InputRichMessage(
             markdown=f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\nMohon tunggu sebentar."
         )
     )
-    all_bots_data = await ctx.db.getBots(is_token=True)
+    all_bots_data = await client.db.getBots(is_token=True)
     total_bots = len(all_bots_data)
     unique_users = set()
     bot_user_counts = {}
     for bot_data in all_bots_data:
         try:
             bot_id = int(bot_data["name"])
-            user_ids = await ctx.db.getListVars(bot_id, "user_ids") or []
+            user_ids = await client.db.getListVars(bot_id, "user_ids") or []
         except (KeyError, TypeError, ValueError):
             continue
         bot_user_counts[bot_id] = len(user_ids)
@@ -33,7 +33,7 @@ async def dashboard_command_handler(client, message):
     )
     top_bot_info = "N/A"
     if top_bot_id:
-        top_bot_instance = ctx.manager.running_bots.get(top_bot_id)
+        top_bot_instance = client.manager.running_bots.get(top_bot_id)
         top_bot_name = (
             top_bot_instance.me.first_name if top_bot_instance else f"ID {top_bot_id}"
         )
@@ -97,7 +97,6 @@ async def dashboard_command_handler(client, message):
             photo_stream.close()
 
 
-@command(lambda ctx: filters.regex("^refund_stars_"), handler_type="callback")
 async def refund_stars_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return await callback_query.answer(
@@ -107,7 +106,7 @@ async def refund_stars_callback(client, callback_query):
     try:
         refund_key = callback_query.data.split("_")[2]
         db_key = f"refund_{refund_key}"
-        refund_data = await ctx.db.getVars(client.me.id, db_key)
+        refund_data = await client.db.getVars(client.me.id, db_key)
         if not refund_data:
             await callback_query.edit_message_text(
                 rich_message=pyrogram.types.InputRichMessage(
@@ -123,8 +122,8 @@ async def refund_stars_callback(client, callback_query):
         refunded_key = f"refunded_{charge_id}"
 
         async with _refund_lock:
-            if await ctx.db.getVars(client.me.id, refunded_key):
-                await ctx.db.removeVars(client.me.id, db_key)
+            if await client.db.getVars(client.me.id, refunded_key):
+                await client.db.removeVars(client.me.id, db_key)
                 return await callback_query.answer(
                     "Donasi ini sudah dikembalikan.",
                     show_alert=True,
@@ -134,7 +133,7 @@ async def refund_stars_callback(client, callback_query):
                 user_id=user_id_to_refund,
                 telegram_payment_charge_id=charge_id,
             )
-            await ctx.db.setVars(client.me.id, refunded_key, True)
+            await client.db.setVars(client.me.id, refunded_key, True)
 
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
@@ -154,7 +153,7 @@ async def refund_stars_callback(client, callback_query):
             ),
         )
     except Exception as e:
-        ctx.log.print(f"{ctx.log.RED}Gagal merefund donasi: {e}")
+        client.log.print(f"{client.log.RED}Gagal merefund donasi: {e}")
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
@@ -165,10 +164,9 @@ async def refund_stars_callback(client, callback_query):
         )
     finally:
         if db_key:
-            await ctx.db.removeVars(client.me.id, db_key)
+            await client.db.removeVars(client.me.id, db_key)
 
 
-@command(lambda ctx: filters.regex("^stats_(\\d+)"), handler_type="callback")
 async def show_stars_stats(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return
@@ -316,19 +314,18 @@ async def show_stars_stats(client, callback_query):
             reply_markup=btn,
         )
     except Exception as e:
-        ctx.log.print(
-            f"{ctx.log.RED} Error fetching stars stats: {e}\n{traceback.format_exc()}"
+        client.log.print(
+            f"{client.log.RED} Error fetching stars stats: {e}\n{traceback.format_exc()}"
         )
         await callback_query.answer(f"Error: {e}", show_alert=True)
 
 
-@command(lambda ctx: filters.regex("^total_users_count$"), handler_type="callback")
 async def total_users_count_callback(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return await callback_query.answer(
             "🚫 Anda tidak memiliki akses ke menu ini.", show_alert=True
         )
-    user_ids = await ctx.db.getListVars(client.me.id, "user_ids") or []
+    user_ids = await client.db.getListVars(client.me.id, "user_ids") or []
     total_count = len(user_ids)
     text = (
         f"{client.ns.emoji.md('busts_in_silhouette')} **Total Pengguna Bot**\n\n"
@@ -358,4 +355,21 @@ async def total_users_count_callback(client, callback_query):
         await callback_query.answer(
             "❌ **Terjadi Kesalahan**\n\n`{e}`".format(e=e),
             show_alert=True,
+        )
+
+
+class AdminDashboard(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_message(
+            filters.command("dashboard") & filters.user(self.client.owner_id)
+        )(self.handle(dashboard_command_handler))
+        self.client.on_callback_query(filters.regex("^refund_stars_"))(
+            self.handle(refund_stars_callback)
+        )
+        self.client.on_callback_query(filters.regex("^stats_(\\d+)"))(
+            self.handle(show_stars_stats)
+        )
+        self.client.on_callback_query(filters.regex("^total_users_count$"))(
+            self.handle(total_users_count_callback)
         )

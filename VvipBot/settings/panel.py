@@ -1,13 +1,10 @@
+from helpers.modules import Modules
 import pyrogram
 from pyrogram import filters
 
-from .. import command, is_bot_owner
+from .. import is_bot_owner
 
 
-@command(
-    lambda ctx: filters.regex("^settings$"),
-    handler_type="callback",
-)
 async def settings(client, callback_query):
     if not await is_bot_owner(client, callback_query.from_user.id):
         return await callback_query.answer(
@@ -197,3 +194,11 @@ async def settings(client, callback_query):
         rich_message=pyrogram.types.InputRichMessage(markdown=txt_content),
         reply_markup=btn,
     )
+
+
+class SettingsPanel(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^settings$"))(
+            self.handle(settings)
+        )

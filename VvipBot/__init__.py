@@ -26,32 +26,16 @@ from helpers.saweria_message_generator import (
     generate_safe_saweria_message,
 )
 
-ALL_HANDLERS = []
-
-
-class HandlerContext(SimpleNamespace):
-    pass
-
-
-ctx = HandlerContext()
-
-
-def command(filter_lambda, handler_type="message"):
-
-    def decorator(func):
-        ALL_HANDLERS.append((func, filter_lambda, handler_type))
-        return func
-
-    return decorator
-
 
 def seller_only(func):
 
     @wraps(func)
     async def wrapper(client, update, *args, **kwargs):
         user_id = update.from_user.id
-        seller_list = await ctx.db.getListVars(ctx.owner_id, "seller_id_list") or []
-        if user_id == ctx.owner_id or user_id in seller_list:
+        seller_list = (
+            await client.db.getListVars(client.owner_id, "seller_id_list") or []
+        )
+        if user_id == client.owner_id or user_id in seller_list:
             return await func(client, update, *args, **kwargs)
         else:
             error_message = (
@@ -69,41 +53,42 @@ def seller_only(func):
 
 
 async def is_bot_owner(client, user_id):
-    owner_of_this_bot = await ctx.db.getVars(client.me.id, "owner_id")
-    return user_id == ctx.owner_id or (
+    owner_of_this_bot = await client.db.getVars(client.me.id, "owner_id")
+    return user_id == client.owner_id or (
         owner_of_this_bot and user_id == owner_of_this_bot
     )
 
 
 async def get_notification_target(client):
-    raw = await ctx.db.getVars(client.me.id, "notif_chat_id")
+    raw = await client.db.getVars(client.me.id, "notif_chat_id")
 
     if raw is not None:
         value = str(raw).strip()
         if value and not value.startswith("/"):
             return raw
 
-    return await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
+    return await client.db.getVars(client.me.id, "owner_id") or client.owner_id
 
 
-_member_locks = WeakValueDictionary()
-
-
-def get_member_lock(bot_id):
-    lock = _member_locks.get(bot_id)
+def get_member_lock(client):
+    locks = getattr(client, "_member_locks", None)
+    if locks is None:
+        locks = WeakValueDictionary()
+        setattr(client, "_member_locks", locks)
+    bot_id = client.me.id
+    lock = locks.get(bot_id)
     if lock is None:
         lock = asyncio.Lock()
-        _member_locks[bot_id] = lock
+        locks[bot_id] = lock
     return lock
 
 
-def get_bot_cache(name, bot_id):
-    store = getattr(ctx, name, None)
+def get_bot_cache(client, name):
+    store = getattr(client, name, None)
     if not isinstance(store, dict):
         store = {}
-        setattr(ctx, name, store)
-
-    key = str(bot_id)
+        setattr(client, name, store)
+    key = str(client.me.id)
     bucket = store.get(key)
     if not isinstance(bucket, dict):
         bucket = {}
@@ -112,11 +97,11 @@ def get_bot_cache(name, bot_id):
 
 
 async def get_sales_count(client):
-    count = await ctx.db.getVars(client.me.id, "sales_count")
+    count = await client.db.getVars(client.me.id, "sales_count")
     if count is None:
-        history = await ctx.db.getListVars(client.me.id, "vip_revenue_history") or []
+        history = await client.db.getListVars(client.me.id, "vip_revenue_history") or []
         count = len(history)
-        await ctx.db.setVars(client.me.id, "sales_count", count)
+        await client.db.setVars(client.me.id, "sales_count", count)
 
     try:
         return int(count)
@@ -150,7 +135,7 @@ def _sanitize_emoji_id(value):
 
 
 async def get_list_vvip_icons(client):
-    saved = await ctx.db.getVars(client.me.id, "list_vvip_icon")
+    saved = await client.db.getVars(client.me.id, "list_vvip_icon")
 
     if not isinstance(saved, dict):
         return {}
@@ -182,18 +167,18 @@ async def check_new_user(client, update):
     if not update or not getattr(update, "from_user", None):
         return
 
-    already_seen = await ctx.db.isMemberOf(
+    already_seen = await client.db.isMemberOf(
         client.me.id, "user_ids", update.from_user.id
     )
     if not already_seen:
-        await ctx.db.setListVars(
+        await client.db.setListVars(
             client.me.id,
             "user_ids",
             update.from_user.id,
             check_duplicate=False,
         )
         owner_of_this_bot = (
-            await ctx.db.getVars(client.me.id, "owner_id") or ctx.owner_id
+            await client.db.getVars(client.me.id, "owner_id") or client.owner_id
         )
 
         try:
@@ -209,80 +194,6 @@ async def check_new_user(client, update):
         except Exception:
             pass
 
-        ctx.log.print(
-            f"{ctx.log.CYAN}User baru {client.ns.telegram.arg.getMention(update.from_user, logs=True)} memulai bot {client.me.first_name}"
+        client.log.print(
+            f"{client.log.CYAN}User baru {client.ns.telegram.arg.getMention(update.from_user, logs=True)} memulai bot {client.me.first_name}"
         )
-
-
-def _load_all_handlers():
-    current_dir = os.path.dirname(__file__)
-    flat_paths = glob.glob(os.path.join(current_dir, "*.py"))
-    flat_modules = sorted(
-        os.path.basename(f)[:-3]
-        for f in flat_paths
-        if os.path.isfile(f) and not f.endswith("__init__.py")
-    )
-    for module_name in flat_modules:
-        importlib.import_module(f".{module_name}", package=__name__)
-
-    for entry in sorted(os.scandir(current_dir), key=lambda e: e.name):
-        if entry.is_dir() and not entry.name.startswith("_"):
-            pkg_init = os.path.join(entry.path, "__init__.py")
-            if os.path.isfile(pkg_init):
-                importlib.import_module(f".{entry.name}", package=__name__)
-
-
-_load_all_handlers()
-
-
-def register_all_handlers(
-    client: pyrogram.Client,
-    db_instance,
-    bot_manager,
-    owner_id,
-):
-    ctx.db = db_instance
-    ctx.manager = bot_manager
-    ctx.owner_id = owner_id
-    ctx.log = client.ns.utils.log()
-    HANDLER_MAP = {
-        "message": pyrogram.handlers.MessageHandler,
-        "callback": pyrogram.handlers.CallbackQueryHandler,
-        "chat_member": pyrogram.handlers.ChatMemberUpdatedHandler,
-        "pre_checkout": pyrogram.handlers.PreCheckoutQueryHandler,
-    }
-    for func, filter_lambda, handler_type in ALL_HANDLERS:
-        actual_filter = filter_lambda(ctx)
-        HandlerClass = HANDLER_MAP.get(handler_type)
-        if not HandlerClass:
-            ctx.log.print(
-                f"{ctx.log.YELLOW}Handler type '{handler_type}' tidak dikenal. Melewati pendaftaran."
-            )
-            continue
-
-        async def handler_wrapper(original_func, c, u):
-            if hasattr(u, "from_user") and u.from_user:
-                u.from_user.id
-            elif hasattr(u, "sender_chat") and u.sender_chat:
-                u.sender_chat.id
-            try:
-                await original_func(c, u)
-            except (
-                pyrogram.errors.MessageNotModified,
-                pyrogram.errors.MessageDeleteForbidden,
-            ):
-                pass
-            except Exception as e:
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                tb_info = traceback.extract_tb(exc_traceback)[-1]
-                filename = os.path.basename(tb_info.filename)
-                func_name = tb_info.name
-                line_no = tb_info.lineno
-                log_message = f"{ctx.log.RED}[ERROR]: {ctx.log.CYAN}{filename}:{func_name}:{line_no} {ctx.log.WHITE}| {ctx.log.YELLOW}{type(e).__name__}: {ctx.log.RED}{e}"
-                ctx.log.print(log_message)
-
-        wrapped_func = partial(handler_wrapper, func)
-        if handler_type == "pre_checkout":
-            client.add_handler(HandlerClass(wrapped_func))
-        else:
-            client.add_handler(HandlerClass(wrapped_func, filters=actual_filter))

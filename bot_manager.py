@@ -5,11 +5,10 @@ from datetime import datetime, timedelta, timezone
 import pyrogram
 from pyrogram.types import InputRichMessage
 
-import VvipBot as handlers
 from database import schedule
 from helpers import parse_dt
 from helpers.logger import LoggerHandler
-from VvipBot import ctx
+from VvipBot import get_member_lock
 
 log = LoggerHandler()
 
@@ -18,6 +17,8 @@ START_STAGGER_SECONDS = 0.75
 
 
 class BotManager:
+    current = None
+
     def __init__(self, db_instance, owner_id):
         self.db = db_instance
         self.owner_id = owner_id
@@ -25,6 +26,7 @@ class BotManager:
         self.main_bot_client = None
         self.main_bot_id = None
         self._flood_until = {}
+        BotManager.current = self
 
     async def flood_remaining(self, bot_id):
         try:
@@ -71,8 +73,20 @@ class BotManager:
                 in_memory=True,
             )
 
-            handlers.register_all_handlers(client, self.db, self, self.owner_id)
+            client.db = self.db
+            client.manager = self
+            client.owner_id = self.owner_id
+            client.broadcast_stop = {}
+            client.eval_history = {
+                "last_code": None,
+                "last_result": None,
+                "last_stdout": None,
+                "last_error": None,
+                "last_time": None,
+            }
+            client.kwargs = {}
 
+            client.load_all(directory="VvipBot")
             await client.start()
 
             self.running_bots[client.me.id] = client
@@ -127,7 +141,7 @@ class BotManager:
 
 @schedule.cron("*/5 * * * *")
 async def flood_retry_method():
-    manager = ctx.manager
+    manager = BotManager.current
     if not manager:
         return
 
@@ -157,9 +171,9 @@ async def flood_retry_method():
 @schedule.cron("0 * * * *")
 async def expiration_checker_method():
     log.info(f"Menjalankan pemeriksaan masa aktif bot...")
-    manager = ctx.manager
+    manager = BotManager.current
     if not manager:
-        log.warning("BotManager belum diinisialisasi di ctx. Melewati pemeriksaan.")
+        log.warning("BotManager belum diinisialisasi. Melewati pemeriksaan.")
         return
 
     all_bot_ids = [bot["name"] for bot in await manager.db.getBots(is_token=True)]
@@ -277,9 +291,9 @@ async def expiration_checker_method():
 async def subscription_checker_method():
     log.info(f"Menjalankan pemeriksaan langganan anggota...")
 
-    manager = ctx.manager
+    manager = BotManager.current
     if not manager:
-        log.warning("BotManager belum diinisialisasi di ctx. Melewati pemeriksaan.")
+        log.warning("BotManager belum diinisialisasi. Melewati pemeriksaan.")
         return
 
     now = datetime.now(timezone.utc)
@@ -395,11 +409,11 @@ async def subscription_checker_method():
 
                     except Exception as e:
                         log.print(
-                            f"{ctx.log.RED}Gagal kirim notif perpanjangan ke {user_id}: {e}"
+                            f"{log.RED}Gagal kirim notif perpanjangan ke {user_id}: {e}"
                         )
 
         if expired_keys:
-            async with handlers.get_member_lock(bot_id):
+            async with get_member_lock(bot_client):
 
                 async def remove_expired(current_members):
                     filtered = []
@@ -413,18 +427,12 @@ async def subscription_checker_method():
                             continue
 
                         member_expiry = parse_dt(member.get("expiry_date"))
-                        if member_expiry and member_expiry < datetime.now(
-                            timezone.utc
-                        ):
+                        if member_expiry and member_expiry < datetime.now(timezone.utc):
                             continue
 
                         filtered.append(member)
 
-                    return (
-                        filtered
-                        if len(filtered) != len(current_members)
-                        else None
-                    )
+                    return filtered if len(filtered) != len(current_members) else None
 
                 await manager.db.updateListVars(
                     bot_id,
@@ -455,9 +463,9 @@ _WATCHDOG_AUTH_LABELS = {
 @schedule.cron("*/15 * * * *")
 async def watchdog_token_checker():
     log.info(f"Menjalankan watchdog token bot...")
-    manager = ctx.manager
+    manager = BotManager.current
     if not manager:
-        log.warning("BotManager belum diinisialisasi di ctx. Melewati pemeriksaan.")
+        log.warning("BotManager belum diinisialisasi. Melewati pemeriksaan.")
         return
 
     main_client = manager.main_bot_client

@@ -1,3 +1,4 @@
+from helpers.modules import Modules
 import asyncio
 from datetime import datetime, timedelta, timezone
 from weakref import WeakValueDictionary
@@ -8,7 +9,7 @@ from pyrogram import filters
 from config import BACKUP_BOT
 from helpers import parse_dt
 
-from .. import MAX_BOT_CAPACITY, command, ctx
+from .. import MAX_BOT_CAPACITY
 from .pricing import calculate_bot_price, get_bot_purchase_panel
 
 _purchase_locks = WeakValueDictionary()
@@ -23,12 +24,8 @@ def _get_purchase_lock(bot_id, transaction_id):
     return lock
 
 
-@command(
-    lambda ctx: filters.regex("^create_bot$"),
-    handler_type="callback",
-)
 async def create_bot_callback(client, callback_query):
-    all_bots_data = await ctx.db.getBots(is_token=True)
+    all_bots_data = await client.db.getBots(is_token=True)
 
     if len(all_bots_data) >= MAX_BOT_CAPACITY:
         backup_text = f" melalui @{BACKUP_BOT}" if BACKUP_BOT else ""
@@ -56,7 +53,7 @@ async def create_bot_callback(client, callback_query):
         )
 
     user_id = callback_query.from_user.id
-    user_expiry = parse_dt(await ctx.db.getVars(user_id, "user_expiry_date"))
+    user_expiry = parse_dt(await client.db.getVars(user_id, "user_expiry_date"))
 
     if user_expiry and user_expiry > datetime.now(timezone.utc):
         text = (
@@ -97,10 +94,6 @@ async def create_bot_callback(client, callback_query):
     )
 
 
-@command(
-    lambda ctx: filters.regex("^adjust_bot_month_(\\d+)"),
-    handler_type="callback",
-)
 async def adjust_bot_month_callback(client, callback_query):
     months = int(callback_query.data.split("_")[-1])
 
@@ -119,10 +112,6 @@ async def adjust_bot_month_callback(client, callback_query):
         )
 
 
-@command(
-    lambda ctx: filters.regex("^pay_bot_qris_(\\d+)"),
-    handler_type="callback",
-)
 async def proceed_bot_payment_callback(client, callback_query):
     user_id = callback_query.from_user.id
     months = int(callback_query.data.split("_")[-1])
@@ -142,7 +131,7 @@ async def proceed_bot_payment_callback(client, callback_query):
         )
     )
 
-    saweria_user_id = await ctx.db.getVars(client.me.id, "SAWERIA_USER_ID")
+    saweria_user_id = await client.db.getVars(client.me.id, "SAWERIA_USER_ID")
 
     if not saweria_user_id:
         return await callback_query.edit_message_text(
@@ -173,7 +162,7 @@ async def proceed_bot_payment_callback(client, callback_query):
         )
 
         order_data = f"{months}|{amount_raw}|{user_id}"
-        await ctx.db.setVars(client.me.id, transaction_id, order_data)
+        await client.db.setVars(client.me.id, transaction_id, order_data)
 
         detail_rows = [
             [
@@ -230,7 +219,7 @@ async def proceed_bot_payment_callback(client, callback_query):
 
 
 async def _confirm_bot_payment(client, callback_query, transaction_id, user):
-    order_data_str = await ctx.db.getVars(client.me.id, transaction_id)
+    order_data_str = await client.db.getVars(client.me.id, transaction_id)
 
     if not order_data_str:
         return await callback_query.answer(
@@ -270,13 +259,11 @@ async def _confirm_bot_payment(client, callback_query, transaction_id, user):
 
         if is_paid:
             marker_key = f"bot_purchase_done_{transaction_id}"
-            already_processed = bool(
-                await ctx.db.getVars(client.me.id, marker_key)
-            )
+            already_processed = bool(await client.db.getVars(client.me.id, marker_key))
 
             if already_processed:
-                await ctx.db.removeVars(client.me.id, transaction_id)
-                await ctx.db.removeVars(client.me.id, marker_key)
+                await client.db.removeVars(client.me.id, transaction_id)
+                await client.db.removeVars(client.me.id, marker_key)
                 try:
                     await callback_query.message.delete()
                 except Exception:
@@ -287,7 +274,7 @@ async def _confirm_bot_payment(client, callback_query, transaction_id, user):
                 )
 
             current_expiry = parse_dt(
-                await ctx.db.getVars(user.id, "user_expiry_date")
+                await client.db.getVars(user.id, "user_expiry_date")
             )
             start_date = max(
                 current_expiry or datetime.now(timezone.utc),
@@ -295,14 +282,14 @@ async def _confirm_bot_payment(client, callback_query, transaction_id, user):
             )
             expiry_date = start_date + timedelta(days=30 * months)
 
-            await ctx.db.setVars(
+            await client.db.setVars(
                 user.id,
                 "user_expiry_date",
                 expiry_date.isoformat(),
             )
-            await ctx.db.setVars(client.me.id, marker_key, True)
-            await ctx.db.removeVars(client.me.id, transaction_id)
-            await ctx.db.removeVars(client.me.id, marker_key)
+            await client.db.setVars(client.me.id, marker_key, True)
+            await client.db.removeVars(client.me.id, transaction_id)
+            await client.db.removeVars(client.me.id, marker_key)
             await callback_query.message.delete()
 
             success_text = (
@@ -340,7 +327,7 @@ async def _confirm_bot_payment(client, callback_query, transaction_id, user):
                 f"| Jumlah | `Rp {formatted_amount}` |"
             )
             await client.send_rich_message(
-                ctx.owner_id,
+                client.owner_id,
                 pyrogram.types.InputRichMessage(markdown=owner_notif),
             )
         else:
@@ -355,10 +342,6 @@ async def _confirm_bot_payment(client, callback_query, transaction_id, user):
         )
 
 
-@command(
-    lambda ctx: filters.regex("^confirm_bot_payment_(.+)"),
-    handler_type="callback",
-)
 async def confirm_bot_payment_callback(client, callback_query):
     prefix = "confirm_bot_payment_"
     transaction_id = callback_query.data[len(prefix) :]
@@ -369,4 +352,21 @@ async def confirm_bot_payment_callback(client, callback_query):
             callback_query,
             transaction_id,
             callback_query.from_user,
+        )
+
+
+class BotPurchase(Modules):
+    def __init__(self, client):
+        super().__init__(client)
+        self.client.on_callback_query(filters.regex("^create_bot$"))(
+            self.handle(create_bot_callback)
+        )
+        self.client.on_callback_query(filters.regex("^adjust_bot_month_(\\d+)"))(
+            self.handle(adjust_bot_month_callback)
+        )
+        self.client.on_callback_query(filters.regex("^pay_bot_qris_(\\d+)"))(
+            self.handle(proceed_bot_payment_callback)
+        )
+        self.client.on_callback_query(filters.regex("^confirm_bot_payment_(.+)"))(
+            self.handle(confirm_bot_payment_callback)
         )

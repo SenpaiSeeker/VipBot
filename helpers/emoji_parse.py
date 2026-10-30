@@ -1,3 +1,5 @@
+from .patcher import Object
+
 _EMOJI_MAP = {
     "copyright": ("5458496841547015692", "©"),
     "registered": ("5246863809800318186", "®"),
@@ -586,8 +588,11 @@ def _render_markdown(eid, char):
     return f"![{char}](tg://emoji?id={eid})"
 
 
-class EmojiParse:
-    def __init__(self):
+class Emoji(Object):
+    _ns_alias = "emoji"
+
+    def __init__(self, client=None):
+        super().__init__(client)
         self._data = _EMOJI_MAP
 
     def __getattr__(self, name):
@@ -631,3 +636,6 @@ class EmojiParse:
 
     def all_names(self):
         return list(_EMOJI_MAP.keys())
+
+
+EmojiParse = Emoji
