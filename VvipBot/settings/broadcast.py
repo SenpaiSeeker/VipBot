@@ -87,7 +87,7 @@ async def _send_broadcast_message(
     client, target_user_id, source_message, broadcast_price=0
 ):
     caption_or_text = source_message.caption or source_message.text
-    text_to_parse = caption_or_text.markdown if caption_or_text else ""
+    text_to_parse = caption_or_text.html if caption_or_text else ""
     reply_markup, cleaned_text = client.ns.telegram.button.create_inline_keyboard(
         text_to_parse
     )
