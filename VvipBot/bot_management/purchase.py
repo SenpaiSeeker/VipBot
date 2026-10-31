@@ -1,4 +1,3 @@
-from helpers.modules import Modules
 import asyncio
 from datetime import datetime, timedelta, timezone
 from weakref import WeakValueDictionary
@@ -8,6 +7,7 @@ from pyrogram import filters
 
 from config import BACKUP_BOT
 from helpers import parse_dt
+from helpers.modules import Modules
 
 from .. import MAX_BOT_CAPACITY
 from .pricing import calculate_bot_price, get_bot_purchase_panel
