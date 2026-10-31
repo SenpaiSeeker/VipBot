@@ -837,6 +837,15 @@ async def block_purchase_handler(client, message):
 
 
 async def bot_owners_handler(client, message):
+    status_msg = await message.reply_rich(
+        pyrogram.types.InputRichMessage(
+            markdown=(
+                f"{client.ns.emoji.md('repeat')} **Memproses**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Mengumpulkan daftar owner bot']])}"
+            )
+        )
+    )
+
     rows = []
     for _, x in client.manager.running_bots.items():
         try:
@@ -889,7 +898,7 @@ async def bot_owners_handler(client, message):
         f"{client.ns.emoji.md('busts_in_silhouette')} **Daftar Owner Bot**\n\n"
         f"{client.ns.table.md(['Bot', 'Owner', 'Token', 'Expired', 'Terjual'], rows)}"
     )
-    await message.reply_rich(pyrogram.types.InputRichMessage(markdown=text))
+    await status_msg.edit(rich_message=pyrogram.types.InputRichMessage(markdown=text))
 
 
 class AdminDevTools(Modules):
