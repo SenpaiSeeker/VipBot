@@ -489,7 +489,6 @@ async def tfdatabase_command_handler(client, message):
             client.db
             if source_db_name == client.db.file_name
             else DataBase(
-                storage_type=client.db.storage_type,
                 file_name=source_db_name,
                 keys_encrypt=client.db.keys_encrypt,
                 method_encrypt=client.db.method_encrypt,
@@ -499,7 +498,6 @@ async def tfdatabase_command_handler(client, message):
             client.db
             if target_db_name == client.db.file_name
             else DataBase(
-                storage_type=client.db.storage_type,
                 file_name=target_db_name,
                 keys_encrypt=client.db.keys_encrypt,
                 method_encrypt=client.db.method_encrypt,
@@ -598,7 +596,6 @@ async def tfbot_command_handler(client, message):
             client.db
             if source_db_name == client.db.file_name
             else DataBase(
-                storage_type=client.db.storage_type,
                 file_name=source_db_name,
                 keys_encrypt=client.db.keys_encrypt,
                 method_encrypt=client.db.method_encrypt,
@@ -608,7 +605,6 @@ async def tfbot_command_handler(client, message):
             client.db
             if target_db_name == client.db.file_name
             else DataBase(
-                storage_type=client.db.storage_type,
                 file_name=target_db_name,
                 keys_encrypt=client.db.keys_encrypt,
                 method_encrypt=client.db.method_encrypt,

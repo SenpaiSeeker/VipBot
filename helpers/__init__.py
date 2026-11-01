@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from .argument import Argument
 from .button import Button, Buttons
 from .dashboard_gen import DashboardGenerator
+from .database import DataBase
 from .emoji_parse import Emoji, EmojiParse
 from .faker_gen import FakeInfoGenerator
 from .gradient import Gradient
@@ -31,6 +32,7 @@ __all__ = [
     "Button",
     "Buttons",
     "DashboardGenerator",
+    "DataBase",
     "DataObject",
     "Emoji",
     "EmojiParse",

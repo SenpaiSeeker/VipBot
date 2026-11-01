@@ -18,7 +18,6 @@ finally:
 
 from bot_manager import BotManager
 from config import API_HASH, API_ID, BOT_TOKEN, OWNER_ID
-from database import db
 from helpers.logger import CustomLogHandler, LoggerHandler
 
 log = LoggerHandler()
@@ -97,8 +96,6 @@ async def clean_sessions():
 async def main():
     await clean_sessions()
 
-    manager = BotManager(db, OWNER_ID)
-
     app = pyrogram.Client(
         name="vvip_manager_main",
         api_id=API_ID,
@@ -108,7 +105,8 @@ async def main():
         in_memory=True,
     )
 
-    app.db = db
+    manager = BotManager(app.db, OWNER_ID)
+
     app.manager = manager
     app.owner_id = OWNER_ID
     app.broadcast_stop = {}

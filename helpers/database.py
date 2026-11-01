@@ -26,13 +26,21 @@ def _get_file_lock(path):
 
 class DataBase(Object):
 
-    _ns_aliases = ()
+    _ns_alias = "db"
 
     def __init__(self, client=None, **options):
         super().__init__(client)
-        self.storage_type = "local"
-        self.file_name = options.get("file_name", "database")
-        self.keys_encrypt = options.get("keys_encrypt", "default_db_key_12345")
+        file_name = options.get("file_name")
+        keys_encrypt = options.get("keys_encrypt")
+        if client is not None and (file_name is None or keys_encrypt is None):
+            from config import DB_KEY, DB_NAME
+
+            if file_name is None:
+                file_name = DB_NAME
+            if keys_encrypt is None:
+                keys_encrypt = DB_KEY
+        self.file_name = file_name or "database"
+        self.keys_encrypt = keys_encrypt or "default_db_key_12345"
         self.method_encrypt = options.get("method_encrypt", "bytes")
 
         self.cipher = CipherHandler(
