@@ -42,7 +42,8 @@ async def pay_all_vvip_callback(client, callback_query):
     text = (
         f"{client.ns.emoji.md('shopping_cart')} **Ringkasan Ambil Semua VIP**\n\n"
         f"{table.md(['Paket', 'Harga'], rows)}\n\n"
-        f"{client.ns.emoji.md('money_bag')} **Total: Rp {int(total_amount):,}** ({len(selected_items)} paket)"
+        f"{client.ns.emoji.md('money_bag')} **Total: Rp "
+        f"{int(total_amount):,}** ({len(selected_items)} paket)"
     )
 
     layout = [
@@ -251,9 +252,13 @@ async def pick_vvip_pay_callback(client, callback_query):
 
 
 def _processing_text(client) -> str:
+    rows = [
+        ["Status", "Sedang memproses"],
+        ["Keterangan", "Mohon tunggu sebentar"],
+    ]
     return (
         f"{client.ns.emoji.md('hourglass')} **Sedang Memproses**\n\n"
-        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Sedang memproses'], ['Keterangan', 'Mohon tunggu sebentar']])}"
+        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
     )
 
 
@@ -307,7 +312,8 @@ async def notes_data(client, callback_query):
             ("Nama Paket", f"`{name}`"),
             (
                 "Deskripsi",
-                "Dapatkan akses instan ke konten premium dan eksklusif setelah pembayaran berhasil.",
+                "Dapatkan akses instan ke konten premium dan eksklusif "
+                "setelah pembayaran berhasil.",
             ),
             ("Harga Normal", f"`Rp {formatted_price}`"),
         ]
@@ -411,7 +417,8 @@ async def promo_detail(client, callback_query):
             ("Nama Paket", f"`{name}`"),
             (
                 "Deskripsi",
-                "Jangan lewatkan kesempatan emas ini untuk bergabung dengan harga yang jauh lebih terjangkau!",
+                "Jangan lewatkan kesempatan emas ini untuk bergabung dengan "
+                "harga yang jauh lebih terjangkau!",
             ),
             ("Harga Promo", f"`Rp {formatted_promo}`"),
         ]
@@ -461,9 +468,10 @@ async def promo_detail(client, callback_query):
             reply_markup=btn,
         )
 
+    rows = [["Status", "Paket promo tidak ditemukan atau tidak aktif"]]
     text = (
         f"{client.ns.emoji.md('cross_mark')} **Paket Tidak Ditemukan**\n\n"
-        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Paket promo tidak ditemukan atau tidak aktif']])}"
+        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
     )
     btn = client.ns.telegram.button.build_button_grid(layout)
 
@@ -498,10 +506,14 @@ async def apply_coupon_callback(client, callback_query):
     await callback_query.message.delete()
 
     try:
+        rows = [
+            ["Instruksi", "Silakan masukkan kode kupon Anda"],
+            ["Batal", "Ketik `/batal` untuk membatalkan"],
+        ]
         ask_msg = await client.ask(
             chat_id,
             f"**Masukkan Kode Kupon**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Instruksi', 'Silakan masukkan kode kupon Anda'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}",
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}",
             timeout=300,
         )
 
@@ -535,7 +547,8 @@ async def apply_coupon_callback(client, callback_query):
             coupon_expiry = parse_dt(expiry_str)
         except (TypeError, ValueError):
             raise ValueError(
-                f"{client.ns.emoji.md('cross_mark')} Tanggal kedaluwarsa kupon tidak valid."
+                f"{client.ns.emoji.md('cross_mark')} Tanggal kedaluwarsa "
+                "kupon tidak valid."
             )
 
         if coupon_expiry and coupon_expiry < datetime.now(timezone.utc):
@@ -589,22 +602,31 @@ async def apply_coupon_callback(client, callback_query):
             ),
         )
     except ValueError as e:
+        rows = [
+            ["Status", "Gagal"],
+            ["Error", f"`{e}`"],
+        ]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Kode Promo Tidak Valid**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Kode Promo Tidak "
+                    "Valid**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
     except Exception as e:
+        rows = [
+            ["Status", "Terjadi kesalahan"],
+            ["Error", f"`{e}`"],
+        ]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Terjadi kesalahan'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )

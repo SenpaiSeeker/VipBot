@@ -54,9 +54,14 @@ async def list_members_callback(client, callback_query):
         KeyError,
         pyrogram.errors.UserNotParticipant,
     ) as e:
+        rows = [
+            ["Status", "Pengguna tidak dapat diakses"],
+            ["Error", f"{e}"],
+            ["Tindakan", "Entri dihapus dari daftar"],
+        ]
         text_error = (
             f"**Data Member Bermasalah**\n\n"
-            f"{client.ns.table.md(['Info', 'Isi'], [['Status', 'Pengguna tidak dapat diakses'], ['Error', f'{e}'], ['Tindakan', 'Entri dihapus dari daftar']])}"
+            f"{client.ns.table.md(['Info', 'Isi'], rows)}"
         )
         btn_back = client.ns.telegram.button.build_button_grid([back_row])
         await callback_query.edit_message_text(
@@ -84,7 +89,8 @@ async def list_members_callback(client, callback_query):
 
     table = client.ns.table
     rich_text = (
-        f"{client.ns.emoji.md('busts_in_silhouette')} **Daftar Member VVIP ({page + 1}/{total_pages})**\n\n"
+        f"{client.ns.emoji.md('busts_in_silhouette')} **Daftar Member VVIP "
+        f"({page + 1}/{total_pages})**\n\n"
         f"{table.md(['Label', 'Isi'], rows)}"
     )
     button_name = (user.first_name or str(user.id))[:15]
@@ -140,9 +146,19 @@ async def confirm_kick_member_callback(client, callback_query):
     user = await client.get_users(int(user_id_str))
 
     mention_str = client.ns.telegram.arg.getMention(user, md=True)
+    rows = [
+        ["Pengguna", f"**{mention_str}**"],
+        ["Grup", f"Grup VVIP **{vvip_name}**"],
+        ["Aksi", "Anda yakin ingin menendang pengguna ini?"],
+        [
+            "Efek",
+            "Pengguna akan dikeluarkan dari grup dan data keanggotaannya "
+            "akan dihapus",
+        ],
+    ]
     rich_text = (
         f"{client.ns.emoji.md('exclamation')} **Konfirmasi Penendangan**\n\n"
-        f"{client.ns.table.md(['Info', 'Nilai'], [['Pengguna', f'**{mention_str}**'], ['Grup', f'Grup VVIP **{vvip_name}**'], ['Aksi', 'Anda yakin ingin menendang pengguna ini?'], ['Efek', 'Pengguna akan dikeluarkan dari grup dan data keanggotaannya akan dihapus']])}"
+        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
     )
     layout = [
         [
@@ -183,29 +199,38 @@ async def do_kick_member_callback(client, callback_query):
         None,
     )
     if not record_to_remove:
+        rows = [["Status", "Record keanggotaan tidak ada di database"]]
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Gagal: Record Tidak Ditemukan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Record keanggotaan tidak ada di database']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Gagal: Record "
+                    "Tidak Ditemukan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
         return
     chat_id_kick = record_to_remove.get("chat_id_kick")
     if not chat_id_kick:
+        rows = [
+            ["Status", "Chat ID tidak valid atau belum diatur di paket VVIP"],
+        ]
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Gagal: Chat ID Tidak Valid**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Chat ID tidak valid atau belum diatur di paket VVIP']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Gagal: Chat ID "
+                    "Tidak Valid**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
         return
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(
-            markdown=f"{client.ns.emoji.md('hourglass')} **Memproses penendangan member dari grup...**"
+            markdown=(
+                f"{client.ns.emoji.md('hourglass')} **Memproses penendangan "
+                "member dari grup...**"
+            )
         )
     )
     try:
@@ -227,21 +252,30 @@ async def do_kick_member_callback(client, callback_query):
         btn_back = client.ns.telegram.button.build_button_grid(layout)
 
         mention_str = client.ns.telegram.arg.getMention(user_to_kick, md=True)
+        rows = [
+            ["Pengguna", mention_str],
+            ["Paket", vvip_name],
+            ["Tindakan", "Ditelanggari dan dihapus dari daftar"],
+        ]
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('white_check_mark')} **Sukses**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Pengguna', mention_str], ['Paket', vvip_name], ['Tindakan', 'Ditelanggari dan dihapus dari daftar']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
             reply_markup=btn_back,
         )
     except Exception as e:
+        rows = [
+            ["Status", "Gagal"],
+            ["Error", f"`{e}`"],
+        ]
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Gagal Menendang**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -334,7 +368,8 @@ async def list_active_members_callback(client, callback_query):
     if chat_id not in members_cache:
         try:
             await callback_query.answer(
-                "<emoji id=5451732530048802485>⏳</emoji> Mengambil data member dari server Telegram, mohon tunggu...",
+                "<emoji id=5451732530048802485>⏳</emoji> Mengambil data "
+                "member dari server Telegram, mohon tunggu...",
                 show_alert=False,
             )
             members = [
@@ -343,11 +378,16 @@ async def list_active_members_callback(client, callback_query):
             random.shuffle(members)
             members_cache[chat_id] = members
         except Exception as e:
+            rows = [
+                ["Status", "Gagal"],
+                ["Error", f"`{e}`"],
+            ]
             await callback_query.edit_message_text(
                 rich_message=pyrogram.types.InputRichMessage(
                     markdown=(
-                        f"{client.ns.emoji.md('cross_mark')} **Gagal Mengambil Daftar Member**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Error', f'`{e}`']])}"
+                        f"{client.ns.emoji.md('cross_mark')} **Gagal "
+                        "Mengambil Daftar Member**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 )
             )
@@ -443,9 +483,13 @@ async def confirm_kick_active_callback(client, callback_query):
     user = await client.get_users(int(user_id_str))
 
     mention_str = client.ns.telegram.arg.getMention(user, md=True)
+    rows = [
+        ["Pengguna", f"**{mention_str}**"],
+        ["Aksi", "Anda yakin ingin menendang pengguna ini dari grup?"],
+    ]
     rich_text = (
         f"{client.ns.emoji.md('exclamation')} **Konfirmasi**\n\n"
-        f"{client.ns.table.md(['Info', 'Nilai'], [['Pengguna', f'**{mention_str}**'], ['Aksi', 'Anda yakin ingin menendang pengguna ini dari grup?']])}"
+        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
     )
     layout = [
         [
@@ -479,11 +523,13 @@ async def do_kick_active_callback(client, callback_query):
         int(user_id_str),
     )
     try:
+        rows = [["Status", "Memproses penendangan pengguna"]]
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('hourglass')} **Memproses Penendangan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Memproses penendangan pengguna']])}"
+                    f"{client.ns.emoji.md('hourglass')} **Memproses "
+                    "Penendangan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -512,9 +558,13 @@ async def do_kick_active_callback(client, callback_query):
         user = await client.get_users(user_id)
 
         mention_str = client.ns.telegram.arg.getMention(user, md=True)
+        rows = [
+            ["Pengguna", f"**{mention_str}**"],
+            ["Status", "Telah ditendang dari grup"],
+        ]
         rich_text = (
             f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Pengguna', f'**{mention_str}**'], ['Status', 'Telah ditendang dari grup']])}"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
         layout = [
             [
@@ -532,11 +582,15 @@ async def do_kick_active_callback(client, callback_query):
             reply_markup=btn,
         )
     except Exception as e:
+        rows = [
+            ["Status", "Gagal"],
+            ["Error", f"`{e}`"],
+        ]
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Gagal Menendang**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )

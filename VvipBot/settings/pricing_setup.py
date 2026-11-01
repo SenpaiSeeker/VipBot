@@ -59,12 +59,28 @@ async def set_start_photo_callback(client, callback_query):
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
 
+    rows = [
+        [
+            "Instruksi",
+            "Silakan pilih opsi di bawah ini untuk mengubah foto sambutan " "`/start`",
+        ],
+        [
+            "Perhatian",
+            "Semakin besar ukuran foto, maka semakin lama juga respon `/start`. "
+            "Gunakan foto berukuran kecil agar bot tetap cepat merespons",
+        ],
+        [
+            "Default",
+            "Jika foto tidak diatur, maka `/start` hanya akan mengirim "
+            "**teks sambutan saja**",
+        ],
+    ]
     await client.send_rich_message(
         chat_id,
         pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('frame')} **Atur Foto Start**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Instruksi', 'Silakan pilih opsi di bawah ini untuk mengubah foto sambutan `/start`'], ['Perhatian', 'Semakin besar ukuran foto, maka semakin lama juga respon `/start`. Gunakan foto berukuran kecil agar bot tetap cepat merespons'], ['Default', 'Jika foto tidak diatur, maka `/start` hanya akan mengirim **teks sambutan saja**']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         ),
         reply_markup=btn,
@@ -92,12 +108,13 @@ async def set_default_start_photo_callback(client, callback_query):
 
     await callback_query.message.delete()
 
+    rows = [["Status", "Foto `/start` diatur ke **foto default**"]]
     await client.send_rich_message(
         chat_id,
         pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Foto `/start` diatur ke **foto default**']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         ),
         reply_markup=btn,
@@ -125,12 +142,16 @@ async def clear_start_photo_callback(client, callback_query):
 
     await callback_query.message.delete()
 
+    rows = [
+        ["Status", "Foto `/start` telah dihapus"],
+        ["Efek", "Sekarang `/start` hanya akan mengirim **teks sambutan**"],
+    ]
     await client.send_rich_message(
         chat_id,
         pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Foto `/start` telah dihapus'], ['Efek', 'Sekarang `/start` hanya akan mengirim **teks sambutan**']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         ),
         reply_markup=btn,
@@ -157,9 +178,21 @@ async def ask_start_photo_callback(client, callback_query):
     back_btn = client.ns.telegram.button.build_button_grid(layout)
 
     try:
+        rows = [
+            ["Instruksi", "Silakan kirim foto baru untuk menyambut user"],
+            [
+                "Perhatian",
+                "Semakin besar ukuran foto, maka semakin lama juga respon `/start`",
+            ],
+            ["Batal", "Ketik `/batal` untuk membatalkan"],
+            [
+                "Hapus",
+                "Ketik `/empty` untuk menghapus foto dan hanya mengirim teks",
+            ],
+        ]
         prompt = (
             f"{client.ns.emoji.md('frame')} **Kirim Foto Baru**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Instruksi', 'Silakan kirim foto baru untuk menyambut user'], ['Perhatian', 'Semakin besar ukuran foto, maka semakin lama juga respon `/start`'], ['Batal', 'Ketik `/batal` untuk membatalkan'], ['Hapus', 'Ketik `/empty` untuk menghapus foto dan hanya mengirim teks']])}"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
         ask_msg = await client.ask(chat_id, prompt, timeout=120)
 
@@ -169,24 +202,29 @@ async def ask_start_photo_callback(client, callback_query):
             if ask_msg.text.lower() == "/empty":
                 await client.db.removeVars(client.me.id, "start_photo_id")
 
+                rows = [["Status", "Foto /start telah dihapus"]]
                 return await client.send_rich_message(
                     chat_id,
                     pyrogram.types.InputRichMessage(
                         markdown=(
                             f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Foto /start telah dihapus']])}"
+                            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                         )
                     ),
                     reply_markup=back_btn,
                 )
 
         if not ask_msg.photo:
+            rows = [
+                ["Status", "Gagal"],
+                ["Keterangan", "Pesan bukan foto"],
+            ]
             return await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
                         f"{client.ns.emoji.md('cross_mark')} **Gagal**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Keterangan', 'Pesan bukan foto']])}"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 ),
                 reply_markup=back_btn,
@@ -195,24 +233,26 @@ async def ask_start_photo_callback(client, callback_query):
         photo_id = ask_msg.photo.file_id
         await client.db.setVars(client.me.id, "start_photo_id", photo_id)
 
+        rows = [["Status", "Foto /start berhasil diperbarui"]]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Foto /start berhasil diperbarui']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
             reply_markup=back_btn,
         )
 
     except (listen.UserCancelled, asyncio.TimeoutError):
+        rows = [["Status", "Dibatalkan"]]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
             reply_markup=back_btn,
@@ -243,6 +283,26 @@ async def set_start_text_callback(client, callback_query):
         status = "Kustom (aktif)" if current else "Default (bawaan)"
         var_rows = [[f"`{name}`", desc] for name, desc in START_TEMPLATE_VARIABLES]
 
+        rows = [
+            [
+                "Format",
+                "Rich message Markdown, emoji premium, dan tombol `[[...]]`",
+            ],
+            [
+                "Input",
+                "Format teks dari Telegram disimpan melalui `text.markdown`",
+            ],
+            [
+                "Variabel lain",
+                "Placeholder yang tidak dikenali akan dibiarkan apa adanya",
+            ],
+            [
+                "Foto",
+                "Foto start diatur terpisah melalui menu Atur Foto Start",
+            ],
+            ["Hapus", "Ketik `/empty` untuk kembali ke teks default"],
+            ["Batal", "Ketik `/batal` untuk membatalkan"],
+        ]
         prompt = (
             f"{client.ns.emoji.md('writing_hand')} **Atur Teks Start**\n\n"
             f"Status saat ini: **{status}**\n\n"
@@ -250,17 +310,21 @@ async def set_start_text_callback(client, callback_query):
             f"{client.ns.table.md(['Variabel', 'Keterangan'], var_rows)}\n\n"
             f"Contoh template:\n"
             f"```\n{START_TEMPLATE_EXAMPLE}\n```\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Format', 'Rich message Markdown, emoji premium, dan tombol `[[...]]`'], ['Input', 'Format teks dari Telegram disimpan melalui `text.markdown`'], ['Variabel lain', 'Placeholder yang tidak dikenali akan dibiarkan apa adanya'], ['Foto', 'Foto start diatur terpisah melalui menu Atur Foto Start'], ['Hapus', 'Ketik `/empty` untuk kembali ke teks default'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
         ask_text_msg = await client.ask(chat_id, prompt, timeout=600)
 
         if not ask_text_msg.text:
+            rows = [
+                ["Status", "Gagal"],
+                ["Keterangan", "Pesan bukan teks"],
+            ]
             return await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
                         f"{client.ns.emoji.md('cross_mark')} **Gagal**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Keterangan', 'Pesan bukan teks']])}"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 ),
                 reply_markup=back_btn,
@@ -272,12 +336,13 @@ async def set_start_text_callback(client, callback_query):
         if ask_text_msg.text.lower() == "/empty":
             await client.db.removeVars(client.me.id, "start_text_template")
 
+            rows = [["Status", "Teks /start telah dihapus"]]
             return await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
                         f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Teks /start telah dihapus']])}"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 ),
                 reply_markup=back_btn,
@@ -289,24 +354,26 @@ async def set_start_text_callback(client, callback_query):
             ask_text_msg.text.markdown,
         )
 
+        rows = [["Status", "Teks /start berhasil diperbarui"]]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Teks /start berhasil diperbarui']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
             reply_markup=back_btn,
         )
 
     except (listen.UserCancelled, asyncio.TimeoutError):
+        rows = [["Status", "Dibatalkan"]]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
             reply_markup=back_btn,
@@ -323,12 +390,17 @@ async def check_vvip_status_callback(client, callback_query):
     chat_id = callback_query.message.chat.id
     await callback_query.message.delete()
 
+    rows = [
+        ["Status", "Sedang memeriksa status grup"],
+        ["Keterangan", "Mohon tunggu, proses ini mungkin memakan waktu"],
+    ]
     status_msg = await client.send_rich_message(
         chat_id,
         pyrogram.types.InputRichMessage(
             markdown=(
-                f"{client.ns.emoji.md('hourglass')} **Sedang Memeriksa Status Grup**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Sedang memeriksa status grup'], ['Keterangan', 'Mohon tunggu, proses ini mungkin memakan waktu']])}"
+                f"{client.ns.emoji.md('hourglass')} **Sedang Memeriksa Status "
+                "Grup**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         ),
     )
@@ -342,7 +414,8 @@ async def check_vvip_status_callback(client, callback_query):
         return await status_msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Laporan Status Grup VVIP**\n\n"
+                    f"{client.ns.emoji.md('cross_mark')} **Laporan Status Grup "
+                    "VVIP**\n\n"
                     f"{client.ns.table.md(['Info', 'Nilai'], empty_rows)}"
                 )
             )
@@ -407,12 +480,13 @@ async def check_vvip_status_callback(client, callback_query):
 
     await status_msg.delete()
 
+    rows = [["Status", "Pemeriksaan selesai"]]
     await client.send_rich_message(
         chat_id,
         pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('white_check_mark')} **Pemeriksaan Selesai**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Pemeriksaan selesai']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         ),
         reply_markup=btn,
@@ -434,8 +508,12 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
                 raise listen.UserCancelled
             if not check_func(msg.text):
                 errors = {
-                    "settings.setup_vvip.err_must_be_number": "**Input Tidak Valid!** Nilai harus berupa angka.",
-                    "settings.setup_vvip.err_must_be_chat_id": "**Input Tidak Valid!** Format Chat ID salah.",
+                    "settings.setup_vvip.err_must_be_number": (
+                        "**Input Tidak Valid!** Nilai harus berupa angka."
+                    ),
+                    "settings.setup_vvip.err_must_be_chat_id": (
+                        "**Input Tidak Valid!** Format Chat ID salah."
+                    ),
                 }
                 raise ValueError(
                     errors.get(
@@ -452,11 +530,12 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
             return t.lstrip("-").isdigit()
 
         vvip_data = {}
+        rows = [["Contoh", "`VVIP Bulanan`"]]
 
         vvip_data["name"] = validate(
             await ask(
                 f"{client.ns.emoji.md('pencil')} **Nama Kategori**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', '`VVIP Bulanan`']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             ),
             lambda t: True,
             "",
@@ -473,11 +552,13 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
             )
         )
 
+        rows = [["Contoh", "Kirim `0` untuk akses permanen"]]
         vvip_data["duration"] = int(
             validate(
                 await ask(
-                    f"{client.ns.emoji.md('hourglass')} **Durasi Keanggotaan (Hari)**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', 'Kirim `0` untuk akses permanen']])}"
+                    f"{client.ns.emoji.md('hourglass')} **Durasi Keanggotaan "
+                    "(Hari)**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 ),
                 is_digit,
                 "settings.setup_vvip.err_must_be_number",
@@ -485,11 +566,12 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
         )
 
         if preset_chat_id is None:
+            rows = [["Contoh", "`-100123456789`"]]
             vvip_data["chat_id_normal"] = int(
                 validate(
                     await ask(
                         f"{client.ns.emoji.md('id_card')} **Chat ID Grup Normal**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', '`-100123456789`']])}"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     ),
                     is_chatid,
                     "settings.setup_vvip.err_must_be_chat_id",
@@ -497,21 +579,30 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
             )
         else:
             vvip_data["chat_id_normal"] = int(preset_chat_id)
+            rows = [
+                ["Chat ID", f"`{preset_chat_id}`"],
+                [
+                    "Status",
+                    "Otomatis dari grup/channel yang baru ditambahkan",
+                ],
+            ]
             await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
-                        f"{client.ns.emoji.md('id_card')} **Chat ID Grup/Channel Normal**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Chat ID', f'`{preset_chat_id}`'], ['Status', 'Otomatis dari grup/channel yang baru ditambahkan']])}"
+                        f"{client.ns.emoji.md('id_card')} **Chat ID "
+                        "Grup/Channel Normal**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 ),
             )
 
+        rows = [["Contoh", "Kirim `0` jika tidak ada harga promo"]]
         vvip_data["promo_price"] = int(
             validate(
                 await ask(
                     f"{client.ns.emoji.md('party_popper')} **Harga Promo**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', 'Kirim `0` jika tidak ada harga promo']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 ),
                 is_digit,
                 "settings.setup_vvip.err_must_be_number",
@@ -519,11 +610,12 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
         )
 
         if vvip_data["promo_price"] > 0:
+            rows = [["Contoh", "Diisi jika Harga Promo > 0"]]
             vvip_data["chat_id_promo"] = int(
                 validate(
                     await ask(
                         f"{client.ns.emoji.md('id_card')} **Chat ID Grup Promo**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', 'Diisi jika Harga Promo > 0']])}"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     ),
                     is_chatid,
                     "settings.setup_vvip.err_must_be_chat_id",
@@ -531,9 +623,17 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
             )
 
             promo_variables = "Gunakan `{name}` dan `{promo_price}`"
+            rows = [
+                ["Variabel", promo_variables],
+                [
+                    "Lewati",
+                    "Ketik `/skip` untuk menggunakan teks default",
+                ],
+                ["Batal", "Ketik `/batal` untuk membatalkan"],
+            ]
             prompt_promo = (
                 f"{client.ns.emoji.md('pencil')} **Teks Deskripsi Promo**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Variabel', promo_variables], ['Lewati', 'Ketik `/skip` untuk menggunakan teks default'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
             promo_text_msg = await client.ask(chat_id, prompt_promo, timeout=600)
 
@@ -549,9 +649,14 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
             ) = (0, "")
 
         normal_variables = "Gunakan `{name}` dan `{price}`"
+        rows = [
+            ["Variabel", normal_variables],
+            ["Lewati", "Ketik `/skip` untuk menggunakan teks default"],
+            ["Batal", "Ketik `/batal` untuk membatalkan"],
+        ]
         prompt_normal = (
             f"{client.ns.emoji.md('pencil')} **Teks Deskripsi Normal**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Variabel', normal_variables], ['Lewati', 'Ketik `/skip` untuk menggunakan teks default'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
         normal_text_msg = await client.ask(chat_id, prompt_normal, timeout=600)
 
@@ -563,33 +668,44 @@ async def _run_setup_listvvip(client, chat_id, preset_chat_id=None):
 
         await client.db.setListVars(client.me.id, "list_vvip", vvip_data)
 
+        package_name = vvip_data["name"]
+        rows = [
+            ["Status", f"Paket VVIP **{package_name}** berhasil ditambahkan"],
+        ]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', f"Paket VVIP **{vvip_data['name']}** berhasil ditambahkan"]])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
 
     except listen.UserCancelled:
+        rows = [["Status", "Setup paket VVIP dibatalkan"]]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Dibatalkan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Setup paket VVIP dibatalkan']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
     except (asyncio.TimeoutError, ValueError) as e:
+        rows = [
+            ["Status", "Input tidak valid atau timeout"],
+            ["Tindakan", "Proses dibatalkan"],
+            ["Error", f"`{e}`"],
+        ]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Input Tidak Valid / Timeout**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Input tidak valid atau timeout'], ['Tindakan', 'Proses dibatalkan'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Input Tidak Valid / "
+                    "Timeout**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
@@ -832,9 +948,13 @@ async def edit_vvip_price_callback(client, callback_query):
                 timeout=300,
             )
 
+        rows = [
+            ["Contoh", "`50000`"],
+            ["Harga Sebelumnya", f"`{old_item.get('price', 0)}`"],
+        ]
         new_price_msg = await ask(
             f"{client.ns.emoji.md('money_bag')} **Masukkan Harga Normal Baru**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', '`50000`'], ['Harga Sebelumnya', f"`{old_item.get('price', 0)}`"]])}"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
 
         if new_price_msg.text.lower() == "/batal":
@@ -844,9 +964,13 @@ async def edit_vvip_price_callback(client, callback_query):
 
         new_price = int(new_price_msg.text)
 
+        rows = [
+            ["Contoh", "`25000` atau `0`"],
+            ["Harga Sebelumnya", f"`{old_item.get('promo_price', 0)}`"],
+        ]
         new_promo_msg = await ask(
             f"{client.ns.emoji.md('party_popper')} **Masukkan Harga Promo Baru**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', '`25000` atau `0`'], ['Harga Sebelumnya', f"`{old_item.get('promo_price', 0)}`"]])}"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
 
         if new_promo_msg.text.lower() == "/batal":
@@ -862,33 +986,43 @@ async def edit_vvip_price_callback(client, callback_query):
         await client.db.replaceListVars(client.me.id, "list_vvip", vvip_list)
         edit_cache.pop(item_id, None)
 
+        rows = [
+            ["Status", f"Harga paket VVIP **{name}** berhasil diubah"],
+        ]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', f'Harga paket VVIP **{name}** berhasil diubah']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
 
     except listen.UserCancelled:
+        rows = [["Status", "Perubahan dibatalkan"]]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Dibatalkan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Perubahan dibatalkan']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
     except (asyncio.TimeoutError, ValueError) as e:
+        rows = [
+            ["Status", "Input tidak valid atau timeout"],
+            ["Tindakan", "Proses dibatalkan"],
+            ["Error", f"`{e}`"],
+        ]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Input Tidak Valid / Timeout**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Input tidak valid atau timeout'], ['Tindakan', 'Proses dibatalkan'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Input Tidak Valid / "
+                    "Timeout**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )

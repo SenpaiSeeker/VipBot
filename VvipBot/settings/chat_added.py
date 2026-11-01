@@ -56,9 +56,16 @@ async def notify_bot_added_to_chat(client, update):
     try:
         bot_mention = client.ns.telegram.arg.getMention(client.me, md=True)
         actor_mention = client.ns.telegram.arg.getMention(update.from_user, md=True)
+        rows = [
+            ["Bot", bot_mention],
+            ["Nama", f"**{chat_title}**"],
+            ["Tipe", chat_type],
+            ["Chat ID", f"`{chat.id}`"],
+            ["Ditambahkan Oleh", actor_mention],
+        ]
         notification_text = (
             f"{client.ns.emoji.md('bell')} **Bot Ditambahkan ke {chat_type}**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', bot_mention], ['Nama', f'**{chat_title}**'], ['Tipe', chat_type], ['Chat ID', f'`{chat.id}`'], ['Ditambahkan Oleh', actor_mention]])}\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}\n\n"
             f"Pilih tindakan untuk {chat_type.lower()} ini."
         )
 
@@ -128,12 +135,16 @@ async def reject_chat_callback(client, callback_query):
     ]
     back_btn = client.ns.telegram.button.build_button_grid(layout)
 
+    rows = [
+        ["Status", "Bot sudah keluar dari chat"],
+        ["Chat ID", f"`{chat_id}`"],
+    ]
     await callback_query.answer("Bot berhasil keluar dari chat.")
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('white_check_mark')} **Chat Ditolak**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Bot sudah keluar dari chat'], ['Chat ID', f'`{chat_id}`']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         ),
         reply_markup=back_btn,

@@ -36,9 +36,14 @@ async def build_extend_panel(client, bot_id):
         else "Belum diatur"
     )
 
+    rows = [
+        ["Bot", f"**{bot_name}** (`{bot_id}`)"],
+        ["Masa Aktif", expiry_text],
+        ["Pilih", "Tambah atau kurangi masa aktif"],
+    ]
     text = (
         f"{client.ns.emoji.md('calendar')} **Atur Masa Aktif**\n\n"
-        f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'**{bot_name}** (`{bot_id}`)'], ['Masa Aktif', f'{expiry_text}'], ['Pilih', 'Tambah atau kurangi masa aktif']])}"
+        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
     )
 
     layout = [
@@ -73,10 +78,12 @@ async def build_extend_month_grid(client, bot_id, mode):
         if is_add
         else f"{client.ns.emoji.md('calendar')} **Kurangi Masa Aktif**"
     )
-    text = (
-        f"{title}\n\n"
-        f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'`{bot_id}`'], ['Satuan', '1 bulan = 30 hari'], ['Pilih', 'Jumlah bulan di bawah ini']])}"
-    )
+    rows = [
+        ["Bot", f"`{bot_id}`"],
+        ["Satuan", "1 bulan = 30 hari"],
+        ["Pilih", "Jumlah bulan di bawah ini"],
+    ]
+    text = f"{title}\n\n" f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
 
     layout = []
     row = []
@@ -126,12 +133,19 @@ async def notify_extend_owner(client, bot_id, action="diperpanjang"):
     try:
         bot_instance = client.manager.running_bots.get(bot_id)
         bot_name = bot_instance.me.first_name if bot_instance else f"ID {bot_id}"
+        rows = [
+            ["Bot", f"**{bot_name}**"],
+            [
+                "Status",
+                f"Masa aktif bot Anda telah {action} oleh Owner Utama",
+            ],
+        ]
         await client.send_rich_message(
             owner_bot_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('party_popper')} **Kabar Baik!**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'**{bot_name}**'], ['Status', f'Masa aktif bot Anda telah {action} oleh Owner Utama']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
@@ -188,12 +202,15 @@ async def extend_month_callback(client, callback_query):
         title = f"{client.ns.emoji.md('white_check_mark')} **Sukses!**"
         aksi = f"`{months}` bulan (`{abs(days_to_add)}` hari)"
         action = "dikurangi"
+    rows = [
+        ["Bot", f"`{bot_id}`"],
+        ["Aksi", f"{action.title()} masa aktif"],
+        ["Jumlah", f"{aksi}"],
+        ["Masa Aktif Baru", f"`{formatted_new_date}`"],
+    ]
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(
-            markdown=(
-                f"{title}\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'`{bot_id}`'], ['Aksi', f'{action.title()} masa aktif'], ['Jumlah', f'{aksi}'], ['Masa Aktif Baru', f'`{formatted_new_date}`']])}"
-            )
+            markdown=(f"{title}\n\n" f"{client.ns.table.md(['Info', 'Nilai'], rows)}")
         )
     )
     await notify_extend_owner(client, bot_id, action)
@@ -202,11 +219,17 @@ async def extend_month_callback(client, callback_query):
 async def broadcast_owners_handler(client, message):
     broadcast_msg = client.ns.telegram.arg.getMessage(message)
     if not broadcast_msg:
+        rows = [
+            [
+                "Gunakan",
+                "`/broadcast_owners <pesan>` atau balas ke sebuah pesan",
+            ],
+        ]
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Gunakan', '`/broadcast_owners <pesan>` atau balas ke sebuah pesan']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -224,18 +247,23 @@ async def broadcast_owners_handler(client, message):
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Broadcast ke Pemilik Bot**\n\n"
+                    f"{client.ns.emoji.md('cross_mark')} **Broadcast ke Pemilik "
+                    "Bot**\n\n"
                     f"{client.ns.table.md(['Info', 'Nilai'], empty_rows)}"
                 )
             )
         )
 
     total_owners = len(owner_ids)
+    rows = [
+        ["Status", "Siaran dimulai"],
+        ["Jumlah", f"`{total_owners}` pengguna"],
+    ]
     progress_msg = await message.reply_rich(
         pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('white_check_mark')} **Memulai Siaran**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Siaran dimulai'], ['Jumlah', f'`{total_owners}` pengguna']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         )
     )
@@ -252,10 +280,15 @@ async def broadcast_owners_handler(client, message):
             fail_count += 1
         await asyncio.sleep(0.2)
 
+    rows = [
+        ["Status", "Selesai"],
+        ["Terkirim", f"`{success_count}`"],
+        ["Gagal", f"`{fail_count}`"],
+    ]
     await progress_msg.edit(
         rich_message=pyrogram.types.InputRichMessage(
             markdown=f"**{client.ns.emoji.md('loudspeaker')} Siaran Selesai!**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Selesai'], ['Terkirim', f'`{success_count}`'], ['Gagal', f'`{fail_count}`']])}"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
     )
 

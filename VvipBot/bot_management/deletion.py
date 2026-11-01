@@ -17,8 +17,10 @@ async def confirm_delete_bot_callback(client, callback_query):
 
     text = (
         f"**{client.ns.emoji.md('exclamation')} Konfirmasi Penghapusan**\n\n"
-        f"Anda yakin ingin menghapus bot **{bot_name}** (`{bot_id_to_manage}`) secara permanen?\n\n"
-        f"_Semua data (member, paket, pengaturan) bot ini akan hilang dan tindakan ini tidak dapat diurungkan._"
+        f"Anda yakin ingin menghapus bot **{bot_name}** "
+        f"(`{bot_id_to_manage}`) secara permanen?\n\n"
+        "_Semua data (member, paket, pengaturan) bot ini akan hilang dan "
+        "tindakan ini tidak dapat diurungkan._"
     )
 
     layout = [
@@ -57,11 +59,15 @@ async def do_delete_bot_callback(client, callback_query):
             show_alert=True,
         )
 
+    rows = [
+        ["Bot ID", f"`{bot_id_to_manage}`"],
+        ["Status", "Sedang dihentikan dan dihapus"],
+    ]
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('hourglass')} **Menghapus Bot**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Bot ID', f'`{bot_id_to_manage}`'], ['Status', 'Sedang dihentikan dan dihapus']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         )
     )
@@ -83,22 +89,32 @@ async def do_delete_bot_callback(client, callback_query):
         ]
         btn = client.ns.telegram.button.build_button_grid(layout)
 
+        rows = [
+            ["Bot ID", f"`{bot_id_to_manage}`"],
+            ["Data", "Bot dan seluruh datanya telah dihapus dari sistem"],
+        ]
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('white_check_mark')} **Penghapusan Berhasil**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Bot ID', f'`{bot_id_to_manage}`'], ['Data', 'Bot dan seluruh datanya telah dihapus dari sistem']])}"
+                    f"{client.ns.emoji.md('white_check_mark')} **Penghapusan "
+                    "Berhasil**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
             reply_markup=btn,
         )
 
     except Exception as e:
+        rows = [
+            ["Status", "Terjadi kesalahan"],
+            ["Error", f"`{e}`"],
+        ]
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Gagal Menghapus Bot**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Terjadi kesalahan'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Gagal Menghapus "
+                    "Bot**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )

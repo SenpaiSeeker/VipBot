@@ -46,14 +46,20 @@ class LoggerHandler(Object, AnsiColors):
         return self.fmt.format(
             asctime=f"{self.colors['TIME']}[ {self.formatTime()} ]",
             levelname=record["levelname"],
-            module=f"{pipe_color}│ {self.colors['MODULE']}{os.path.basename(record.get('module', '<unknown>'))}",
+            module=(
+                f"{pipe_color}│ {self.colors['MODULE']}"
+                f"{os.path.basename(record.get('module', '<unknown>'))}"
+            ),
             funcName=record.get("funcName", "<unknown>"),
             lineno=record.get("lineno", 0),
             message=record["message"],
         )
 
     def print(self, message, isPrint=True):
-        text = f"{self.CYAN}[ {self.WHITE}{self.formatTime()} {self.CYAN}] {self.WHITE}│ {message}{self.RESET}"
+        text = (
+            f"{self.CYAN}[ {self.WHITE}{self.formatTime()} {self.CYAN}] "
+            f"{self.WHITE}│ {message}{self.RESET}"
+        )
         if isPrint:
             print(f"\033[2K{text}")
         else:

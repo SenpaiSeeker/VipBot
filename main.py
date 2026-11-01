@@ -155,7 +155,8 @@ async def main():
 
     except Exception as e:
         log.print(
-            f"{log.RED}[FATAL] Terjadi error saat memulai: {e}\n{traceback.format_exc()}"
+            f"{log.RED}[FATAL] Terjadi error saat memulai: {e}\n"
+            f"{traceback.format_exc()}"
         )
     finally:
         await shutdown(app, manager)

@@ -58,12 +58,13 @@ async def set_income_text_callback(client, callback_query):
         ask_text_msg = await client.ask(chat_id, prompt, timeout=600)
 
         if not ask_text_msg.text:
+            rows = [["Status", "Gagal"], ["Keterangan", "Pesan bukan teks"]]
             return await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
                         f"{client.ns.emoji.md('cross_mark')} **Gagal**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Keterangan', 'Pesan bukan teks']])}"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 ),
                 reply_markup=back_btn,
@@ -75,12 +76,13 @@ async def set_income_text_callback(client, callback_query):
         if ask_text_msg.text.lower() == "/empty":
             await client.db.removeVars(client.me.id, "income_text_template")
 
+            rows = [["Status", "Teks notifikasi pemasukan kembali ke default"]]
             return await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
                         f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Teks notifikasi pemasukan kembali ke default']])}"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 ),
                 reply_markup=back_btn,
@@ -92,24 +94,26 @@ async def set_income_text_callback(client, callback_query):
             ask_text_msg.text.markdown,
         )
 
+        rows = [["Status", "Teks notifikasi pemasukan berhasil diperbarui"]]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Teks notifikasi pemasukan berhasil diperbarui']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
             reply_markup=back_btn,
         )
 
     except (listen.UserCancelled, asyncio.TimeoutError):
+        rows = [["Status", "Dibatalkan"]]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
             reply_markup=back_btn,

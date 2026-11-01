@@ -10,11 +10,12 @@ from .. import *
 async def access_command_handler(client, message):
     user_id_target, _ = await client.ns.telegram.arg.getReasonAndId(message)
     if not user_id_target:
+        rows = [["Gunakan", "`/akses <user_id atau @username>`"]]
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Gunakan', '`/akses <user_id atau @username>`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -29,11 +30,12 @@ async def access_command_handler(client, message):
             if has_access
             else f"{client.ns.emoji.md('cross_mark')} Tidak Memiliki Akses"
         )
+        mention = client.ns.telegram.arg.getMention(target_user, md=True)
         text = (
             f"{client.ns.emoji.md('key')} **Kelola Akses Pembuatan Bot**\n\n"
             f"| Info | Detail |\n"
             f"| :--- | :--- |\n"
-            f"| Pengguna | {client.ns.telegram.arg.getMention(target_user, md=True)} |\n"
+            f"| Pengguna | {mention} |\n"
             f"| ID | `{target_user.id}` |\n"
             f"| Status | {status_text} |\n\n"
             f"Pilih tindakan untuk pengguna ini:"
@@ -59,11 +61,15 @@ async def access_command_handler(client, message):
             pyrogram.types.InputRichMessage(markdown=text), reply_markup=btn
         )
     except Exception as e:
+        rows = [
+            ["Status", "Gagal"],
+            ["Error", f"`{e}`"],
+        ]
         await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Gagal Memproses**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -92,11 +98,15 @@ async def give_access_callback(client, callback_query):
         ],
     ]
     btn = client.ns.telegram.button.build_button_grid(layout)
+    rows = [
+        ["Tujuan", "Berikan akses premium ke pengguna"],
+        ["Opsi", "Pilih salah satu durasi di bawah ini"],
+    ]
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('hourglass')} **Pilih Durasi Akses**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Tujuan', 'Berikan akses premium ke pengguna'], ['Opsi', 'Pilih salah satu durasi di bawah ini']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         ),
         reply_markup=btn,
@@ -129,16 +139,23 @@ async def do_give_access_callback(client, callback_query):
 
         mention_str = client.ns.telegram.arg.getMention(target_user, md=True)
         formatted_jakarta_date = expiry_in_jakarta.strftime("%d %B %Y, %H:%M %Z")
+        rows = [
+            ["Pengguna", mention_str],
+            ["Akses", f"Membuat bot selama **{months_to_add} bulan**"],
+            ["Berlaku hingga", f"`{formatted_jakarta_date}`"],
+        ]
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('white_check_mark')} **Akses Diberikan!**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Pengguna', f'{mention_str}'], ['Akses', f'Membuat bot selama **{months_to_add} bulan**'], ['Berlaku hingga', f'`{formatted_jakarta_date}`']])}"
+                markdown=(
+                    f"{client.ns.emoji.md('white_check_mark')} **Akses "
+                    "Diberikan!**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
+                )
             )
         )
         await callback_query.answer(
-            "<emoji id=6296367896398399651>✅</emoji> Akses berhasil diberikan kepada {target_id}".format(
-                target_id=target_id
-            )
+            "<emoji id=6296367896398399651>✅</emoji> Akses berhasil "
+            "diberikan kepada {target_id}".format(target_id=target_id)
         )
     except Exception as e:
         await callback_query.answer(f"Gagal memproses. Error: `{e}`", show_alert=True)
@@ -152,14 +169,19 @@ async def revoke_access_callback(client, callback_query):
         mention = client.ns.telegram.arg.getMention(target_user, md=True)
         await client.db.removeVars(target_id, "user_expiry_date")
         await callback_query.answer(
-            "<emoji id=6298671811345254603>❌</emoji> Akses berhasil dicabut dari {target_id}".format(
-                target_id=target_id
-            )
+            "<emoji id=6298671811345254603>❌</emoji> Akses berhasil "
+            "dicabut dari {target_id}".format(target_id=target_id)
         )
+        rows = [
+            ["Pengguna", mention],
+            ["Status", "Tidak lagi memiliki hak untuk membuat bot"],
+        ]
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} **Akses Dicabut!**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Pengguna', f'{mention}'], ['Status', 'Tidak lagi memiliki hak untuk membuat bot']])}"
+                markdown=(
+                    f"{client.ns.emoji.md('cross_mark')} **Akses Dicabut!**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
+                )
             )
         )
     except Exception as e:
@@ -169,11 +191,19 @@ async def revoke_access_callback(client, callback_query):
 async def add_seller_handler(client, message):
     user_id_target, _ = await client.ns.telegram.arg.getReasonAndId(message)
     if not user_id_target:
+        rows = [
+            ["Status", "Pengguna tidak ditemukan"],
+            [
+                "Saran",
+                "Pastikan ID/Username benar atau balas pesan pengguna",
+            ],
+        ]
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Pengguna Tidak Ditemukan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Pengguna tidak ditemukan'], ['Saran', 'Pastikan ID/Username benar atau balas pesan pengguna']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Pengguna Tidak "
+                    "Ditemukan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -183,30 +213,44 @@ async def add_seller_handler(client, message):
             await client.db.getListVars(client.owner_id, "seller_id_list") or []
         )
         if target_user.id in seller_list:
+            rows = [
+                ["User", f"`{target_user.id}`"],
+                ["Status", "Sudah terdaftar sebagai seller"],
+            ]
             return await message.reply_rich(
                 pyrogram.types.InputRichMessage(
                     markdown=(
-                        f"{client.ns.emoji.md('cross_mark')} **Sudah Terdaftar**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['User', f'`{target_user.id}`'], ['Status', 'Sudah terdaftar sebagai seller']])}"
+                        f"{client.ns.emoji.md('cross_mark')} **Sudah "
+                        "Terdaftar**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 )
             )
         await client.db.setListVars(client.owner_id, "seller_id_list", target_user.id)
         user_mention = client.ns.telegram.arg.getMention(target_user, md=True)
+        rows = [
+            ["Seller", user_mention],
+            ["Status", "Berhasil ditambahkan sebagai seller"],
+        ]
         await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('white_check_mark')} **Seller Ditambahkan!**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Seller', f'{user_mention}'], ['Status', 'Berhasil ditambahkan sebagai seller']])}"
+                    f"{client.ns.emoji.md('white_check_mark')} **Seller "
+                    "Ditambahkan!**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
     except Exception as e:
+        rows = [
+            ["Status", "Gagal"],
+            ["Error", f"`{e}`"],
+        ]
         await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -222,7 +266,8 @@ async def list_seller_handler(client, message):
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('bust_in_silhouette')} **Daftar Seller Aktif**\n\n"
+                    f"{client.ns.emoji.md('bust_in_silhouette')} **Daftar "
+                    "Seller Aktif**\n\n"
                     f"{client.ns.table.md(['Info', 'Nilai'], empty_rows)}"
                 )
             )
@@ -274,7 +319,8 @@ async def delete_seller_callback(client, callback_query):
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('bust_in_silhouette')} **Daftar Seller Aktif**\n\n"
+                    f"{client.ns.emoji.md('bust_in_silhouette')} **Daftar "
+                    "Seller Aktif**\n\n"
                     f"{client.ns.table.md(['Info', 'Nilai'], empty_rows)}"
                 )
             )

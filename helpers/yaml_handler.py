@@ -19,11 +19,13 @@ class YamlHandler(AnsiColors):
             return self._convertToNamespace(rawData)
         except FileNotFoundError:
             print(
-                f"{self.YELLOW}File {self.LIGHT_CYAN}'{filePath}' {self.RED}tidak ditemukan.{self.RESET}"
+                f"{self.YELLOW}File {self.LIGHT_CYAN}'{filePath}' "
+                f"{self.RED}tidak ditemukan.{self.RESET}"
             )
         except yaml.YAMLError as e:
             print(
-                f"{self.YELLOW}Kesalahan saat memproses file YAML: {self.RED}{e}{self.RESET}"
+                f"{self.YELLOW}Kesalahan saat memproses file YAML: "
+                f"{self.RED}{e}{self.RESET}"
             )
         return None
 

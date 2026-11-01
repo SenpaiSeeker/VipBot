@@ -67,9 +67,15 @@ async def rich_message_help_callback(client, callback_query):
         ],
     ]
 
+    format_rows = [
+        ["Format", "Rich message Markdown"],
+        ["Input", "`text.markdown`"],
+        ["Tombol", "`[[...]]`"],
+        ["Batas", "32.768 karakter, 500 blok, 20 kolom, 50 media"],
+    ]
     content = (
         f"{client.ns.emoji.md('open_book')} **Panduan Rich Message**\n\n"
-        f"{table.md(['Info', 'Nilai'], [['Format', 'Rich message Markdown'], ['Input', '`text.markdown`'], ['Tombol', '`[[...]]`'], ['Batas', '32.768 karakter, 500 blok, 20 kolom, 50 media']])}\n\n"
+        f"{table.md(['Info', 'Nilai'], format_rows)}\n\n"
         f"**1. Rich Message**\n\n"
         f"{table.md(['Topik', 'Keterangan'], rich_message_rows)}\n\n"
         f"**2. Blok & Struktur**\n\n"

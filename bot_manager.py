@@ -170,7 +170,7 @@ async def flood_retry_method():
 
 @schedule.cron("0 * * * *")
 async def expiration_checker_method():
-    log.info(f"Menjalankan pemeriksaan masa aktif bot...")
+    log.info("Menjalankan pemeriksaan masa aktif bot...")
     manager = BotManager.current
     if not manager:
         log.warning("BotManager belum diinisialisasi. Melewati pemeriksaan.")
@@ -208,9 +208,14 @@ async def expiration_checker_method():
                         if bot_instance and bot_instance.is_connected
                         else f"ID {bot_id}"
                     )
+                    rows = [
+                        ["Bot", f"**{bot_name}**"],
+                        ["Status", "Masa aktif sudah habis"],
+                    ]
                     expired_message = (
-                        f"{main_client.ns.emoji.md('cross_mark')} **Masa Aktif Habis**\n\n"
-                        f"{main_client.ns.table.md(['Info', 'Nilai'], [['Bot', f'**{bot_name}**'], ['Status', 'Masa aktif sudah habis']])}"
+                        f"{main_client.ns.emoji.md('cross_mark')} **Masa Aktif "
+                        "Habis**\n\n"
+                        f"{main_client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                     await main_client.send_rich_message(
                         owner_id,
@@ -250,9 +255,19 @@ async def expiration_checker_method():
                             owner_user, md=True
                         )
 
+                        rows = [
+                            ["Pengguna", mention_owner],
+                            ["Bot", f"**{bot_name}**"],
+                            ["Sisa Aktif", f"**{days_left} hari**"],
+                            [
+                                "Aksi",
+                                "Silakan hubungi @NorSodikin jika mau diperpanjang",
+                            ],
+                        ]
                         warning_message = (
-                            f"{notif_client.ns.emoji.md('bell')} **Notifikasi Masa Aktif**\n\n"
-                            f"{notif_client.ns.table.md(['Info', 'Nilai'], [['Pengguna', f'{mention_owner}'], ['Bot', f'**{bot_name}**'], ['Sisa Aktif', f'**{days_left} hari**'], ['Aksi', 'Silakan hubungi @NorSodikin jika mau diperpanjang']])}"
+                            f"{notif_client.ns.emoji.md('bell')} **Notifikasi "
+                            "Masa Aktif**\n\n"
+                            f"{notif_client.ns.table.md(['Info', 'Nilai'], rows)}"
                         )
                         try:
                             await main_client.send_rich_message(
@@ -270,11 +285,13 @@ async def expiration_checker_method():
                             today_str,
                         )
                         log.print(
-                            f"{log.CYAN}Mengirim notifikasi sisa {days_left} hari ke owner {owner_id} untuk bot {bot_id}"
+                            f"{log.CYAN}Mengirim notifikasi sisa {days_left} hari "
+                            f"ke owner {owner_id} untuk bot {bot_id}"
                         )
                     except Exception as e:
                         log.print(
-                            f"{log.RED}Gagal mengirim notifikasi perpanjangan ke owner {owner_id}: {e}"
+                            f"{log.RED}Gagal mengirim notifikasi perpanjangan "
+                            f"ke owner {owner_id}: {e}"
                         )
 
             elif days_left > 10:
@@ -289,7 +306,7 @@ async def expiration_checker_method():
 
 @schedule.cron("0 */12 * * *")
 async def subscription_checker_method():
-    log.info(f"Menjalankan pemeriksaan langganan anggota...")
+    log.info("Menjalankan pemeriksaan langganan anggota...")
 
     manager = BotManager.current
     if not manager:
@@ -337,7 +354,8 @@ async def subscription_checker_method():
 
                     vvip_name_val = member["vvip_name"]
                     expired_message_text = (
-                        f"{bot_client.ns.emoji.md('hourglass_done')} **Langganan Berakhir**\n\n"
+                        f"{bot_client.ns.emoji.md('hourglass_done')} **Langganan "
+                        "Berakhir**\n\n"
                         f"| Info | Detail |\n"
                         f"| :--- | :--- |\n"
                         f"| Paket | **{vvip_name_val}** |\n"
@@ -349,7 +367,8 @@ async def subscription_checker_method():
                     )
                     expired_keys.add((str(user_id), str(chat_id)))
                     log.debug(
-                        f"Langganan {user_id} di bot {bot_id} habis. Dikeluarkan dari grup."
+                        f"Langganan {user_id} di bot {bot_id} habis. "
+                        "Dikeluarkan dari grup."
                     )
                 except Exception as e:
                     log.error(f"Gagal kick member {user_id} dari grup: {e}")
@@ -376,7 +395,8 @@ async def subscription_checker_method():
                             vvip_name_val = member["vvip_name"]
                             days_left_val = time_left.days
                             text = (
-                                f"{bot_client.ns.emoji.md('bell')} **Pengingat Langganan**\n\n"
+                                f"{bot_client.ns.emoji.md('bell')} **Pengingat "
+                                "Langganan**\n\n"
                                 f"| Info | Detail |\n"
                                 f"| :--- | :---: |\n"
                                 f"| Paket | **{vvip_name_val}** |\n"
@@ -462,7 +482,7 @@ _WATCHDOG_AUTH_LABELS = {
 
 @schedule.cron("*/15 * * * *")
 async def watchdog_token_checker():
-    log.info(f"Menjalankan watchdog token bot...")
+    log.info("Menjalankan watchdog token bot...")
     manager = BotManager.current
     if not manager:
         log.warning("BotManager belum diinisialisasi. Melewati pemeriksaan.")
@@ -500,9 +520,17 @@ async def watchdog_token_checker():
 
             try:
                 owner_text = f"`{owner_id}`" if owner_id else "Tidak diketahui"
+                rows = [
+                    ["Bot", f"**{bot_name}** (`{bot_id}`)"],
+                    ["Penyebab", label],
+                    ["Aksi", "Bot dihentikan (data bot disimpan)"],
+                    ["Owner", owner_text],
+                    ["Saran", "Login ulang dengan token baru via `/login`"],
+                ]
                 notif_text = (
-                    f"{main_client.ns.emoji.md('shield')} **Watchdog: Bot Dihapus Otomatis**\n\n"
-                    f"{main_client.ns.table.md(['Info', 'Nilai'], [['Bot', f'**{bot_name}** (`{bot_id}`)'], ['Penyebab', f'{label}'], ['Aksi', 'Bot dihentikan (data bot disimpan)'], ['Owner', f'{owner_text}'], ['Saran', 'Login ulang dengan token baru via `/login`']])}"
+                    f"{main_client.ns.emoji.md('shield')} **Watchdog: Bot Dihapus "
+                    "Otomatis**\n\n"
+                    f"{main_client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
                 await main_client.send_rich_message(
                     manager.owner_id,

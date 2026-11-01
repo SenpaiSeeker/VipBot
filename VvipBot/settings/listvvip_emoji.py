@@ -139,9 +139,25 @@ async def render_list_vvip_icon_menu(client, callback_query):
 
     btn = client.ns.telegram.button.build_button_grid(layout)
 
+    default_normal = client.ns.emoji.md(LIST_VVIP_ICON_DEFAULT["normal"])
+    default_promo = client.ns.emoji.md(LIST_VVIP_ICON_DEFAULT["promo"])
+    rows = [
+        ["Tujuan", "Kustomisasi icon tiap paket VVIP secara individu"],
+        [
+            "Cara",
+            "Pilih paket berdasarkan nama, lalu kirim custom emoji atau "
+            "ID custom emoji",
+        ],
+        ["Icon Bawaan", f"{default_normal} normal / {default_promo} promo"],
+        [
+            "Penerapan",
+            "Icon kustom dipakai di tombol paket pada menu daftar VVIP",
+        ],
+        ["Tambahan", "Tombol Ambil Semua VIP juga bisa diubah iconnya"],
+    ]
     text = (
         f"{client.ns.emoji.md('art')} **Atur Icon List VVIP**\n\n"
-        f"{client.ns.table.md(['Info', 'Nilai'], [['Tujuan', 'Kustomisasi icon tiap paket VVIP secara individu'], ['Cara', 'Pilih paket berdasarkan nama, lalu kirim custom emoji atau ID custom emoji'], ['Icon Bawaan', f"{client.ns.emoji.md(LIST_VVIP_ICON_DEFAULT['normal'])} normal / {client.ns.emoji.md(LIST_VVIP_ICON_DEFAULT['promo'])} promo"], ['Penerapan', 'Icon kustom dipakai di tombol paket pada menu daftar VVIP'], ['Tambahan', 'Tombol Ambil Semua VIP juga bisa diubah iconnya']])}"
+        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
     )
 
     await callback_query.edit_message_text(
@@ -175,7 +191,8 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
         icon_cache = get_bot_cache(client, "vip_list_icon")
         if item_id not in icon_cache:
             return await callback_query.answer(
-                "Sesi tidak ditemukan atau kedaluwarsa. Buka kembali menu dari Pengaturan.",
+                "Sesi tidak ditemukan atau kedaluwarsa. Buka kembali menu "
+                "dari Pengaturan.",
                 show_alert=True,
             )
 
@@ -203,9 +220,21 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
         current_display = "bawaan"
 
     try:
+        rows = [
+            ["Icon Saat Ini", current_display],
+            ["ID Bawaan", f"`{default_id}`"],
+            [
+                "Instruksi",
+                "Kirim **custom emoji** yang ingin digunakan, atau tulis "
+                "**ID custom emoji** secara langsung",
+            ],
+            ["Default", "Ketik `/default` untuk kembali ke ID bawaan"],
+            ["Batal", "Ketik `/batal` untuk membatalkan"],
+        ]
         prompt = (
-            f"**{client.ns.emoji.md('art')} Atur Icon Paket `{display_name}`**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Icon Saat Ini', f'{current_display}'], ['ID Bawaan', f'`{default_id}`'], ['Instruksi', 'Kirim **custom emoji** yang ingin digunakan, atau tulis **ID custom emoji** secara langsung'], ['Default', 'Ketik `/default` untuk kembali ke ID bawaan'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
+            f"**{client.ns.emoji.md('art')} Atur Icon Paket "
+            f"`{display_name}`**\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
         ask_msg = await client.ask(chat_id, prompt, timeout=600)
 
@@ -227,12 +256,18 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
                 emoji_char = None
 
             if not emoji_id:
+                rows = [
+                    ["Status", "Tidak ada custom emoji terdeteksi"],
+                    ["Solusi", "Kirim pesan berisi custom emoji"],
+                    ["Alternatif", "Tulis ID custom emoji berupa angka"],
+                ]
                 return await client.send_rich_message(
                     chat_id,
                     pyrogram.types.InputRichMessage(
                         markdown=(
-                            f"{client.ns.emoji.md('cross_mark')} **Gagal: Custom Emoji Tidak Ditemukan**\n\n"
-                            f"{client.ns.table.md(['Info', 'Keterangan'], [['Status', 'Tidak ada custom emoji terdeteksi'], ['Solusi', 'Kirim pesan berisi custom emoji'], ['Alternatif', 'Tulis ID custom emoji berupa angka']])}"
+                            f"{client.ns.emoji.md('cross_mark')} **Gagal: "
+                            "Custom Emoji Tidak Ditemukan**\n\n"
+                            f"{client.ns.table.md(['Info', 'Keterangan'], rows)}"
                         )
                     ),
                     reply_markup=back_btn,
@@ -261,24 +296,31 @@ async def set_listvvip_icon_item_prompt(client, callback_query):
             else client.ns.emoji.md(LIST_VVIP_ICON_DEFAULT["normal"])
         )
 
+        rows = [
+            ["Paket", f"**{display_name}**"],
+            ["Status", f"Icon {status}"],
+            ["ID Aktif", f"{result_display}"],
+        ]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Paket', f'**{display_name}**'], ['Status', f'Icon {status}'], ['ID Aktif', f'{result_display}']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
             reply_markup=back_btn,
         )
 
     except (listen.UserCancelled, asyncio.TimeoutError):
+        rows = [["Status", "Dibatalkan"]]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Proses "
+                    "Dibatalkan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
             reply_markup=back_btn,

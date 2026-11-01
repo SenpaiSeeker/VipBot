@@ -19,12 +19,23 @@ async def successful_donation_handler(client, message):
     super_admin_id = client.owner_id
 
     try:
+        star_emoji = client.ns.emoji.md("star")
+        rows = [
+            ["Donasi", f"**{stars_donated} Stars ({star_emoji})**"],
+            ["Status", "Kami telah menerima donasi Anda"],
+            [
+                "Catatan",
+                "Dukungan Anda adalah bahan bakar semangat bagi kami. "
+                "Semoga hari Anda menyenangkan!",
+            ],
+        ]
         await client.send_rich_message(
             chat_id=user.id,
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('party_popper')} **Terima Kasih Banyak, {user.first_name}!**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Donasi', f"**{stars_donated} Stars ({client.ns.emoji.md('star')})**"], ['Status', 'Kami telah menerima donasi Anda'], ['Catatan', 'Dukungan Anda adalah bahan bakar semangat bagi kami. Semoga hari Anda menyenangkan!']])}"
+                    f"{client.ns.emoji.md('party_popper')} **Terima Kasih Banyak, "
+                    f"{user.first_name}!**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
@@ -42,9 +53,14 @@ async def successful_donation_handler(client, message):
         user_mention_str = client.ns.telegram.arg.getMention(user, md=True)
         bot_mention_str = client.ns.telegram.arg.getMention(client.me, md=True)
 
+        rows = [
+            ["Jumlah", f"`{stars_donated}` Stars ({client.ns.emoji.md('star')})"],
+            ["Dari", f"{user_mention_str} (`{user.id}`)"],
+            ["Melalui Bot", f"{bot_mention_str}"],
+        ]
         notification_text = (
             f"{client.ns.emoji.md('sparkles')} **Donasi Baru Diterima!**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Jumlah', f'`{stars_donated}` Stars ({client.ns.emoji.md('star')})'], ['Dari', f'{user_mention_str} (`{user.id}`)'], ['Melalui Bot', f'{bot_mention_str}']])}"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
 
         refund_key = uuid.uuid4().hex[:16]
@@ -82,12 +98,19 @@ async def successful_donation_handler(client, message):
         if main_bot_client and owner_of_this_bot != super_admin_id:
             user_mention_str = client.ns.telegram.arg.getMention(user, md=True)
 
+            rows = [
+                ["Donasi", f"`{stars_donated}` Stars"],
+                ["Dari", user_mention_str],
+                ["Owner Bot", f"`{client.me.first_name}`"],
+                ["Penyebab", "Bot diblokir oleh owner"],
+            ]
             await main_bot_client.send_rich_message(
                 super_admin_id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
-                        f"{client.ns.emoji.md('exclamation')} **Notifikasi Gagal Terkirim**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Donasi', f'`{stars_donated}` Stars'], ['Dari', user_mention_str], ['Owner Bot', f'`{client.me.first_name}`'], ['Penyebab', 'Bot diblokir oleh owner']])}"
+                        f"{client.ns.emoji.md('exclamation')} **Notifikasi Gagal "
+                        "Terkirim**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 ),
             )

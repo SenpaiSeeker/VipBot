@@ -83,9 +83,13 @@ async def _resolve_sale_routing(client, saweria_user_id):
 
 
 def _processing_text(client) -> str:
+    rows = [
+        ["Status", "Sedang memproses"],
+        ["Keterangan", "Mohon tunggu sebentar"],
+    ]
     return (
         f"{client.ns.emoji.md('hourglass')} **Sedang Memproses**\n\n"
-        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Sedang memproses'], ['Keterangan', 'Mohon tunggu sebentar']])}"
+        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
     )
 
 
@@ -106,12 +110,14 @@ async def _create_payment_invoice(
     try:
         item = vvip_list[item_index]
     except (IndexError, TypeError):
+        rows = [["Status", "Paket VVIP tidak ditemukan"]]
         return await client.send_rich_message(
             user.id,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Paket Tidak Ditemukan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Paket VVIP tidak ditemukan']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Paket Tidak "
+                    "Ditemukan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
@@ -120,12 +126,17 @@ async def _create_payment_invoice(
     try:
         amount = await _resolve_invoice_amount(client, item, tipe, coupon_code)
     except ValueError as e:
+        rows = [
+            ["Status", "Harga paket/kupon tidak valid"],
+            ["Keterangan", f"`{e}`"],
+        ]
         return await client.send_rich_message(
             user.id,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Paket Tidak Dapat Dibeli**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Harga paket/kupon tidak valid'], ['Keterangan', f'`{e}`']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Paket Tidak Dapat "
+                    "Dibeli**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
@@ -135,8 +146,9 @@ async def _create_payment_invoice(
     if not saweria_user_id:
         if await is_bot_owner(client, user.id):
             text = (
-                f"{client.ns.emoji.md('exclamation')} **Layanan Pembayaran Tidak Aktif**\n\n"
-                f"Silakan setup payment terlebih dahulu."
+                f"{client.ns.emoji.md('exclamation')} **Layanan Pembayaran "
+                "Tidak Aktif**\n\n"
+                "Silakan setup payment terlebih dahulu."
             )
             layout = [
                 [
@@ -155,12 +167,20 @@ async def _create_payment_invoice(
                 reply_markup=btn,
             )
         else:
+            rows = [
+                [
+                    "Tidak Tersedia",
+                    "Layanan pembayaran sedang dinonaktifkan sementara",
+                ],
+                ["Tindakan", "Silakan coba lagi beberapa saat lagi"],
+            ]
             await client.send_rich_message(
                 user.id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
-                        f"{client.ns.emoji.md('cross_mark')} **Layanan Pembayaran Tidak Tersedia**\n\n"
-                        f"{client.ns.table.md(['Status', 'Keterangan'], [['Tidak Tersedia', 'Layanan pembayaran sedang dinonaktifkan sementara'], ['Tindakan', 'Silakan coba lagi beberapa saat lagi']])}"
+                        f"{client.ns.emoji.md('cross_mark')} **Layanan "
+                        "Pembayaran Tidak Tersedia**\n\n"
+                        f"{client.ns.table.md(['Status', 'Keterangan'], rows)}"
                     )
                 ),
             )
@@ -214,8 +234,10 @@ async def _create_payment_invoice(
         ]
 
         markdown = (
-            f"{client.ns.emoji.md('white_check_mark')} **Pembayaran Siap Dilakukan**\n\n"
-            f"Silakan scan QRIS di atas untuk membayar, lalu tekan tombol Konfirmasi Pembayaran.\n\n"
+            f"{client.ns.emoji.md('white_check_mark')} **Pembayaran Siap "
+            "Dilakukan**\n\n"
+            "Silakan scan QRIS di atas untuk membayar, lalu tekan tombol "
+            "Konfirmasi Pembayaran.\n\n"
             f"{client.ns.table.md(['Item', 'Keterangan'], detail_rows)}"
         )
 
@@ -244,11 +266,15 @@ async def _create_payment_invoice(
     except Exception as e:
         if qr_image_stream is not None:
             qr_image_stream.close()
+        rows = [
+            ["Status", "Terjadi kesalahan"],
+            ["Error", f"`{e}`"],
+        ]
         await msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Terjadi kesalahan'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -262,9 +288,14 @@ async def _create_pick_vvip_payment_invoice(
 
     if not saweria_user_id:
         if await is_bot_owner(client, user.id):
+            rows = [
+                ["Status", "Layanan pembayaran tidak aktif"],
+                ["Aksi", "Silakan setup payment terlebih dahulu"],
+            ]
             text = (
-                f"{client.ns.emoji.md('exclamation')} **Layanan Pembayaran Tidak Aktif**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Layanan pembayaran tidak aktif'], ['Aksi', 'Silakan setup payment terlebih dahulu']])}"
+                f"{client.ns.emoji.md('exclamation')} **Layanan Pembayaran "
+                "Tidak Aktif**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
             layout = [
                 [
@@ -283,12 +314,20 @@ async def _create_pick_vvip_payment_invoice(
                 reply_markup=btn,
             )
         else:
+            rows = [
+                [
+                    "Tidak Tersedia",
+                    "Layanan pembayaran sedang dinonaktifkan sementara",
+                ],
+                ["Tindakan", "Silakan coba lagi beberapa saat lagi"],
+            ]
             await client.send_rich_message(
                 user.id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
-                        f"{client.ns.emoji.md('cross_mark')} **Layanan Pembayaran Tidak Tersedia**\n\n"
-                        f"{client.ns.table.md(['Status', 'Keterangan'], [['Tidak Tersedia', 'Layanan pembayaran sedang dinonaktifkan sementara'], ['Tindakan', 'Silakan coba lagi beberapa saat lagi']])}"
+                        f"{client.ns.emoji.md('cross_mark')} **Layanan "
+                        "Pembayaran Tidak Tersedia**\n\n"
+                        f"{client.ns.table.md(['Status', 'Keterangan'], rows)}"
                     )
                 ),
             )
@@ -307,12 +346,14 @@ async def _create_pick_vvip_payment_invoice(
         _package_price(item_data, "normal") for item_data in resolved_items
     )
     if not resolved_items or total_amount <= 0:
+        rows = [["Status", "Harga paket belum diatur"]]
         return await client.send_rich_message(
             user.id,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Paket Tidak Dapat Dibeli**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Harga paket belum diatur']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Paket Tidak Dapat "
+                    "Dibeli**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
@@ -367,8 +408,10 @@ async def _create_pick_vvip_payment_invoice(
         ]
 
         markdown = (
-            f"{client.ns.emoji.md('white_check_mark')} **Pembayaran Siap Dilakukan**\n\n"
-            f"Silakan scan QRIS di atas untuk membayar, lalu tekan tombol Konfirmasi Pembayaran.\n\n"
+            f"{client.ns.emoji.md('white_check_mark')} **Pembayaran Siap "
+            "Dilakukan**\n\n"
+            "Silakan scan QRIS di atas untuk membayar, lalu tekan tombol "
+            "Konfirmasi Pembayaran.\n\n"
             f"{client.ns.table.md(['Item', 'Keterangan'], detail_rows)}"
         )
 
@@ -397,11 +440,15 @@ async def _create_pick_vvip_payment_invoice(
     except Exception as e:
         if qr_image_stream is not None:
             qr_image_stream.close()
+        rows = [
+            ["Status", "Terjadi kesalahan"],
+            ["Error", f"`{e}`"],
+        ]
         await msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Terjadi kesalahan'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -416,8 +463,9 @@ async def _create_all_vvip_payment_invoice(
     if not saweria_user_id:
         if await is_bot_owner(client, user.id):
             text = (
-                f"{client.ns.emoji.md('exclamation')} **Layanan Pembayaran Tidak Aktif**\n\n"
-                f"Silakan setup payment terlebih dahulu."
+                f"{client.ns.emoji.md('exclamation')} **Layanan Pembayaran "
+                "Tidak Aktif**\n\n"
+                "Silakan setup payment terlebih dahulu."
             )
             layout = [
                 [
@@ -436,12 +484,20 @@ async def _create_all_vvip_payment_invoice(
                 reply_markup=btn,
             )
         else:
+            rows = [
+                [
+                    "Tidak Tersedia",
+                    "Layanan pembayaran sedang dinonaktifkan sementara",
+                ],
+                ["Tindakan", "Silakan coba lagi beberapa saat lagi"],
+            ]
             await client.send_rich_message(
                 user.id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
-                        f"{client.ns.emoji.md('cross_mark')} **Layanan Pembayaran Tidak Tersedia**\n\n"
-                        f"{client.ns.table.md(['Status', 'Keterangan'], [['Tidak Tersedia', 'Layanan pembayaran sedang dinonaktifkan sementara'], ['Tindakan', 'Silakan coba lagi beberapa saat lagi']])}"
+                        f"{client.ns.emoji.md('cross_mark')} **Layanan "
+                        "Pembayaran Tidak Tersedia**\n\n"
+                        f"{client.ns.table.md(['Status', 'Keterangan'], rows)}"
                     )
                 ),
             )
@@ -460,12 +516,14 @@ async def _create_all_vvip_payment_invoice(
         _package_price(item_data, "normal") for item_data in resolved_items
     )
     if not resolved_items or total_amount <= 0:
+        rows = [["Status", "Harga paket belum diatur"]]
         return await client.send_rich_message(
             user.id,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Paket Tidak Dapat Dibeli**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Harga paket belum diatur']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Paket Tidak Dapat "
+                    "Dibeli**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
@@ -520,8 +578,10 @@ async def _create_all_vvip_payment_invoice(
         ]
 
         markdown = (
-            f"{client.ns.emoji.md('white_check_mark')} **Pembayaran Siap Dilakukan**\n\n"
-            f"Silakan scan QRIS di atas untuk membayar, lalu tekan tombol Konfirmasi Pembayaran.\n\n"
+            f"{client.ns.emoji.md('white_check_mark')} **Pembayaran Siap "
+            "Dilakukan**\n\n"
+            "Silakan scan QRIS di atas untuk membayar, lalu tekan tombol "
+            "Konfirmasi Pembayaran.\n\n"
             f"{client.ns.table.md(['Item', 'Keterangan'], detail_rows)}"
         )
 
@@ -550,11 +610,15 @@ async def _create_all_vvip_payment_invoice(
     except Exception as e:
         if qr_image_stream is not None:
             qr_image_stream.close()
+        rows = [
+            ["Status", "Terjadi kesalahan"],
+            ["Error", f"`{e}`"],
+        ]
         await msg.edit(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Terjadi kesalahan'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )

@@ -136,7 +136,8 @@ async def get_start_keyboard_and_content(client, user):
                     ],
                 ],
             )}\n\n"
-            f"{client.ns.emoji.md('heart_hands')} **Terima kasih telah menggunakan layanan kami.**"
+            f"{client.ns.emoji.md('heart_hands')} **Terima kasih telah "
+            "menggunakan layanan kami.**"
         )
     else:
         _default_text = (
@@ -174,7 +175,8 @@ async def get_start_keyboard_and_content(client, user):
                     ],
                 ],
             )}\n\n"
-            f"{client.ns.emoji.md('heart_hands')} **Terima kasih telah menggunakan layanan kami.**"
+            f"{client.ns.emoji.md('heart_hands')} **Terima kasih telah "
+            "menggunakan layanan kami.**"
         )
 
     db_text_template = await client.db.getVars(client.me.id, "start_text_template")
@@ -283,13 +285,27 @@ async def start_callback(client, callback_query):
 
 async def about_bot_callback(client, callback_query):
     table = client.ns.table
+    fitur_rows = [
+        ["Pembayaran", "Otomatis dan aman via QRIS"],
+        ["Akses", "Instan setelah transaksi berhasil"],
+        ["Konfirmasi", "Tanpa menunggu konfirmasi manual"],
+    ]
+    alur_rows = [
+        ["Pilih paket — jelajahi daftar VVIP yang tersedia"],
+        ["Lakukan pembayaran — scan QRIS yang saya berikan"],
+        [
+            "Akses instan — link undangan terkirim otomatis setelah "
+            "pembayaran terkonfirmasi",
+        ],
+    ]
     text = (
         f"{client.ns.emoji.md('glowing_star')} **Tentang Bot VVIP Ini**\n\n"
-        f"Selamat datang! Saya adalah asisten otomatis yang dirancang untuk memberikan Anda kemudahan dalam accessing grup VVIP.\n\n"
+        "Selamat datang! Saya adalah asisten otomatis yang dirancang untuk "
+        "memberikan Anda kemudahan dalam accessing grup VVIP.\n\n"
         f"{client.ns.emoji.md('robot')} **Fungsi Utama Saya**\n\n"
-        f"{table.md(['Fitur', 'Keterangan'], [['Pembayaran', 'Otomatis dan aman via QRIS'], ['Akses', 'Instan setelah transaksi berhasil'], ['Konfirmasi', 'Tanpa menunggu konfirmasi manual']])}\n\n"
+        f"{table.md(['Fitur', 'Keterangan'], fitur_rows)}\n\n"
         f"{client.ns.emoji.md('rocket')} **Alur Penggunaan**\n\n"
-        f"{table.md(['Tindakan'], [['Pilih paket — jelajahi daftar VVIP yang tersedia'], ['Lakukan pembayaran — scan QRIS yang saya berikan'], ['Akses instan — link undangan terkirim otomatis setelah pembayaran terkonfirmasi']])}"
+        f"{table.md(['Tindakan'], alur_rows)}"
     )
 
     layout = [
@@ -416,9 +432,17 @@ async def list_vvip_bot(client, callback_query):
     )
     btn = client.ns.telegram.button.build_button_grid(layout)
 
+    rows = [
+        ["Bot", client.ns.telegram.arg.getMention(client.me, md=True)],
+        [
+            "Keterangan",
+            "Daftar paket eksklusif. Klik paket untuk detail lengkap dan "
+            "penawaran spesial.",
+        ],
+    ]
     text = (
         f"{client.ns.emoji.md('books')} **Daftar VVIP Bot**\n\n"
-        f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', client.ns.telegram.arg.getMention(client.me, md=True)], ['Keterangan', 'Daftar paket eksklusif. Klik paket untuk detail lengkap dan penawaran spesial.']])}"
+        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
     )
 
     await callback_query.edit_message_text(
@@ -508,10 +532,13 @@ async def process_donation_callback(client, callback_query):
 
     invoice = {
         "title": "Donasi untuk Pengembangan Bot",
-        "description": "Dukungan Anda sebesar {stars} Bintang (Stars) sangat kami hargai. Terima kasih!".format(
-            stars=star_amount
+        "description": (
+            "Dukungan Anda sebesar {stars} Bintang (Stars) sangat kami "
+            "hargai. Terima kasih!"
+        ).format(stars=star_amount),
+        "payload": (
+            f"donation_{star_amount}_{callback_query.from_user.id}_" f"{int(time())}"
         ),
-        "payload": f"donation_{star_amount}_{callback_query.from_user.id}_{int(time())}",
         "currency": "XTR",
         "prices": [
             pyrogram.types.LabeledPrice(f"Donasi {star_amount} Stars", star_amount)

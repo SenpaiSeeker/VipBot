@@ -29,7 +29,8 @@ class KeyManager:
 
         if not args.key or not args.env:
             self.logger.print(
-                f"{self.logger.RED}Argumen --key dan --env harus disertakan untuk menjalankan bot."
+                f"{self.logger.RED}Argumen --key dan --env harus disertakan "
+                "untuk menjalankan bot."
             )
             sys.exit(1)
 

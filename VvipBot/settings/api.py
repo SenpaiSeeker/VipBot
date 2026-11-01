@@ -53,8 +53,10 @@ async def api_settings_callback(client, callback_query):
     ]
 
     table = client.ns.table
+    owner_mention = client.ns.telegram.arg.getMention(client.me, md=True)
     text = (
-        f"{client.ns.emoji.md('key')} **Payment Gateway untuk {client.ns.telegram.arg.getMention(client.me, md=True)}**\n\n"
+        f"{client.ns.emoji.md('key')} **Payment Gateway untuk "
+        f"{owner_mention}**\n\n"
         f"{table.md(['Gateway', 'Status', 'User ID'], [status_row])}\n\n"
         f"Pilih tindakan:"
     )
@@ -96,19 +98,24 @@ async def set_api_key_prompt(client, callback_query):
             )
 
         if key_name == "SAWERIA":
+            rows = [["Isi", "Kirim **Username Saweria** Anda"]]
             username_msg = await ask(
                 f"**2/2: Username Saweria**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Isi', 'Kirim **Username Saweria** Anda']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
             if username_msg.text and username_msg.text.lower() == "/batal":
                 raise listen.UserCancelled
 
+            rows = [
+                ["Status", "Sedang memproses"],
+                ["Keterangan", "Mohon tunggu sebentar"],
+            ]
             processing_msg = await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
                         f"{client.ns.emoji.md('hourglass')} **Sedang Memproses**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Sedang memproses'], ['Keterangan', 'Mohon tunggu sebentar']])}"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 ),
             )
@@ -130,35 +137,47 @@ async def set_api_key_prompt(client, callback_query):
 
                 await processing_msg.delete()
 
+                rows = [
+                    ["Status", "Payment Saweria berhasil disetup"],
+                ]
                 await client.send_rich_message(
                     chat_id,
                     pyrogram.types.InputRichMessage(
                         markdown=(
                             f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Payment Saweria berhasil disetup']])}"
+                            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                         )
                     ),
                     reply_markup=back_btn,
                 )
 
             except Exception as e:
+                rows = [
+                    ["Status", "Gagal menyimpan payment"],
+                    ["Error", f"`{e}`"],
+                ]
                 await processing_msg.edit_text(
                     rich_message=pyrogram.types.InputRichMessage(
                         markdown=(
                             f"{client.ns.emoji.md('cross_mark')} **Gagal!**\n\n"
-                            f"{client.ns.table.md(['Info', 'Isi'], [['Status', 'Gagal menyimpan payment'], ['Error', f'`{e}`']])}"
+                            f"{client.ns.table.md(['Info', 'Isi'], rows)}"
                         )
                     ),
                     reply_markup=back_btn,
                 )
                 return
         else:
+            rows = [
+                ["Status", "Fitur tidak didukung"],
+                ["Aksi", "Kembali ke Payment Gateway"],
+            ]
             await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
-                        f"{client.ns.emoji.md('cross_mark')} **Fitur Tidak Didukung**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Fitur tidak didukung'], ['Aksi', 'Kembali ke Payment Gateway']])}"
+                        f"{client.ns.emoji.md('cross_mark')} **Fitur Tidak "
+                        "Didukung**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 ),
                 reply_markup=back_btn,
@@ -166,12 +185,14 @@ async def set_api_key_prompt(client, callback_query):
             return
 
     except (listen.UserCancelled, asyncio.TimeoutError):
+        rows = [["Status", "Dibatalkan"]]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Proses "
+                    "Dibatalkan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
             reply_markup=back_btn,

@@ -12,7 +12,8 @@ _refund_lock = asyncio.Lock()
 async def dashboard_command_handler(client, message):
     msg = await message.reply_rich(
         pyrogram.types.InputRichMessage(
-            markdown=f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\nMohon tunggu sebentar."
+            markdown=f"{client.ns.emoji.md('hourglass')} **Sedang Memproses...**\n"
+            "Mohon tunggu sebentar."
         )
     )
     all_bots_data = await client.db.getBots(is_token=True)
@@ -60,7 +61,11 @@ async def dashboard_command_handler(client, message):
         server_stats_text = client.ns.table.md(["Komponen", "Penggunaan"], server_rows)
     except Exception as e:
         stats_data = {"cpu": 0, "ram": 0, "disk": 0}
-        server_stats_text = f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal mengambil statistik server'], ['Error', f'`{e}`']])}"
+        rows = [
+            ["Status", "Gagal mengambil statistik server"],
+            ["Error", f"`{e}`"],
+        ]
+        server_stats_text = f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
 
     platform_rows = [
         ["Total Bot Aktif", f"`{total_bots}`"],
@@ -85,11 +90,15 @@ async def dashboard_command_handler(client, message):
         )
         await msg.delete()
     except Exception as e:
+        rows = [
+            ["Status", "Error Visualisasi"],
+            ["Detail", f"`{e}`"],
+        ]
         await msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{dashboard_text}\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Error Visualisasi'], ['Detail', f'`{e}`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -109,11 +118,14 @@ async def refund_stars_callback(client, callback_query):
         db_key = f"refund_{refund_key}"
         refund_data = await client.db.getVars(client.me.id, db_key)
         if not refund_data:
+            rows = [
+                ["Gagal", "Transaksi tidak ditemukan atau sudah di-refund"],
+            ]
             await callback_query.edit_message_text(
                 rich_message=pyrogram.types.InputRichMessage(
                     markdown=(
                         f"{callback_query.message.text}\n\n"
-                        f"{client.ns.table.md(['Status', 'Keterangan'], [['Gagal', 'Transaksi tidak ditemukan atau sudah di-refund']])}"
+                        f"{client.ns.table.md(['Status', 'Keterangan'], rows)}"
                     )
                 )
             )
@@ -136,30 +148,40 @@ async def refund_stars_callback(client, callback_query):
             )
             await client.db.setVars(client.me.id, refunded_key, True)
 
+        rows = [["Berhasil", "Donasi Stars telah dikembalikan"]]
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{callback_query.message.text}\n\n"
-                    f"{client.ns.table.md(['Status', 'Keterangan'], [['Berhasil', 'Donasi Stars telah dikembalikan']])}"
+                    f"{client.ns.table.md(['Status', 'Keterangan'], rows)}"
                 )
             ),
         )
+        rows = [
+            ["Status", "Donasi Stars Anda telah dikembalikan oleh admin"],
+            ["Catatan", "Terima kasih atas pengertian Anda"],
+        ]
         await client.send_rich_message(
             user_id_to_refund,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('information_source')} **Informasi Donasi**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Donasi Stars Anda telah dikembalikan oleh admin'], ['Catatan', 'Terima kasih atas pengertian Anda']])}"
+                    f"{client.ns.emoji.md('information_source')} **Informasi "
+                    "Donasi**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
     except Exception as e:
         client.log.print(f"{client.log.RED}Gagal merefund donasi: {e}")
+        rows = [
+            ["Gagal", "Gagal mengembalikan donasi"],
+            ["Error", f"`{e}`"],
+        ]
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{callback_query.message.text}\n\n"
-                    f"{client.ns.table.md(['Status', 'Keterangan'], [['Gagal', 'Gagal mengembalikan donasi'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.table.md(['Status', 'Keterangan'], rows)}"
                 )
             )
         )
@@ -276,7 +298,8 @@ async def show_stars_stats(client, callback_query):
         text = (
             f"{client.ns.emoji.md('chart_bar')} **Statistik Pendapatan Stars**\n\n"
             f"{summary_text}\n\n"
-            f"**{client.ns.emoji.md('open_book')} Transaksi Terakhir ({page + 1}/{total_pages})**\n\n"
+            f"**{client.ns.emoji.md('open_book')} Transaksi Terakhir "
+            f"({page + 1}/{total_pages})**\n\n"
             f"{table.md(['Tanggal', 'Jumlah', 'Sumber'], transactions_rows)}"
         )
         layout = []
@@ -316,7 +339,8 @@ async def show_stars_stats(client, callback_query):
         )
     except Exception as e:
         client.log.print(
-            f"{client.log.RED} Error fetching stars stats: {e}\n{traceback.format_exc()}"
+            f"{client.log.RED} Error fetching stars stats: {e}\n"
+            f"{traceback.format_exc()}"
         )
         await callback_query.answer(f"Error: {e}", show_alert=True)
 
@@ -328,10 +352,12 @@ async def total_users_count_callback(client, callback_query):
         )
     user_ids = await client.db.getListVars(client.me.id, "user_ids") or []
     total_count = len(user_ids)
+    rows = [["Jumlah Pengguna", f"`{total_count}`"]]
     text = (
         f"{client.ns.emoji.md('busts_in_silhouette')} **Total Pengguna Bot**\n\n"
-        f"{client.ns.table.md(['Aspek', 'Nilai'], [['Jumlah Pengguna', f'`{total_count}`']])}\n\n"
-        f"Jumlah keseluruhan pengguna yang pernah memulai bot ini adalah **{total_count} pengguna**."
+        f"{client.ns.table.md(['Aspek', 'Nilai'], rows)}\n\n"
+        "Jumlah keseluruhan pengguna yang pernah memulai bot ini adalah "
+        f"**{total_count} pengguna**."
     )
     markup = client.ns.telegram.button.build_button_grid(
         [

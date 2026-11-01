@@ -60,7 +60,8 @@ async def list_my_bots_callback(client, callback_query):
 
     table = client.ns.table
     text = (
-        f"**{client.ns.emoji.md('folder')} Daftar Bot Saya ({page + 1}/{total_pages})**\n\n"
+        f"**{client.ns.emoji.md('folder')} Daftar Bot Saya "
+        f"({page + 1}/{total_pages})**\n\n"
         f"{table.md(['Info', 'Detail'], bot_rows)}"
     )
 

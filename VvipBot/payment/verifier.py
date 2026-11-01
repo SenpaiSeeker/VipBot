@@ -48,12 +48,16 @@ async def verify_user_join(client, user, chat_id, link_msg):
         pass
 
     if not is_joined:
+        rows = [
+            ["Status", "Link undangan Anda telah kedaluwarsa"],
+            ["Sebab", "Anda tidak bergabung dalam 60 menit"],
+        ]
         await client.send_rich_message(
             user.id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('exclamation')} **Peringatan!**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Link undangan Anda telah kedaluwarsa'], ['Sebab', 'Anda tidak bergabung dalam 60 menit']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
@@ -115,12 +119,16 @@ async def verify_user_join_multiple(client, user, invite_payloads, link_msg):
         pending_lines.append(f"- {item.get('name')}: {item.get('link')}")
 
     try:
+        rows = [
+            ["Status", "Anda belum join ke semua grup VIP dalam waktu 60 menit"],
+            ["Aksi", "Silakan join grup berikut"],
+        ]
         await client.send_rich_message(
             user.id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('exclamation')} **Belum Join Semua Grup**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Anda belum join ke semua grup VIP dalam waktu 60 menit'], ['Aksi', 'Silakan join grup berikut']])}\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}\n\n"
                     + "\n".join(pending_lines)
                 )
             ),

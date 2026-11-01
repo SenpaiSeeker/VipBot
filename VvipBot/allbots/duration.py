@@ -40,7 +40,10 @@ async def allbots_duration_callback(client, callback_query):
     ]
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(
-            markdown=f"**{client.ns.emoji.md('calendar')} Kelola Masa Aktif untuk Bot `{bot_id}`**"
+            markdown=(
+                f"**{client.ns.emoji.md('calendar')} Kelola Masa Aktif untuk Bot "
+                f"`{bot_id}`**"
+            )
         ),
         reply_markup=client.ns.telegram.button.build_button_grid(layout),
     )
@@ -71,11 +74,16 @@ async def allbots_extend_callback(client, callback_query):
             }
         ],
     ]
+    rows = [
+        ["Bot", f"`{bot_id}`"],
+        ["Tindakan", "Durasi yang akan ditambahkan"],
+        ["Opsi", "Pilih salah satu durasi di bawah ini"],
+    ]
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('plus')} **Pilih Durasi**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'`{bot_id}`'], ['Tindakan', 'Durasi yang akan ditambahkan'], ['Opsi', 'Pilih salah satu durasi di bawah ini']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         ),
         reply_markup=client.ns.telegram.button.build_button_grid(layout),
@@ -129,11 +137,16 @@ async def allbots_reduce_callback(client, callback_query):
             }
         ],
     ]
+    rows = [
+        ["Bot", f"`{bot_id}`"],
+        ["Tindakan", "Durasi yang akan dikurangi"],
+        ["Opsi", "Pilih salah satu durasi di bawah ini"],
+    ]
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('minus')} **Pilih Durasi**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'`{bot_id}`'], ['Tindakan', 'Durasi yang akan dikurangi'], ['Opsi', 'Pilih salah satu durasi di bawah ini']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         ),
         reply_markup=client.ns.telegram.button.build_button_grid(layout),

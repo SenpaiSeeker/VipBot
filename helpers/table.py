@@ -85,7 +85,8 @@ class TableBuilder(Object):
         attr = _BUTTON_TYPES[btn_type]
         return (
             f'<tg-button type="{btn_type}" {attr}="{html.escape(payload, quote=True)}"'
-            f' style="{style}">{_BUTTON_PAD}{html.escape(label, quote=False)}{_BUTTON_PAD}</tg-button>'
+            f' style="{style}">{_BUTTON_PAD}{html.escape(label, quote=False)}'
+            f"{_BUTTON_PAD}</tg-button>"
         )
 
     def buttons(self, text, align: str = "center") -> str:

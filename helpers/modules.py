@@ -27,8 +27,10 @@ class Modules(Object):
                 return None
             except Exception as e:
                 client.log.print(
-                    f"{client.log.RED}[ERROR]: {client.log.CYAN}{func.__module__}.{func.__name__} "
-                    f"{client.log.WHITE}| {client.log.YELLOW}{type(e).__name__}: {client.log.RED}{e}"
+                    f"{client.log.RED}[ERROR]: {client.log.CYAN}"
+                    f"{func.__module__}.{func.__name__} "
+                    f"{client.log.WHITE}| {client.log.YELLOW}{type(e).__name__}: "
+                    f"{client.log.RED}{e}"
                 )
 
         return wrapper

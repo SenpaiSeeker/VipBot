@@ -42,12 +42,15 @@ async def set_broadcast_price_callback(client, callback_query):
             if ask_msg.text.lower() in ["/empty", "0"]:
                 await client.db.removeVars(client.me.id, "broadcast_price")
 
+                rows = [
+                    ["Status", "Fitur Paid Broadcast dinonaktifkan"],
+                ]
                 return await client.send_rich_message(
                     chat_id,
                     pyrogram.types.InputRichMessage(
                         markdown=(
                             f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Fitur Paid Broadcast dinonaktifkan']])}"
+                            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                         )
                     ),
                     reply_markup=back_btn,
@@ -59,24 +62,33 @@ async def set_broadcast_price_callback(client, callback_query):
         stars_amount = int(ask_msg.text)
         await client.db.setVars(client.me.id, "broadcast_price", stars_amount)
 
+        rows = [
+            ["Status", "Harga broadcast diperbarui"],
+            ["Harga", f"`{stars_amount}` Stars"],
+        ]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Harga broadcast diperbarui'], ['Harga', f'`{stars_amount}` Stars']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
             reply_markup=back_btn,
         )
 
     except (listen.UserCancelled, asyncio.TimeoutError, ValueError) as e:
+        rows = [
+            ["Status", "Dibatalkan"],
+            ["Keterangan", f"{e}"],
+        ]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan'], ['Keterangan', f'{e}']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Proses "
+                    "Dibatalkan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
             reply_markup=back_btn,
@@ -144,9 +156,17 @@ async def broadcast_callback(client, callback_query):
 
     try:
         await callback_query.message.delete()
+        rows = [
+            [
+                "Instruksi",
+                "Teruskan (forward) atau kirim pesan yang ingin disiarkan",
+            ],
+            ["Batal", "Ketik `/batal` untuk membatalkan"],
+        ]
         prompt = (
-            f"{client.ns.emoji.md('loudspeaker')} **Kirim Pesan Broadcast**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Instruksi', 'Teruskan (forward) atau kirim pesan yang ingin disiarkan'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
+            f"{client.ns.emoji.md('loudspeaker')} **Kirim Pesan "
+            "Broadcast**\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
         ask_message = await client.ask(chat_id, text=prompt, timeout=600)
 
@@ -158,7 +178,8 @@ async def broadcast_callback(client, callback_query):
 
         if broadcast_price > 0 and (not (ask_message.photo or ask_message.video)):
             raise ValueError(
-                f"{client.ns.emoji.md('cross_mark')} **Gagal:** Paid Broadcast memerlukan media foto/video!"
+                f"{client.ns.emoji.md('cross_mark')} **Gagal:** Paid "
+                "Broadcast memerlukan media foto/video!"
             )
 
         user_ids = await client.db.getListVars(client.me.id, "user_ids") or []
@@ -178,12 +199,18 @@ async def broadcast_callback(client, callback_query):
                 ),
             )
 
+        rows = [
+            ["Status", "Siaran dimulai"],
+            ["Jumlah", f"`{len(user_ids)}` pengguna"],
+            ["Berhenti", "Tekan tombol dibawah untuk berhenti"],
+        ]
         progress_msg = await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('white_check_mark')} **Memulai Siaran**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Siaran dimulai'], ['Jumlah', f'`{len(user_ids)}` pengguna'], ['Berhenti', 'Tekan tombol dibawah untuk berhenti']])}"
+                    f"{client.ns.emoji.md('white_check_mark')} **Memulai "
+                    "Siaran**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
             reply_markup=client.ns.telegram.button.build_button_grid(
@@ -258,21 +285,32 @@ async def broadcast_callback(client, callback_query):
             if should_stop
             else f"{client.ns.emoji.md('loudspeaker')} **Siaran Selesai!**"
         )
+        rows = [
+            ["Status", "Dibatalkan" if should_stop else "Selesai"],
+            ["Terkirim", f"`{success_count}`"],
+            ["Gagal", f"`{fail_count}`"],
+        ]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
-                markdown=f"{status_title}\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan' if should_stop else 'Selesai'], ['Terkirim', f'`{success_count}`'], ['Gagal', f'`{fail_count}`']])}"
+                markdown=(
+                    f"{status_title}\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
+                )
             ),
         )
 
     except (listen.UserCancelled, asyncio.TimeoutError, ValueError) as e:
+        rows = [
+            ["Status", "Gagal/Batal"],
+            ["Keterangan", f"{e}"],
+        ]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Gagal/Batal**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal/Batal'], ['Keterangan', f'{e}']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )

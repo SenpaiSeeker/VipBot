@@ -30,16 +30,27 @@ async def request_extend_duration_callback(client, callback_query):
             requester.full_name or requester.first_name or "Deleted Account"
         )
         requester_mention = f"[{requester_name}](tg://user?id={requester.id})"
+        rows = [
+            ["Pengguna", f"{requester_mention} (`{requester.id}`)"],
+            ["Bot", f"**{bot_name}** (`{bot_id_to_request}`)"],
+            [
+                "Aksi",
+                "Setujui untuk menambah masa aktif bot ini sebanyak 30 hari",
+            ],
+        ]
         txt_owner = (
-            f"**{main_bot_client.ns.emoji.md('bell')} Permintaan Perpanjangan Durasi**\n\n"
-            f"{main_bot_client.ns.table.md(['Info', 'Nilai'], [['Pengguna', f'{requester_mention} (`{requester.id}`)'], ['Bot', f'**{bot_name}** (`{bot_id_to_request}`)'], ['Aksi', 'Setujui untuk menambah masa aktif bot ini sebanyak 30 hari']])}"
+            f"**{main_bot_client.ns.emoji.md('bell')} Permintaan "
+            "Perpanjangan Durasi**\n\n"
+            f"{main_bot_client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
 
         layout_owner = [
             [
                 {
                     "text": "✅ Setujui (+30 Hari)",
-                    "callback_data": f"approve_extension {bot_id_to_request} {requester.id}",
+                    "callback_data": (
+                        f"approve_extension {bot_id_to_request} " f"{requester.id}"
+                    ),
                     "style": "green",
                     "emoji": main_bot_client.ns.emoji.id("white_check_mark"),
                 },
@@ -59,7 +70,8 @@ async def request_extend_duration_callback(client, callback_query):
             reply_markup=btn_owner,
         )
         await callback_query.answer(
-            "✅ Permintaan perpanjangan telah dikirim ke Owner Utama. Anda akan dihubungi jika disetujui.",
+            "✅ Permintaan perpanjangan telah dikirim ke Owner Utama. Anda "
+            "akan dihubungi jika disetujui.",
             show_alert=True,
         )
     except Exception as e:
@@ -96,11 +108,17 @@ async def owner_approve_extension_callback(client, callback_query):
             new_exp_date.isoformat(),
         )
 
+        rows = [
+            ["Bot", f"`{bot_id_to_extend}`"],
+            ["Tambahan", f"**{days_to_add} hari**"],
+            ["Status", "Durasi telah ditambah"],
+        ]
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('white_check_mark')} **Persetujuan Berhasil!**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'`{bot_id_to_extend}`'], ['Tambahan', f'**{days_to_add} hari**'], ['Status', 'Durasi telah ditambah']])}"
+                    f"{client.ns.emoji.md('white_check_mark')} **Persetujuan "
+                    "Berhasil!**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -113,23 +131,34 @@ async def owner_approve_extension_callback(client, callback_query):
                 else f"ID {bot_id_to_extend}"
             )
 
+            rows = [
+                ["Bot", f"**{bot_name}**"],
+                [
+                    "Status",
+                    "Permintaan perpanjangan Anda telah disetujui dan " "diperpanjang",
+                ],
+            ]
             await client.send_rich_message(
                 requester_id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
                         f"{client.ns.emoji.md('party_popper')} **Kabar Baik!**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'**{bot_name}**'], ['Status', 'Permintaan perpanjangan Anda telah disetujui dan diperpanjang']])}"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 ),
             )
         except Exception as e:
             client.log.print(f"Gagal kirim notif persetujuan ke {requester_id}: {e}")
     except Exception as e:
+        rows = [
+            ["Status", "Gagal menyetujui permintaan"],
+            ["Error", f"`{e}`"],
+        ]
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Gagal Menyetujui**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal menyetujui permintaan'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -143,11 +172,15 @@ async def owner_close_request_callback(client, callback_query):
         )
 
     try:
+        rows = [
+            ["Status", "Permintaan telah ditolak/ditutup oleh Owner Utama"],
+        ]
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Permintaan Ditutup**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Permintaan telah ditolak/ditutup oleh Owner Utama']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Permintaan "
+                    "Ditutup**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )

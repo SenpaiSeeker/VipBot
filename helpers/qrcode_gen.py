@@ -80,14 +80,14 @@ class QrCodeGenerator:
             <meta charset="UTF-8">
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-                
+
                 body {{
                     margin: 0;
                     padding: 0;
                     background: transparent;
                     font-family: 'Inter', sans-serif;
                 }}
-                
+
                 .qris-card {{
                     background-color: #ffffff;
                     background-image: linear-gradient(#f0f0f0 1.5px, transparent 1.5px), linear-gradient(90deg, #f0f0f0 1.5px, transparent 1.5px);
@@ -98,7 +98,7 @@ class QrCodeGenerator:
                     position: relative;
                     overflow: hidden;
                 }}
-                
+
                 .shape-left {{
                     position: absolute;
                     left: -15px;
@@ -109,7 +109,7 @@ class QrCodeGenerator:
                     clip-path: polygon(0 0, 100% 50%, 0 100%);
                     z-index: 1;
                 }}
-                
+
                 .shape-right-bottom {{
                     position: absolute;
                     right: 0;
@@ -120,7 +120,7 @@ class QrCodeGenerator:
                     clip-path: polygon(100% 0, 0 100%, 100% 100%);
                     z-index: 1;
                 }}
-                
+
                 .content-wrapper {{
                     position: absolute;
                     top: 0; left: 0; right: 0; bottom: 0;
@@ -129,7 +129,7 @@ class QrCodeGenerator:
                     flex-direction: column;
                     padding: 35px 45px 30px 45px;
                 }}
-                
+
                 .header-row {{
                     display: flex;
                     justify-content: space-between;
@@ -137,22 +137,22 @@ class QrCodeGenerator:
                     width: 100%;
                     padding-bottom: 25px;
                 }}
-                
+
                 .qris-block {{
                     display: flex;
                     flex-direction: column;
                 }}
-                
+
                 .qris-group {{
                     display: flex;
                     align-items: center;
                 }}
-                
+
                 .qris-logo {{
                     height: 38px;
                     margin-right: 12px;
                 }}
-                
+
                 .qris-separator {{
                     width: 2.5px;
                     height: 34px;
@@ -160,37 +160,37 @@ class QrCodeGenerator:
                     margin-right: 12px;
                     border-radius: 1px;
                 }}
-                
+
                 .qris-text {{
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
                     line-height: 1.15;
                 }}
-                
+
                 .qris-text span {{
                     font-weight: 800;
                     font-size: 13.5px;
                     color: #000000;
                     letter-spacing: 0.1px;
                 }}
-                
+
                 .qris-underline {{
                     width: 295px;
                     height: 5.5px;
                     background-color: #000000;
                     margin-top: 10px;
                 }}
-                
+
                 .gpn-logo {{
                     height: 55px;
                 }}
-                
+
                 .merchant-info {{
                     text-align: center;
                     margin-top: 25px;
                 }}
-                
+
                 .merchant-name {{
                     font-size: 38px;
                     font-weight: 900;
@@ -198,27 +198,27 @@ class QrCodeGenerator:
                     letter-spacing: 0.5px;
                     margin: 0;
                 }}
-                
+
                 .nmid {{
                     font-size: 24px;
                     font-weight: 700;
                     color: #333333;
                     margin-top: 12px;
                 }}
-                
+
                 .terminal-id {{
                     font-size: 24px;
                     font-weight: 800;
                     color: #333333;
                     margin-top: 6px;
                 }}
-                
+
                 .qr-section {{
                     display: flex;
                     justify-content: center;
                     margin-top: 25px;
                 }}
-                
+
                 .qr-border-outer {{
                     border: 2px solid #e0e0e0;
                     padding: 12px;
@@ -226,39 +226,39 @@ class QrCodeGenerator:
                     border-radius: 8px;
                     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
                 }}
-                
+
                 .qr-code-img {{
                     width: 320px;
                     height: 320px;
                     display: block;
                 }}
-                
+
                 .aspi-section {{
                     text-align: center;
                     margin-top: 20px;
                 }}
-                
+
                 .aspi-title {{
                     font-size: 18px;
                     font-weight: 900;
                     color: #222222;
                     letter-spacing: 0.5px;
                 }}
-                
+
                 .aspi-sub {{
                     font-size: 12px;
                     font-weight: 500;
                     color: #666666;
                     margin-top: 4px;
                 }}
-                
+
                 .aspi-link {{
                     font-size: 12px;
                     font-weight: 800;
                     color: #222222;
                     margin-top: 2px;
                 }}
-                
+
                 .footer-row {{
                     margin-top: auto;
                     display: flex;
@@ -266,7 +266,7 @@ class QrCodeGenerator:
                     align-items: flex-end;
                     width: 100%;
                 }}
-                
+
                 .footer-left {{
                     font-size: 13px;
                     color: #888888;
@@ -274,7 +274,7 @@ class QrCodeGenerator:
                     font-weight: 500;
                     margin-bottom: -5px;
                 }}
-                
+
                 .footer-right {{
                     display: flex;
                     flex-direction: column;
@@ -283,7 +283,7 @@ class QrCodeGenerator:
                     margin-bottom: 25px;
                     margin-right: -15px;
                 }}
-                
+
                 .instruction {{
                     font-size: 14px;
                     font-weight: 700;
@@ -292,21 +292,21 @@ class QrCodeGenerator:
                     width: 100%;
                     margin-right: 5px;
                 }}
-                
+
                 .icons-row {{
                     display: flex;
                     gap: 24px;
                     justify-content: center;
                     width: 100%;
                 }}
-                
+
                 .icon-item {{
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     gap: 8px;
                 }}
-                
+
                 .icon-circle {{
                     width: 40px;
                     height: 40px;
@@ -317,13 +317,13 @@ class QrCodeGenerator:
                     justify-content: center;
                     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
                 }}
-                
+
                 .icon-circle svg {{
                     width: 22px;
                     height: 22px;
                     fill: #D2142A;
                 }}
-                
+
                 .icon-label {{
                     font-size: 8px;
                     color: #ffffff;
@@ -337,7 +337,7 @@ class QrCodeGenerator:
             <div class="qris-card">
                 <div class="shape-left"></div>
                 <div class="shape-right-bottom"></div>
-                
+
                 <div class="content-wrapper">
                     <div class="header-row">
                         <div class="qris-block">
@@ -353,31 +353,31 @@ class QrCodeGenerator:
                         </div>
                         <img src="https://upload.wikimedia.org/wikipedia/commons/8/83/Gerbang_Pembayaran_Nasional_logo.svg" class="gpn-logo" />
                     </div>
-                    
+
                     <div class="merchant-info">
                         <div class="merchant-name">{0}</div>
                         <div class="nmid">{1}</div>
                         <div class="terminal-id">A01</div>
                     </div>
-                    
+
                     <div class="qr-section">
                         <div class="qr-border-outer">
                             <img class="qr-code-img" src="data:image/png;base64,{2}" />
                         </div>
                     </div>
-                    
+
                     <div class="aspi-section">
                         <div class="aspi-title">SATU QRIS UNTUK SEMUA</div>
                         <div class="aspi-sub">Cek aplikasi penyelenggara di:</div>
                         <div class="aspi-link">www.aspi-qris.id</div>
                     </div>
-                    
+
                     <div class="footer-row">
                         <div class="footer-left">
                             <div>Dicetak oleh: {0}</div>
                             <div>Versi cetak: {3}</div>
                         </div>
-                        
+
                         <div class="footer-right">
                             <div class="instruction">Cara bayar dengan QRIS:</div>
                             <div class="icons-row">
@@ -389,7 +389,7 @@ class QrCodeGenerator:
                                     </div>
                                     <div class="icon-label">Buka Aplikasi<br>Berlogo QRIS</div>
                                 </div>
-                                
+
                                 <div class="icon-item">
                                     <div class="icon-circle">
                                         <svg viewBox="0 0 24 24">
@@ -398,7 +398,7 @@ class QrCodeGenerator:
                                     </div>
                                     <div class="icon-label">Scan dan Cek<br>Nominal</div>
                                 </div>
-                                
+
                                 <div class="icon-item">
                                     <div class="icon-circle">
                                         <svg viewBox="0 0 24 24">

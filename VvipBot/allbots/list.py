@@ -8,11 +8,12 @@ from .helpers import invalidate_page_cache, send_allbots_list
 
 async def allbots_command_handler(client, message):
     invalidate_page_cache()
+    rows = [["Status", "Sedang memproses mengumpulkan bot"]]
     msg_process = await message.reply_rich(
         pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('repeat')} **Memproses**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Sedang memproses mengumpulkan bot']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         )
     )

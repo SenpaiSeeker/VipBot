@@ -11,7 +11,8 @@ class Buttons(Object):
 
     def get_urls(self, text):
         return re.findall(
-            r"(?:https?://)?(?:www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:[/?]\S+)?|tg://\S+$",
+            r"(?:https?://)?(?:www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+            r"(?:[/?]\S+)?|tg://\S+$",
             text,
         )
 

@@ -151,7 +151,8 @@ async def _build_page(client, page: int) -> dict:
     )
 
     page_text = (
-        f"{client.ns.emoji.md('open_folder')} **Daftar Semua Bot ({page + 1}/{total_pages})**\n\n"
+        f"{client.ns.emoji.md('open_folder')} **Daftar Semua Bot "
+        f"({page + 1}/{total_pages})**\n\n"
         f"{client.ns.table.md(['#', 'Bot', 'Bot ID', 'Owner', 'Aktif'], table_rows)}"
     )
 

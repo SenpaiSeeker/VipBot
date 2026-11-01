@@ -307,7 +307,8 @@ async def eval_bot_handler(client: pyrogram.Client, message: Message):
     if not code:
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} Berikan kode untuk dievaluasi atau balas ke sebuah pesan."
+                markdown=f"{client.ns.emoji.md('cross_mark')} Berikan kode untuk "
+                "dievaluasi atau balas ke sebuah pesan."
             )
         )
 
@@ -336,9 +337,13 @@ async def eval_bot_handler(client: pyrogram.Client, message: Message):
                 link_preview_options=LinkPreviewOptions(is_disabled=True),
             )
     except Exception:
+        rows = [
+            ["Status", "Gagal"],
+            ["Traceback", f"```\n{traceback.format_exc()}\n```"],
+        ]
         error_text = (
             f"{client.ns.emoji.md('cross_mark')} **Kesalahan Handler**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Traceback', f'```\n{traceback.format_exc()}\n```']])}"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
         if status_msg:
             try:
@@ -433,29 +438,44 @@ async def eval_callback_handler(
 
 async def restore_database_handler(client, message):
     if not message.reply_to_message or not message.reply_to_message.document:
+        rows = [
+            ["Status", "Cara penggunaan salah"],
+            [
+                "Cara",
+                "Balas (reply) ke file backup `.zip` yang dikirim oleh bot "
+                "dengan perintah ini",
+            ],
+        ]
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('exclamation')} **Cara Penggunaan Salah**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Cara penggunaan salah'], ['Cara', 'Balas (reply) ke file backup `.zip` yang dikirim oleh bot dengan perintah ini']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
+
     doc = message.reply_to_message.document
     if not doc.file_name.endswith(".zip"):
+        rows = [
+            ["Status", "Format file salah"],
+            ["Syarat", "Hanya file backup dengan format `.zip` yang bisa dipulihkan"],
+        ]
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Format File Salah**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Format file salah'], ['Syarat', 'Hanya file backup dengan format `.zip` yang bisa dipulihkan']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
+
+    rows = [["Status", "Mendownload & mengekstrak file backup"]]
     status_msg = await message.reply_rich(
         pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('hourglass')} **Memproses Backup**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Mendownload & mengekstrak file backup']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         )
     )
@@ -498,27 +518,39 @@ async def restore_database_handler(client, message):
                         break
                 if not restored_files:
                     raise ValueError(
-                        f"Tidak ada file database ({db_ext}) yang valid ditemukan dalam arsip."
+                        f"Tidak ada file database ({db_ext}) yang valid "
+                        "ditemukan dalam arsip."
                     )
                 return restored_files
 
         restored_files = await asyncio.to_thread(_do_restore)
         await client.db.close_async()
         restored_names = ", ".join(restored_files)
+        rows = [
+            ["Database", f"`{restored_names}`"],
+            ["Status", "Telah dipulihkan"],
+            [
+                "Penting",
+                "Mohon **restart** bot agar dapat menggunakan database baru",
+            ],
+        ]
         await status_msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('white_check_mark')} **Pemulihan Berhasil!**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Database', f'`{restored_names}`'], ['Status', 'Telah dipulihkan'], ['Penting', 'Mohon **restart** bot agar dapat menggunakan database baru']])}"
+                markdown=f"{client.ns.emoji.md('white_check_mark')} **Pemulihan "
+                "Berhasil!**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         )
         client.log.print(
-            f"{client.log.GREEN}File-file berikut dipulihkan: {', '.join(restored_files)} oleh admin."
+            f"{client.log.GREEN}File-file berikut dipulihkan: "
+            f"{', '.join(restored_files)} oleh admin."
         )
     except Exception as e:
+        rows = [["Status", "Pemulihan gagal"], ["Error", f"`{e}`"]]
         await status_msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=f"{client.ns.emoji.md('cross_mark')} **Pemulihan Gagal!**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Pemulihan gagal'], ['Error', f'`{e}`']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         )
         client.log.print(f"{client.log.RED}Restore failed: {e}")
@@ -530,11 +562,18 @@ async def restore_database_handler(client, message):
 async def tfdatabase_command_handler(client, message):
     args = message.command
     if len(args) != 3:
+        rows = [
+            [
+                "Gunakan",
+                "`/tfdatabase <source_id>:<source_db> <target_id>:<target_db>`",
+            ],
+            ["Contoh", "`/tfdatabase 123455:databaseV1 666999:databaseV2`"],
+        ]
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Gunakan', '`/tfdatabase <source_id>:<source_db> <target_id>:<target_db>`'], ['Contoh', '`/tfdatabase 123455:databaseV1 666999:databaseV2`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -546,19 +585,24 @@ async def tfdatabase_command_handler(client, message):
         source_id = int(source_id_str)
         target_id = int(target_id_str)
     except Exception:
+        rows = [
+            ["Format", "`ID:NAMA_DB`"],
+            ["Contoh", "`/tfdatabase 123455:databaseV1 666999:databaseV2`"],
+        ]
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Format', '`ID:NAMA_DB`'], ['Contoh', '`/tfdatabase 123455:databaseV1 666999:databaseV2`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
+    rows = [["Status", "Memproses transfer database"]]
     msg = await message.reply_rich(
         pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('repeat')} **Memproses Transfer**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Memproses transfer database']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         )
     )
@@ -597,7 +641,8 @@ async def tfdatabase_command_handler(client, message):
                 await target_db.close_async()
             return await msg.edit_text(
                 rich_message=pyrogram.types.InputRichMessage(
-                    markdown=f"{client.ns.emoji.md('cross_mark')} Data sumber tidak ditemukan pada database."
+                    markdown=f"{client.ns.emoji.md('cross_mark')} Data sumber "
+                    "tidak ditemukan pada database."
                 )
             )
         await target_db._set_user_vars(target_id, source_data)
@@ -607,18 +652,23 @@ async def tfdatabase_command_handler(client, message):
             await target_db.close_async()
         await msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('white_check_mark')} **Transfer Database Berhasil!**\n\n"
+                markdown=f"{client.ns.emoji.md('white_check_mark')} **Transfer "
+                "Database Berhasil!**\n\n"
                 f"**Sumber:** `{source_id}` (`{source_db_name}`)\n"
                 f"**Tujuan:** `{target_id}` (`{target_db_name}`)\n\n"
                 f"Semua data berhasil disalin secara lengkap."
             )
         )
     except Exception as e:
+        rows = [
+            ["Status", "Terjadi kesalahan saat mentransfer database"],
+            ["Error", f"`{e}`"],
+        ]
         await msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Transfer Gagal**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Terjadi kesalahan saat mentransfer database'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -632,32 +682,38 @@ async def tfdatabase_command_handler(client, message):
 async def tfbot_command_handler(client, message):
     args = message.command
     if len(args) != 4:
+        rows = [
+            ["Gunakan", "`/tfbot <id_bot> <source_db> <target_db>`"],
+            ["Contoh", "`/tfbot 123456789 vvip_database vvip_databaseV2`"],
+        ]
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Gunakan', '`/tfbot <id_bot> <source_db> <target_db>`'], ['Contoh', '`/tfbot 123456789 vvip_database vvip_databaseV2`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
     try:
         bot_id = int(args[1])
     except ValueError:
+        rows = [["Detail", "ID Bot harus berupa angka"]]
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Detail', 'ID Bot harus berupa angka']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
     source_db_name = args[2]
     target_db_name = args[3]
+    rows = [["Status", "Memproses migrasi bot"]]
     msg = await message.reply_rich(
         pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('repeat')} **Memproses Migrasi**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Memproses migrasi bot']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         )
     )
@@ -693,6 +749,11 @@ async def tfbot_command_handler(client, message):
         all_bots = bots_token + bots_session
         bot_data = next((b for b in all_bots if str(b["name"]) == str(bot_id)), None)
         if not bot_data:
+            rows = [
+                ["Bot ID", f"`{bot_id}`"],
+                ["Status", "Tidak ditemukan"],
+                ["Database", f"`{source_db_name}`"],
+            ]
             if source_db != client.db:
                 await source_db.close_async()
             if target_db != client.db:
@@ -700,8 +761,9 @@ async def tfbot_command_handler(client, message):
             return await msg.edit_text(
                 rich_message=pyrogram.types.InputRichMessage(
                     markdown=(
-                        f"{client.ns.emoji.md('cross_mark')} **Bot Tidak Ditemukan**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Bot ID', f'`{bot_id}`'], ['Status', 'Tidak ditemukan'], ['Database', f'`{source_db_name}`']])}"
+                        f"{client.ns.emoji.md('cross_mark')} **Bot Tidak "
+                        "Ditemukan**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 )
             )
@@ -726,19 +788,38 @@ async def tfbot_command_handler(client, message):
             await source_db.close_async()
         if target_db != client.db:
             await target_db.close_async()
+        rows = [
+            ["Bot ID", f"`{bot_id}`"],
+            ["Dari", f"`{source_db_name}`"],
+            ["Ke", f"`{target_db_name}`"],
+            [
+                "Status",
+                "Bot beserta seluruh datanya telah dipindahkan dan dihapus "
+                "dari database lama",
+            ],
+            [
+                "Penting",
+                "Jangan lupa restart bot tujuan agar bot ini segera menyala",
+            ],
+        ]
         await msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('white_check_mark')} **Migrasi Bot Berhasil!**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Bot ID', f'`{bot_id}`'], ['Dari', f'`{source_db_name}`'], ['Ke', f'`{target_db_name}`'], ['Status', 'Bot beserta seluruh datanya telah dipindahkan dan dihapus dari database lama'], ['Penting', 'Jangan lupa restart bot tujuan agar bot ini segera menyala']])}"
+                markdown=f"{client.ns.emoji.md('white_check_mark')} **Migrasi Bot "
+                "Berhasil!**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         )
     except Exception as e:
         client.log.print(f"{client.log.RED}Error saat tfbot: {e}")
+        rows = [
+            ["Status", "Terjadi kesalahan saat migrasi bot"],
+            ["Error", f"`{e}`"],
+        ]
         await msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Migrasi Gagal**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Terjadi kesalahan saat migrasi bot'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -764,7 +845,8 @@ async def block_purchase_handler(client, message):
             ["Status", f"`{state}`"],
             [
                 "Efek ON",
-                "Pencatatan dilewati; notifikasi dialihkan ke owner utama; link pembeli tetap dikirim; SAWERIA_USER_ID diganti sementara",
+                "Pencatatan dilewati; notifikasi dialihkan ke owner utama; "
+                "link pembeli tetap dikirim; SAWERIA_USER_ID diganti sementara",
             ],
             ["Ubah", "`/block on` atau `/block off`"],
         ]
@@ -778,10 +860,15 @@ async def block_purchase_handler(client, message):
         )
 
     if arg not in ("on", "off"):
+        rows = [
+            ["Bot", bot_mention],
+            ["Gunakan", "`/block on` atau `/block off`"],
+            ["Status Saat Ini", f"`{'ON' if current else 'OFF'}`"],
+        ]
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=f"{client.ns.emoji.md('cross_mark')} **Format Salah**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'{bot_mention}'], ['Gunakan', '`/block on` atau `/block off`'], ['Status Saat Ini', f"`{'ON' if current else 'OFF'}`"]])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         )
 
@@ -837,11 +924,12 @@ async def block_purchase_handler(client, message):
 
 
 async def bot_owners_handler(client, message):
+    rows = [["Status", "Mengumpulkan daftar owner bot"]]
     status_msg = await message.reply_rich(
         pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('repeat')} **Memproses**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Mengumpulkan daftar owner bot']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         )
     )

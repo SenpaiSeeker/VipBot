@@ -7,10 +7,23 @@ from .. import *
 
 
 async def login_command_handler(client, message):
+    rows = [
+        ["Format 1", "`/login (bot_token)`"],
+        ["Format 2", "`/login (bot_token) (owner_id)`"],
+        [
+            "Balas Pesan",
+            "Balas pesan berisi bot token dengan `/login` atau " "`/login (owner_id)`",
+        ],
+        [
+            "Owner ID",
+            "`owner_id` bersifat opsional. Jika tidak diberikan dan sudah "
+            "tersimpan sebelumnya, data owner lama akan dipakai",
+        ],
+    ]
     usage_text = (
         f"{client.ns.emoji.md('robot')} **Perintah Login Bot**\n\n"
         "Khusus Owner Utama untuk membuat / mengaktifkan ulang bot yang mati.\n\n"
-        f"{client.ns.table.md(['Info', 'Nilai'], [['Format 1', '`/login (bot_token)`'], ['Format 2', '`/login (bot_token) (owner_id)`'], ['Balas Pesan', 'Balas pesan berisi bot token dengan `/login` atau `/login (owner_id)`'], ['Owner ID', '`owner_id` bersifat opsional. Jika tidak diberikan dan sudah tersimpan sebelumnya, data owner lama akan dipakai']])}"
+        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
     )
 
     args_text = client.ns.telegram.arg.getMessage(message, is_arg=True)
@@ -26,11 +39,15 @@ async def login_command_handler(client, message):
     try:
         new_bot_id = int(bot_token.split(":", 1)[0])
     except (ValueError, IndexError):
+        rows = [
+            ["Format Benar", "`(bot_id):(secret)`"],
+            ["Contoh", "`123456789:AAH...`"],
+        ]
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Token tidak valid**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Format Benar', '`(bot_id):(secret)`'], ['Contoh', '`123456789:AAH...`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -40,11 +57,16 @@ async def login_command_handler(client, message):
         try:
             owner_id = int(owner_id_arg)
         except ValueError:
+            rows = [
+                ["Status", "Owner ID tidak valid"],
+                ["Syarat", "`owner_id` harus berupa angka"],
+            ]
             return await message.reply_rich(
                 pyrogram.types.InputRichMessage(
                     markdown=(
-                        f"{client.ns.emoji.md('cross_mark')} **Owner ID tidak valid**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Owner ID tidak valid'], ['Syarat', '`owner_id` harus berupa angka']])}"
+                        f"{client.ns.emoji.md('cross_mark')} **Owner ID tidak "
+                        "valid**\n\n"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 )
             )
@@ -52,20 +74,25 @@ async def login_command_handler(client, message):
     if new_bot_id in client.manager.running_bots:
         running = client.manager.running_bots[new_bot_id]
         bot_name = running.me.first_name if running.me else f"ID {new_bot_id}"
+        rows = [
+            ["Bot", f"**{bot_name}** (`{new_bot_id}`)"],
+            ["Status", "Sudah berjalan. Tidak perlu login ulang"],
+        ]
         return await message.reply_rich(
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('warning')} **Bot Sudah Berjalan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'**{bot_name}** (`{new_bot_id}`)'], ['Status', 'Sudah berjalan. Tidak perlu login ulang']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
 
+    rows = [["Status", "Memverifikasi token & menghubungkan bot"]]
     msg = await message.reply_rich(
         pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('mag')} **Memverifikasi Token**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Memverifikasi token & menghubungkan bot']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         )
     )
@@ -77,11 +104,16 @@ async def login_command_handler(client, message):
         if int(bot_info.id) != new_bot_id:
             raise ValueError("Token bot tidak cocok dengan ID bot.")
     except Exception as e:
+        rows = [
+            ["Status", "Gagal memverifikasi token"],
+            ["Error", f"`{e}`"],
+        ]
         return await msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Gagal Memverifikasi Token**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal memverifikasi token'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Gagal Memverifikasi "
+                    "Token**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -113,19 +145,34 @@ async def login_command_handler(client, message):
         remaining = await client.manager.flood_remaining(new_bot_id)
         if remaining > 0:
             mins = max(1, remaining // 60)
+            rows = [
+                ["Bot", f"`{new_bot_id}`"],
+                ["Tunggu", f"±{mins} menit"],
+                [
+                    "Penting",
+                    "Jangan spam /login karena memperpanjang masa tunggu",
+                ],
+            ]
             return await msg.edit_text(
                 rich_message=pyrogram.types.InputRichMessage(
                     markdown=(
                         f"{client.ns.emoji.md('hourglass')} **Kena FloodWait**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'`{new_bot_id}`'], ['Tunggu', f'±{mins} menit'], ['Penting', 'Jangan spam /login karena memperpanjang masa tunggu']])}"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 )
             )
+        rows = [
+            ["Status", "Gagal mengaktifkan bot"],
+            [
+                "Keterangan",
+                "Token kemungkinan tidak valid / tidak bisa digunakan",
+            ],
+        ]
         return await msg.edit_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Gagal Mengaktifkan Bot**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal mengaktifkan bot'], ['Keterangan', 'Token kemungkinan tidak valid / tidak bisa digunakan']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             )
         )
@@ -145,10 +192,16 @@ async def login_command_handler(client, message):
     except ValueError:
         formatted_expiry = expiry_date_str
 
+    rows = [
+        ["Bot", f"{bot_info.first_name} (`{new_bot_id}`)"],
+        ["Owner", f"`{resolved_owner}` (dari {owner_source})"],
+        ["Masa Aktif", f"`{formatted_expiry}`"],
+    ]
     await msg.edit_text(
         rich_message=pyrogram.types.InputRichMessage(
-            markdown=f"{client.ns.emoji.md('party_popper')} **Bot Berhasil Diaktifkan!**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', f'{bot_info.first_name} (`{new_bot_id}`)'], ['Owner', f'`{resolved_owner}` (dari {owner_source})'], ['Masa Aktif', f'`{formatted_expiry}`']])}"
+            markdown=f"{client.ns.emoji.md('party_popper')} **Bot Berhasil "
+            "Diaktifkan!**\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
     )
 

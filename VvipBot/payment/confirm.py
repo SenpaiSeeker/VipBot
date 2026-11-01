@@ -361,6 +361,12 @@ async def _build_income_notification(
     if custom_template:
         return render_income_template(custom_template, values)
 
+    paket_headers = [
+        f"{emoji.md('gem')} NAMA VIP",
+        f"{emoji.md('money_bag')} HARGA",
+        f"{emoji.md('hourglass')} DURASI",
+        f"{emoji.md('link')} CHAT ID",
+    ]
     return (
         f"{section(f'{emoji.md('money_bag')} PEMASUKAN BARU')}\n\n"
         f"<details>\n"
@@ -370,7 +376,7 @@ async def _build_income_notification(
         f"{section(f'{emoji.md('bust_in_silhouette')} DATA PEMBELI')}\n\n"
         f"{table.md([h_info, h_ket], pembeli_rows)}\n\n"
         f"{section(f'{emoji.md('gem')} DETAIL PAKET VIP')}\n\n"
-        f"{table.md([f'{emoji.md('gem')} NAMA VIP', f'{emoji.md('money_bag')} HARGA', f'{emoji.md('hourglass')} DURASI', f'{emoji.md('link')} CHAT ID'], paket_rows)}\n\n"
+        f"{table.md(paket_headers, paket_rows)}\n\n"
         f"{section(f'{emoji.md('money_bag')} RINCIAN PEMBAYARAN')}\n\n"
         f"{table.md([h_info, h_ket], pembayaran_rows)}\n\n"
         f"{section(f'{emoji.md('robot')} INFO BOT')}\n\n"
@@ -380,6 +386,7 @@ async def _build_income_notification(
 
 
 async def _confirm_payment(client, callback_query, transaction_id, user):
+    table = client.ns.table
     ref_data_str = await client.db.getVars(client.me.id, transaction_id)
 
     if not ref_data_str:
@@ -476,7 +483,8 @@ async def _confirm_payment(client, callback_query, transaction_id, user):
 
                     if not target_chat_id:
                         raise ValueError(
-                            f"Chat ID untuk paket {name or '-'} belum diatur oleh admin."
+                            f"Chat ID untuk paket {name or '-'} "
+                            "belum diatur oleh admin."
                         )
 
                     selected_items.append((item_found, target_chat_id))
@@ -546,14 +554,28 @@ async def _confirm_payment(client, callback_query, transaction_id, user):
 
                 if is_pick_order:
                     for payload in invite_payloads:
+                        rows = [
+                            ["Status", "Pembayaran berhasil"],
+                            ["Paket", f"**{payload.get('name')}**"],
+                            ["Akses", "Berikut link akses Anda"],
+                        ]
+                        notice_rows = [
+                            [
+                                "Perhatian",
+                                "Link hanya berlaku 1 kali klik dan kedaluwarsa "
+                                "dalam 60 menit",
+                            ]
+                        ]
                         pick_link_msg = await client.send_rich_message(
                             user.id,
                             pyrogram.types.InputRichMessage(
                                 markdown=(
-                                    f"{client.ns.emoji.md('party_popper')} **Pembayaran Paket {payload.get('name')} Berhasil!**\n\n"
-                                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Pembayaran berhasil'], ['Paket', f"**{payload.get('name')}**"], ['Akses', 'Berikut link akses Anda']])}\n\n"
+                                    f"{client.ns.emoji.md('party_popper')} "
+                                    "**Pembayaran "
+                                    f"Paket {payload.get('name')} Berhasil!**\n\n"
+                                    f"{table.md(['Info', 'Nilai'], rows)}\n\n"
                                     f"{payload.get('link')}\n\n"
-                                    f"{client.ns.table.md(['Info', 'Nilai'], [['Perhatian', 'Link hanya berlaku 1 kali klik dan kedaluwarsa dalam 60 menit']])}"
+                                    f"{table.md(['Info', 'Nilai'], notice_rows)}"
                                 )
                             ),
                             protect_content=True,
@@ -574,14 +596,26 @@ async def _confirm_payment(client, callback_query, transaction_id, user):
                         ]
                     )
 
+                    rows = [
+                        ["Status", "Pembayaran berhasil"],
+                        ["Akses", "Berikut semua link akses VIP Anda"],
+                    ]
+                    notice_rows = [
+                        [
+                            "Perhatian",
+                            "Setiap link hanya berlaku 1 kali klik dan "
+                            "kedaluwarsa dalam 60 menit",
+                        ]
+                    ]
                     link_msg = await client.send_rich_message(
                         user.id,
                         pyrogram.types.InputRichMessage(
                             markdown=(
-                                f"{client.ns.emoji.md('party_popper')} **Pembayaran Paket Semua VIP Berhasil!**\n\n"
-                                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Pembayaran berhasil'], ['Akses', 'Berikut semua link akses VIP Anda']])}\n\n"
+                                f"{client.ns.emoji.md('party_popper')} **Pembayaran "
+                                "Paket Semua VIP Berhasil!**\n\n"
+                                f"{table.md(['Info', 'Nilai'], rows)}\n\n"
                                 f"{link_text}\n\n"
-                                f"{client.ns.table.md(['Info', 'Nilai'], [['Perhatian', 'Setiap link hanya berlaku 1 kali klik dan kedaluwarsa dalam 60 menit']])}"
+                                f"{table.md(['Info', 'Nilai'], notice_rows)}"
                             )
                         ),
                         protect_content=True,
@@ -711,14 +745,27 @@ async def _confirm_payment(client, callback_query, transaction_id, user):
                 transaction_id,
             )
 
+            rows = [
+                ["Status", "Pembayaran dikonfirmasi"],
+                ["Paket", f"**{name}**"],
+                ["Akses", "Berikut adalah link akses Anda"],
+            ]
+            notice_rows = [
+                [
+                    "Perhatian",
+                    "Link ini hanya berlaku untuk 1 kali klik dan akan "
+                    "kedaluwarsa dalam 60 menit jika tidak digunakan",
+                ]
+            ]
             link_msg = await client.send_rich_message(
                 user.id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
-                        f"{client.ns.emoji.md('party_popper')} **Pembayaran Dikonfirmasi!**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Pembayaran dikonfirmasi'], ['Paket', f'**{name}**'], ['Akses', 'Berikut adalah link akses Anda']])}\n\n"
+                        f"{client.ns.emoji.md('party_popper')} **Pembayaran "
+                        "Dikonfirmasi!**\n\n"
+                        f"{table.md(['Info', 'Nilai'], rows)}\n\n"
                         f"{link}\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Perhatian', 'Link ini hanya berlaku untuk 1 kali klik dan akan kedaluwarsa dalam 60 menit jika tidak digunakan']])}"
+                        f"{table.md(['Info', 'Nilai'], notice_rows)}"
                     )
                 ),
                 protect_content=True,
@@ -797,7 +844,8 @@ async def _confirm_payment(client, callback_query, transaction_id, user):
             await _cleanup_order(client, transaction_id, route_sale_no)
         else:
             await callback_query.answer(
-                "❌ Pembayaran belum terdeteksi. Silakan coba lagi setelah beberapa saat.",
+                "❌ Pembayaran belum terdeteksi. Silakan coba lagi setelah "
+                "beberapa saat.",
                 show_alert=True,
             )
     except Exception as e:

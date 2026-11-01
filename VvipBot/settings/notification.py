@@ -28,19 +28,35 @@ async def set_notif_chat_callback(client, callback_query):
     back_btn = client.ns.telegram.button.build_button_grid(layout)
 
     try:
+        rows = [
+            [
+                "Instruksi",
+                "Kirim ID chat atau @username tempat notifikasi pembayaran "
+                "akan dikirim",
+            ],
+            [
+                "Default",
+                "Ketik `/none` untuk kembali ke default (dikirim ke owner_id)",
+            ],
+            ["Batal", "Ketik `/batal` untuk membatalkan"],
+        ]
         prompt = (
             f"{client.ns.emoji.md('bell')} **Atur Tempat Notifikasi**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Instruksi', 'Kirim ID chat atau @username tempat notifikasi pembayaran akan dikirim'], ['Default', 'Ketik `/none` untuk kembali ke default (dikirim ke owner_id)'], ['Batal', 'Ketik `/batal` untuk membatalkan']])}"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
         ask_msg = await client.ask(chat_id, prompt, timeout=600)
 
         if not ask_msg.text:
+            rows = [
+                ["Status", "Gagal"],
+                ["Keterangan", "Pesan bukan teks"],
+            ]
             return await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
                         f"{client.ns.emoji.md('cross_mark')} **Gagal**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Keterangan', 'Pesan bukan teks']])}"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 ),
                 reply_markup=back_btn,
@@ -54,12 +70,16 @@ async def set_notif_chat_callback(client, callback_query):
         if raw.lower() == "/none":
             await client.db.removeVars(client.me.id, "notif_chat_id")
 
+            rows = [
+                ["Status", "Notifikasi kembali ke default"],
+                ["Tujuan", "owner_id"],
+            ]
             return await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
                         f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Notifikasi kembali ke default'], ['Tujuan', 'owner_id']])}"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 ),
                 reply_markup=back_btn,
@@ -69,12 +89,16 @@ async def set_notif_chat_callback(client, callback_query):
             chat_target = int(raw)
             await client.db.setVars(client.me.id, "notif_chat_id", chat_target)
 
+            rows = [
+                ["Status", "Tempat notifikasi diperbarui"],
+                ["Tujuan", f"`{chat_target}`"],
+            ]
             return await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
                         f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Tempat notifikasi diperbarui'], ['Tujuan', f'`{chat_target}`']])}"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 ),
                 reply_markup=back_btn,
@@ -84,12 +108,20 @@ async def set_notif_chat_callback(client, callback_query):
             try:
                 await client.resolve_peer(raw)
             except Exception:
+                rows = [
+                    ["Status", "Gagal"],
+                    [
+                        "Keterangan",
+                        f"Username `{raw}` tidak valid atau bot tidak dapat "
+                        "menjangkau target tersebut",
+                    ],
+                ]
                 return await client.send_rich_message(
                     chat_id,
                     pyrogram.types.InputRichMessage(
                         markdown=(
                             f"{client.ns.emoji.md('cross_mark')} **Gagal**\n\n"
-                            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Keterangan', f'Username `{raw}` tidak valid atau bot tidak dapat menjangkau target tersebut']])}"
+                            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                         )
                     ),
                     reply_markup=back_btn,
@@ -97,35 +129,50 @@ async def set_notif_chat_callback(client, callback_query):
 
             await client.db.setVars(client.me.id, "notif_chat_id", raw)
 
+            rows = [
+                ["Status", "Tempat notifikasi diperbarui"],
+                ["Tujuan", f"`{raw}`"],
+            ]
             return await client.send_rich_message(
                 chat_id,
                 pyrogram.types.InputRichMessage(
                     markdown=(
                         f"{client.ns.emoji.md('white_check_mark')} **Sukses!**\n\n"
-                        f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Tempat notifikasi diperbarui'], ['Tujuan', f'`{raw}`']])}"
+                        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                     )
                 ),
                 reply_markup=back_btn,
             )
 
+        rows = [
+            ["Status", "Gagal"],
+            ["Keterangan", "Format tidak valid"],
+            [
+                "Format",
+                "Gunakan **ID chat** (angka), **@username**, atau `/none` "
+                "untuk kembali ke default",
+            ],
+        ]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Gagal**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Gagal'], ['Keterangan', 'Format tidak valid'], ['Format', 'Gunakan **ID chat** (angka), **@username**, atau `/none` untuk kembali ke default']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
             reply_markup=back_btn,
         )
 
     except (listen.UserCancelled, asyncio.TimeoutError):
+        rows = [["Status", "Dibatalkan"]]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Proses "
+                    "Dibatalkan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
             reply_markup=back_btn,
@@ -155,11 +202,16 @@ async def set_notif_payment_callback(client, callback_query):
     ]
     back_btn = client.ns.telegram.button.build_button_grid(layout)
 
+    rows = [
+        ["Status", "Semua notifikasi payment dialihkan ke chat tujuan"],
+        ["Chat ID", f"`{chat_target}`"],
+    ]
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(
             markdown=(
-                f"{client.ns.emoji.md('white_check_mark')} **Notifikasi Payment Diaktifkan**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Semua notifikasi payment dialihkan ke chat tujuan'], ['Chat ID', f'`{chat_target}`']])}"
+                f"{client.ns.emoji.md('white_check_mark')} **Notifikasi "
+                "Payment Diaktifkan**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         ),
         reply_markup=back_btn,

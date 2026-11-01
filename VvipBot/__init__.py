@@ -38,9 +38,16 @@ def seller_only(func):
         if user_id == client.owner_id or user_id in seller_list:
             return await func(client, update, *args, **kwargs)
         else:
+            rows = [
+                ["Status", "Ditolak"],
+                [
+                    "Keterangan",
+                    "Anda tidak memiliki izin untuk menggunakan perintah ini",
+                ],
+            ]
             error_message = (
                 f"{client.ns.emoji.md('cross_mark')} **Akses Ditolak**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Ditolak'], ['Keterangan', 'Anda tidak memiliki izin untuk menggunakan perintah ini']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
             if isinstance(update, pyrogram.types.CallbackQuery):
                 return await update.answer(error_message, show_alert=True)
@@ -183,9 +190,15 @@ async def check_new_user(client, update):
 
         try:
             mention_user = client.ns.telegram.arg.getMention(update.from_user, md=True)
+            rows = [
+                ["Bot", client.ns.telegram.arg.getMention(client.me, md=True)],
+                ["Pengguna", mention_user],
+                ["ID", f"`{update.from_user.id}`"],
+            ]
             notification_text = (
-                f"{client.ns.emoji.md('bust_in_silhouette')} **Pengguna Baru Telah Memulai Bot Anda**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Bot', client.ns.telegram.arg.getMention(client.me, md=True)], ['Pengguna', mention_user], ['ID', f'`{update.from_user.id}`']])}"
+                f"{client.ns.emoji.md('bust_in_silhouette')} **Pengguna Baru "
+                "Telah Memulai Bot Anda**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
             await client.send_rich_message(
                 owner_of_this_bot,
@@ -195,5 +208,7 @@ async def check_new_user(client, update):
             pass
 
         client.log.print(
-            f"{client.log.CYAN}User baru {client.ns.telegram.arg.getMention(update.from_user, logs=True)} memulai bot {client.me.first_name}"
+            f"{client.log.CYAN}User baru "
+            f"{client.ns.telegram.arg.getMention(update.from_user, logs=True)} "
+            f"memulai bot {client.me.first_name}"
         )

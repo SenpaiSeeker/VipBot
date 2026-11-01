@@ -30,9 +30,17 @@ async def create_bot_callback(client, callback_query):
     if len(all_bots_data) >= MAX_BOT_CAPACITY:
         backup_text = f" melalui @{BACKUP_BOT}" if BACKUP_BOT else ""
 
+        rows = [
+            [
+                "Status",
+                "Server sudah mencapai batas maksimal pembuatan bot "
+                f"({MAX_BOT_CAPACITY} Bot)",
+            ],
+            ["Saran", f"Silakan buat bot baru{backup_text}"],
+        ]
         text_warning = (
             f"{client.ns.emoji.md('cross_mark')} **Kapasitas Bot Penuh!**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', f'Server sudah mencapai batas maksimal pembuatan bot ({MAX_BOT_CAPACITY} Bot)'], ['Saran', f'Silakan buat bot baru{backup_text}']])}"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
 
         layout = [
@@ -56,9 +64,17 @@ async def create_bot_callback(client, callback_query):
     user_expiry = parse_dt(await client.db.getVars(user_id, "user_expiry_date"))
 
     if user_expiry and user_expiry > datetime.now(timezone.utc):
+        rows = [
+            ["Status", "Anda sudah memiliki akses untuk membuat bot"],
+            [
+                "Aksi",
+                "Tekan tombol di bawah untuk memulai proses pembuatan",
+            ],
+        ]
         text = (
-            f"{client.ns.emoji.md('white_check_mark')} **Anda Sudah Berlangganan!**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Anda sudah memiliki akses untuk membuat bot'], ['Aksi', 'Tekan tombol di bawah untuk memulai proses pembuatan']])}"
+            f"{client.ns.emoji.md('white_check_mark')} **Anda Sudah "
+            "Berlangganan!**\n\n"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
 
         layout = [
@@ -122,11 +138,15 @@ async def proceed_bot_payment_callback(client, callback_query):
             show_alert=True,
         )
 
+    rows = [
+        ["Status", "Sedang memproses"],
+        ["Keterangan", "Mohon tunggu sebentar"],
+    ]
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(
             markdown=(
                 f"{client.ns.emoji.md('hourglass')} **Sedang Memproses**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Sedang memproses'], ['Keterangan', 'Mohon tunggu sebentar']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         )
     )
@@ -134,11 +154,19 @@ async def proceed_bot_payment_callback(client, callback_query):
     saweria_user_id = await client.db.getVars(client.me.id, "SAWERIA_USER_ID")
 
     if not saweria_user_id:
+        rows = [
+            [
+                "Tidak Tersedia",
+                "Layanan pembayaran sedang dinonaktifkan sementara",
+            ],
+            ["Tindakan", "Silakan coba lagi beberapa saat lagi"],
+        ]
         return await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Layanan Pembayaran Tidak Tersedia**\n\n"
-                    f"{client.ns.table.md(['Status', 'Keterangan'], [['Tidak Tersedia', 'Layanan pembayaran sedang dinonaktifkan sementara'], ['Tindakan', 'Silakan coba lagi beberapa saat lagi']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Layanan "
+                    "Pembayaran Tidak Tersedia**\n\n"
+                    f"{client.ns.table.md(['Status', 'Keterangan'], rows)}"
                 )
             )
         )
@@ -174,8 +202,10 @@ async def proceed_bot_payment_callback(client, callback_query):
         ]
 
         markdown = (
-            f"{client.ns.emoji.md('white_check_mark')} **Pembayaran Siap Dilakukan**\n\n"
-            f"Silakan scan QRIS di atas untuk membayar, lalu tekan tombol Konfirmasi Pembayaran.\n\n"
+            f"{client.ns.emoji.md('white_check_mark')} **Pembayaran Siap "
+            "Dilakukan**\n\n"
+            "Silakan scan QRIS di atas untuk membayar, lalu tekan tombol "
+            "Konfirmasi Pembayaran.\n\n"
             f"{client.ns.table.md(['Item', 'Keterangan'], detail_rows)}"
         )
 
@@ -207,12 +237,16 @@ async def proceed_bot_payment_callback(client, callback_query):
     except Exception as e:
         if qr_image_stream is not None:
             qr_image_stream.close()
+        rows = [
+            ["Status", "Terjadi kesalahan"],
+            ["Error", f"`{e}`"],
+        ]
         await client.send_rich_message(
             user_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
                     f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Terjadi kesalahan'], ['Error', f'`{e}`']])}"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
@@ -223,7 +257,8 @@ async def _confirm_bot_payment(client, callback_query, transaction_id, user):
 
     if not order_data_str:
         return await callback_query.answer(
-            "<emoji id=6271786398404055377>⚠️</emoji> Invoice ini sudah tidak valid atau telah selesai.",
+            "<emoji id=6271786398404055377>⚠️</emoji> Invoice ini sudah "
+            "tidak valid atau telah selesai.",
             show_alert=True,
         )
 
@@ -292,9 +327,18 @@ async def _confirm_bot_payment(client, callback_query, transaction_id, user):
             await client.db.removeVars(client.me.id, marker_key)
             await callback_query.message.delete()
 
+            rows = [
+                [
+                    "Status",
+                    "Langganan Anda untuk membuat bot selama "
+                    f"**{months} bulan** telah diaktifkan",
+                ],
+                ["Ucapan", "Terima kasih"],
+            ]
             success_text = (
-                f"{client.ns.emoji.md('white_check_mark')} **Pembayaran Berhasil!**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Status', f'Langganan Anda untuk membuat bot selama **{months} bulan** telah diaktifkan'], ['Ucapan', 'Terima kasih']])}"
+                f"{client.ns.emoji.md('white_check_mark')} **Pembayaran "
+                "Berhasil!**\n\n"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
 
             layout = [
@@ -332,7 +376,8 @@ async def _confirm_bot_payment(client, callback_query, transaction_id, user):
             )
         else:
             await callback_query.answer(
-                "❌ Pembayaran belum terdeteksi. Silakan coba lagi setelah beberapa saat.",
+                "❌ Pembayaran belum terdeteksi. Silakan coba lagi setelah "
+                "beberapa saat.",
                 show_alert=True,
             )
     except Exception as e:

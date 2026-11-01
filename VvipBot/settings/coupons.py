@@ -84,16 +84,18 @@ async def add_coupon_callback(client, callback_query):
                 timeout=600,
             )
 
+        rows = [["Contoh", "Kode kupon unik (misal: `DISKONBARU`)"]]
         code = (
             await ask_value(
                 f"**1/4: Masukkan Kode Kupon**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Contoh', 'Kode kupon unik (misal: `DISKONBARU`)']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         ).upper()
 
         if not _COUPON_CODE_RE.fullmatch(code):
             raise ValueError(
-                "Kode kupon hanya boleh berisi huruf, angka, `_`, atau `-` (maksimal 32 karakter)."
+                "Kode kupon hanya boleh berisi huruf, angka, `_`, atau `-` "
+                "(maksimal 32 karakter)."
             )
 
         existing_coupons = await client.db.getListVars(client.me.id, "coupons") or []
@@ -102,17 +104,27 @@ async def add_coupon_callback(client, callback_query):
         ):
             raise ValueError("Kode kupon sudah digunakan.")
 
+        rows = [
+            ["1", "Persentase (%)"],
+            ["2", "Potongan Harga Tetap"],
+        ]
         type_text = await ask_value(
             f"**2/4: Pilih Tipe Diskon**\n\n"
-            f"{client.ns.table.md(['Opsi', 'Keterangan'], [['1', 'Persentase (%)'], ['2', 'Potongan Harga Tetap']])}"
+            f"{client.ns.table.md(['Opsi', 'Keterangan'], rows)}"
         )
         if type_text not in {"1", "2"}:
             raise ValueError("Tipe diskon harus `1` atau `2`.")
         discount_type = "percentage" if type_text == "1" else "fixed"
 
+        value_example = (
+            "Masukkan nilai persentase (1-100)"
+            if discount_type == "percentage"
+            else "Masukkan jumlah potongan harga"
+        )
+        rows = [["Isi", value_example]]
         value_prompt = (
             f"**3/4: Nilai Diskon**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], [['Isi', 'Masukkan nilai persentase (1-100)' if discount_type == 'percentage' else 'Masukkan jumlah potongan harga']])}"
+            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
         )
         discount_value = int(await ask_value(value_prompt))
 
@@ -122,19 +134,21 @@ async def add_coupon_callback(client, callback_query):
         elif discount_value <= 0:
             raise ValueError("Potongan harga harus lebih dari 0.")
 
+        rows = [["Isi", "Berapa kali kupon ini bisa digunakan?"]]
         uses_left = int(
             await ask_value(
                 f"**4/4: Batas Penggunaan**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Isi', 'Berapa kali kupon ini bisa digunakan?']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         )
         if uses_left <= 0:
             raise ValueError("Batas penggunaan harus lebih dari 0.")
 
+        rows = [["Isi", "Berapa hari kupon ini akan berlaku?"]]
         expiry_days = int(
             await ask_value(
                 f"**5/5: Masa Berlaku**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], [['Isi', 'Berapa hari kupon ini akan berlaku?']])}"
+                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
             )
         )
         if expiry_days < 0:
@@ -156,23 +170,33 @@ async def add_coupon_callback(client, callback_query):
 
         await client.db.setListVars(client.me.id, "coupons", coupon_data)
 
+        rows = [
+            ["Kode", f"`{code}`"],
+            ["Status", "Aktif"],
+        ]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('white_check_mark')} **Kupon Berhasil Dibuat!**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Kode', f'`{code}`'], ['Status', 'Aktif']])}"
+                    f"{client.ns.emoji.md('white_check_mark')} **Kupon "
+                    "Berhasil Dibuat!**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
 
     except (listen.UserCancelled, asyncio.TimeoutError, ValueError):
+        rows = [
+            ["Status", "Dibatalkan"],
+            ["Keterangan", "Pembuatan kupon dibatalkan"],
+        ]
         await client.send_rich_message(
             chat_id,
             pyrogram.types.InputRichMessage(
                 markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Proses Dibatalkan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], [['Status', 'Dibatalkan'], ['Keterangan', 'Pembuatan kupon dibatalkan']])}"
+                    f"{client.ns.emoji.md('cross_mark')} **Proses "
+                    "Dibatalkan**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
                 )
             ),
         )
@@ -227,7 +251,8 @@ async def list_coupons_callback(client, callback_query):
 
     table = client.ns.table
     text = (
-        f"{client.ns.emoji.md('pencil')} **Detail Kupon ({page + 1}/{total_pages})**\n\n"
+        f"{client.ns.emoji.md('pencil')} **Detail Kupon "
+        f"({page + 1}/{total_pages})**\n\n"
         f"{table.md(['Info', 'Isi'], detail_rows)}"
     )
 
