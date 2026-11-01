@@ -49,7 +49,7 @@ class Object:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         aliases = getattr(cls, "_ns_aliases", None)
-        if not aliases:
+        if aliases is None:
             alias = getattr(cls, "_ns_alias", cls.__name__.lower())
             aliases = (alias,)
 

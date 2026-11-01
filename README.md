@@ -123,7 +123,8 @@ sudo apt-get install -y libzbar0 ffmpeg
 - `/dashboard`: Melihat statistik lengkap platform dan kesehatan server.
 - `/broadcast_owners <pesan>`: Mengirim pesan ke semua pemilik bot.
 - `/block on|off`: Mengaktifkan mode block untuk bot yang sedang dipakai.
-- `/restore`: Balas ke file `database.zip` untuk memulihkan data.
+- `/backup`: Membuat dan mengirim arsip database ke owner.
+- `/restore`: Balas ke file backup `.zip` untuk memulihkan data dan restart bot.
 - `/eval`: Menjalankan kode Python untuk debugging.
 
 ### 👤 Untuk Pemilik Bot (Pengguna)

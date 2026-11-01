@@ -5,7 +5,6 @@ from datetime import datetime, timedelta, timezone
 import pyrogram
 from pyrogram.types import InputRichMessage
 
-from database import schedule
 from helpers import parse_dt
 from helpers.logger import LoggerHandler
 from VvipBot import get_member_lock
@@ -139,7 +138,6 @@ class BotManager:
                 del self.running_bots[bot_id]
 
 
-@schedule.cron("*/5 * * * *")
 async def flood_retry_method():
     manager = BotManager.current
     if not manager:
@@ -168,7 +166,6 @@ async def flood_retry_method():
         await manager.start_bot(bot_data)
 
 
-@schedule.cron("0 * * * *")
 async def expiration_checker_method():
     log.info("Menjalankan pemeriksaan masa aktif bot...")
     manager = BotManager.current
@@ -304,7 +301,6 @@ async def expiration_checker_method():
             log.error(f"Error saat memeriksa masa aktif bot {bot_id}: {e}")
 
 
-@schedule.cron("0 */12 * * *")
 async def subscription_checker_method():
     log.info("Menjalankan pemeriksaan langganan anggota...")
 
@@ -480,7 +476,6 @@ _WATCHDOG_AUTH_LABELS = {
 }
 
 
-@schedule.cron("*/15 * * * *")
 async def watchdog_token_checker():
     log.info("Menjalankan watchdog token bot...")
     manager = BotManager.current

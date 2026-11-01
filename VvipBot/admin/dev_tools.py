@@ -16,14 +16,11 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 import traceback
-import zipfile
 from datetime import datetime, timedelta, timezone
 from time import time
 from typing import Any, Dict, Optional, Tuple
 
-import aiofiles.os
 import pyrogram
 from pyrogram import filters
 from pyrogram.types import LinkPreviewOptions, Message, ReplyParameters
@@ -436,129 +433,6 @@ async def eval_callback_handler(
             await query.answer(f"Error: {e}", show_alert=True)
 
 
-async def restore_database_handler(client, message):
-    if not message.reply_to_message or not message.reply_to_message.document:
-        rows = [
-            ["Status", "Cara penggunaan salah"],
-            [
-                "Cara",
-                "Balas (reply) ke file backup `.zip` yang dikirim oleh bot "
-                "dengan perintah ini",
-            ],
-        ]
-        return await message.reply_rich(
-            pyrogram.types.InputRichMessage(
-                markdown=(
-                    f"{client.ns.emoji.md('exclamation')} **Cara Penggunaan Salah**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
-                )
-            )
-        )
-
-    doc = message.reply_to_message.document
-    if not doc.file_name.endswith(".zip"):
-        rows = [
-            ["Status", "Format file salah"],
-            ["Syarat", "Hanya file backup dengan format `.zip` yang bisa dipulihkan"],
-        ]
-        return await message.reply_rich(
-            pyrogram.types.InputRichMessage(
-                markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Format File Salah**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
-                )
-            )
-        )
-
-    rows = [["Status", "Mendownload & mengekstrak file backup"]]
-    status_msg = await message.reply_rich(
-        pyrogram.types.InputRichMessage(
-            markdown=(
-                f"{client.ns.emoji.md('hourglass')} **Memproses Backup**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
-            )
-        )
-    )
-    downloaded_zip_path = None
-    try:
-        downloaded_zip_path = await client.download_media(message.reply_to_message)
-
-        def _do_restore():
-            with tempfile.TemporaryDirectory() as temp_dir:
-                with zipfile.ZipFile(downloaded_zip_path, "r") as zf:
-                    if not zf.namelist():
-                        raise ValueError("File .zip ini kosong atau rusak.")
-                    temp_root = os.path.realpath(temp_dir)
-                    for member in zf.infolist():
-                        target_path = os.path.realpath(
-                            os.path.join(temp_dir, member.filename)
-                        )
-                        if target_path != temp_root and not target_path.startswith(
-                            temp_root + os.sep
-                        ):
-                            raise ValueError(
-                                "Arsip backup berisi path yang tidak aman."
-                            )
-                    zf.extractall(path=temp_dir)
-                restored_files = []
-                current_db_path = getattr(
-                    client.db, "data_file", getattr(client.db, "db_file", None)
-                )
-                if not current_db_path:
-                    raise ValueError("Tidak dapat menentukan path database aktif.")
-                db_ext = ".db" if current_db_path.endswith(".db") else ".json"
-                for root, _, files in os.walk(temp_dir):
-                    for filename in files:
-                        if filename.endswith(db_ext):
-                            source_path = os.path.join(root, filename)
-                            shutil.move(source_path, current_db_path)
-                            restored_files.append(os.path.basename(current_db_path))
-                            break
-                    if restored_files:
-                        break
-                if not restored_files:
-                    raise ValueError(
-                        f"Tidak ada file database ({db_ext}) yang valid "
-                        "ditemukan dalam arsip."
-                    )
-                return restored_files
-
-        restored_files = await asyncio.to_thread(_do_restore)
-        await client.db.close_async()
-        restored_names = ", ".join(restored_files)
-        rows = [
-            ["Database", f"`{restored_names}`"],
-            ["Status", "Telah dipulihkan"],
-            [
-                "Penting",
-                "Mohon **restart** bot agar dapat menggunakan database baru",
-            ],
-        ]
-        await status_msg.edit_text(
-            rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('white_check_mark')} **Pemulihan "
-                "Berhasil!**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
-            )
-        )
-        client.log.print(
-            f"{client.log.GREEN}File-file berikut dipulihkan: "
-            f"{', '.join(restored_files)} oleh admin."
-        )
-    except Exception as e:
-        rows = [["Status", "Pemulihan gagal"], ["Error", f"`{e}`"]]
-        await status_msg.edit_text(
-            rich_message=pyrogram.types.InputRichMessage(
-                markdown=f"{client.ns.emoji.md('cross_mark')} **Pemulihan Gagal!**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
-            )
-        )
-        client.log.print(f"{client.log.RED}Restore failed: {e}")
-    finally:
-        if downloaded_zip_path and await aiofiles.os.path.exists(downloaded_zip_path):
-            await aiofiles.os.remove(downloaded_zip_path)
-
-
 async def tfdatabase_command_handler(client, message):
     args = message.command
     if len(args) != 3:
@@ -619,7 +493,6 @@ async def tfdatabase_command_handler(client, message):
                 file_name=source_db_name,
                 keys_encrypt=client.db.keys_encrypt,
                 method_encrypt=client.db.method_encrypt,
-                auto_backup=False,
             )
         )
         target_db = (
@@ -630,7 +503,6 @@ async def tfdatabase_command_handler(client, message):
                 file_name=target_db_name,
                 keys_encrypt=client.db.keys_encrypt,
                 method_encrypt=client.db.method_encrypt,
-                auto_backup=False,
             )
         )
         source_data = await source_db._get_user_vars(source_id)
@@ -730,7 +602,6 @@ async def tfbot_command_handler(client, message):
                 file_name=source_db_name,
                 keys_encrypt=client.db.keys_encrypt,
                 method_encrypt=client.db.method_encrypt,
-                auto_backup=False,
             )
         )
         target_db = (
@@ -741,7 +612,6 @@ async def tfbot_command_handler(client, message):
                 file_name=target_db_name,
                 keys_encrypt=client.db.keys_encrypt,
                 method_encrypt=client.db.method_encrypt,
-                auto_backup=False,
             )
         )
         bots_token = await source_db.getBots(is_token=True)
@@ -998,9 +868,6 @@ class AdminDevTools(Modules):
         self.client.on_callback_query(
             filters.regex(r"^eval_") & filters.user(self.client.owner_id)
         )(self.handle(eval_callback_handler))
-        self.client.on_message(
-            filters.command("restore") & filters.user(self.client.owner_id)
-        )(self.handle(restore_database_handler))
         self.client.on_message(
             filters.command("tfdatabase") & filters.user(self.client.owner_id)
         )(self.handle(tfdatabase_command_handler))

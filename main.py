@@ -18,7 +18,7 @@ finally:
 
 from bot_manager import BotManager
 from config import API_HASH, API_ID, BOT_TOKEN, OWNER_ID
-from database import db, schedule
+from database import db
 from helpers.logger import CustomLogHandler, LoggerHandler
 
 log = LoggerHandler()
@@ -134,9 +134,6 @@ async def main():
         manager.running_bots[app.me.id] = app
 
         await manager.start_all_bots()
-
-        if schedule.jobs:
-            schedule.start()
 
         log.print(f"{log.CYAN}Bot sekarang berjalan. Tekan Ctrl+C untuk berhenti.")
 

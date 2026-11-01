@@ -3,17 +3,14 @@ import json
 import os
 import shutil
 import tempfile
-import zipfile
 from copy import deepcopy
-from datetime import datetime
 from weakref import WeakValueDictionary
-from zoneinfo import ZoneInfo
 
 import aiofiles
 import aiofiles.os
-import aiohttp
 
 from .encrypt import CipherHandler
+from .patcher import Object
 
 _FILE_LOCKS = WeakValueDictionary()
 
@@ -27,9 +24,12 @@ def _get_file_lock(path):
     return lock
 
 
-class DataBase:
+class DataBase(Object):
 
-    def __init__(self, **options):
+    _ns_aliases = ()
+
+    def __init__(self, client=None, **options):
+        super().__init__(client)
         self.storage_type = "local"
         self.file_name = options.get("file_name", "database")
         self.keys_encrypt = options.get("keys_encrypt", "default_db_key_12345")
@@ -45,127 +45,13 @@ class DataBase:
         self._mtime = None
         self._data = None
         self._member_cache = {}
-        self.auto_backup = options.get("auto_backup", False)
-        self.backup_bot_token = options.get("backup_bot_token")
-        self.backup_chat_id = options.get("backup_chat_id")
-        self.backup_cron_spec = options.get("backup_cron_spec", "0 */3 * * *")
-        self.scheduler = options.get("scheduler_instance")
-        self._backup_tasks = set()
-        self._backup_lock = asyncio.Lock()
 
         if not os.path.exists(self.data_file):
             with open(self.data_file, "w") as f:
                 json.dump({"vars": {}, "bots": []}, f, indent=4)
 
-        self._register_backup_task()
-
     async def _run_sync(self, func, *args, **kwargs):
         return await asyncio.to_thread(func, *args, **kwargs)
-
-    def _register_backup_task(self):
-        if self.auto_backup and self.scheduler:
-            if not self.backup_bot_token or not self.backup_chat_id:
-                return self.cipher.log.warning(
-                    "Auto backup is disabled because token/chat_id is missing."
-                )
-
-            @self.scheduler.cron(self.backup_cron_spec)
-            async def scheduled_backup_task():
-                self._spawn_backup_task()
-
-    def _spawn_backup_task(self):
-        if any(not task.done() for task in self._backup_tasks):
-            return
-
-        task = asyncio.create_task(self.perform_backup())
-        self._backup_tasks.add(task)
-        task.add_done_callback(self._backup_tasks.discard)
-
-    async def perform_backup(self):
-        if self._backup_lock.locked():
-            return
-
-        async with self._backup_lock:
-            await self._perform_backup()
-
-    async def _perform_backup(self):
-        zip_path = None
-        temp_backup_dir = "temp_db_backup"
-        db_path = self.data_file
-
-        async with self._lock:
-            if not await aiofiles.os.path.exists(db_path):
-                return
-
-            await aiofiles.os.makedirs(temp_backup_dir, exist_ok=True)
-
-            try:
-                temp_db_path = os.path.join(temp_backup_dir, os.path.basename(db_path))
-                await self._run_sync(shutil.copy2, db_path, temp_db_path)
-            except Exception:
-                await self._run_sync(shutil.rmtree, temp_backup_dir, ignore_errors=True)
-                return
-
-        try:
-            source_paths = [temp_db_path]
-            zip_path = await self._run_sync(
-                self._create_zip_archive, source_paths, temp_backup_dir
-            )
-
-            if zip_path:
-                timestamp = datetime.now(ZoneInfo("Asia/Jakarta")).strftime(
-                    "%Y-%m-%d %H:%M:%S %Z"
-                )
-                caption = (
-                    f"Backup otomatis untuk `{os.path.basename(zip_path)}`\n"
-                    f"Tipe DB: `{self.storage_type}`\n"
-                    f"Waktu: `{timestamp}`"
-                )
-                await self._send_zip_to_telegram(zip_path, caption)
-        except Exception:
-            pass
-        finally:
-            await self._run_sync(shutil.rmtree, temp_backup_dir, ignore_errors=True)
-
-            if zip_path and await aiofiles.os.path.exists(zip_path):
-                try:
-                    await aiofiles.os.remove(zip_path)
-                except Exception:
-                    pass
-
-    def _create_zip_archive(self, source_paths: list, temp_dir: str):
-        timestamp = datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%Y%m%d_%H%M%S")
-        zip_filename = f"backup_{self.file_name}_{timestamp}.zip"
-
-        try:
-            with zipfile.ZipFile(zip_filename, "w", zipfile.ZIP_DEFLATED) as zf:
-                for path in source_paths:
-                    arcname = os.path.basename(path)
-                    zf.write(path, arcname)
-            return zip_filename
-        except Exception:
-            return None
-
-    async def _send_zip_to_telegram(self, file_path, caption):
-        url = f"https://api.telegram.org/bot{self.backup_bot_token}/sendDocument"
-
-        async with aiofiles.open(file_path, "rb") as f:
-            file_bytes = await f.read()
-
-        data = aiohttp.FormData()
-        data.add_field("chat_id", str(self.backup_chat_id))
-        data.add_field("caption", caption)
-        data.add_field("parse_mode", "Markdown")
-        data.add_field("document", file_bytes, filename=os.path.basename(file_path))
-
-        timeout = aiohttp.ClientTimeout(total=20)
-
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            try:
-                async with session.post(url, data=data) as resp:
-                    await resp.json()
-            except Exception:
-                pass
 
     async def _file_mtime(self):
         try:
