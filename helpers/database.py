@@ -30,17 +30,16 @@ class DataBase(Object):
 
     def __init__(self, client=None, **options):
         super().__init__(client)
-        file_name = options.get("file_name")
-        keys_encrypt = options.get("keys_encrypt")
-        if client is not None and (file_name is None or keys_encrypt is None):
+        if client is not None:
             from config import DB_KEY, DB_NAME
 
-            if file_name is None:
-                file_name = DB_NAME
-            if keys_encrypt is None:
-                keys_encrypt = DB_KEY
-        self.file_name = file_name or "database"
-        self.keys_encrypt = keys_encrypt or "default_db_key_12345"
+            default_file_name = DB_NAME
+            default_keys_encrypt = DB_KEY
+        else:
+            default_file_name = "database"
+            default_keys_encrypt = "default_db_key_12345"
+        self.file_name = options.get("file_name", default_file_name)
+        self.keys_encrypt = options.get("keys_encrypt", default_keys_encrypt)
         self.method_encrypt = options.get("method_encrypt", "bytes")
 
         self.cipher = CipherHandler(
