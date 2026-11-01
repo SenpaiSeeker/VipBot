@@ -13,7 +13,6 @@ from datetime import datetime, timedelta, timezone
 from functools import partial, wraps
 from io import BytesIO, StringIO
 from time import time
-from types import SimpleNamespace
 from weakref import WeakValueDictionary
 from zoneinfo import ZoneInfo
 

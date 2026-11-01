@@ -2,11 +2,10 @@ import asyncio
 import platform
 import time
 from datetime import timedelta
-from types import SimpleNamespace
 
 import psutil
 
-from .patcher import Object
+from .patcher import DataObject, Object
 
 
 class ServerMonitor(Object):
@@ -34,7 +33,7 @@ class ServerMonitor(Object):
             n += 1
         return f"{size:.2f} {power_labels[n]}B"
 
-    def _collect_stats(self) -> SimpleNamespace:
+    def _collect_stats(self) -> DataObject:
         cpu_percent = psutil.cpu_percent(interval=0.1)
         cpu_bar = self._create_progress_bar(cpu_percent)
         cpu_freq = psutil.cpu_freq()
@@ -53,7 +52,7 @@ class ServerMonitor(Object):
         sent = self._format_bytes(net.bytes_sent)
         recv = self._format_bytes(net.bytes_recv)
 
-        return SimpleNamespace(
+        return DataObject(
             os=f"{platform.system()} {platform.release()}",
             python=platform.python_version(),
             uptime=self._get_uptime(),
@@ -78,8 +77,8 @@ class ServerMonitor(Object):
             network={"sent": sent, "recv": recv},
         )
 
-    async def get_detailed_stats(self) -> SimpleNamespace:
+    async def get_detailed_stats(self) -> DataObject:
         return await asyncio.to_thread(self._collect_stats)
 
-    def get_detailed_stats_sync(self) -> SimpleNamespace:
+    def get_detailed_stats_sync(self) -> DataObject:
         return self._collect_stats()

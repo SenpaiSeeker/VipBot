@@ -1,8 +1,6 @@
-from types import SimpleNamespace
-
 from faker import Faker
 
-from .patcher import Object
+from .patcher import DataObject, Object
 
 
 class FakeInfoGenerator(Object):
@@ -12,9 +10,9 @@ class FakeInfoGenerator(Object):
         super().__init__(client)
         self.fake = Faker(locale)
 
-    def generate(self) -> SimpleNamespace:
+    def generate(self) -> DataObject:
         profile = self.fake.profile()
-        return SimpleNamespace(
+        return DataObject(
             name=profile.get("name"),
             address=profile.get("address"),
             email=profile.get("mail"),

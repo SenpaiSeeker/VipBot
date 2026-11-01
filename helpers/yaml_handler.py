@@ -1,10 +1,10 @@
 import asyncio
-from types import SimpleNamespace
 
 import aiofiles
 import yaml
 
 from .colorize import AnsiColors
+from .patcher import DataObject
 
 
 class YamlHandler(AnsiColors):
@@ -34,7 +34,7 @@ class YamlHandler(AnsiColors):
             string_keyed_dict = {
                 str(k): self._convertToNamespace(v) for k, v in data.items()
             }
-            return SimpleNamespace(**string_keyed_dict)
+            return DataObject(**string_keyed_dict)
         elif isinstance(data, list):
             return [self._convertToNamespace(item) for item in data]
         else:

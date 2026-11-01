@@ -1,5 +1,4 @@
 import json
-from types import SimpleNamespace
 
 import pyrogram
 
@@ -20,10 +19,10 @@ class NamespaceProxy:
             return self._instances[name]
 
         if name == "telegram":
-            return SimpleNamespace(arg=self.arg, button=self.buttons)
+            return DataObject(arg=self.arg, button=self.buttons)
 
         if name == "utils":
-            return SimpleNamespace(
+            return DataObject(
                 log=self.log,
                 faker=self.faker,
                 grad=self.grad,
@@ -31,7 +30,7 @@ class NamespaceProxy:
             )
 
         if name == "server":
-            return SimpleNamespace(monitor=self.monitor)
+            return DataObject(monitor=self.monitor)
 
         factory = getattr(type(self), f"_factory_{name}", None)
         if factory:
