@@ -28,19 +28,13 @@ class DataBase(Object):
 
     _ns_alias = "db"
 
-    def __init__(self, client=None, **options):
+    def __init__(self, client):
         super().__init__(client)
-        if client is not None:
-            from config import DB_KEY, DB_NAME
+        from config import DB_KEY, DB_NAME
 
-            default_file_name = DB_NAME
-            default_keys_encrypt = DB_KEY
-        else:
-            default_file_name = "database"
-            default_keys_encrypt = "default_db_key_12345"
-        self.file_name = options.get("file_name", default_file_name)
-        self.keys_encrypt = options.get("keys_encrypt", default_keys_encrypt)
-        self.method_encrypt = options.get("method_encrypt", "bytes")
+        self.file_name = DB_NAME
+        self.keys_encrypt = DB_KEY
+        self.method_encrypt = "bytes"
 
         self.cipher = CipherHandler(
             key=self.keys_encrypt,
