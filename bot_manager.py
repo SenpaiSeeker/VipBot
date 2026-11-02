@@ -22,6 +22,8 @@ class BotManager:
         self.db = db_instance
         self.owner_id = owner_id
         self.running_bots = {}
+        self._starting_bots = set()
+        self._startup_complete = False
         self.main_bot_client = None
         self.main_bot_id = None
         self._flood_until = {}
@@ -51,6 +53,18 @@ class BotManager:
             log.print(f"{log.RED}Gagal menyimpan FloodWait {bot_id}: {e}")
 
     async def start_bot(self, bot_data):
+        bot_id = int(bot_data["name"])
+        if bot_id in self.running_bots or bot_id in self._starting_bots:
+            log.warning(f"Bot {bot_id} sudah berjalan atau sedang dimulai.")
+            return
+
+        self._starting_bots.add(bot_id)
+        try:
+            await self._start_bot(bot_data)
+        finally:
+            self._starting_bots.discard(bot_id)
+
+    async def _start_bot(self, bot_data):
         bot_id = int(bot_data["name"])
         if bot_id in self.running_bots:
             log.warning(f"Bot {bot_id} sudah berjalan.")
@@ -115,15 +129,19 @@ class BotManager:
                 )
 
     async def start_all_bots(self):
-        all_bots_data = await self.db.getBots(is_token=True)
-        semaphore = asyncio.Semaphore(START_CONCURRENCY)
+        self._startup_complete = False
+        try:
+            all_bots_data = await self.db.getBots(is_token=True)
+            semaphore = asyncio.Semaphore(START_CONCURRENCY)
 
-        async def start_one(bot_data):
-            async with semaphore:
-                await self.start_bot(bot_data)
-                await asyncio.sleep(START_STAGGER_SECONDS)
+            async def start_one(bot_data):
+                async with semaphore:
+                    await self.start_bot(bot_data)
+                    await asyncio.sleep(START_STAGGER_SECONDS)
 
-        await asyncio.gather(*(start_one(bot_data) for bot_data in all_bots_data))
+            await asyncio.gather(*(start_one(bot_data) for bot_data in all_bots_data))
+        finally:
+            self._startup_complete = True
 
     async def stop_bot(self, bot_id):
         if bot_id in self.running_bots:
@@ -140,7 +158,7 @@ class BotManager:
 
 async def flood_retry_method():
     manager = BotManager.current
-    if not manager:
+    if not manager or not manager._startup_complete:
         return
 
     try:
@@ -155,7 +173,7 @@ async def flood_retry_method():
         except (TypeError, ValueError):
             continue
 
-        if bot_id in manager.running_bots:
+        if bot_id in manager.running_bots or bot_id in manager._starting_bots:
             continue
 
         remaining = await manager.flood_remaining(bot_id)

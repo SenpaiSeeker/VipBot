@@ -62,7 +62,14 @@ class Object:
             def get_client_property(self, _alias=alias):
                 return getattr(self.ns, _alias)
 
-            setattr(pyrogram.client.Client, alias, property(get_client_property))
+            def set_client_property(self, value, _alias=alias):
+                self.ns._register(_alias, value)
+
+            setattr(
+                pyrogram.client.Client,
+                alias,
+                property(get_client_property, set_client_property),
+            )
 
 
 class DataObject:

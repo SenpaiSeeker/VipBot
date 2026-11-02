@@ -62,14 +62,11 @@ async def perform_database_backup(client):
             async with db_lock:
                 await asyncio.to_thread(_create_zip)
 
-        rows = [
-            ["File", f"`{zip_name}`"],
-            ["Database", f"`{os.path.basename(db_path)}`"],
-            ["Waktu", f"`{_now_label()}`"],
-        ]
         caption = (
             f"{client.ns.emoji.md('shield')} **Backup Database**\n\n"
-            f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
+            f"**File:** `{zip_name}`\n"
+            f"**Database:** `{os.path.basename(db_path)}`\n"
+            f"**Waktu:** `{_now_label()}`"
         )
         await client.send_document(
             chat_id=client.owner_id,
