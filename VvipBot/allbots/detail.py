@@ -27,7 +27,11 @@ async def allbots_detail_callback(client, callback_query):
     owner_text = await _resolve_owner_text(bot_instance or client, owner_id)
 
     exp_date = parse_dt(await client.db.getVars(bot_id, "bot_expiration_date"))
-    days_left = (exp_date - datetime.now(timezone.utc)).days if exp_date else "N/A"
+    days_left_text = (
+        f"`{(exp_date - datetime.now(timezone.utc)).days}` hari"
+        if exp_date
+        else "Belum diatur"
+    )
 
     text = (
         f"**{client.ns.emoji.md('toolbox')} Kelola Bot Spesifik**\n\n"
@@ -37,7 +41,7 @@ async def allbots_detail_callback(client, callback_query):
         f"| ID Bot | `{bot_id}` |\n"
         f"| Username Bot | @{bot_username} |\n"
         f"| Pemilik | {owner_text} |\n"
-        f"| Sisa Aktif | `{days_left}` hari |"
+        f"| Sisa Aktif | {days_left_text} |"
     )
 
     layout = [

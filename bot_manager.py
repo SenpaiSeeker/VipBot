@@ -7,7 +7,7 @@ from pyrogram.types import InputRichMessage
 
 from helpers import parse_dt
 from helpers.logger import LoggerHandler
-from VvipBot import get_member_lock
+from VvipBot import get_member_lock, set_purchase_block
 
 log = LoggerHandler()
 
@@ -216,7 +216,15 @@ async def expiration_checker_method():
 
             if days_left < 1:
                 bot_instance = manager.running_bots.get(bot_id)
-                log.debug(f"Masa aktif bot {bot_id} telah habis. Menghapus bot...")
+                log.debug(f"Masa aktif bot {bot_id} habis. Mengaktifkan block mode...")
+                try:
+                    await set_purchase_block(manager.db, bot_id, True)
+                except Exception as e:
+                    log.error(f"Gagal mengaktifkan block mode untuk bot {bot_id}: {e}")
+                    continue
+
+                await manager.db.removeVars(bot_id, "bot_expiration_date")
+
                 try:
                     bot_name = (
                         bot_instance.me.first_name
@@ -225,7 +233,9 @@ async def expiration_checker_method():
                     )
                     rows = [
                         ["Bot", f"**{bot_name}**"],
-                        ["Status", "Masa aktif sudah habis"],
+                        ["Status", "Masa aktif habis"],
+                        ["Aksi", "Mode block ON, bot tidak dihentikan"],
+                        ["Masa Aktif", "Belum diatur"],
                     ]
                     expired_message = (
                         f"{main_client.ns.emoji.md('cross_mark')} **Masa Aktif "
@@ -236,15 +246,15 @@ async def expiration_checker_method():
                         owner_id,
                         InputRichMessage(markdown=expired_message),
                     )
-                except Exception:
-                    await bot_instance.send_rich_message(
-                        owner_id,
-                        InputRichMessage(markdown=expired_message),
+                except Exception as e:
+                    log.error(
+                        f"Gagal mengirim notifikasi kedaluwarsa bot {bot_id}: {e}"
                     )
 
-                await manager.stop_bot(bot_id)
-                await manager.db.removeBot(bot_id)
-                log.warning(f"Bot {bot_id} telah dihapus karena kedaluwarsa.")
+                log.warning(
+                    f"Bot {bot_id} kedaluwarsa: block mode ON, bot tidak "
+                    "dihentikan, masa aktif direset."
+                )
                 continue
 
             target_warning_days = [10, 5, 3, 1]

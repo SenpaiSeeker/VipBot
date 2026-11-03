@@ -84,11 +84,15 @@ async def _build_page(client, page: int) -> dict:
         exp_date_str = await client.db.getVars(bot_id, "bot_expiration_date")
         try:
             exp_date = parse_dt(exp_date_str)
-            days_left = (
-                (exp_date - datetime.now(timezone.utc)).days if exp_date else "N/A"
-            )
+            if exp_date:
+                days_left = (exp_date - datetime.now(timezone.utc)).days
+                active_text = f"`{days_left}` hari lagi"
+            else:
+                days_left = "N/A"
+                active_text = "Belum diatur"
         except (TypeError, ValueError):
             days_left = "N/A"
+            active_text = "Belum diatur"
 
         table_rows.append(
             [
@@ -96,7 +100,7 @@ async def _build_page(client, page: int) -> dict:
                 bot_username,
                 f"`{bot_id}`",
                 owner_text,
-                f"`{days_left}` hari lagi",
+                active_text,
             ]
         )
 

@@ -104,6 +104,7 @@ async def allbots_do_extend_callback(client, callback_query):
     await client.db.setVars(
         bot_id, "bot_expiration_date", (start_date + timedelta(days=days)).isoformat()
     )
+    await set_purchase_block(client.db, bot_id, False)
     await callback_query.answer(
         f"{days} hari berhasil ditambahkan ke bot {bot_id}.",
         show_alert=True,

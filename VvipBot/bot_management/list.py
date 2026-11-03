@@ -49,13 +49,17 @@ async def list_my_bots_callback(client, callback_query):
         bot_name = f"ID {bot_id} (Error)"
 
     exp_date = parse_dt(await client.db.getVars(bot_id, "bot_expiration_date"))
-    days_left = (exp_date - datetime.now(timezone.utc)).days if exp_date else "N/A"
+    days_left_text = (
+        f"`{(exp_date - datetime.now(timezone.utc)).days}` hari"
+        if exp_date
+        else "Belum diatur"
+    )
 
     bot_rows = [
         ["Nama Bot", bot_name],
         ["ID Bot", f"`{bot_id}`"],
         ["Username", f"@{bot_username}"],
-        ["Sisa Masa Aktif", f"`{days_left}` hari"],
+        ["Sisa Masa Aktif", days_left_text],
     ]
 
     table = client.ns.table
@@ -141,7 +145,7 @@ async def manage_bot_callback(client, callback_query):
     exp_date = parse_dt(
         await client.db.getVars(bot_id_to_manage, "bot_expiration_date")
     )
-    days_left_text = "Tidak diatur"
+    days_left_text = "Belum diatur"
 
     if exp_date:
         days_left = (exp_date - datetime.now(timezone.utc)).days

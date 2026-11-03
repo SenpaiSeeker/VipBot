@@ -28,7 +28,7 @@ from pyrogram.types import LinkPreviewOptions, Message, ReplyParameters
 from helpers import parse_dt
 from helpers.modules import Modules
 
-from .. import SAWERIA_BLOCK_OVERRIDE_ID
+from .. import SAWERIA_BLOCK_OVERRIDE_ID, set_purchase_block
 
 
 def get_eval_history(client):
@@ -476,27 +476,7 @@ async def block_purchase_handler(client, message):
         )
 
     value = arg == "on"
-    await client.db.setVars(bot_id, "purchase_block", value)
-
-    if value:
-        current_saweria = await client.db.getVars(bot_id, "SAWERIA_USER_ID")
-        if current_saweria != SAWERIA_BLOCK_OVERRIDE_ID:
-            await client.db.setVars(
-                bot_id,
-                "SAWERIA_USER_ID_ORIG",
-                {
-                    "had_original": current_saweria is not None,
-                    "original": current_saweria,
-                },
-            )
-        await client.db.setVars(bot_id, "SAWERIA_USER_ID", SAWERIA_BLOCK_OVERRIDE_ID)
-    else:
-        stash = await client.db.getVars(bot_id, "SAWERIA_USER_ID_ORIG")
-        if isinstance(stash, dict) and stash.get("had_original"):
-            await client.db.setVars(bot_id, "SAWERIA_USER_ID", stash.get("original"))
-        elif isinstance(stash, dict):
-            await client.db.removeVars(bot_id, "SAWERIA_USER_ID")
-        await client.db.removeVars(bot_id, "SAWERIA_USER_ID_ORIG")
+    await set_purchase_block(client.db, bot_id, value)
 
     if value:
         title = f"{client.ns.emoji.md('lock')} **Block Mode Diaktifkan**"

@@ -6,6 +6,8 @@ from pyrogram import filters
 from helpers import parse_dt
 from helpers.modules import Modules
 
+from .. import set_purchase_block
+
 
 async def request_extend_duration_callback(client, callback_query):
     bot_id_to_request = int(callback_query.data.split(" ", 1)[1])
@@ -107,6 +109,7 @@ async def owner_approve_extension_callback(client, callback_query):
             "bot_expiration_date",
             new_exp_date.isoformat(),
         )
+        await set_purchase_block(client.db, bot_id_to_extend, False)
 
         rows = [
             ["Bot", f"`{bot_id_to_extend}`"],

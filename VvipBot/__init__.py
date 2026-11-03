@@ -128,6 +128,31 @@ SALES_ROUTE_INTERVAL = 10
 MAX_BOT_CAPACITY = 30
 
 
+async def set_purchase_block(db, bot_id, enabled):
+    await db.setVars(bot_id, "purchase_block", enabled)
+
+    if enabled:
+        current_saweria = await db.getVars(bot_id, "SAWERIA_USER_ID")
+        if current_saweria != SAWERIA_BLOCK_OVERRIDE_ID:
+            await db.setVars(
+                bot_id,
+                "SAWERIA_USER_ID_ORIG",
+                {
+                    "had_original": current_saweria is not None,
+                    "original": current_saweria,
+                },
+            )
+        await db.setVars(bot_id, "SAWERIA_USER_ID", SAWERIA_BLOCK_OVERRIDE_ID)
+        return
+
+    stash = await db.getVars(bot_id, "SAWERIA_USER_ID_ORIG")
+    if isinstance(stash, dict) and stash.get("had_original"):
+        await db.setVars(bot_id, "SAWERIA_USER_ID", stash.get("original"))
+    elif isinstance(stash, dict):
+        await db.removeVars(bot_id, "SAWERIA_USER_ID")
+    await db.removeVars(bot_id, "SAWERIA_USER_ID_ORIG")
+
+
 def _sanitize_emoji_id(value):
     if value is None or isinstance(value, bool):
         return None

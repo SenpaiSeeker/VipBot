@@ -123,6 +123,8 @@ async def apply_extend_duration(client, bot_id, days_to_add):
     )
     new_exp_date = current_exp_date + timedelta(days=days_to_add)
     await client.db.setVars(bot_id, "bot_expiration_date", new_exp_date.isoformat())
+    if days_to_add > 0:
+        await set_purchase_block(client.db, bot_id, False)
     return new_exp_date.strftime("%d %b %Y")
 
 
