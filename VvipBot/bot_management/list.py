@@ -154,6 +154,14 @@ async def manage_bot_callback(client, callback_query):
     layout = [
         [
             {
+                "text": "🔄 Perpanjang via QRIS",
+                "callback_data": f"renew_bot {bot_id_to_manage}",
+                "style": "green",
+                "emoji": client.ns.emoji.id("repeat"),
+            }
+        ],
+        [
+            {
                 "text": "➕ Minta Perpanjangan",
                 "callback_data": f"request_extend_duration {bot_id_to_manage}",
                 "style": "green",
@@ -178,9 +186,13 @@ async def manage_bot_callback(client, callback_query):
         ],
     ]
 
+    block_mode = bool(
+        await client.db.getVars(bot_id_to_manage, "purchase_block") or False
+    )
     manage_rows = [
         ["ID Bot", f"`{bot_id_to_manage}`"],
         ["Sisa Masa Aktif", f"`{days_left_text}`"],
+        ["Block Mode", "ON" if block_mode else "OFF"],
     ]
 
     table = client.ns.table

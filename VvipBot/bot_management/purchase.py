@@ -10,7 +10,11 @@ from helpers import parse_dt
 from helpers.modules import Modules
 
 from .. import MAX_BOT_CAPACITY
-from .pricing import calculate_bot_price, get_bot_purchase_panel
+from .pricing import (
+    calculate_bot_price,
+    get_bot_base_price,
+    get_bot_purchase_panel,
+)
 
 _purchase_locks = WeakValueDictionary()
 
@@ -171,7 +175,7 @@ async def proceed_bot_payment_callback(client, callback_query):
             )
         )
 
-    _, _, amount = calculate_bot_price(months)
+    _, _, amount = calculate_bot_price(months, await get_bot_base_price(client))
     fakeinfo = client.ns.utils.faker.generate()
     qr_image_stream = None
 

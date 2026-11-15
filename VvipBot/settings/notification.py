@@ -5,7 +5,64 @@ from pyrogram import filters
 
 from helpers.modules import Modules
 
-from .. import is_bot_owner, listen
+from .. import is_bot_owner, is_new_user_notif_enabled, listen
+
+
+async def new_user_notif_menu_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+
+    enabled = await is_new_user_notif_enabled(client)
+    rows = [
+        ["Status", f"`{'ON' if enabled else 'OFF'}`"],
+        ["Data Pengguna", "Tetap disimpan"],
+        [
+            "Efek",
+            (
+                "Notifikasi dikirim ke owner saat pengguna baru memulai bot"
+                if enabled
+                else "Notifikasi tidak dikirim; data pengguna tetap tersimpan"
+            ),
+        ],
+    ]
+    text = (
+        f"{client.ns.emoji.md('bust_in_silhouette')} **Notifikasi Pengguna Baru**\n\n"
+        f"{client.ns.table.md(['Info', 'Nilai'], rows)}\n\n"
+        "Data pengguna baru tetap disimpan meskipun notifikasi dimatikan."
+    )
+    layout = [
+        [
+            {
+                "text": (
+                    "🔕 Matikan Notifikasi" if enabled else "🔔 Aktifkan Notifikasi"
+                ),
+                "callback_data": "toggle_new_user_notif",
+                "style": "red" if enabled else "green",
+                "emoji": client.ns.emoji.id("cross_mark" if enabled else "bell"),
+            }
+        ],
+        [
+            {
+                "text": "• Kembali ke Pengaturan •",
+                "callback_data": "settings",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("back_arrow"),
+            }
+        ],
+    ]
+    await callback_query.edit_message_text(
+        rich_message=pyrogram.types.InputRichMessage(markdown=text),
+        reply_markup=client.ns.telegram.button.build_button_grid(layout),
+    )
+
+
+async def toggle_new_user_notif_callback(client, callback_query):
+    if not await is_bot_owner(client, callback_query.from_user.id):
+        return
+
+    enabled = await is_new_user_notif_enabled(client)
+    await client.db.setVars(client.me.id, "notif_new_user", not enabled)
+    await new_user_notif_menu_callback(client, callback_query)
 
 
 async def set_notif_chat_callback(client, callback_query):
@@ -221,6 +278,12 @@ async def set_notif_payment_callback(client, callback_query):
 class SettingsNotification(Modules):
     def __init__(self, client):
         super().__init__(client)
+        self.client.on_callback_query(filters.regex("^new_user_notif_menu$"))(
+            self.handle(new_user_notif_menu_callback)
+        )
+        self.client.on_callback_query(filters.regex("^toggle_new_user_notif$"))(
+            self.handle(toggle_new_user_notif_callback)
+        )
         self.client.on_callback_query(filters.regex("^set_notif_chat$"))(
             self.handle(set_notif_chat_callback)
         )

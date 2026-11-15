@@ -76,6 +76,11 @@ async def get_notification_target(client):
     return await client.db.getVars(client.me.id, "owner_id") or client.owner_id
 
 
+async def is_new_user_notif_enabled(client):
+    value = await client.db.getVars(client.me.id, "notif_new_user")
+    return True if value is None else bool(value)
+
+
 def get_member_lock(client):
     locks = getattr(client, "_member_locks", None)
     if locks is None:
@@ -208,28 +213,31 @@ async def check_new_user(client, update):
             update.from_user.id,
             check_duplicate=False,
         )
-        owner_of_this_bot = (
-            await client.db.getVars(client.me.id, "owner_id") or client.owner_id
-        )
+        if await is_new_user_notif_enabled(client):
+            owner_of_this_bot = (
+                await client.db.getVars(client.me.id, "owner_id") or client.owner_id
+            )
 
-        try:
-            mention_user = client.ns.telegram.arg.getMention(update.from_user, md=True)
-            rows = [
-                ["Bot", client.ns.telegram.arg.getMention(client.me, md=True)],
-                ["Pengguna", mention_user],
-                ["ID", f"`{update.from_user.id}`"],
-            ]
-            notification_text = (
-                f"{client.ns.emoji.md('bust_in_silhouette')} **Pengguna Baru "
-                "Telah Memulai Bot Anda**\n\n"
-                f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
-            )
-            await client.send_rich_message(
-                owner_of_this_bot,
-                pyrogram.types.InputRichMessage(markdown=notification_text),
-            )
-        except Exception:
-            pass
+            try:
+                mention_user = client.ns.telegram.arg.getMention(
+                    update.from_user, md=True
+                )
+                rows = [
+                    ["Bot", client.ns.telegram.arg.getMention(client.me, md=True)],
+                    ["Pengguna", mention_user],
+                    ["ID", f"`{update.from_user.id}`"],
+                ]
+                notification_text = (
+                    f"{client.ns.emoji.md('bust_in_silhouette')} **Pengguna Baru "
+                    "Telah Memulai Bot Anda**\n\n"
+                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
+                )
+                await client.send_rich_message(
+                    owner_of_this_bot,
+                    pyrogram.types.InputRichMessage(markdown=notification_text),
+                )
+            except Exception:
+                pass
 
         client.log.print(
             f"{client.log.CYAN}User baru "

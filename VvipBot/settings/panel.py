@@ -140,6 +140,14 @@ async def settings(client, callback_query):
         ],
         [
             {
+                "text": "👤 Notifikasi Pengguna Baru",
+                "callback_data": "new_user_notif_menu",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("bust_in_silhouette"),
+            }
+        ],
+        [
+            {
                 "text": "💰 Pendapatan VIP",
                 "callback_data": "vip_revenue_menu",
                 "style": "green",
@@ -179,7 +187,7 @@ async def settings(client, callback_query):
         [f"{client.ns.emoji.md('mag_right')} Grup", "Status Grup VVIP"],
         [f"{client.ns.emoji.md('loudspeaker')} Broadcast", "Kirim & Harga"],
         [f"{client.ns.emoji.md('key')} Payment", "Gateway, kupon & transaksi"],
-        [f"{client.ns.emoji.md('bell')} Notifikasi", "Tempat Notifikasi"],
+        [f"{client.ns.emoji.md('bell')} Notifikasi", "Tempat & Pengguna Baru"],
         [f"{client.ns.emoji.md('money_bag')} Laporan", "Pendapatan & Stars"],
     ]
 
