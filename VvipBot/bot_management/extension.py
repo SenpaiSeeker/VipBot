@@ -68,28 +68,67 @@ async def _find_bot_data(client, bot_id):
     return None
 
 
-async def _get_renewal_saweria_id(client, bot_id):
-    stash = await client.db.getVars(bot_id, "SAWERIA_USER_ID_ORIG")
-    if isinstance(stash, dict) and stash.get("had_original"):
-        original = stash.get("original")
-        if original:
-            return original
+async def _get_renewal_saweria_id(client):
+    main_bot_id = getattr(client.manager, "main_bot_id", None) or client.me.id
+    main_saweria = await client.db.getVars(main_bot_id, "SAWERIA_USER_ID")
+    if main_saweria and main_saweria != SAWERIA_BLOCK_OVERRIDE_ID:
+        return main_saweria
 
-    current = await client.db.getVars(bot_id, "SAWERIA_USER_ID")
-    if current and current != SAWERIA_BLOCK_OVERRIDE_ID:
-        return current
-
-    main_bot_id = getattr(client.manager, "main_bot_id", None)
-    if main_bot_id and int(main_bot_id) != int(bot_id):
-        main_saweria = await client.db.getVars(main_bot_id, "SAWERIA_USER_ID")
-        if main_saweria and main_saweria != SAWERIA_BLOCK_OVERRIDE_ID:
-            return main_saweria
-
-        main_stash = await client.db.getVars(main_bot_id, "SAWERIA_USER_ID_ORIG")
-        if isinstance(main_stash, dict) and main_stash.get("had_original"):
-            return main_stash.get("original")
+    main_stash = await client.db.getVars(main_bot_id, "SAWERIA_USER_ID_ORIG")
+    if isinstance(main_stash, dict) and main_stash.get("had_original"):
+        return main_stash.get("original")
 
     return None
+
+
+def _renewal_error_layout(client, bot_id):
+    return client.ns.telegram.button.build_button_grid(
+        [
+            [
+                {
+                    "text": "🔄 Coba Lagi",
+                    "callback_data": f"renew_bot {bot_id}",
+                    "style": "green",
+                    "emoji": client.ns.emoji.id("repeat"),
+                }
+            ],
+            [
+                {
+                    "text": "• Kembali •",
+                    "callback_data": f"manage_bot {bot_id}",
+                    "style": "blue",
+                    "emoji": client.ns.emoji.id("back_arrow"),
+                }
+            ],
+        ]
+    )
+
+
+async def _show_renewal_error(client, callback_query, bot_id, title, detail):
+    rows = [
+        ["Status", title],
+        ["Keterangan", f"`{detail}`"],
+    ]
+    text = (
+        f"{client.ns.emoji.md('cross_mark')} **{title}**\n\n"
+        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
+    )
+    markup = _renewal_error_layout(client, bot_id)
+
+    try:
+        await callback_query.edit_message_text(
+            rich_message=pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=markup,
+        )
+    except Exception:
+        try:
+            await client.send_rich_message(
+                callback_query.from_user.id,
+                pyrogram.types.InputRichMessage(markdown=text),
+                reply_markup=markup,
+            )
+        except Exception:
+            pass
 
 
 async def _ensure_bot_running(client, bot_id):
@@ -356,6 +395,32 @@ async def proceed_bot_renewal_callback(client, callback_query):
             show_alert=True,
         )
 
+    try:
+        await callback_query.answer()
+    except Exception:
+        pass
+
+    owner_id = await client.db.getVars(bot_id, "owner_id")
+    bot_data = await _find_bot_data(client, bot_id)
+    if not owner_id or not bot_data:
+        return await _show_renewal_error(
+            client,
+            callback_query,
+            bot_id,
+            "Bot Tidak Tersedia",
+            "Data bot atau pemilik bot tidak ditemukan.",
+        )
+
+    saweria_user_id = await _get_renewal_saweria_id(client)
+    if not saweria_user_id:
+        return await _show_renewal_error(
+            client,
+            callback_query,
+            bot_id,
+            "Pembayaran Tidak Tersedia",
+            "Saweria Owner Utama belum diatur.",
+        )
+
     rows = [
         ["Status", "Sedang memproses"],
         ["Keterangan", "Mohon tunggu sebentar"],
@@ -368,29 +433,6 @@ async def proceed_bot_renewal_callback(client, callback_query):
             )
         )
     )
-
-    saweria_user_id = await _get_renewal_saweria_id(client, bot_id)
-    if not saweria_user_id:
-        rows = [
-            ["Status", "Layanan pembayaran belum tersedia"],
-            ["Tindakan", "Silakan hubungi Owner Utama"],
-        ]
-        return await callback_query.edit_message_text(
-            rich_message=pyrogram.types.InputRichMessage(
-                markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Pembayaran Tidak "
-                    "Tersedia**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
-                )
-            )
-        )
-
-    owner_id = await client.db.getVars(bot_id, "owner_id")
-    if not owner_id:
-        return await callback_query.answer(
-            "Data pemilik bot tidak ditemukan.",
-            show_alert=True,
-        )
 
     base_price = await get_bot_base_price(client)
     _, _, amount = calculate_bot_price(months, base_price)
@@ -470,18 +512,12 @@ async def proceed_bot_renewal_callback(client, callback_query):
             reply_markup=btn,
         )
     except Exception as e:
-        rows = [
-            ["Status", "Terjadi kesalahan"],
-            ["Error", f"`{e}`"],
-        ]
-        await client.send_rich_message(
-            user_id,
-            pyrogram.types.InputRichMessage(
-                markdown=(
-                    f"{client.ns.emoji.md('cross_mark')} **Terjadi Kesalahan**\n\n"
-                    f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
-                )
-            ),
+        await _show_renewal_error(
+            client,
+            callback_query,
+            bot_id,
+            "Gagal Membuat Pembayaran",
+            str(e),
         )
     finally:
         if qr_image_stream is not None:
@@ -516,11 +552,13 @@ async def _confirm_bot_renewal(client, callback_query, transaction_id, user):
         )
 
     owner_id = await client.db.getVars(bot_id, "owner_id")
-    if not owner_id:
+    bot_data = await _find_bot_data(client, bot_id)
+    if not owner_id or not bot_data:
         await client.db.removeVars(client.me.id, order_key)
         await _notify_deleted_bot(client, order, transaction_id)
         return await callback_query.answer(
-            "Bot sudah dihapus. Pembayaran tidak dapat diproses.",
+            "Bot sudah dihapus atau tidak lagi terdaftar. Pembayaran tidak "
+            "dapat diproses.",
             show_alert=True,
         )
 

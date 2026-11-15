@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from weakref import WeakValueDictionary
 from zoneinfo import ZoneInfo
 
@@ -76,6 +76,7 @@ async def _collect_stats(client, bot_id):
     user_ids = await client.db.getListVars(bot_id, "user_ids") or []
     members = await client.db.getListVars(bot_id, "vvip_members") or []
     coupons = await client.db.getListVars(bot_id, "coupons") or []
+    packages = await client.db.getListVars(bot_id, "list_vvip") or []
     history = await client.db.getListVars(bot_id, "vip_revenue_history") or []
 
     sales_count = await client.db.getVars(bot_id, "sales_count")
@@ -98,21 +99,47 @@ async def _collect_stats(client, bot_id):
             normal_members += 1
 
     revenue = 0
+    revenue_today = 0
+    revenue_week = 0
+    revenue_month = 0
+    now = datetime.now(_TZ)
+    week_start = now - timedelta(days=7)
+
     for record in history:
         if not isinstance(record, dict):
             continue
         try:
-            revenue += int(record.get("amount", 0) or 0)
+            amount = int(record.get("amount", 0) or 0)
         except (TypeError, ValueError):
             continue
+
+        revenue += amount
+        try:
+            record_date = parse_dt(record.get("date"))
+        except (TypeError, ValueError):
+            record_date = None
+        if not record_date:
+            continue
+
+        local_date = record_date.astimezone(_TZ)
+        if local_date.date() == now.date():
+            revenue_today += amount
+        if week_start <= local_date <= now:
+            revenue_week += amount
+        if local_date.year == now.year and local_date.month == now.month:
+            revenue_month += amount
 
     return {
         "users": len(user_ids),
         "vvip_normal": normal_members,
         "vvip_hidden": hidden_members,
         "coupons": len(coupons),
+        "packages": len(packages),
         "sales": sales_count,
         "revenue": revenue,
+        "revenue_today": revenue_today,
+        "revenue_week": revenue_week,
+        "revenue_month": revenue_month,
     }
 
 
@@ -214,8 +241,10 @@ async def _build_detail(client, bot_id, page):
     return text, layout
 
 
-async def _show_detail(client, callback_query, bot_id, page):
+async def _show_detail(client, callback_query, bot_id, page, notice=None):
     text, layout = await _build_detail(client, bot_id, page)
+    if notice:
+        text = f"{notice}\n\n{text}"
     await callback_query.edit_message_text(
         rich_message=pyrogram.types.InputRichMessage(markdown=text),
         reply_markup=client.ns.telegram.button.build_button_grid(layout),
@@ -260,7 +289,11 @@ async def allbots_stats_callback(client, callback_query):
         ["VVIP Normal", f"`{stats['vvip_normal']}`"],
         ["VVIP Hidden", f"`{stats['vvip_hidden']}`"],
         ["Kupon", f"`{stats['coupons']}`"],
+        ["Paket VVIP", f"`{stats['packages']}`"],
         ["Penjualan", f"`{stats['sales']}`"],
+        ["Pendapatan Hari Ini", f"`{_format_rupiah(stats['revenue_today'])}`"],
+        ["Pendapatan 7 Hari", f"`{_format_rupiah(stats['revenue_week'])}`"],
+        ["Pendapatan Bulan Ini", f"`{_format_rupiah(stats['revenue_month'])}`"],
         ["Total Pendapatan", f"**`{_format_rupiah(stats['revenue'])}`**"],
     ]
     text = (
@@ -324,6 +357,11 @@ async def allbots_restart_callback(client, callback_query):
                 show_alert=True,
             )
 
+        try:
+            await callback_query.answer()
+        except Exception:
+            pass
+
         rows = [["Status", "Memproses restart bot"]]
         await callback_query.edit_message_text(
             rich_message=pyrogram.types.InputRichMessage(
@@ -354,11 +392,7 @@ async def allbots_restart_callback(client, callback_query):
             result = f"❌ Gagal restart bot: {e}"
 
         invalidate_page_cache(page)
-        try:
-            await callback_query.answer(result, show_alert=True)
-        except Exception:
-            pass
-        await _show_detail(client, callback_query, bot_id, page)
+        await _show_detail(client, callback_query, bot_id, page, notice=result)
 
 
 async def allbots_toggle_block_callback(client, callback_query):
@@ -406,6 +440,11 @@ async def allbots_message_owner_callback(client, callback_query):
             show_alert=True,
         )
 
+    try:
+        await callback_query.answer()
+    except Exception:
+        pass
+
     prompt = (
         "**✉️ Kirim Pesan ke Owner Bot**\n\n"
         "Kirim teks, foto, atau media yang ingin diteruskan ke owner bot.\n"
@@ -433,11 +472,33 @@ async def allbots_message_owner_callback(client, callback_query):
     except Exception as e:
         result = f"❌ Gagal mengirim pesan: {e}"
 
+    rows = [
+        ["Bot", f"`{bot_id}`"],
+        ["Tujuan", f"`{int(owner_id)}`"],
+        ["Status", result],
+    ]
+    text = (
+        f"{client.ns.emoji.md('envelope')} **Status Pengiriman Pesan**\n\n"
+        f"{client.ns.table.md(['Info', 'Nilai'], rows)}"
+    )
+    layout = [
+        [
+            {
+                "text": "• Kembali ke Detail •",
+                "callback_data": f"allbots_detail_{bot_id}_{page}",
+                "style": "blue",
+                "emoji": client.ns.emoji.id("back_arrow"),
+            }
+        ]
+    ]
     try:
-        await callback_query.answer(result, show_alert=True)
-    except Exception:
-        pass
-    await _show_detail(client, callback_query, bot_id, page)
+        await client.send_rich_message(
+            client.owner_id,
+            pyrogram.types.InputRichMessage(markdown=text),
+            reply_markup=client.ns.telegram.button.build_button_grid(layout),
+        )
+    except Exception as e:
+        client.log.print(f"Gagal mengirim status pesan owner: {e}")
 
 
 class AllBotsDetail(Modules):
