@@ -214,7 +214,7 @@ async def expiration_checker_method():
             if not main_client:
                 continue
 
-            if days_left < 1:
+            if time_remaining.total_seconds() <= 0:
                 bot_instance = manager.running_bots.get(bot_id)
                 log.debug(f"Masa aktif bot {bot_id} habis. Mengaktifkan block mode...")
                 try:
